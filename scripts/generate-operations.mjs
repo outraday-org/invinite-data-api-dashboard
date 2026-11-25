@@ -6,6 +6,7 @@
 // Data API's access rank), and the webhook payloads of `x-webhooks` (`webhooks.mjs`: the reference page `/alerts/webhooks`
 // follows the pinned spec). Never edit the output by hand; `pnpm run check` (eslint --fix) formats it before a commit.
 
+import { createHash } from "node:crypto";
 import { readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -15,6 +16,60 @@ import { webhookEntries, webhookEnvelope } from "./webhooks.mjs";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const spec = JSON.parse(readFileSync(resolve(root, "openapi.json"), "utf8"));
+
+/**
+ * The SDK names (`reference/sdk-contract.json` of the same API reference bundle as `openapi.json`): the class, method,
+ * parameter and body names of the TypeScript and Python SDKs, for the request panel's code. Never derived here.
+ */
+const sdkContract = JSON.parse(readFileSync(resolve(root, "sdk-contract.json"), "utf8"));
+
+if (sdkContract.provenance?.specSha256 && sdkContract.provenance.specSha256 !== createHash("sha256").update(readFileSync(resolve(root, "openapi.json"))).digest("hex")) {
+    throw new Error("sdk-contract.json was exported for another openapi.json: adopt both from the same API reference bundle");
+}
+
+/** A parameter's value kind: how the SDK code writes it (the SDKs type numbers, booleans and dates). */
+const paramKind = (schema = {}) => {
+    if (schema.type === "integer" || schema.type === "number") return "number";
+
+    if (schema.type === "boolean") return "boolean";
+
+    if (schema.format === "date") return "date";
+
+    if (schema.format === "date-time") return "datetime";
+
+    return "string";
+};
+
+const resolveParameter = parameter => (parameter.$ref ? spec.components.parameters[parameter.$ref.split("/").at(-1)] : parameter);
+
+/** An operation's SDK call (null when the SDK has none): class, methods, path + query parameters, the body argument. */
+const sdkOf = (id, operation, pathItem) => {
+    const entry = sdkContract.operations[id];
+
+    if (!entry) return null;
+
+    const params = {};
+
+    for (const raw of [...(pathItem.parameters ?? []), ...(operation.parameters ?? [])]) {
+        const parameter = resolveParameter(raw);
+
+        if (parameter.in !== "path" && parameter.in !== "query") continue;
+
+        const names = sdkContract.parameters[parameter.name];
+
+        if (!names) throw new Error(`${id}: parameter ${parameter.name} has no SDK names in sdk-contract.json`);
+
+        params[parameter.name] = { kind: paramKind(parameter.schema), py: names.pyName, ts: names.tsName };
+    }
+
+    return {
+        body: entry.body ? { model: entry.body.model, py: entry.body.pyName, ts: entry.body.tsName } : null,
+        className: entry.className,
+        params,
+        py: entry.pyMethod,
+        ts: entry.tsMethod,
+    };
+};
 
 const METHODS = ["get", "post", "patch", "put", "delete"];
 
@@ -75,6 +130,7 @@ for (const [path, item] of Object.entries(spec.paths)) {
             docsUrl: docsUrl(method, path),
             method: method.toUpperCase(),
             path,
+            sdk: sdkOf(id, operation, item),
             summary: operation.summary ?? id,
             tier: tierOf(id, operation),
         };
@@ -113,12 +169,27 @@ export type OperationTier = (typeof PLAN_ORDER)[number];
 
 export type OperationCli = { action: null | string; group: string; positional: null | string };
 
+export type OperationSdkParamKind = "boolean" | "date" | "datetime" | "number" | "string";
+
+/** The SDK call of an operation (\`sdk-contract.json\`): TS / Python method, each parameter's names, the body argument. */
+export type OperationSdk = {
+    body: null | { model: string; py: string; ts: string };
+    className: string;
+    params: Record<string, { kind: OperationSdkParamKind; py: string; ts: string }>;
+    py: string;
+    ts: string;
+};
+
+/** The SDK packages (\`sdk-contract.json\`). */
+export const SDK_PACKAGES = ${JSON.stringify(sdkContract.packages)} as const;
+
 export type Operation = {
     cli: null | OperationCli;
     credits: null | number;
     docsUrl: string;
     method: OperationMethod;
     path: string;
+    sdk: null | OperationSdk;
     summary: string;
     tier: null | OperationTier;
 };

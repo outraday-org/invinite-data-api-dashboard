@@ -1,13 +1,20 @@
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
+import type { SnippetFormat } from "@/lib/api/request-snippets";
+
+import { SNIPPET_FORMATS } from "@/lib/api/request-snippets";
+
 /** From this width the request panel is docked beside the page; below it, it is a sheet over the page. */
 export const DOCKED_PANEL_MIN_PX = 1280;
 
 type RequestPanelState = {
+    /** The form every row's request is shown and "Copy all as …" copies in (shared by the rows, remembered). */
+    format: SnippetFormat;
     hasHydrated: boolean;
     open: boolean;
     markHydrated: () => void;
+    setFormat: (format: SnippetFormat) => void;
     setOpen: (open: boolean) => void;
     toggle: () => void;
 };
@@ -33,6 +40,7 @@ const isNarrow = () => typeof window !== "undefined" && typeof window.matchMedia
 export const useRequestPanelStore = create<RequestPanelState>()(
     persist(
         set => ({
+            format: "curl",
             hasHydrated: false,
             markHydrated: () => {
                 if (typeof window === "undefined") return;
@@ -40,15 +48,20 @@ export const useRequestPanelStore = create<RequestPanelState>()(
                 set({ hasHydrated: true });
             },
             open: false,
+            setFormat: format => set({ format }),
             setOpen: open => set({ open }),
             toggle: () => set(state => ({ open: !state.open })),
         }),
         {
             // `merge` runs on hydration only.
             merge: (persisted, current) => {
-                const open = (persisted as Partial<RequestPanelState> | undefined)?.open === true && !isNarrow();
+                const stored = persisted as Partial<RequestPanelState> | undefined;
 
-                return { ...current, open };
+                const open = stored?.open === true && !isNarrow();
+
+                const format = SNIPPET_FORMATS.find(item => item.value === stored?.format)?.value ?? current.format;
+
+                return { ...current, format, open };
             },
             name: "invinite-request-panel",
             onRehydrateStorage: () => (state) => {
@@ -56,7 +69,7 @@ export const useRequestPanelStore = create<RequestPanelState>()(
 
                 state?.markHydrated();
             },
-            partialize: state => ({ open: state.open }),
+            partialize: state => ({ format: state.format, open: state.open }),
             skipHydration: true,
             storage,
         },

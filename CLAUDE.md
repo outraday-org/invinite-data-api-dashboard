@@ -508,14 +508,22 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   close the sheets and focus returns to the toggle (`finalFocus`); a window narrowed below 1280 closes a docked panel;
   `print:hidden`; nothing outside a `QueryClientProvider`. `RequestPanelView` (pure, tested): "Requests on this page",
   "N requests · M credits charged · <host>" (`useApiBaseUrl() ?? DEFAULT_API_BASE_URL`, the one component file that
-  names the API host), "Copy all as curl", the page's rows (the first expanded; expansion keyed by `request.key`, so a
+  names the API host), "Copy all as <format>" (the whole label is the copy button: `CopyButton` with `children`) in the
+  code format the rows show, the page's rows (the first expanded; expansion keyed by `request.key`, so a
   refetch / "Load more" keeps it), "App requests (N)" and "Writes (N)" folded, the empty text, and a static line that
   live streams (WebSocket) are not listed, linking the stream docs (`ws--_v1_stream`). A row
   (`request-row.tsx` `RequestRow`, a `button aria-expanded`): method chip (GET in `--brand`, writes a strong neutral
   chip), path + the query on a muted second line (wraps), status (4xx / 5xx in `--destructive` with the problem code),
   credits charged `Nc` (`--warn` above the operation's base cost), summary + tier badge (an unknown operation: path
-  only); expanded = curl | CLI | Answer (one at a time, CLI only with `cliOf`, Answer = `JsonTree` with copy /
-  download), request id + copy (when stated), docs link, the error of a failed one. `curlOf` ALWAYS writes
+  only); expanded = curl | CLI | Python | TypeScript | Response (one at a time; the code format is the panel's —
+  `useRequestPanelStore().format`, persisted beside `open` — so a pick in one row applies to every row and to "Copy all";
+  Response is the row's alone, a `JsonTree` with copy / download; a request without a CLI command / SDK operation says
+  so). The code comes from `src/lib/api/request-snippets.ts` (`snippetOf`, `pythonOf`, `typescriptOf`, tested): curl /
+  CLI one line per request, Python / TypeScript one program with every call (typed values: numbers, booleans, dates as
+  `date.fromisoformat` / `new Date`; a body through the model's `from_dict` / `…FromJSON`; the key from
+  `INVINITE_API_KEY`). SDK names come from `sdk-contract.json` (repo root, adopted with `openapi.json` from the same API
+  reference bundle's `reference/sdk-contract.json`; the generator refuses one exported for another spec) into each
+  operation's `sdk` in `operations.gen.ts` (`SDK_PACKAGES` = npm / PyPI names), request id + copy (when stated), docs link, the error of a failed one. `curlOf` ALWAYS writes
   `$INVINITE_API_KEY`. Rows of one method + path fold under the first (`foldRuns`: "N more pages" of one query, else
   "N more requests").
 - **Page vs app requests** (`src/components/api/request-groups.ts`, tested): `ViewRequest.queryKey` (a query's key;

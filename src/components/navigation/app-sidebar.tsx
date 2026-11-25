@@ -50,12 +50,12 @@ import { LiveDot } from "@/routes/$ticker/earnings-calls/-components/live-dot";
 // 32 px rows (36 px below 640 px); the active row (TanStack `Link`: `data-status="active"` + `aria-current="page"`) is
 // filled and marked by a 2 px brand bar on its left.
 const linkClass = cn(
-    "ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground text-sidebar-foreground/80 relative flex h-8 w-full items-center gap-2 overflow-hidden rounded-[calc(var(--radius-sm)+2px)] px-2 text-left text-sm outline-hidden transition-colors focus-visible:ring-2 max-sm:h-9",
+    "ring-sidebar-ring hover-fill hover:bg-sidebar-accent text-sidebar-foreground/80 relative flex h-8 w-full items-center gap-2 overflow-hidden rounded-[calc(var(--radius-sm)+2px)] px-2 text-left text-sm outline-hidden focus-visible:ring-2 max-sm:h-9",
     "before:absolute before:inset-y-1.5 before:left-0 before:w-0.5 before:rounded-full",
     "data-[status=active]:bg-sidebar-accent data-[status=active]:text-sidebar-accent-foreground data-[status=active]:font-medium data-[status=active]:before:bg-brand",
 );
 
-const groupHeaderClass = "ring-sidebar-ring hover:bg-sidebar-accent text-sidebar-foreground/70 hover:text-sidebar-foreground flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-xs font-medium outline-hidden transition-colors focus-visible:ring-2 aria-disabled:cursor-default aria-disabled:hover:bg-transparent max-sm:h-9";
+const groupHeaderClass = "ring-sidebar-ring hover-fill hover:bg-sidebar-accent text-sidebar-foreground/70 flex h-8 w-full items-center gap-2 rounded-md px-2 text-left text-xs font-medium outline-hidden focus-visible:ring-2 aria-disabled:cursor-default aria-disabled:hover:bg-transparent max-sm:h-9";
 
 function ItemContent({ children, icon: Icon, label }: { children?: React.ReactNode; icon: LucideIcon; label: string }) {
     return (

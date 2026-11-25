@@ -15,10 +15,16 @@ import { DataTable } from "@/components/ui/data-table";
 import { ApiRequestError } from "@/lib/api/errors";
 import { fileRequests, shareWithRequests } from "@/lib/api/request-meta";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
+import { useRequestPanelStore } from "@/lib/stores/request-panel-store";
 
 vi.mock("@/lib/api/server-functions", () => ({ getApiBaseUrl: vi.fn(() => Promise.resolve({ url: "https://api.test" })) }));
 
-afterEach(cleanup);
+afterEach(() => {
+    cleanup();
+
+    // The code format is the panel's (shared by the rows, remembered): every test starts at curl.
+    useRequestPanelStore.setState({ format: "curl" });
+});
 
 const STORED_KEY = "invd_live_secret_key_0123456789";
 
@@ -87,9 +93,54 @@ describe("Request panel view", () => {
 
         expect(within(row).getByText("invd dividends list AAPL --limit 40")).toBeInTheDocument();
 
-        fireEvent.click(within(row).getByRole("button", { name: "Answer" }));
+        fireEvent.click(within(row).getByRole("button", { name: "Response" }));
 
         expect(within(row).getByText("data:", { exact: false })).toBeInTheDocument();
+    });
+
+    it("a code tab is every row's and \"Copy all as …\" copies it; Response is the row's alone", async () => {
+        const writeText = vi.fn(() => Promise.resolve());
+
+        Object.assign(navigator, { clipboard: { writeText } });
+
+        const second = viewRequest({ key: "b:0:0", meta: meta({ operationId: "getFund", path: "/v1/funds/SPY", query: {} }), queryKey: ["v2", "fund"] });
+
+        render(view([viewRequest(), second]));
+
+        const rows = screen.getAllByTestId("api-request");
+
+        fireEvent.click(within(rows[0]).getByRole("button", { name: "Python" }));
+
+        expect(within(rows[0]).getByText(/CorporateActionsApi\(client\)\.list_dividends/)).toBeInTheDocument();
+
+        // The whole label is the button.
+        const copyAll = screen.getByRole("button", { name: "Copy all as Python" });
+
+        expect(copyAll).toHaveTextContent("Copy all as Python");
+
+        fireEvent.click(copyAll);
+
+        await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+
+        const copied = (writeText.mock.calls[0] as unknown as [string])[0];
+
+        expect(copied).toContain(".list_dividends(");
+
+        expect(copied).toContain(".get_fund(");
+
+        // Another row opens in the same format.
+        fireEvent.click(within(rows[1]).getByRole("button", { expanded: false }));
+
+        expect(within(rows[1]).getByRole("button", { name: "Python" })).toHaveAttribute("aria-pressed", "true");
+
+        // Answer leaves the copy format as it was.
+        fireEvent.click(within(rows[0]).getByRole("button", { name: "Response" }));
+
+        expect(screen.getByRole("button", { name: "Copy all as Python" })).toBeInTheDocument();
+
+        fireEvent.click(within(rows[0]).getByRole("button", { name: "TypeScript" }));
+
+        expect(screen.getByRole("button", { name: "Copy all as TypeScript" })).toBeInTheDocument();
     });
 
     it("the summary counts the page's requests and the credits charged; others start collapsed and expand", () => {
@@ -125,7 +176,7 @@ describe("Request panel view", () => {
 
         expect(within(row).getByText(/Your plan does not include this operation/)).toBeInTheDocument();
 
-        expect(within(row).queryByRole("button", { name: "Answer" })).toBeNull();
+        expect(within(row).queryByRole("button", { name: "Response" })).toBeNull();
     });
 
     it("an operation the generated table does not know shows its path without a summary", () => {
@@ -200,7 +251,7 @@ describe("Request panel view", () => {
         // Writes start collapsed (only the page's first request opens by itself).
         fireEvent.click(screen.getByRole("button", { expanded: false, name: /\/v1\/destinations/ }));
 
-        fireEvent.click(screen.getByRole("button", { name: "Answer" }));
+        fireEvent.click(screen.getByRole("button", { name: "Response" }));
 
         expect(document.body.innerHTML).not.toContain("whsec_live_secret");
 

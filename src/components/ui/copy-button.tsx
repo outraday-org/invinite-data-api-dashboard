@@ -10,9 +10,10 @@ const COPIED_MS = 1500;
 
 /**
  * A small icon button that copies `value` (an accession number, CIK, event id, CUSIP, a curl line). `label` names what
- * is copied for screen readers ("Copy accession number").
+ * is copied for screen readers ("Copy accession number"). With `children` the button shows them before the icon (the
+whole text is the button, same hover as the icon alone).
  */
-export function CopyButton({ className, label, value }: { className?: string; label: string; value: string }) {
+export function CopyButton({ children, className, label, value }: { children?: React.ReactNode; className?: string; label: string; value: string }) {
     const [copied, setCopied] = React.useState(false);
 
     React.useEffect(() => {
@@ -44,12 +45,13 @@ export function CopyButton({ className, label, value }: { className?: string; la
             aria-label={label}
             className={cn("text-muted-foreground hover:text-foreground", className)}
             onClick={copy}
-            size="icon-xs"
+            size={children ? "xs" : "icon-xs"}
             title={label}
             type="button"
             variant="ghost"
         >
-            {copied ? <Check /> : <Copy />}
+            {children}
+            {copied ? <Check data-icon={children ? "inline-end" : undefined} /> : <Copy data-icon={children ? "inline-end" : undefined} />}
         </Button>
     );
 }

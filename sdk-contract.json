@@ -1,0 +1,3782 @@
+{
+  "schemaVersion": 1,
+  "packages": {
+    "npm": "@invinite-org/data-api-client",
+    "pypi": "invinite-data-api",
+    "pythonImport": "invinite_data_api"
+  },
+  "generatorVersion": "7.23.0",
+  "runtimeExports": {
+    "typescript": [
+      "Configuration",
+      "ResponseError"
+    ],
+    "python": [
+      "Configuration",
+      "ApiClient",
+      "ApiException"
+    ]
+  },
+  "pagination": {
+    "typescript": {
+      "module": "@invinite-org/data-api-client",
+      "exports": [
+        "paginate",
+        "paginateItems"
+      ]
+    },
+    "python": {
+      "module": "invinite_data_api.pagination",
+      "exports": [
+        "iterate_pages",
+        "iterate_items"
+      ]
+    }
+  },
+  "errors": {
+    "typescript": {
+      "module": "@invinite-org/data-api-client",
+      "exports": [
+        "InviniteApiError",
+        "toApiError"
+      ]
+    },
+    "python": {
+      "module": "invinite_data_api.errors",
+      "exports": [
+        "InviniteApiError",
+        "as_api_error"
+      ]
+    }
+  },
+  "webhooks": {
+    "typescript": {
+      "module": "@invinite-org/data-api-client",
+      "exports": [
+        "verifyWebhook",
+        "WebhookVerificationError",
+        "WEBHOOK_TOLERANCE_SECONDS"
+      ]
+    },
+    "python": {
+      "module": "invinite_data_api.webhooks",
+      "exports": [
+        "verify_webhook",
+        "WebhookVerificationError",
+        "WEBHOOK_TOLERANCE_SECONDS"
+      ]
+    }
+  },
+  "classes": {
+    "Instruments": {
+      "name": "InstrumentsApi",
+      "pythonModule": "instruments_api"
+    },
+    "Funds": {
+      "name": "FundsApi",
+      "pythonModule": "funds_api"
+    },
+    "Companies": {
+      "name": "CompaniesApi",
+      "pythonModule": "companies_api"
+    },
+    "Events": {
+      "name": "EventsApi",
+      "pythonModule": "events_api"
+    },
+    "Calendar": {
+      "name": "CalendarApi",
+      "pythonModule": "calendar_api"
+    },
+    "Corporate actions": {
+      "name": "CorporateActionsApi",
+      "pythonModule": "corporate_actions_api"
+    },
+    "Catalog": {
+      "name": "CatalogApi",
+      "pythonModule": "catalog_api"
+    },
+    "Macro": {
+      "name": "MacroApi",
+      "pythonModule": "macro_api"
+    },
+    "Account": {
+      "name": "AccountApi",
+      "pythonModule": "account_api"
+    },
+    "Alert users": {
+      "name": "AlertUsersApi",
+      "pythonModule": "alert_users_api"
+    },
+    "Financials": {
+      "name": "FinancialsApi",
+      "pythonModule": "financials_api"
+    },
+    "Metrics": {
+      "name": "MetricsApi",
+      "pythonModule": "metrics_api"
+    },
+    "Filings": {
+      "name": "FilingsApi",
+      "pythonModule": "filings_api"
+    },
+    "Holders": {
+      "name": "HoldersApi",
+      "pythonModule": "holders_api"
+    },
+    "Insider trades": {
+      "name": "InsiderTradesApi",
+      "pythonModule": "insider_trades_api"
+    },
+    "Offerings": {
+      "name": "OfferingsApi",
+      "pythonModule": "offerings_api"
+    },
+    "Call analytics": {
+      "name": "CallAnalyticsApi",
+      "pythonModule": "call_analytics_api"
+    },
+    "Transcripts": {
+      "name": "TranscriptsApi",
+      "pythonModule": "transcripts_api"
+    },
+    "Guidance": {
+      "name": "GuidanceApi",
+      "pythonModule": "guidance_api"
+    },
+    "Investor documents": {
+      "name": "InvestorDocumentsApi",
+      "pythonModule": "investor_documents_api"
+    },
+    "News": {
+      "name": "NewsApi",
+      "pythonModule": "news_api"
+    },
+    "Alerts": {
+      "name": "AlertsApi",
+      "pythonModule": "alerts_api"
+    },
+    "Alert events": {
+      "name": "AlertEventsApi",
+      "pythonModule": "alert_events_api"
+    },
+    "Destinations": {
+      "name": "DestinationsApi",
+      "pythonModule": "destinations_api"
+    },
+    "Scripts": {
+      "name": "ScriptsApi",
+      "pythonModule": "scripts_api"
+    }
+  },
+  "parameters": {
+    "accession": {
+      "tsName": "accession",
+      "pyName": "accession"
+    },
+    "after": {
+      "tsName": "after",
+      "pyName": "after"
+    },
+    "alert_id": {
+      "tsName": "alertId",
+      "pyName": "alert_id"
+    },
+    "announced_at.gt": {
+      "tsName": "announcedAtGt",
+      "pyName": "announced_at_gt"
+    },
+    "announced_at.gte": {
+      "tsName": "announcedAtGte",
+      "pyName": "announced_at_gte"
+    },
+    "announced_at.lt": {
+      "tsName": "announcedAtLt",
+      "pyName": "announced_at_lt"
+    },
+    "announced_at.lte": {
+      "tsName": "announcedAtLte",
+      "pyName": "announced_at_lte"
+    },
+    "as_of": {
+      "tsName": "asOf",
+      "pyName": "as_of"
+    },
+    "as_of.gt": {
+      "tsName": "asOfGt",
+      "pyName": "as_of_gt"
+    },
+    "as_of.gte": {
+      "tsName": "asOfGte",
+      "pyName": "as_of_gte"
+    },
+    "as_of.lt": {
+      "tsName": "asOfLt",
+      "pyName": "as_of_lt"
+    },
+    "as_of.lte": {
+      "tsName": "asOfLte",
+      "pyName": "as_of_lte"
+    },
+    "axis": {
+      "tsName": "axis",
+      "pyName": "axis"
+    },
+    "basis": {
+      "tsName": "basis",
+      "pyName": "basis"
+    },
+    "block_id": {
+      "tsName": "blockId",
+      "pyName": "block_id"
+    },
+    "blocks": {
+      "tsName": "blocks",
+      "pyName": "blocks"
+    },
+    "case_sensitive": {
+      "tsName": "caseSensitive",
+      "pyName": "case_sensitive"
+    },
+    "category": {
+      "tsName": "category",
+      "pyName": "category"
+    },
+    "cik": {
+      "tsName": "cik",
+      "pyName": "cik"
+    },
+    "client_reference_id": {
+      "tsName": "clientReferenceId",
+      "pyName": "client_reference_id"
+    },
+    "company": {
+      "tsName": "company",
+      "pyName": "company"
+    },
+    "concept": {
+      "tsName": "concept",
+      "pyName": "concept"
+    },
+    "conference_date.gt": {
+      "tsName": "conferenceDateGt",
+      "pyName": "conference_date_gt"
+    },
+    "conference_date.gte": {
+      "tsName": "conferenceDateGte",
+      "pyName": "conference_date_gte"
+    },
+    "conference_date.lt": {
+      "tsName": "conferenceDateLt",
+      "pyName": "conference_date_lt"
+    },
+    "conference_date.lte": {
+      "tsName": "conferenceDateLte",
+      "pyName": "conference_date_lte"
+    },
+    "cursor": {
+      "tsName": "cursor",
+      "pyName": "cursor"
+    },
+    "date.gt": {
+      "tsName": "dateGt",
+      "pyName": "date_gt"
+    },
+    "date.gte": {
+      "tsName": "dateGte",
+      "pyName": "date_gte"
+    },
+    "date.lt": {
+      "tsName": "dateLt",
+      "pyName": "date_lt"
+    },
+    "date.lte": {
+      "tsName": "dateLte",
+      "pyName": "date_lte"
+    },
+    "date_kind": {
+      "tsName": "dateKind",
+      "pyName": "date_kind"
+    },
+    "days": {
+      "tsName": "days",
+      "pyName": "days"
+    },
+    "destination_id": {
+      "tsName": "destinationId",
+      "pyName": "destination_id"
+    },
+    "dimension": {
+      "tsName": "dimension",
+      "pyName": "dimension"
+    },
+    "direction": {
+      "tsName": "direction",
+      "pyName": "direction"
+    },
+    "display_sign": {
+      "tsName": "displaySign",
+      "pyName": "display_sign"
+    },
+    "document_id": {
+      "tsName": "documentId",
+      "pyName": "document_id"
+    },
+    "document_version": {
+      "tsName": "documentVersion",
+      "pyName": "document_version"
+    },
+    "effective_from.gte": {
+      "tsName": "effectiveFromGte",
+      "pyName": "effective_from_gte"
+    },
+    "effective_to.lte": {
+      "tsName": "effectiveToLte",
+      "pyName": "effective_to_lte"
+    },
+    "event": {
+      "tsName": "event",
+      "pyName": "event"
+    },
+    "event_id": {
+      "tsName": "eventId",
+      "pyName": "event_id"
+    },
+    "ex_date.gt": {
+      "tsName": "exDateGt",
+      "pyName": "ex_date_gt"
+    },
+    "ex_date.gte": {
+      "tsName": "exDateGte",
+      "pyName": "ex_date_gte"
+    },
+    "ex_date.lt": {
+      "tsName": "exDateLt",
+      "pyName": "ex_date_lt"
+    },
+    "ex_date.lte": {
+      "tsName": "exDateLte",
+      "pyName": "ex_date_lte"
+    },
+    "exchange": {
+      "tsName": "exchange",
+      "pyName": "exchange"
+    },
+    "exemption": {
+      "tsName": "exemption",
+      "pyName": "exemption"
+    },
+    "expand": {
+      "tsName": "expand",
+      "pyName": "expand"
+    },
+    "external_user_id": {
+      "tsName": "externalUserId",
+      "pyName": "external_user_id"
+    },
+    "fact": {
+      "tsName": "fact",
+      "pyName": "fact"
+    },
+    "fact_id": {
+      "tsName": "factId",
+      "pyName": "fact_id"
+    },
+    "family": {
+      "tsName": "family",
+      "pyName": "family"
+    },
+    "field": {
+      "tsName": "field",
+      "pyName": "var_field"
+    },
+    "fields": {
+      "tsName": "fields",
+      "pyName": "fields"
+    },
+    "filed_at.gt": {
+      "tsName": "filedAtGt",
+      "pyName": "filed_at_gt"
+    },
+    "filed_at.gte": {
+      "tsName": "filedAtGte",
+      "pyName": "filed_at_gte"
+    },
+    "filed_at.lt": {
+      "tsName": "filedAtLt",
+      "pyName": "filed_at_lt"
+    },
+    "filed_at.lte": {
+      "tsName": "filedAtLte",
+      "pyName": "filed_at_lte"
+    },
+    "filer": {
+      "tsName": "filer",
+      "pyName": "filer"
+    },
+    "filing": {
+      "tsName": "filing",
+      "pyName": "filing"
+    },
+    "fiscal_quarter": {
+      "tsName": "fiscalQuarter",
+      "pyName": "fiscal_quarter"
+    },
+    "fiscal_year": {
+      "tsName": "fiscalYear",
+      "pyName": "fiscal_year"
+    },
+    "fiscal_year.gt": {
+      "tsName": "fiscalYearGt",
+      "pyName": "fiscal_year_gt"
+    },
+    "fiscal_year.gte": {
+      "tsName": "fiscalYearGte",
+      "pyName": "fiscal_year_gte"
+    },
+    "fiscal_year.lt": {
+      "tsName": "fiscalYearLt",
+      "pyName": "fiscal_year_lt"
+    },
+    "fiscal_year.lte": {
+      "tsName": "fiscalYearLte",
+      "pyName": "fiscal_year_lte"
+    },
+    "footnotes": {
+      "tsName": "footnotes",
+      "pyName": "footnotes"
+    },
+    "form": {
+      "tsName": "form",
+      "pyName": "form"
+    },
+    "from": {
+      "tsName": "from",
+      "pyName": "var_from"
+    },
+    "fund": {
+      "tsName": "fund",
+      "pyName": "fund"
+    },
+    "horizon": {
+      "tsName": "horizon",
+      "pyName": "horizon"
+    },
+    "id": {
+      "tsName": "id",
+      "pyName": "id"
+    },
+    "include": {
+      "tsName": "include",
+      "pyName": "include"
+    },
+    "industry": {
+      "tsName": "industry",
+      "pyName": "industry"
+    },
+    "instruments": {
+      "tsName": "instruments",
+      "pyName": "instruments"
+    },
+    "ipo_id": {
+      "tsName": "ipoId",
+      "pyName": "ipo_id"
+    },
+    "is_active": {
+      "tsName": "isActive",
+      "pyName": "is_active"
+    },
+    "is_amendment": {
+      "tsName": "isAmendment",
+      "pyName": "is_amendment"
+    },
+    "is_derivative": {
+      "tsName": "isDerivative",
+      "pyName": "is_derivative"
+    },
+    "is_spac": {
+      "tsName": "isSpac",
+      "pyName": "is_spac"
+    },
+    "item": {
+      "tsName": "item",
+      "pyName": "item"
+    },
+    "items": {
+      "tsName": "items",
+      "pyName": "items"
+    },
+    "kind": {
+      "tsName": "kind",
+      "pyName": "kind"
+    },
+    "layer": {
+      "tsName": "layer",
+      "pyName": "layer"
+    },
+    "limit": {
+      "tsName": "limit",
+      "pyName": "limit"
+    },
+    "listed": {
+      "tsName": "listed",
+      "pyName": "listed"
+    },
+    "listing_date.gt": {
+      "tsName": "listingDateGt",
+      "pyName": "listing_date_gt"
+    },
+    "listing_date.gte": {
+      "tsName": "listingDateGte",
+      "pyName": "listing_date_gte"
+    },
+    "listing_date.lt": {
+      "tsName": "listingDateLt",
+      "pyName": "listing_date_lt"
+    },
+    "listing_date.lte": {
+      "tsName": "listingDateLte",
+      "pyName": "listing_date_lte"
+    },
+    "max_chars": {
+      "tsName": "maxChars",
+      "pyName": "max_chars"
+    },
+    "max_depth": {
+      "tsName": "maxDepth",
+      "pyName": "max_depth"
+    },
+    "max_members": {
+      "tsName": "maxMembers",
+      "pyName": "max_members"
+    },
+    "max_nodes": {
+      "tsName": "maxNodes",
+      "pyName": "max_nodes"
+    },
+    "member": {
+      "tsName": "member",
+      "pyName": "member"
+    },
+    "metric": {
+      "tsName": "metric",
+      "pyName": "metric"
+    },
+    "metric_id": {
+      "tsName": "metricId",
+      "pyName": "metric_id"
+    },
+    "metrics": {
+      "tsName": "metrics",
+      "pyName": "metrics"
+    },
+    "mode": {
+      "tsName": "mode",
+      "pyName": "mode"
+    },
+    "neighbors": {
+      "tsName": "neighbors",
+      "pyName": "neighbors"
+    },
+    "offering_id": {
+      "tsName": "offeringId",
+      "pyName": "offering_id"
+    },
+    "outline": {
+      "tsName": "outline",
+      "pyName": "outline"
+    },
+    "owner": {
+      "tsName": "owner",
+      "pyName": "owner"
+    },
+    "pages": {
+      "tsName": "pages",
+      "pyName": "pages"
+    },
+    "period": {
+      "tsName": "period",
+      "pyName": "period"
+    },
+    "period_end": {
+      "tsName": "periodEnd",
+      "pyName": "period_end"
+    },
+    "period_kind": {
+      "tsName": "periodKind",
+      "pyName": "period_kind"
+    },
+    "period_start": {
+      "tsName": "periodStart",
+      "pyName": "period_start"
+    },
+    "person": {
+      "tsName": "person",
+      "pyName": "person"
+    },
+    "person_id": {
+      "tsName": "personId",
+      "pyName": "person_id"
+    },
+    "phase": {
+      "tsName": "phase",
+      "pyName": "phase"
+    },
+    "printed": {
+      "tsName": "printed",
+      "pyName": "printed"
+    },
+    "prior": {
+      "tsName": "prior",
+      "pyName": "prior"
+    },
+    "prior_period_end": {
+      "tsName": "priorPeriodEnd",
+      "pyName": "prior_period_end"
+    },
+    "published_at.gt": {
+      "tsName": "publishedAtGt",
+      "pyName": "published_at_gt"
+    },
+    "published_at.gte": {
+      "tsName": "publishedAtGte",
+      "pyName": "published_at_gte"
+    },
+    "published_at.lt": {
+      "tsName": "publishedAtLt",
+      "pyName": "published_at_lt"
+    },
+    "published_at.lte": {
+      "tsName": "publishedAtLte",
+      "pyName": "published_at_lte"
+    },
+    "q": {
+      "tsName": "q",
+      "pyName": "q"
+    },
+    "reference_date.gt": {
+      "tsName": "referenceDateGt",
+      "pyName": "reference_date_gt"
+    },
+    "reference_date.gte": {
+      "tsName": "referenceDateGte",
+      "pyName": "reference_date_gte"
+    },
+    "reference_date.lt": {
+      "tsName": "referenceDateLt",
+      "pyName": "reference_date_lt"
+    },
+    "reference_date.lte": {
+      "tsName": "referenceDateLte",
+      "pyName": "reference_date_lte"
+    },
+    "reported_only": {
+      "tsName": "reportedOnly",
+      "pyName": "reported_only"
+    },
+    "review": {
+      "tsName": "review",
+      "pyName": "review"
+    },
+    "role": {
+      "tsName": "role",
+      "pyName": "role"
+    },
+    "scheduled_at.gt": {
+      "tsName": "scheduledAtGt",
+      "pyName": "scheduled_at_gt"
+    },
+    "scheduled_at.gte": {
+      "tsName": "scheduledAtGte",
+      "pyName": "scheduled_at_gte"
+    },
+    "scheduled_at.lt": {
+      "tsName": "scheduledAtLt",
+      "pyName": "scheduled_at_lt"
+    },
+    "scheduled_at.lte": {
+      "tsName": "scheduledAtLte",
+      "pyName": "scheduled_at_lte"
+    },
+    "section": {
+      "tsName": "section",
+      "pyName": "section"
+    },
+    "sector": {
+      "tsName": "sector",
+      "pyName": "sector"
+    },
+    "series": {
+      "tsName": "series",
+      "pyName": "series"
+    },
+    "side": {
+      "tsName": "side",
+      "pyName": "side"
+    },
+    "sort": {
+      "tsName": "sort",
+      "pyName": "sort"
+    },
+    "source": {
+      "tsName": "source",
+      "pyName": "source"
+    },
+    "split": {
+      "tsName": "split",
+      "pyName": "split"
+    },
+    "stage": {
+      "tsName": "stage",
+      "pyName": "stage"
+    },
+    "statement": {
+      "tsName": "statement",
+      "pyName": "statement"
+    },
+    "status": {
+      "tsName": "status",
+      "pyName": "status"
+    },
+    "structure": {
+      "tsName": "structure",
+      "pyName": "structure"
+    },
+    "symbol": {
+      "tsName": "symbol",
+      "pyName": "symbol"
+    },
+    "tag": {
+      "tsName": "tag",
+      "pyName": "tag"
+    },
+    "to": {
+      "tsName": "to",
+      "pyName": "to"
+    },
+    "topic": {
+      "tsName": "topic",
+      "pyName": "topic"
+    },
+    "total_sold.gte": {
+      "tsName": "totalSoldGte",
+      "pyName": "total_sold_gte"
+    },
+    "transaction_date.gte": {
+      "tsName": "transactionDateGte",
+      "pyName": "transaction_date_gte"
+    },
+    "transaction_date.lte": {
+      "tsName": "transactionDateLte",
+      "pyName": "transaction_date_lte"
+    },
+    "type": {
+      "tsName": "type",
+      "pyName": "type"
+    },
+    "validate_only": {
+      "tsName": "validateOnly",
+      "pyName": "validate_only"
+    },
+    "version": {
+      "tsName": "version",
+      "pyName": "version"
+    },
+    "version_id": {
+      "tsName": "versionId",
+      "pyName": "version_id"
+    }
+  },
+  "operations": {
+    "listInstruments": {
+      "label": "GET /v1/instruments",
+      "operationId": "listInstruments",
+      "tag": "Instruments",
+      "params": [
+        "q",
+        "type",
+        "structure",
+        "exchange",
+        "is_active",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "InstrumentsApi",
+      "tsMethod": "listInstruments",
+      "pyMethod": "list_instruments"
+    },
+    "getInstrument": {
+      "label": "GET /v1/instruments/{symbol}",
+      "operationId": "getInstrument",
+      "tag": "Instruments",
+      "params": [
+        "fields",
+        "symbol"
+      ],
+      "hasBody": false,
+      "className": "InstrumentsApi",
+      "tsMethod": "getInstrument",
+      "pyMethod": "get_instrument"
+    },
+    "listFunds": {
+      "label": "GET /v1/funds",
+      "operationId": "listFunds",
+      "tag": "Funds",
+      "params": [
+        "q",
+        "type",
+        "structure",
+        "exchange",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "FundsApi",
+      "tsMethod": "listFunds",
+      "pyMethod": "list_funds"
+    },
+    "getFund": {
+      "label": "GET /v1/funds/{fund}",
+      "operationId": "getFund",
+      "tag": "Funds",
+      "params": [
+        "expand",
+        "fields",
+        "fund"
+      ],
+      "hasBody": false,
+      "className": "FundsApi",
+      "tsMethod": "getFund",
+      "pyMethod": "get_fund"
+    },
+    "listFundPositions": {
+      "label": "GET /v1/funds/{fund}/holdings",
+      "operationId": "listFundPositions",
+      "tag": "Funds",
+      "params": [
+        "as_of",
+        "sort",
+        "fields",
+        "limit",
+        "cursor",
+        "fund"
+      ],
+      "hasBody": false,
+      "className": "FundsApi",
+      "tsMethod": "listFundPositions",
+      "pyMethod": "list_fund_positions"
+    },
+    "listFundWeights": {
+      "label": "GET /v1/funds/{fund}/weights",
+      "operationId": "listFundWeights",
+      "tag": "Funds",
+      "params": [
+        "dimension",
+        "as_of",
+        "fields",
+        "limit",
+        "cursor",
+        "fund"
+      ],
+      "hasBody": false,
+      "className": "FundsApi",
+      "tsMethod": "listFundWeights",
+      "pyMethod": "list_fund_weights"
+    },
+    "listCompanies": {
+      "label": "GET /v1/companies",
+      "operationId": "listCompanies",
+      "tag": "Companies",
+      "params": [
+        "q",
+        "exchange",
+        "sector",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CompaniesApi",
+      "tsMethod": "listCompanies",
+      "pyMethod": "list_companies"
+    },
+    "getCompany": {
+      "label": "GET /v1/companies/{company}",
+      "operationId": "getCompany",
+      "tag": "Companies",
+      "params": [
+        "expand",
+        "fields",
+        "company"
+      ],
+      "hasBody": false,
+      "className": "CompaniesApi",
+      "tsMethod": "getCompany",
+      "pyMethod": "get_company"
+    },
+    "listFilers": {
+      "label": "GET /v1/filers",
+      "operationId": "listFilers",
+      "tag": "Companies",
+      "params": [
+        "q",
+        "form",
+        "phase",
+        "listed",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CompaniesApi",
+      "tsMethod": "listFilers",
+      "pyMethod": "list_filers"
+    },
+    "getFiler": {
+      "label": "GET /v1/filers/{cik}",
+      "operationId": "getFiler",
+      "tag": "Companies",
+      "params": [
+        "expand",
+        "fields",
+        "cik"
+      ],
+      "hasBody": false,
+      "className": "CompaniesApi",
+      "tsMethod": "getFiler",
+      "pyMethod": "get_filer"
+    },
+    "listPeople": {
+      "label": "GET /v1/people",
+      "operationId": "listPeople",
+      "tag": "Companies",
+      "params": [
+        "company",
+        "event",
+        "role",
+        "q",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CompaniesApi",
+      "tsMethod": "listPeople",
+      "pyMethod": "list_people"
+    },
+    "getPerson": {
+      "label": "GET /v1/people/{person_id}",
+      "operationId": "getPerson",
+      "tag": "Companies",
+      "params": [
+        "fields",
+        "person_id"
+      ],
+      "hasBody": false,
+      "className": "CompaniesApi",
+      "tsMethod": "getPerson",
+      "pyMethod": "get_person"
+    },
+    "listParticipants": {
+      "label": "GET /v1/participants",
+      "operationId": "listParticipants",
+      "tag": "Events",
+      "params": [
+        "event",
+        "person",
+        "role",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "EventsApi",
+      "tsMethod": "listParticipants",
+      "pyMethod": "list_participants"
+    },
+    "listFiscalPeriods": {
+      "label": "GET /v1/fiscal-periods",
+      "operationId": "listFiscalPeriods",
+      "tag": "Calendar",
+      "params": [
+        "company",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CalendarApi",
+      "tsMethod": "listFiscalPeriods",
+      "pyMethod": "list_fiscal_periods"
+    },
+    "listDividends": {
+      "label": "GET /v1/dividends",
+      "operationId": "listDividends",
+      "tag": "Corporate actions",
+      "params": [
+        "symbol",
+        "ex_date.gte",
+        "ex_date.gt",
+        "ex_date.lte",
+        "ex_date.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CorporateActionsApi",
+      "tsMethod": "listDividends",
+      "pyMethod": "list_dividends"
+    },
+    "listSplits": {
+      "label": "GET /v1/splits",
+      "operationId": "listSplits",
+      "tag": "Corporate actions",
+      "params": [
+        "symbol",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CorporateActionsApi",
+      "tsMethod": "listSplits",
+      "pyMethod": "list_splits"
+    },
+    "listMarketHolidays": {
+      "label": "GET /v1/market-holidays",
+      "operationId": "listMarketHolidays",
+      "tag": "Calendar",
+      "params": [
+        "date.gte",
+        "date.gt",
+        "date.lte",
+        "date.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CalendarApi",
+      "tsMethod": "listMarketHolidays",
+      "pyMethod": "list_market_holidays"
+    },
+    "listMetricCatalog": {
+      "label": "GET /v1/catalog/metrics",
+      "operationId": "listMetricCatalog",
+      "tag": "Catalog",
+      "params": [
+        "statement",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CatalogApi",
+      "tsMethod": "listMetricCatalog",
+      "pyMethod": "list_metric_catalog"
+    },
+    "listSectionCatalog": {
+      "label": "GET /v1/catalog/sections",
+      "operationId": "listSectionCatalog",
+      "tag": "Catalog",
+      "params": [
+        "form",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CatalogApi",
+      "tsMethod": "listSectionCatalog",
+      "pyMethod": "list_section_catalog"
+    },
+    "listFormCatalog": {
+      "label": "GET /v1/catalog/forms",
+      "operationId": "listFormCatalog",
+      "tag": "Catalog",
+      "params": [
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CatalogApi",
+      "tsMethod": "listFormCatalog",
+      "pyMethod": "list_form_catalog"
+    },
+    "listEventTypeCatalog": {
+      "label": "GET /v1/catalog/event-types",
+      "operationId": "listEventTypeCatalog",
+      "tag": "Catalog",
+      "params": [
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CatalogApi",
+      "tsMethod": "listEventTypeCatalog",
+      "pyMethod": "list_event_type_catalog"
+    },
+    "listDocumentKindCatalog": {
+      "label": "GET /v1/catalog/document-kinds",
+      "operationId": "listDocumentKindCatalog",
+      "tag": "Catalog",
+      "params": [
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CatalogApi",
+      "tsMethod": "listDocumentKindCatalog",
+      "pyMethod": "list_document_kind_catalog"
+    },
+    "listMappingRules": {
+      "label": "GET /v1/catalog/mapping-rules",
+      "operationId": "listMappingRules",
+      "tag": "Catalog",
+      "params": [
+        "statement",
+        "metric_id",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CatalogApi",
+      "tsMethod": "listMappingRules",
+      "pyMethod": "list_mapping_rules"
+    },
+    "listExchangeCatalog": {
+      "label": "GET /v1/catalog/exchanges",
+      "operationId": "listExchangeCatalog",
+      "tag": "Catalog",
+      "params": [
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CatalogApi",
+      "tsMethod": "listExchangeCatalog",
+      "pyMethod": "list_exchange_catalog"
+    },
+    "listSectorCatalog": {
+      "label": "GET /v1/catalog/sectors",
+      "operationId": "listSectorCatalog",
+      "tag": "Catalog",
+      "params": [
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CatalogApi",
+      "tsMethod": "listSectorCatalog",
+      "pyMethod": "list_sector_catalog"
+    },
+    "listMacroSeries": {
+      "label": "GET /v1/macro/series",
+      "operationId": "listMacroSeries",
+      "tag": "Macro",
+      "params": [
+        "family",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "MacroApi",
+      "tsMethod": "listMacroSeries",
+      "pyMethod": "list_macro_series"
+    },
+    "listMacroInflation": {
+      "label": "GET /v1/macro/inflation",
+      "operationId": "listMacroInflation",
+      "tag": "Macro",
+      "params": [
+        "series",
+        "reference_date.gte",
+        "reference_date.gt",
+        "reference_date.lte",
+        "reference_date.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "MacroApi",
+      "tsMethod": "listMacroInflation",
+      "pyMethod": "list_macro_inflation"
+    },
+    "getMacroInflationSnapshot": {
+      "label": "GET /v1/macro/inflation/snapshot",
+      "operationId": "getMacroInflationSnapshot",
+      "tag": "Macro",
+      "params": [
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "MacroApi",
+      "tsMethod": "getMacroInflationSnapshot",
+      "pyMethod": "get_macro_inflation_snapshot"
+    },
+    "listMacroGdp": {
+      "label": "GET /v1/macro/gdp",
+      "operationId": "listMacroGdp",
+      "tag": "Macro",
+      "params": [
+        "series",
+        "reference_date.gte",
+        "reference_date.gt",
+        "reference_date.lte",
+        "reference_date.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "MacroApi",
+      "tsMethod": "listMacroGdp",
+      "pyMethod": "list_macro_gdp"
+    },
+    "getMacroGdpSnapshot": {
+      "label": "GET /v1/macro/gdp/snapshot",
+      "operationId": "getMacroGdpSnapshot",
+      "tag": "Macro",
+      "params": [
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "MacroApi",
+      "tsMethod": "getMacroGdpSnapshot",
+      "pyMethod": "get_macro_gdp_snapshot"
+    },
+    "listMacroLabor": {
+      "label": "GET /v1/macro/labor",
+      "operationId": "listMacroLabor",
+      "tag": "Macro",
+      "params": [
+        "series",
+        "reference_date.gte",
+        "reference_date.gt",
+        "reference_date.lte",
+        "reference_date.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "MacroApi",
+      "tsMethod": "listMacroLabor",
+      "pyMethod": "list_macro_labor"
+    },
+    "getMacroLaborSnapshot": {
+      "label": "GET /v1/macro/labor/snapshot",
+      "operationId": "getMacroLaborSnapshot",
+      "tag": "Macro",
+      "params": [
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "MacroApi",
+      "tsMethod": "getMacroLaborSnapshot",
+      "pyMethod": "get_macro_labor_snapshot"
+    },
+    "listTreasuryYieldCurves": {
+      "label": "GET /v1/macro/yield-curve",
+      "operationId": "listTreasuryYieldCurves",
+      "tag": "Macro",
+      "params": [
+        "date.gte",
+        "date.gt",
+        "date.lte",
+        "date.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "MacroApi",
+      "tsMethod": "listTreasuryYieldCurves",
+      "pyMethod": "list_treasury_yield_curves"
+    },
+    "getTreasuryYieldCurveSnapshot": {
+      "label": "GET /v1/macro/yield-curve/snapshot",
+      "operationId": "getTreasuryYieldCurveSnapshot",
+      "tag": "Macro",
+      "params": [
+        "fields"
+      ],
+      "hasBody": false,
+      "className": "MacroApi",
+      "tsMethod": "getTreasuryYieldCurveSnapshot",
+      "pyMethod": "get_treasury_yield_curve_snapshot"
+    },
+    "getMe": {
+      "label": "GET /v1/me",
+      "operationId": "getMe",
+      "tag": "Account",
+      "params": [],
+      "hasBody": false,
+      "className": "AccountApi",
+      "tsMethod": "getMe",
+      "pyMethod": "get_me"
+    },
+    "getMyUsage": {
+      "label": "GET /v1/me/usage",
+      "operationId": "getMyUsage",
+      "tag": "Account",
+      "params": [
+        "days"
+      ],
+      "hasBody": false,
+      "className": "AccountApi",
+      "tsMethod": "getMyUsage",
+      "pyMethod": "get_my_usage"
+    },
+    "getAlertUserDefaults": {
+      "label": "GET /v1/me/alert-user-defaults",
+      "operationId": "getAlertUserDefaults",
+      "tag": "Alert users",
+      "params": [],
+      "hasBody": false,
+      "className": "AlertUsersApi",
+      "tsMethod": "getAlertUserDefaults",
+      "pyMethod": "get_alert_user_defaults"
+    },
+    "updateAlertUserDefaults": {
+      "label": "PATCH /v1/me/alert-user-defaults",
+      "operationId": "updateAlertUserDefaults",
+      "tag": "Alert users",
+      "params": [],
+      "hasBody": true,
+      "className": "AlertUsersApi",
+      "tsMethod": "updateAlertUserDefaults",
+      "pyMethod": "update_alert_user_defaults",
+      "body": {
+        "tsName": "updateAlertUserDefaultsRequest",
+        "pyName": "update_alert_user_defaults_request",
+        "model": "UpdateAlertUserDefaultsRequest"
+      }
+    },
+    "getStandardizedFinancials": {
+      "label": "GET /v1/financials/standardized",
+      "operationId": "getStandardizedFinancials",
+      "tag": "Financials",
+      "params": [
+        "company",
+        "statement",
+        "period",
+        "fiscal_year",
+        "fiscal_quarter",
+        "fiscal_year.gte",
+        "fiscal_year.gt",
+        "fiscal_year.lte",
+        "fiscal_year.lt",
+        "as_of",
+        "filing",
+        "sort",
+        "metrics",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "FinancialsApi",
+      "tsMethod": "getStandardizedFinancials",
+      "pyMethod": "get_standardized_financials"
+    },
+    "getStandardizedFinancialsDetailed": {
+      "label": "GET /v1/financials/standardized/detailed",
+      "operationId": "getStandardizedFinancialsDetailed",
+      "tag": "Financials",
+      "params": [
+        "company",
+        "statement",
+        "period",
+        "fiscal_year",
+        "fiscal_quarter",
+        "fiscal_year.gte",
+        "fiscal_year.gt",
+        "fiscal_year.lte",
+        "fiscal_year.lt",
+        "as_of",
+        "filing",
+        "sort",
+        "metrics",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "FinancialsApi",
+      "tsMethod": "getStandardizedFinancialsDetailed",
+      "pyMethod": "get_standardized_financials_detailed"
+    },
+    "getStandardizedFinancialsPresentation": {
+      "label": "GET /v1/financials/standardized/presentation",
+      "operationId": "getStandardizedFinancialsPresentation",
+      "tag": "Financials",
+      "params": [
+        "company",
+        "statement",
+        "period",
+        "fiscal_year",
+        "fiscal_quarter",
+        "fiscal_year.gte",
+        "fiscal_year.gt",
+        "fiscal_year.lte",
+        "fiscal_year.lt",
+        "as_of",
+        "filing",
+        "sort",
+        "metrics",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "FinancialsApi",
+      "tsMethod": "getStandardizedFinancialsPresentation",
+      "pyMethod": "get_standardized_financials_presentation"
+    },
+    "getAsReportedFinancials": {
+      "label": "GET /v1/financials/as-reported",
+      "operationId": "getAsReportedFinancials",
+      "tag": "Financials",
+      "params": [
+        "company",
+        "statement",
+        "period",
+        "fiscal_year",
+        "fiscal_quarter",
+        "fiscal_year.gte",
+        "fiscal_year.gt",
+        "fiscal_year.lte",
+        "fiscal_year.lt",
+        "as_of",
+        "filing",
+        "sort",
+        "metrics",
+        "fields",
+        "limit",
+        "cursor",
+        "reported_only",
+        "display_sign"
+      ],
+      "hasBody": false,
+      "className": "FinancialsApi",
+      "tsMethod": "getAsReportedFinancials",
+      "pyMethod": "get_as_reported_financials"
+    },
+    "getAsReportedFinancialsDetailed": {
+      "label": "GET /v1/financials/as-reported/detailed",
+      "operationId": "getAsReportedFinancialsDetailed",
+      "tag": "Financials",
+      "params": [
+        "company",
+        "statement",
+        "period",
+        "fiscal_year",
+        "fiscal_quarter",
+        "fiscal_year.gte",
+        "fiscal_year.gt",
+        "fiscal_year.lte",
+        "fiscal_year.lt",
+        "as_of",
+        "filing",
+        "sort",
+        "metrics",
+        "fields",
+        "limit",
+        "cursor",
+        "reported_only",
+        "display_sign"
+      ],
+      "hasBody": false,
+      "className": "FinancialsApi",
+      "tsMethod": "getAsReportedFinancialsDetailed",
+      "pyMethod": "get_as_reported_financials_detailed"
+    },
+    "getAsReportedFinancialsPresentation": {
+      "label": "GET /v1/financials/as-reported/presentation",
+      "operationId": "getAsReportedFinancialsPresentation",
+      "tag": "Financials",
+      "params": [
+        "company",
+        "statement",
+        "period",
+        "fiscal_year",
+        "fiscal_quarter",
+        "fiscal_year.gte",
+        "fiscal_year.gt",
+        "fiscal_year.lte",
+        "fiscal_year.lt",
+        "as_of",
+        "filing",
+        "sort",
+        "metrics",
+        "fields",
+        "limit",
+        "cursor",
+        "reported_only",
+        "display_sign"
+      ],
+      "hasBody": false,
+      "className": "FinancialsApi",
+      "tsMethod": "getAsReportedFinancialsPresentation",
+      "pyMethod": "get_as_reported_financials_presentation"
+    },
+    "listFinancialVintages": {
+      "label": "GET /v1/financials/vintages",
+      "operationId": "listFinancialVintages",
+      "tag": "Financials",
+      "params": [
+        "company",
+        "concept",
+        "period_end",
+        "period_start",
+        "member",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "FinancialsApi",
+      "tsMethod": "listFinancialVintages",
+      "pyMethod": "list_financial_vintages"
+    },
+    "listRatios": {
+      "label": "GET /v1/metrics/ratios",
+      "operationId": "listRatios",
+      "tag": "Metrics",
+      "params": [
+        "company",
+        "period",
+        "category",
+        "fiscal_year.gte",
+        "fiscal_year.gt",
+        "fiscal_year.lte",
+        "fiscal_year.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "MetricsApi",
+      "tsMethod": "listRatios",
+      "pyMethod": "list_ratios"
+    },
+    "listGrowth": {
+      "label": "GET /v1/metrics/growth",
+      "operationId": "listGrowth",
+      "tag": "Metrics",
+      "params": [
+        "company",
+        "period",
+        "basis",
+        "fiscal_year.gte",
+        "fiscal_year.gt",
+        "fiscal_year.lte",
+        "fiscal_year.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "MetricsApi",
+      "tsMethod": "listGrowth",
+      "pyMethod": "list_growth"
+    },
+    "listCagr": {
+      "label": "GET /v1/metrics/cagr",
+      "operationId": "listCagr",
+      "tag": "Metrics",
+      "params": [
+        "company",
+        "period",
+        "horizon",
+        "fiscal_year.gte",
+        "fiscal_year.gt",
+        "fiscal_year.lte",
+        "fiscal_year.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "MetricsApi",
+      "tsMethod": "listCagr",
+      "pyMethod": "list_cagr"
+    },
+    "listSegments": {
+      "label": "GET /v1/segments",
+      "operationId": "listSegments",
+      "tag": "Financials",
+      "params": [
+        "company",
+        "metric",
+        "axis",
+        "period",
+        "fiscal_year.gte",
+        "fiscal_year.gt",
+        "fiscal_year.lte",
+        "fiscal_year.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "FinancialsApi",
+      "tsMethod": "listSegments",
+      "pyMethod": "list_segments"
+    },
+    "listSegmentsDetailed": {
+      "label": "GET /v1/segments/detailed",
+      "operationId": "listSegmentsDetailed",
+      "tag": "Financials",
+      "params": [
+        "company",
+        "metric",
+        "axis",
+        "period",
+        "fiscal_year.gte",
+        "fiscal_year.gt",
+        "fiscal_year.lte",
+        "fiscal_year.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "FinancialsApi",
+      "tsMethod": "listSegmentsDetailed",
+      "pyMethod": "list_segments_detailed"
+    },
+    "getFact": {
+      "label": "GET /v1/facts/{fact_id}",
+      "operationId": "getFact",
+      "tag": "Financials",
+      "params": [
+        "max_depth",
+        "max_members",
+        "fact_id"
+      ],
+      "hasBody": false,
+      "className": "FinancialsApi",
+      "tsMethod": "getFact",
+      "pyMethod": "get_fact"
+    },
+    "listFilings": {
+      "label": "GET /v1/filings",
+      "operationId": "listFilings",
+      "tag": "Filings",
+      "params": [
+        "symbol",
+        "form",
+        "items",
+        "filed_at.gte",
+        "filed_at.gt",
+        "filed_at.lte",
+        "filed_at.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "FilingsApi",
+      "tsMethod": "listFilings",
+      "pyMethod": "list_filings"
+    },
+    "getFiling": {
+      "label": "GET /v1/filings/{accession}",
+      "operationId": "getFiling",
+      "tag": "Filings",
+      "params": [
+        "expand",
+        "fields",
+        "accession"
+      ],
+      "hasBody": false,
+      "className": "FilingsApi",
+      "tsMethod": "getFiling",
+      "pyMethod": "get_filing"
+    },
+    "listFilingFacts": {
+      "label": "GET /v1/filings/{accession}/facts",
+      "operationId": "listFilingFacts",
+      "tag": "Filings",
+      "params": [
+        "tag",
+        "fields",
+        "limit",
+        "cursor",
+        "accession"
+      ],
+      "hasBody": false,
+      "className": "FilingsApi",
+      "tsMethod": "listFilingFacts",
+      "pyMethod": "list_filing_facts"
+    },
+    "listFilingNotes": {
+      "label": "GET /v1/filings/{accession}/notes",
+      "operationId": "listFilingNotes",
+      "tag": "Filings",
+      "params": [
+        "tag",
+        "fields",
+        "limit",
+        "cursor",
+        "accession"
+      ],
+      "hasBody": false,
+      "className": "FilingsApi",
+      "tsMethod": "listFilingNotes",
+      "pyMethod": "list_filing_notes"
+    },
+    "getReviewChain": {
+      "label": "GET /v1/filings/{accession}/review-chain",
+      "operationId": "getReviewChain",
+      "tag": "Filings",
+      "params": [
+        "max_depth",
+        "max_nodes",
+        "direction",
+        "kind",
+        "accession"
+      ],
+      "hasBody": false,
+      "className": "FilingsApi",
+      "tsMethod": "getReviewChain",
+      "pyMethod": "get_review_chain"
+    },
+    "searchFilings": {
+      "label": "GET /v1/search/filings",
+      "operationId": "searchFilings",
+      "tag": "Filings",
+      "params": [
+        "q",
+        "mode",
+        "case_sensitive",
+        "symbol",
+        "form",
+        "item",
+        "filed_at.gte",
+        "filed_at.gt",
+        "filed_at.lte",
+        "filed_at.lt",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "FilingsApi",
+      "tsMethod": "searchFilings",
+      "pyMethod": "search_filings"
+    },
+    "listDatasets": {
+      "label": "GET /v1/datasets",
+      "operationId": "listDatasets",
+      "tag": "Filings",
+      "params": [
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "FilingsApi",
+      "tsMethod": "listDatasets",
+      "pyMethod": "list_datasets"
+    },
+    "listFilingHoldings": {
+      "label": "GET /v1/filings/{accession}/holdings",
+      "operationId": "listFilingHoldings",
+      "tag": "Filings",
+      "params": [
+        "fields",
+        "limit",
+        "cursor",
+        "accession"
+      ],
+      "hasBody": false,
+      "className": "FilingsApi",
+      "tsMethod": "listFilingHoldings",
+      "pyMethod": "list_filing_holdings"
+    },
+    "getDocumentVersion": {
+      "label": "GET /v1/document-versions/{version_id}",
+      "operationId": "getDocumentVersion",
+      "tag": "Filings",
+      "params": [
+        "blocks",
+        "pages",
+        "printed",
+        "neighbors",
+        "footnotes",
+        "version_id"
+      ],
+      "hasBody": false,
+      "className": "FilingsApi",
+      "tsMethod": "getDocumentVersion",
+      "pyMethod": "get_document_version"
+    },
+    "listDocumentSections": {
+      "label": "GET /v1/document-versions/{version_id}/sections",
+      "operationId": "listDocumentSections",
+      "tag": "Filings",
+      "params": [
+        "outline",
+        "limit",
+        "cursor",
+        "version_id"
+      ],
+      "hasBody": false,
+      "className": "FilingsApi",
+      "tsMethod": "listDocumentSections",
+      "pyMethod": "list_document_sections"
+    },
+    "getDocumentFigure": {
+      "label": "GET /v1/document-versions/{version_id}/figures/{block_id}",
+      "operationId": "getDocumentFigure",
+      "tag": "Filings",
+      "params": [
+        "version_id",
+        "block_id"
+      ],
+      "hasBody": false,
+      "className": "FilingsApi",
+      "tsMethod": "getDocumentFigure",
+      "pyMethod": "get_document_figure"
+    },
+    "listFactPlaces": {
+      "label": "GET /v1/fact-places",
+      "operationId": "listFactPlaces",
+      "tag": "Filings",
+      "params": [
+        "document_version",
+        "fact",
+        "status",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "FilingsApi",
+      "tsMethod": "listFactPlaces",
+      "pyMethod": "list_fact_places"
+    },
+    "listHolders": {
+      "label": "GET /v1/holders",
+      "operationId": "listHolders",
+      "tag": "Holders",
+      "params": [
+        "symbol",
+        "source",
+        "period_end",
+        "instruments",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "HoldersApi",
+      "tsMethod": "listHolders",
+      "pyMethod": "list_holders"
+    },
+    "listHolderChanges": {
+      "label": "GET /v1/holder-changes",
+      "operationId": "listHolderChanges",
+      "tag": "Holders",
+      "params": [
+        "symbol",
+        "filer",
+        "period_end",
+        "prior_period_end",
+        "type",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "HoldersApi",
+      "tsMethod": "listHolderChanges",
+      "pyMethod": "list_holder_changes"
+    },
+    "listFilerHoldings": {
+      "label": "GET /v1/filers/{cik}/holdings",
+      "operationId": "listFilerHoldings",
+      "tag": "Holders",
+      "params": [
+        "period_end",
+        "instruments",
+        "sort",
+        "fields",
+        "limit",
+        "cursor",
+        "cik"
+      ],
+      "hasBody": false,
+      "className": "HoldersApi",
+      "tsMethod": "listFilerHoldings",
+      "pyMethod": "list_filer_holdings"
+    },
+    "listFilerHoldingChanges": {
+      "label": "GET /v1/filers/{cik}/holding-changes",
+      "operationId": "listFilerHoldingChanges",
+      "tag": "Holders",
+      "params": [
+        "period_end",
+        "prior_period_end",
+        "type",
+        "fields",
+        "limit",
+        "cursor",
+        "cik"
+      ],
+      "hasBody": false,
+      "className": "HoldersApi",
+      "tsMethod": "listFilerHoldingChanges",
+      "pyMethod": "list_filer_holding_changes"
+    },
+    "listInsiderTrades": {
+      "label": "GET /v1/insider-trades",
+      "operationId": "listInsiderTrades",
+      "tag": "Insider trades",
+      "params": [
+        "company",
+        "owner",
+        "side",
+        "filed_at.gte",
+        "filed_at.gt",
+        "filed_at.lte",
+        "filed_at.lt",
+        "transaction_date.gte",
+        "transaction_date.lte",
+        "is_derivative",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "InsiderTradesApi",
+      "tsMethod": "listInsiderTrades",
+      "pyMethod": "list_insider_trades"
+    },
+    "getInsiderTrade": {
+      "label": "GET /v1/insider-trades/{id}",
+      "operationId": "getInsiderTrade",
+      "tag": "Insider trades",
+      "params": [
+        "fields",
+        "id"
+      ],
+      "hasBody": false,
+      "className": "InsiderTradesApi",
+      "tsMethod": "getInsiderTrade",
+      "pyMethod": "get_insider_trade"
+    },
+    "listInsiderHoldings": {
+      "label": "GET /v1/insider-holdings",
+      "operationId": "listInsiderHoldings",
+      "tag": "Insider trades",
+      "params": [
+        "company",
+        "owner",
+        "as_of.gte",
+        "as_of.gt",
+        "as_of.lte",
+        "as_of.lt",
+        "is_derivative",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "InsiderTradesApi",
+      "tsMethod": "listInsiderHoldings",
+      "pyMethod": "list_insider_holdings"
+    },
+    "listIpos": {
+      "label": "GET /v1/ipos",
+      "operationId": "listIpos",
+      "tag": "Offerings",
+      "params": [
+        "stage",
+        "is_spac",
+        "listing_date.gte",
+        "listing_date.gt",
+        "listing_date.lte",
+        "listing_date.lt",
+        "company",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "OfferingsApi",
+      "tsMethod": "listIpos",
+      "pyMethod": "list_ipos"
+    },
+    "getIpo": {
+      "label": "GET /v1/ipos/{ipo_id}",
+      "operationId": "getIpo",
+      "tag": "Offerings",
+      "params": [
+        "fields",
+        "ipo_id"
+      ],
+      "hasBody": false,
+      "className": "OfferingsApi",
+      "tsMethod": "getIpo",
+      "pyMethod": "get_ipo"
+    },
+    "listOfferings": {
+      "label": "GET /v1/offerings",
+      "operationId": "listOfferings",
+      "tag": "Offerings",
+      "params": [
+        "company",
+        "filed_at.gte",
+        "filed_at.lte",
+        "exemption",
+        "industry",
+        "total_sold.gte",
+        "is_amendment",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "OfferingsApi",
+      "tsMethod": "listOfferings",
+      "pyMethod": "list_offerings"
+    },
+    "getOffering": {
+      "label": "GET /v1/offerings/{offering_id}",
+      "operationId": "getOffering",
+      "tag": "Offerings",
+      "params": [
+        "fields",
+        "offering_id"
+      ],
+      "hasBody": false,
+      "className": "OfferingsApi",
+      "tsMethod": "getOffering",
+      "pyMethod": "get_offering"
+    },
+    "listEvents": {
+      "label": "GET /v1/events",
+      "operationId": "listEvents",
+      "tag": "Events",
+      "params": [
+        "company",
+        "type",
+        "status",
+        "scheduled_at.gte",
+        "scheduled_at.gt",
+        "scheduled_at.lte",
+        "scheduled_at.lt",
+        "fiscal_year",
+        "fiscal_quarter",
+        "date_kind",
+        "expand",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "EventsApi",
+      "tsMethod": "listEvents",
+      "pyMethod": "list_events"
+    },
+    "getEvent": {
+      "label": "GET /v1/events/{event_id}",
+      "operationId": "getEvent",
+      "tag": "Events",
+      "params": [
+        "expand",
+        "fields",
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "EventsApi",
+      "tsMethod": "getEvent",
+      "pyMethod": "get_event"
+    },
+    "getPressRelease": {
+      "label": "GET /v1/events/{event_id}/press-release",
+      "operationId": "getPressRelease",
+      "tag": "Events",
+      "params": [
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "EventsApi",
+      "tsMethod": "getPressRelease",
+      "pyMethod": "get_press_release"
+    },
+    "listQa": {
+      "label": "GET /v1/events/{event_id}/qa",
+      "operationId": "listQa",
+      "tag": "Events",
+      "params": [
+        "include",
+        "limit",
+        "cursor",
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "EventsApi",
+      "tsMethod": "listQa",
+      "pyMethod": "list_qa"
+    },
+    "getSlides": {
+      "label": "GET /v1/events/{event_id}/slides",
+      "operationId": "getSlides",
+      "tag": "Events",
+      "params": [
+        "pages",
+        "include",
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "EventsApi",
+      "tsMethod": "getSlides",
+      "pyMethod": "get_slides"
+    },
+    "getAudio": {
+      "label": "GET /v1/events/{event_id}/audio",
+      "operationId": "getAudio",
+      "tag": "Events",
+      "params": [
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "EventsApi",
+      "tsMethod": "getAudio",
+      "pyMethod": "get_audio"
+    },
+    "getLiveAudio": {
+      "label": "GET /v1/events/{event_id}/live-audio",
+      "operationId": "getLiveAudio",
+      "tag": "Events",
+      "params": [
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "EventsApi",
+      "tsMethod": "getLiveAudio",
+      "pyMethod": "get_live_audio"
+    },
+    "getEventStats": {
+      "label": "GET /v1/events/{event_id}/stats",
+      "operationId": "getEventStats",
+      "tag": "Call analytics",
+      "params": [
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "CallAnalyticsApi",
+      "tsMethod": "getEventStats",
+      "pyMethod": "get_event_stats"
+    },
+    "getEventComparison": {
+      "label": "GET /v1/events/{event_id}/comparison",
+      "operationId": "getEventComparison",
+      "tag": "Call analytics",
+      "params": [
+        "prior",
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "CallAnalyticsApi",
+      "tsMethod": "getEventComparison",
+      "pyMethod": "get_event_comparison"
+    },
+    "getProsody": {
+      "label": "GET /v1/events/{event_id}/prosody",
+      "operationId": "getProsody",
+      "tag": "Call analytics",
+      "params": [
+        "section",
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "CallAnalyticsApi",
+      "tsMethod": "getProsody",
+      "pyMethod": "get_prosody"
+    },
+    "getPriceAttribution": {
+      "label": "GET /v1/events/{event_id}/price-attribution",
+      "operationId": "getPriceAttribution",
+      "tag": "Call analytics",
+      "params": [
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "CallAnalyticsApi",
+      "tsMethod": "getPriceAttribution",
+      "pyMethod": "get_price_attribution"
+    },
+    "getTranscript": {
+      "label": "GET /v1/events/{event_id}/transcript",
+      "operationId": "getTranscript",
+      "tag": "Transcripts",
+      "params": [
+        "version",
+        "layer",
+        "include",
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "TranscriptsApi",
+      "tsMethod": "getTranscript",
+      "pyMethod": "get_transcript"
+    },
+    "getTranscriptText": {
+      "label": "GET /v1/events/{event_id}/transcript-text",
+      "operationId": "getTranscriptText",
+      "tag": "Transcripts",
+      "params": [
+        "version",
+        "split",
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "TranscriptsApi",
+      "tsMethod": "getTranscriptText",
+      "pyMethod": "get_transcript_text"
+    },
+    "listTranscriptVersions": {
+      "label": "GET /v1/events/{event_id}/transcript-versions",
+      "operationId": "listTranscriptVersions",
+      "tag": "Transcripts",
+      "params": [
+        "limit",
+        "cursor",
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "TranscriptsApi",
+      "tsMethod": "listTranscriptVersions",
+      "pyMethod": "list_transcript_versions"
+    },
+    "getTranscriptDiff": {
+      "label": "GET /v1/events/{event_id}/transcript-diff",
+      "operationId": "getTranscriptDiff",
+      "tag": "Transcripts",
+      "params": [
+        "from",
+        "to",
+        "event_id"
+      ],
+      "hasBody": false,
+      "className": "TranscriptsApi",
+      "tsMethod": "getTranscriptDiff",
+      "pyMethod": "get_transcript_diff"
+    },
+    "searchTranscripts": {
+      "label": "GET /v1/search/transcripts",
+      "operationId": "searchTranscripts",
+      "tag": "Transcripts",
+      "params": [
+        "q",
+        "company",
+        "event",
+        "type",
+        "mode",
+        "conference_date.gte",
+        "conference_date.gt",
+        "conference_date.lte",
+        "conference_date.lt",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "TranscriptsApi",
+      "tsMethod": "searchTranscripts",
+      "pyMethod": "search_transcripts"
+    },
+    "listGuidance": {
+      "label": "GET /v1/guidance",
+      "operationId": "listGuidance",
+      "tag": "Guidance",
+      "params": [
+        "company",
+        "event",
+        "metric",
+        "period_kind",
+        "basis",
+        "review",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "GuidanceApi",
+      "tsMethod": "listGuidance",
+      "pyMethod": "list_guidance"
+    },
+    "listKpis": {
+      "label": "GET /v1/kpis",
+      "operationId": "listKpis",
+      "tag": "Guidance",
+      "params": [
+        "company",
+        "event",
+        "metric",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "GuidanceApi",
+      "tsMethod": "listKpis",
+      "pyMethod": "list_kpis"
+    },
+    "listInvestorDocuments": {
+      "label": "GET /v1/investor-documents",
+      "operationId": "listInvestorDocuments",
+      "tag": "Investor documents",
+      "params": [
+        "company",
+        "event",
+        "category",
+        "kind",
+        "fiscal_year",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "InvestorDocumentsApi",
+      "tsMethod": "listInvestorDocuments",
+      "pyMethod": "list_investor_documents"
+    },
+    "getInvestorDocument": {
+      "label": "GET /v1/investor-documents/{document_id}",
+      "operationId": "getInvestorDocument",
+      "tag": "Investor documents",
+      "params": [
+        "expand",
+        "document_id"
+      ],
+      "hasBody": false,
+      "className": "InvestorDocumentsApi",
+      "tsMethod": "getInvestorDocument",
+      "pyMethod": "get_investor_document"
+    },
+    "searchInvestorDocuments": {
+      "label": "GET /v1/search/investor-documents",
+      "operationId": "searchInvestorDocuments",
+      "tag": "Investor documents",
+      "params": [
+        "q",
+        "company",
+        "kind",
+        "mode",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "InvestorDocumentsApi",
+      "tsMethod": "searchInvestorDocuments",
+      "pyMethod": "search_investor_documents"
+    },
+    "listNews": {
+      "label": "GET /v1/news",
+      "operationId": "listNews",
+      "tag": "News",
+      "params": [
+        "company",
+        "event",
+        "kind",
+        "topic",
+        "published_at.gte",
+        "published_at.gt",
+        "published_at.lte",
+        "published_at.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "NewsApi",
+      "tsMethod": "listNews",
+      "pyMethod": "list_news"
+    },
+    "getNewsItem": {
+      "label": "GET /v1/news/{id}",
+      "operationId": "getNewsItem",
+      "tag": "News",
+      "params": [
+        "fields",
+        "id"
+      ],
+      "hasBody": false,
+      "className": "NewsApi",
+      "tsMethod": "getNewsItem",
+      "pyMethod": "get_news_item"
+    },
+    "getNewsText": {
+      "label": "GET /v1/news/{id}/text",
+      "operationId": "getNewsText",
+      "tag": "News",
+      "params": [
+        "cursor",
+        "max_chars",
+        "id"
+      ],
+      "hasBody": false,
+      "className": "NewsApi",
+      "tsMethod": "getNewsText",
+      "pyMethod": "get_news_text"
+    },
+    "searchNews": {
+      "label": "GET /v1/search/news",
+      "operationId": "searchNews",
+      "tag": "News",
+      "params": [
+        "q",
+        "company",
+        "field",
+        "mode",
+        "published_at.gte",
+        "published_at.gt",
+        "published_at.lte",
+        "published_at.lt",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "NewsApi",
+      "tsMethod": "searchNews",
+      "pyMethod": "search_news"
+    },
+    "listAnnouncements": {
+      "label": "GET /v1/announcements",
+      "operationId": "listAnnouncements",
+      "tag": "News",
+      "params": [
+        "company",
+        "topic",
+        "item",
+        "announced_at.gte",
+        "announced_at.gt",
+        "announced_at.lte",
+        "announced_at.lt",
+        "effective_from.gte",
+        "effective_to.lte",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "NewsApi",
+      "tsMethod": "listAnnouncements",
+      "pyMethod": "list_announcements"
+    },
+    "listAlerts": {
+      "label": "GET /v1/alerts",
+      "operationId": "listAlerts",
+      "tag": "Alerts",
+      "params": [
+        "limit",
+        "cursor",
+        "status",
+        "type",
+        "external_user_id",
+        "client_reference_id",
+        "symbol",
+        "destination_id"
+      ],
+      "hasBody": false,
+      "className": "AlertsApi",
+      "tsMethod": "listAlerts",
+      "pyMethod": "list_alerts"
+    },
+    "createAlert": {
+      "label": "POST /v1/alerts",
+      "operationId": "createAlert",
+      "tag": "Alerts",
+      "params": [
+        "validate_only"
+      ],
+      "hasBody": true,
+      "className": "AlertsApi",
+      "tsMethod": "createAlert",
+      "pyMethod": "create_alert",
+      "body": {
+        "tsName": "createAlertRequest",
+        "pyName": "create_alert_request",
+        "model": "CreateAlertRequest"
+      }
+    },
+    "getAlert": {
+      "label": "GET /v1/alerts/{id}",
+      "operationId": "getAlert",
+      "tag": "Alerts",
+      "params": [
+        "id"
+      ],
+      "hasBody": false,
+      "className": "AlertsApi",
+      "tsMethod": "getAlert",
+      "pyMethod": "get_alert"
+    },
+    "updateAlert": {
+      "label": "PATCH /v1/alerts/{id}",
+      "operationId": "updateAlert",
+      "tag": "Alerts",
+      "params": [
+        "id"
+      ],
+      "hasBody": true,
+      "className": "AlertsApi",
+      "tsMethod": "updateAlert",
+      "pyMethod": "update_alert",
+      "body": {
+        "tsName": "updateAlertRequest",
+        "pyName": "update_alert_request",
+        "model": "UpdateAlertRequest"
+      }
+    },
+    "deleteAlert": {
+      "label": "DELETE /v1/alerts/{id}",
+      "operationId": "deleteAlert",
+      "tag": "Alerts",
+      "params": [
+        "id"
+      ],
+      "hasBody": false,
+      "className": "AlertsApi",
+      "tsMethod": "deleteAlert",
+      "pyMethod": "delete_alert"
+    },
+    "pauseAlert": {
+      "label": "POST /v1/alerts/{id}:pause",
+      "operationId": "pauseAlert",
+      "tag": "Alerts",
+      "params": [
+        "id"
+      ],
+      "hasBody": false,
+      "className": "AlertsApi",
+      "tsMethod": "pauseAlert",
+      "pyMethod": "pause_alert"
+    },
+    "resumeAlert": {
+      "label": "POST /v1/alerts/{id}:resume",
+      "operationId": "resumeAlert",
+      "tag": "Alerts",
+      "params": [
+        "id"
+      ],
+      "hasBody": false,
+      "className": "AlertsApi",
+      "tsMethod": "resumeAlert",
+      "pyMethod": "resume_alert"
+    },
+    "batchAlerts": {
+      "label": "POST /v1/alerts:batch",
+      "operationId": "batchAlerts",
+      "tag": "Alerts",
+      "params": [],
+      "hasBody": true,
+      "className": "AlertsApi",
+      "tsMethod": "batchAlerts",
+      "pyMethod": "batch_alerts",
+      "body": {
+        "tsName": "batchAlertsRequest",
+        "pyName": "batch_alerts_request",
+        "model": "BatchAlertsRequest"
+      }
+    },
+    "listAlertEvents": {
+      "label": "GET /v1/alert-events",
+      "operationId": "listAlertEvents",
+      "tag": "Alert events",
+      "params": [
+        "limit",
+        "cursor",
+        "alert_id",
+        "type",
+        "external_user_id",
+        "after"
+      ],
+      "hasBody": false,
+      "className": "AlertEventsApi",
+      "tsMethod": "listAlertEvents",
+      "pyMethod": "list_alert_events"
+    },
+    "getAlertEvent": {
+      "label": "GET /v1/alert-events/{id}",
+      "operationId": "getAlertEvent",
+      "tag": "Alert events",
+      "params": [
+        "id"
+      ],
+      "hasBody": false,
+      "className": "AlertEventsApi",
+      "tsMethod": "getAlertEvent",
+      "pyMethod": "get_alert_event"
+    },
+    "listAlertEventsForAlert": {
+      "label": "GET /v1/alerts/{id}/events",
+      "operationId": "listAlertEventsForAlert",
+      "tag": "Alert events",
+      "params": [
+        "limit",
+        "cursor",
+        "type",
+        "id"
+      ],
+      "hasBody": false,
+      "className": "AlertEventsApi",
+      "tsMethod": "listAlertEventsForAlert",
+      "pyMethod": "list_alert_events_for_alert"
+    },
+    "testAlert": {
+      "label": "POST /v1/alerts/{id}:test",
+      "operationId": "testAlert",
+      "tag": "Alert events",
+      "params": [
+        "id"
+      ],
+      "hasBody": false,
+      "className": "AlertEventsApi",
+      "tsMethod": "testAlert",
+      "pyMethod": "test_alert"
+    },
+    "listDestinations": {
+      "label": "GET /v1/destinations",
+      "operationId": "listDestinations",
+      "tag": "Destinations",
+      "params": [
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "DestinationsApi",
+      "tsMethod": "listDestinations",
+      "pyMethod": "list_destinations"
+    },
+    "createDestination": {
+      "label": "POST /v1/destinations",
+      "operationId": "createDestination",
+      "tag": "Destinations",
+      "params": [],
+      "hasBody": true,
+      "className": "DestinationsApi",
+      "tsMethod": "createDestination",
+      "pyMethod": "create_destination",
+      "body": {
+        "tsName": "createDestinationRequest",
+        "pyName": "create_destination_request",
+        "model": "CreateDestinationRequest"
+      }
+    },
+    "getDestination": {
+      "label": "GET /v1/destinations/{id}",
+      "operationId": "getDestination",
+      "tag": "Destinations",
+      "params": [
+        "id"
+      ],
+      "hasBody": false,
+      "className": "DestinationsApi",
+      "tsMethod": "getDestination",
+      "pyMethod": "get_destination"
+    },
+    "updateDestination": {
+      "label": "PATCH /v1/destinations/{id}",
+      "operationId": "updateDestination",
+      "tag": "Destinations",
+      "params": [
+        "id"
+      ],
+      "hasBody": true,
+      "className": "DestinationsApi",
+      "tsMethod": "updateDestination",
+      "pyMethod": "update_destination",
+      "body": {
+        "tsName": "updateDestinationRequest",
+        "pyName": "update_destination_request",
+        "model": "UpdateDestinationRequest"
+      }
+    },
+    "deleteDestination": {
+      "label": "DELETE /v1/destinations/{id}",
+      "operationId": "deleteDestination",
+      "tag": "Destinations",
+      "params": [
+        "id"
+      ],
+      "hasBody": false,
+      "className": "DestinationsApi",
+      "tsMethod": "deleteDestination",
+      "pyMethod": "delete_destination"
+    },
+    "rotateDestinationSecret": {
+      "label": "POST /v1/destinations/{id}:rotate-secret",
+      "operationId": "rotateDestinationSecret",
+      "tag": "Destinations",
+      "params": [
+        "id"
+      ],
+      "hasBody": false,
+      "className": "DestinationsApi",
+      "tsMethod": "rotateDestinationSecret",
+      "pyMethod": "rotate_destination_secret"
+    },
+    "testDestination": {
+      "label": "POST /v1/destinations/{id}:test",
+      "operationId": "testDestination",
+      "tag": "Destinations",
+      "params": [
+        "id"
+      ],
+      "hasBody": false,
+      "className": "DestinationsApi",
+      "tsMethod": "testDestination",
+      "pyMethod": "test_destination"
+    },
+    "listDestinationDeliveries": {
+      "label": "GET /v1/destinations/{id}/deliveries",
+      "operationId": "listDestinationDeliveries",
+      "tag": "Destinations",
+      "params": [
+        "limit",
+        "cursor",
+        "id"
+      ],
+      "hasBody": false,
+      "className": "DestinationsApi",
+      "tsMethod": "listDestinationDeliveries",
+      "pyMethod": "list_destination_deliveries"
+    },
+    "listAlertUsers": {
+      "label": "GET /v1/alert-users",
+      "operationId": "listAlertUsers",
+      "tag": "Alert users",
+      "params": [
+        "limit",
+        "cursor",
+        "status",
+        "q"
+      ],
+      "hasBody": false,
+      "className": "AlertUsersApi",
+      "tsMethod": "listAlertUsers",
+      "pyMethod": "list_alert_users"
+    },
+    "getAlertUser": {
+      "label": "GET /v1/alert-users/{external_user_id}",
+      "operationId": "getAlertUser",
+      "tag": "Alert users",
+      "params": [
+        "external_user_id"
+      ],
+      "hasBody": false,
+      "className": "AlertUsersApi",
+      "tsMethod": "getAlertUser",
+      "pyMethod": "get_alert_user"
+    },
+    "updateAlertUser": {
+      "label": "PATCH /v1/alert-users/{external_user_id}",
+      "operationId": "updateAlertUser",
+      "tag": "Alert users",
+      "params": [
+        "external_user_id"
+      ],
+      "hasBody": true,
+      "className": "AlertUsersApi",
+      "tsMethod": "updateAlertUser",
+      "pyMethod": "update_alert_user",
+      "body": {
+        "tsName": "updateAlertUserRequest",
+        "pyName": "update_alert_user_request",
+        "model": "UpdateAlertUserRequest"
+      }
+    },
+    "deleteAlertUser": {
+      "label": "DELETE /v1/alert-users/{external_user_id}",
+      "operationId": "deleteAlertUser",
+      "tag": "Alert users",
+      "params": [
+        "external_user_id"
+      ],
+      "hasBody": false,
+      "className": "AlertUsersApi",
+      "tsMethod": "deleteAlertUser",
+      "pyMethod": "delete_alert_user"
+    },
+    "batchAlertUsers": {
+      "label": "POST /v1/alert-users:batch",
+      "operationId": "batchAlertUsers",
+      "tag": "Alert users",
+      "params": [],
+      "hasBody": true,
+      "className": "AlertUsersApi",
+      "tsMethod": "batchAlertUsers",
+      "pyMethod": "batch_alert_users",
+      "body": {
+        "tsName": "batchAlertUsersRequest",
+        "pyName": "batch_alert_users_request",
+        "model": "BatchAlertUsersRequest"
+      }
+    },
+    "pauseAlertUser": {
+      "label": "POST /v1/alert-users/{external_user_id}:pause",
+      "operationId": "pauseAlertUser",
+      "tag": "Alert users",
+      "params": [
+        "external_user_id"
+      ],
+      "hasBody": false,
+      "className": "AlertUsersApi",
+      "tsMethod": "pauseAlertUser",
+      "pyMethod": "pause_alert_user"
+    },
+    "resumeAlertUser": {
+      "label": "POST /v1/alert-users/{external_user_id}:resume",
+      "operationId": "resumeAlertUser",
+      "tag": "Alert users",
+      "params": [
+        "external_user_id"
+      ],
+      "hasBody": false,
+      "className": "AlertUsersApi",
+      "tsMethod": "resumeAlertUser",
+      "pyMethod": "resume_alert_user"
+    },
+    "listScripts": {
+      "label": "GET /v1/scripts",
+      "operationId": "listScripts",
+      "tag": "Scripts",
+      "params": [
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "ScriptsApi",
+      "tsMethod": "listScripts",
+      "pyMethod": "list_scripts"
+    },
+    "createScript": {
+      "label": "POST /v1/scripts",
+      "operationId": "createScript",
+      "tag": "Scripts",
+      "params": [],
+      "hasBody": true,
+      "className": "ScriptsApi",
+      "tsMethod": "createScript",
+      "pyMethod": "create_script",
+      "body": {
+        "tsName": "createScriptRequest",
+        "pyName": "create_script_request",
+        "model": "CreateScriptRequest"
+      }
+    },
+    "getScript": {
+      "label": "GET /v1/scripts/{id}",
+      "operationId": "getScript",
+      "tag": "Scripts",
+      "params": [
+        "id"
+      ],
+      "hasBody": false,
+      "className": "ScriptsApi",
+      "tsMethod": "getScript",
+      "pyMethod": "get_script"
+    },
+    "deleteScript": {
+      "label": "DELETE /v1/scripts/{id}",
+      "operationId": "deleteScript",
+      "tag": "Scripts",
+      "params": [
+        "id"
+      ],
+      "hasBody": false,
+      "className": "ScriptsApi",
+      "tsMethod": "deleteScript",
+      "pyMethod": "delete_script"
+    },
+    "createScriptVersion": {
+      "label": "POST /v1/scripts/{id}/versions",
+      "operationId": "createScriptVersion",
+      "tag": "Scripts",
+      "params": [
+        "id"
+      ],
+      "hasBody": true,
+      "className": "ScriptsApi",
+      "tsMethod": "createScriptVersion",
+      "pyMethod": "create_script_version",
+      "body": {
+        "tsName": "createScriptVersionRequest",
+        "pyName": "create_script_version_request",
+        "model": "CreateScriptVersionRequest"
+      }
+    },
+    "listScriptVersions": {
+      "label": "GET /v1/scripts/{id}/versions",
+      "operationId": "listScriptVersions",
+      "tag": "Scripts",
+      "params": [
+        "limit",
+        "cursor",
+        "id"
+      ],
+      "hasBody": false,
+      "className": "ScriptsApi",
+      "tsMethod": "listScriptVersions",
+      "pyMethod": "list_script_versions"
+    },
+    "listAlertTemplates": {
+      "label": "GET /v1/alert-templates",
+      "operationId": "listAlertTemplates",
+      "tag": "Scripts",
+      "params": [
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "ScriptsApi",
+      "tsMethod": "listAlertTemplates",
+      "pyMethod": "list_alert_templates"
+    }
+  },
+  "models": {
+    "typescript": [
+      "Alert",
+      "AlertBatchError",
+      "AlertBatchItem",
+      "AlertBatchResponse",
+      "AlertBatchResult",
+      "AlertCondition",
+      "AlertConditionAmountChange",
+      "AlertConditionInput",
+      "AlertConditionInputAmountChange",
+      "AlertConditionInputMentionDeltaRule",
+      "AlertConditionInputRulesInner",
+      "AlertConditionInputYieldRule",
+      "AlertConditionInputYoyRulesInner",
+      "AlertConditionMentionDeltaRule",
+      "AlertConditionRulesInner",
+      "AlertConditionYieldRule",
+      "AlertConditionYoyRulesInner",
+      "AlertEvent",
+      "AlertQuotaUsage",
+      "AlertTemplate",
+      "AlertTemplateInput",
+      "AlertTestAccepted",
+      "AlertTrigger",
+      "AlertTriggerActiveWindow",
+      "AlertTriggerInput",
+      "AlertTriggerInputActiveWindow",
+      "AlertUser",
+      "AlertUserBatchItem",
+      "AlertUserBatchResponse",
+      "AlertUserBatchResult",
+      "AlertUserDefaults",
+      "AlertUserDeleteResult",
+      "AlertUserLimits",
+      "AlertUserUsage",
+      "Announcement",
+      "AnnouncementCounterpartiesInner",
+      "AnnouncementItem",
+      "AnnouncementProductsInner",
+      "AsReportedDetailedLineItem",
+      "AsReportedDetailedPeriod",
+      "AsReportedDetailedPeriodStatements",
+      "AsReportedDetailedPeriodStatementsIncomeStatement",
+      "AsReportedFact",
+      "AsReportedPeriod",
+      "AsReportedPeriodStatements",
+      "AsReportedPeriodStatementsIncomeStatement",
+      "AsReportedPresentationNode",
+      "AsReportedPresentationPeriod",
+      "AsReportedPresentationPeriodStatements",
+      "AsReportedPresentationPeriodStatementsIncomeStatement",
+      "Audio",
+      "BatchAlertUsersRequest",
+      "BatchAlertsRequest",
+      "CagrPeriod",
+      "Company",
+      "CompanyCoverage",
+      "CompanyCoverageFamiliesInner",
+      "CompanyListItem",
+      "CompanyRef",
+      "CreateAlertRequest",
+      "CreateDestinationRequest",
+      "CreateScriptRequest",
+      "CreateScriptVersionRequest",
+      "Dataset",
+      "Destination",
+      "DestinationCreated",
+      "DestinationDelivery",
+      "DestinationSecret",
+      "DestinationTestAccepted",
+      "Dimension",
+      "Dividend",
+      "DocumentFigure",
+      "DocumentKindCatalogEntry",
+      "DocumentSection",
+      "DocumentVersion",
+      "Event",
+      "EventCalendar",
+      "EventCalendarCall",
+      "EventCalendarCallSource",
+      "EventCalendarReport",
+      "EventCalendarReportSource",
+      "EventComparison",
+      "EventComparisonHedging",
+      "EventComparisonNewTopicsInner",
+      "EventComparisonPriorEvent",
+      "EventComparisonSlideDiff",
+      "EventObservationsInner",
+      "EventPeriodicReport",
+      "EventRef",
+      "EventResultsFiling",
+      "EventStats",
+      "EventStatsEvent",
+      "EventTypeCatalogEntry",
+      "EventVideo",
+      "ExchangeCatalogEntry",
+      "FactExplanation",
+      "FactPlace",
+      "FiledHolding",
+      "FiledHoldingHolder",
+      "FiledHoldingSecurity",
+      "FiledHoldingVotingAuthority",
+      "Filer",
+      "FilerDetail",
+      "FilerDetailFormerNamesInner",
+      "FilerDetailSuccessorsInner",
+      "FilerFund",
+      "FilerFundAdviser",
+      "FilerFundReturn",
+      "FilerFundSeries",
+      "FilerFundShareClass",
+      "FilerListing",
+      "FilerPrivateOfferings",
+      "Filing",
+      "FilingDetail",
+      "FilingDocument",
+      "FilingFact",
+      "FilingNote",
+      "FilingSearchCoverage",
+      "FilingSearchCoverageLexical",
+      "FilingSearchCoverageMatches",
+      "FilingSearchHit",
+      "FilingSource",
+      "FinancialVintage",
+      "FiscalPeriod",
+      "FormCatalogEntry",
+      "FormerTicker",
+      "FormulaMember",
+      "Fund",
+      "FundListItem",
+      "FundPosition",
+      "FundPositionFund",
+      "FundPositionSecurity",
+      "FundRef",
+      "FundShareClassesInner",
+      "FundWeight",
+      "GetAsReportedFinancials200Response",
+      "GetAsReportedFinancialsDetailed200Response",
+      "GetAsReportedFinancialsPresentation200Response",
+      "GetStandardizedFinancials200Response",
+      "GetStandardizedFinancials200ResponseMeta",
+      "GetStandardizedFinancials200ResponseMetaPointInTime",
+      "GetStandardizedFinancialsDetailed200Response",
+      "GetStandardizedFinancialsPresentation200Response",
+      "GrowthPeriod",
+      "GuidanceItem",
+      "GuidanceItemChangeVsPrior",
+      "GuidanceItemSourcesInner",
+      "HitMatch",
+      "Holder",
+      "HolderChange",
+      "IndicatorCondition",
+      "IndicatorConditionInput",
+      "IndicatorFilterChild",
+      "IndicatorFilterChildInput",
+      "IndicatorFilterCondition",
+      "IndicatorFilterConditionInput",
+      "IndicatorFilterLeaf",
+      "IndicatorFilterLeafInput",
+      "IndicatorFilters",
+      "IndicatorFiltersInput",
+      "IndicatorOperand",
+      "IndicatorOperandInput",
+      "IndicatorResolved",
+      "IndicatorResolvedThreshold",
+      "IndicatorTemplateRef",
+      "InsiderHolding",
+      "InsiderTrade",
+      "InsiderTradeFootnote",
+      "Instrument",
+      "InstrumentCompany",
+      "InstrumentFund",
+      "InvestorDocument",
+      "InvestorDocumentSearchHit",
+      "Ipo",
+      "IpoListing",
+      "IpoRegistration",
+      "IpoRegistrationFilingsInner",
+      "IpoRegistrationIpoPending",
+      "IpoSources",
+      "KpiMention",
+      "KpiMentionFilingLink",
+      "KpiMentionFilingLinkFactPeriod",
+      "ListAlertEvents200Response",
+      "ListAlertTemplates200Response",
+      "ListAlertUsers200Response",
+      "ListAlerts200Response",
+      "ListAlerts200ResponseMeta",
+      "ListAnnouncements200Response",
+      "ListCagr200Response",
+      "ListCompanies200Response",
+      "ListDatasets200Response",
+      "ListDestinationDeliveries200Response",
+      "ListDestinations200Response",
+      "ListDividends200Response",
+      "ListDocumentKindCatalog200Response",
+      "ListDocumentSections200Response",
+      "ListEventTypeCatalog200Response",
+      "ListEvents200Response",
+      "ListExchangeCatalog200Response",
+      "ListFactPlaces200Response",
+      "ListFilerHoldings200Response",
+      "ListFilerHoldings200ResponseMeta",
+      "ListFilers200Response",
+      "ListFilingFacts200Response",
+      "ListFilingHoldings200Response",
+      "ListFilingHoldings200ResponseMeta",
+      "ListFilingNotes200Response",
+      "ListFilings200Response",
+      "ListFilings200ResponseMeta",
+      "ListFilings200ResponseMetaFormFacetInner",
+      "ListFinancialVintages200Response",
+      "ListFiscalPeriods200Response",
+      "ListFormCatalog200Response",
+      "ListFundPositions200Response",
+      "ListFundPositions200ResponseMeta",
+      "ListFundPositions200ResponseMetaComposition",
+      "ListFundPositions200ResponseMetaCompositionStoredDatesInner",
+      "ListFundWeights200Response",
+      "ListFundWeights200ResponseMeta",
+      "ListFunds200Response",
+      "ListGrowth200Response",
+      "ListGuidance200Response",
+      "ListHolderChanges200Response",
+      "ListHolderChanges200ResponseMeta",
+      "ListHolders200Response",
+      "ListHolders200ResponseMeta",
+      "ListHolders200ResponseMetaSectionsInner",
+      "ListInsiderHoldings200Response",
+      "ListInsiderTrades200Response",
+      "ListInstruments200Response",
+      "ListInstruments200ResponseMeta",
+      "ListInvestorDocuments200Response",
+      "ListIpos200Response",
+      "ListKpis200Response",
+      "ListMacroGdp200Response",
+      "ListMacroInflation200Response",
+      "ListMacroLabor200Response",
+      "ListMacroSeries200Response",
+      "ListMappingRules200Response",
+      "ListMarketHolidays200Response",
+      "ListMetricCatalog200Response",
+      "ListNews200Response",
+      "ListOfferings200Response",
+      "ListOfferings200ResponseMeta",
+      "ListParticipants200Response",
+      "ListPeople200Response",
+      "ListQa200Response",
+      "ListRatios200Response",
+      "ListScriptVersions200Response",
+      "ListScripts200Response",
+      "ListSectionCatalog200Response",
+      "ListSectorCatalog200Response",
+      "ListSegments200Response",
+      "ListSegmentsDetailed200Response",
+      "ListSplits200Response",
+      "ListTranscriptVersions200Response",
+      "ListTreasuryYieldCurves200Response",
+      "LiveAudio",
+      "MacroGdpReading",
+      "MacroInflationReading",
+      "MacroLaborReading",
+      "MacroSeries",
+      "MacroThreshold",
+      "MacroThresholdInput",
+      "MappingRule",
+      "MarketHoliday",
+      "MatchSpan",
+      "Me",
+      "MeAccount",
+      "MeCredits",
+      "MeLimits",
+      "MetaCoverage",
+      "MetaSource",
+      "MetricCatalogEntry",
+      "NewsItem",
+      "NewsItemAttribution",
+      "NewsItemAttributionEdgar",
+      "NewsItemEarnings",
+      "NewsItemPublicationsInner",
+      "NewsItemPublicationsInnerCategoriesInner",
+      "NewsItemPublicationsInnerPublisher",
+      "NewsItemSource",
+      "NewsSearchHit",
+      "NewsSearchHitBlock",
+      "NewsSearchHitItem",
+      "NewsText",
+      "NewsTextBlocksInner",
+      "NewsTextCoverage",
+      "Offering",
+      "OfferingRelatedPerson",
+      "Participation",
+      "ParticipationEvidenceInner",
+      "PdfDocument",
+      "Person",
+      "PressRelease",
+      "PressReleaseParticipantsInner",
+      "PriceAttribution",
+      "PriceAttributionBucketsInner",
+      "PriceAttributionBucketsInnerUtteranceRefsInner",
+      "PriceAttributionTopMinutesInner",
+      "Problem",
+      "ProblemErrorsInner",
+      "ProposedTicker",
+      "Prosody",
+      "ProsodySpeakersInner",
+      "ProsodySpeakersInnerSpeaker",
+      "QaPair",
+      "QaPairAnalyst",
+      "QaPairAnswersInner",
+      "QaPairScores",
+      "QaPairScoresEvidence",
+      "RatioPeriod",
+      "ReviewChain",
+      "Script",
+      "ScriptDiagnostic",
+      "ScriptEvaluation",
+      "ScriptEvaluationInput",
+      "ScriptNode",
+      "ScriptNodeInput",
+      "ScriptSeriesInput",
+      "ScriptSeriesInputInput",
+      "ScriptVersion",
+      "SearchCoverage",
+      "SearchCoverageLeg",
+      "SearchFilings200Response",
+      "SearchFilings200ResponseMeta",
+      "SearchInvestorDocuments200Response",
+      "SearchNews200Response",
+      "SearchTranscripts200Response",
+      "SearchTranscripts200ResponseMeta",
+      "SectionCatalogEntry",
+      "SectorCatalogEntry",
+      "SectorCatalogEntryIndustriesInner",
+      "Segment",
+      "SegmentDetailed",
+      "Slides",
+      "SlidesDeck",
+      "SlidesSlidesInner",
+      "SlidesTimelineInner",
+      "Split",
+      "StandardizedDetailedFact",
+      "StandardizedDetailedFactFormula",
+      "StandardizedDetailedPeriod",
+      "StandardizedDetailedPeriodStatements",
+      "StandardizedDetailedPeriodStatementsIncomeStatement",
+      "StandardizedPeriod",
+      "StandardizedPeriodStatements",
+      "StandardizedPeriodStatementsIncomeStatement",
+      "StandardizedPresentationFact",
+      "StandardizedPresentationPeriod",
+      "StandardizedPresentationPeriodStatements",
+      "StandardizedPresentationPeriodStatementsIncomeStatement",
+      "Transcript",
+      "TranscriptDiff",
+      "TranscriptDiffChangesInner",
+      "TranscriptDiffStats",
+      "TranscriptSearchHit",
+      "TranscriptSearchHitSlide",
+      "TranscriptSearchHitSpeaker",
+      "TranscriptText",
+      "TranscriptTextBlocksInner",
+      "TranscriptTurn",
+      "TranscriptVersion",
+      "TranscriptWord",
+      "TreasuryYieldCurve",
+      "UpdateAlertRequest",
+      "UpdateAlertUserDefaultsRequest",
+      "UpdateAlertUserRequest",
+      "UpdateDestinationRequest",
+      "Usage",
+      "UsageByFamilyInner",
+      "UsageByKeyInner",
+      "UsageDailyInner",
+      "UsageDailyInnerErrors",
+      "UsagePeriod"
+    ],
+    "python": [
+      "Alert",
+      "AlertBatchError",
+      "AlertBatchItem",
+      "AlertBatchResponse",
+      "AlertBatchResult",
+      "AlertCondition",
+      "AlertConditionAmountChange",
+      "AlertConditionInput",
+      "AlertConditionInputAmountChange",
+      "AlertConditionInputMentionDeltaRule",
+      "AlertConditionInputRulesInner",
+      "AlertConditionInputYieldRule",
+      "AlertConditionInputYoyRulesInner",
+      "AlertConditionMentionDeltaRule",
+      "AlertConditionRulesInner",
+      "AlertConditionYieldRule",
+      "AlertConditionYoyRulesInner",
+      "AlertEvent",
+      "AlertQuotaUsage",
+      "AlertTemplate",
+      "AlertTemplateInput",
+      "AlertTestAccepted",
+      "AlertTrigger",
+      "AlertTriggerActiveWindow",
+      "AlertTriggerInput",
+      "AlertTriggerInputActiveWindow",
+      "AlertUser",
+      "AlertUserBatchItem",
+      "AlertUserBatchResponse",
+      "AlertUserBatchResult",
+      "AlertUserDefaults",
+      "AlertUserDeleteResult",
+      "AlertUserLimits",
+      "AlertUserUsage",
+      "Announcement",
+      "AnnouncementCounterpartiesInner",
+      "AnnouncementItem",
+      "AnnouncementProductsInner",
+      "AsReportedDetailedLineItem",
+      "AsReportedDetailedPeriod",
+      "AsReportedDetailedPeriodStatements",
+      "AsReportedDetailedPeriodStatementsIncomeStatement",
+      "AsReportedFact",
+      "AsReportedPeriod",
+      "AsReportedPeriodStatements",
+      "AsReportedPeriodStatementsIncomeStatement",
+      "AsReportedPresentationNode",
+      "AsReportedPresentationPeriod",
+      "AsReportedPresentationPeriodStatements",
+      "AsReportedPresentationPeriodStatementsIncomeStatement",
+      "Audio",
+      "BatchAlertUsersRequest",
+      "BatchAlertsRequest",
+      "CagrPeriod",
+      "Company",
+      "CompanyCoverage",
+      "CompanyCoverageFamiliesInner",
+      "CompanyListItem",
+      "CompanyRef",
+      "CreateAlertRequest",
+      "CreateDestinationRequest",
+      "CreateScriptRequest",
+      "CreateScriptVersionRequest",
+      "Dataset",
+      "Destination",
+      "DestinationCreated",
+      "DestinationDelivery",
+      "DestinationSecret",
+      "DestinationTestAccepted",
+      "Dimension",
+      "Dividend",
+      "DocumentFigure",
+      "DocumentKindCatalogEntry",
+      "DocumentSection",
+      "DocumentVersion",
+      "Event",
+      "EventCalendar",
+      "EventCalendarCall",
+      "EventCalendarCallSource",
+      "EventCalendarReport",
+      "EventCalendarReportSource",
+      "EventComparison",
+      "EventComparisonHedging",
+      "EventComparisonNewTopicsInner",
+      "EventComparisonPriorEvent",
+      "EventComparisonSlideDiff",
+      "EventObservationsInner",
+      "EventPeriodicReport",
+      "EventRef",
+      "EventResultsFiling",
+      "EventStats",
+      "EventStatsEvent",
+      "EventTypeCatalogEntry",
+      "EventVideo",
+      "ExchangeCatalogEntry",
+      "FactExplanation",
+      "FactPlace",
+      "FiledHolding",
+      "FiledHoldingHolder",
+      "FiledHoldingSecurity",
+      "FiledHoldingVotingAuthority",
+      "Filer",
+      "FilerDetail",
+      "FilerDetailFormerNamesInner",
+      "FilerDetailSuccessorsInner",
+      "FilerFund",
+      "FilerFundAdviser",
+      "FilerFundReturn",
+      "FilerFundSeries",
+      "FilerFundShareClass",
+      "FilerListing",
+      "FilerPrivateOfferings",
+      "Filing",
+      "FilingDetail",
+      "FilingDocument",
+      "FilingFact",
+      "FilingNote",
+      "FilingSearchCoverage",
+      "FilingSearchCoverageLexical",
+      "FilingSearchCoverageMatches",
+      "FilingSearchHit",
+      "FilingSource",
+      "FinancialVintage",
+      "FiscalPeriod",
+      "FormCatalogEntry",
+      "FormerTicker",
+      "FormulaMember",
+      "Fund",
+      "FundListItem",
+      "FundPosition",
+      "FundPositionFund",
+      "FundPositionSecurity",
+      "FundRef",
+      "FundShareClassesInner",
+      "FundWeight",
+      "GetAsReportedFinancials200Response",
+      "GetAsReportedFinancialsDetailed200Response",
+      "GetAsReportedFinancialsPresentation200Response",
+      "GetStandardizedFinancials200Response",
+      "GetStandardizedFinancials200ResponseMeta",
+      "GetStandardizedFinancials200ResponseMetaPointInTime",
+      "GetStandardizedFinancialsDetailed200Response",
+      "GetStandardizedFinancialsPresentation200Response",
+      "GrowthPeriod",
+      "GuidanceItem",
+      "GuidanceItemChangeVsPrior",
+      "GuidanceItemSourcesInner",
+      "HitMatch",
+      "Holder",
+      "HolderChange",
+      "IndicatorCondition",
+      "IndicatorConditionInput",
+      "IndicatorFilterChild",
+      "IndicatorFilterChildInput",
+      "IndicatorFilterCondition",
+      "IndicatorFilterConditionInput",
+      "IndicatorFilterLeaf",
+      "IndicatorFilterLeafInput",
+      "IndicatorFilters",
+      "IndicatorFiltersInput",
+      "IndicatorOperand",
+      "IndicatorOperandInput",
+      "IndicatorResolved",
+      "IndicatorResolvedThreshold",
+      "IndicatorTemplateRef",
+      "InsiderHolding",
+      "InsiderTrade",
+      "InsiderTradeFootnote",
+      "Instrument",
+      "InstrumentCompany",
+      "InstrumentFund",
+      "InvestorDocument",
+      "InvestorDocumentSearchHit",
+      "Ipo",
+      "IpoListing",
+      "IpoRegistration",
+      "IpoRegistrationFilingsInner",
+      "IpoRegistrationIpoPending",
+      "IpoSources",
+      "KpiMention",
+      "KpiMentionFilingLink",
+      "KpiMentionFilingLinkFactPeriod",
+      "ListAlertEvents200Response",
+      "ListAlertTemplates200Response",
+      "ListAlertUsers200Response",
+      "ListAlerts200Response",
+      "ListAlerts200ResponseMeta",
+      "ListAnnouncements200Response",
+      "ListCagr200Response",
+      "ListCompanies200Response",
+      "ListDatasets200Response",
+      "ListDestinationDeliveries200Response",
+      "ListDestinations200Response",
+      "ListDividends200Response",
+      "ListDocumentKindCatalog200Response",
+      "ListDocumentSections200Response",
+      "ListEventTypeCatalog200Response",
+      "ListEvents200Response",
+      "ListExchangeCatalog200Response",
+      "ListFactPlaces200Response",
+      "ListFilerHoldings200Response",
+      "ListFilerHoldings200ResponseMeta",
+      "ListFilers200Response",
+      "ListFilingFacts200Response",
+      "ListFilingHoldings200Response",
+      "ListFilingHoldings200ResponseMeta",
+      "ListFilingNotes200Response",
+      "ListFilings200Response",
+      "ListFilings200ResponseMeta",
+      "ListFilings200ResponseMetaFormFacetInner",
+      "ListFinancialVintages200Response",
+      "ListFiscalPeriods200Response",
+      "ListFormCatalog200Response",
+      "ListFundPositions200Response",
+      "ListFundPositions200ResponseMeta",
+      "ListFundPositions200ResponseMetaComposition",
+      "ListFundPositions200ResponseMetaCompositionStoredDatesInner",
+      "ListFundWeights200Response",
+      "ListFundWeights200ResponseMeta",
+      "ListFunds200Response",
+      "ListGrowth200Response",
+      "ListGuidance200Response",
+      "ListHolderChanges200Response",
+      "ListHolderChanges200ResponseMeta",
+      "ListHolders200Response",
+      "ListHolders200ResponseMeta",
+      "ListHolders200ResponseMetaSectionsInner",
+      "ListInsiderHoldings200Response",
+      "ListInsiderTrades200Response",
+      "ListInstruments200Response",
+      "ListInstruments200ResponseMeta",
+      "ListInvestorDocuments200Response",
+      "ListIpos200Response",
+      "ListKpis200Response",
+      "ListMacroGdp200Response",
+      "ListMacroInflation200Response",
+      "ListMacroLabor200Response",
+      "ListMacroSeries200Response",
+      "ListMappingRules200Response",
+      "ListMarketHolidays200Response",
+      "ListMetricCatalog200Response",
+      "ListNews200Response",
+      "ListOfferings200Response",
+      "ListOfferings200ResponseMeta",
+      "ListParticipants200Response",
+      "ListPeople200Response",
+      "ListQa200Response",
+      "ListRatios200Response",
+      "ListScriptVersions200Response",
+      "ListScripts200Response",
+      "ListSectionCatalog200Response",
+      "ListSectorCatalog200Response",
+      "ListSegments200Response",
+      "ListSegmentsDetailed200Response",
+      "ListSplits200Response",
+      "ListTranscriptVersions200Response",
+      "ListTreasuryYieldCurves200Response",
+      "LiveAudio",
+      "MacroGdpReading",
+      "MacroInflationReading",
+      "MacroLaborReading",
+      "MacroSeries",
+      "MacroThreshold",
+      "MacroThresholdInput",
+      "MappingRule",
+      "MarketHoliday",
+      "MatchSpan",
+      "Me",
+      "MeAccount",
+      "MeCredits",
+      "MeLimits",
+      "MetaCoverage",
+      "MetaSource",
+      "MetricCatalogEntry",
+      "NewsItem",
+      "NewsItemAttribution",
+      "NewsItemAttributionEdgar",
+      "NewsItemEarnings",
+      "NewsItemPublicationsInner",
+      "NewsItemPublicationsInnerCategoriesInner",
+      "NewsItemPublicationsInnerPublisher",
+      "NewsItemSource",
+      "NewsSearchHit",
+      "NewsSearchHitBlock",
+      "NewsSearchHitItem",
+      "NewsText",
+      "NewsTextBlocksInner",
+      "NewsTextCoverage",
+      "Offering",
+      "OfferingRelatedPerson",
+      "Participation",
+      "ParticipationEvidenceInner",
+      "PdfDocument",
+      "Person",
+      "PressRelease",
+      "PressReleaseParticipantsInner",
+      "PriceAttribution",
+      "PriceAttributionBucketsInner",
+      "PriceAttributionBucketsInnerUtteranceRefsInner",
+      "PriceAttributionTopMinutesInner",
+      "Problem",
+      "ProblemErrorsInner",
+      "ProposedTicker",
+      "Prosody",
+      "ProsodySpeakersInner",
+      "ProsodySpeakersInnerSpeaker",
+      "QaPair",
+      "QaPairAnalyst",
+      "QaPairAnswersInner",
+      "QaPairScores",
+      "QaPairScoresEvidence",
+      "RatioPeriod",
+      "ReviewChain",
+      "Script",
+      "ScriptDiagnostic",
+      "ScriptEvaluation",
+      "ScriptEvaluationInput",
+      "ScriptNode",
+      "ScriptNodeInput",
+      "ScriptSeriesInput",
+      "ScriptSeriesInputInput",
+      "ScriptVersion",
+      "SearchCoverage",
+      "SearchCoverageLeg",
+      "SearchFilings200Response",
+      "SearchFilings200ResponseMeta",
+      "SearchInvestorDocuments200Response",
+      "SearchNews200Response",
+      "SearchTranscripts200Response",
+      "SearchTranscripts200ResponseMeta",
+      "SectionCatalogEntry",
+      "SectorCatalogEntry",
+      "SectorCatalogEntryIndustriesInner",
+      "Segment",
+      "SegmentDetailed",
+      "Slides",
+      "SlidesDeck",
+      "SlidesSlidesInner",
+      "SlidesTimelineInner",
+      "Split",
+      "StandardizedDetailedFact",
+      "StandardizedDetailedFactFormula",
+      "StandardizedDetailedPeriod",
+      "StandardizedDetailedPeriodStatements",
+      "StandardizedDetailedPeriodStatementsIncomeStatement",
+      "StandardizedPeriod",
+      "StandardizedPeriodStatements",
+      "StandardizedPeriodStatementsIncomeStatement",
+      "StandardizedPresentationFact",
+      "StandardizedPresentationPeriod",
+      "StandardizedPresentationPeriodStatements",
+      "StandardizedPresentationPeriodStatementsIncomeStatement",
+      "Transcript",
+      "TranscriptDiff",
+      "TranscriptDiffChangesInner",
+      "TranscriptDiffStats",
+      "TranscriptSearchHit",
+      "TranscriptSearchHitSlide",
+      "TranscriptSearchHitSpeaker",
+      "TranscriptText",
+      "TranscriptTextBlocksInner",
+      "TranscriptTurn",
+      "TranscriptVersion",
+      "TranscriptWord",
+      "TreasuryYieldCurve",
+      "UpdateAlertRequest",
+      "UpdateAlertUserDefaultsRequest",
+      "UpdateAlertUserRequest",
+      "UpdateDestinationRequest",
+      "Usage",
+      "UsageByFamilyInner",
+      "UsageByKeyInner",
+      "UsageDailyInner",
+      "UsageDailyInnerErrors",
+      "UsagePeriod"
+    ]
+  },
+  "provenance": {
+    "repository": "https://github.com/outraday-org/invinite-data-api",
+    "version": "1.0.0",
+    "specSha256": "b1d363f9adc9f004dd8439d0dacab41e8b9c8587a5c27ab1b0f4741c0114f10d",
+    "sourceHashes": {
+      "openapi.json": "b1d363f9adc9f004dd8439d0dacab41e8b9c8587a5c27ab1b0f4741c0114f10d",
+      "openapitools.json": "0350a3db0a0a0adf49a7c7cdefe7eff466964480780e911b197763d202db1390",
+      "package.json": "0d50038e236051fa9b6ac3dcdaf2d3357207a9826f1284ce217b46e32fcb9240",
+      "scripts/check-data-sdk-names.ts": "fe5f33fd4600c25639d85f4237c84213e5611b42505bc3b224f7e1b0ce6e89f9",
+      "scripts/prepare-data-sdk-spec.mjs": "1d8a1cbfe170e1eb0a8cd0168b957a4c8844321309a3b9e1fda4ce2ca4594bd1",
+      "scripts/reference-artifacts.ts": "0ef8e67cb5454a3f50f43de77b0be1aebb7897164ddf3f5288b58dc7d0f47255",
+      "sdks/data/config/python.json": "8f90ab7c0fd25e125c0c6618ae6e09119ef0b5045818c098fd8b259d1888dd5f",
+      "sdks/data/config/typescript.json": "69139143672ed147b18c217784cbed3bf609ebeb6b5fbd00617e09344b99c4f2",
+      "sdks/data/readme/python.md": "04a0ed261c4091a14fcd03d01c22d7f42fa5a7ea449b26601b6c0df521815883",
+      "sdks/data/readme/typescript.md": "4fc8fe2d31656c6b623284cb64e35cca4e703381720d77b08df6f84fdadaf078",
+      "sdks/data/sdk-naming.ts": "2738bc0f84f4c91aea3122b2ce4ea64d9bbe69f12790b6781b691f28e1c6df78",
+      "sdks/data/templates/python/errors.mustache": "d5ec344532b707b5d4d7984af7cf80c0c16f04506b4e5771a1c31ab28d2ed576",
+      "sdks/data/templates/python/model_generic.mustache": "40085979b609eb8215471b0b25aa2b69998e0f9861733f1c6f25747519093df0",
+      "sdks/data/templates/python/pagination.mustache": "e21118ace1b19e5a8d6252e1024cf7c75829a93260c1f8fd1ff36e8688263c01",
+      "sdks/data/templates/python/partial_api.mustache": "2097d853425ead0fd86cdc3f01c81e48c275d93d2c1a8c7b2f6f33d71607b695",
+      "sdks/data/templates/python/webhooks.mustache": "a44b07b97d81c8f0e29fce8bbe89cde809acf1530a4923f3753df4b60abe08e5",
+      "sdks/data/templates/typescript/apis.mustache": "d88f2e0353ce0e042013eb65568f16d33edc10a9a9b699de2ec190f472dd3a31",
+      "sdks/data/templates/typescript/errors.mustache": "41ef46604a7df71d1935f4849e24a3ee1246404c744e4363090fb0cfb6113764",
+      "sdks/data/templates/typescript/index.mustache": "c4055118478eac00c8631c4cfb50d32be5e8270b850f119b29371c4c2806e3e0",
+      "sdks/data/templates/typescript/modelGeneric.mustache": "bea14f3affaa9946f9e5865a05aa0af4fffdeb5b5e9e219df7f09950117e94dc",
+      "sdks/data/templates/typescript/modelGenericInterfaces.mustache": "88ef0ee6124f4511a0f907a05c27e75222b4c1f8fc7b1aeadaa0131a5122424d",
+      "sdks/data/templates/typescript/pagination.mustache": "190dc450794bc089117af5b5c2f7b2ff707dc2bf6175e49465c393cdba89b395",
+      "sdks/data/templates/typescript/webhooks.mustache": "757001711eafe57e914c05cd6b2d86b5555c4d32d80bf3b1a94e4f570df0c20a"
+    },
+    "revision": "65446951fc2a273962f6be7401b96f0ffaa30156",
+    "fingerprint": "70a9cfc64fa890bd5c0172c03fb622c2e7cb20d16cd072656b048e0d27dd873e"
+  }
+}

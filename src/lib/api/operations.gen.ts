@@ -9,12 +9,27 @@ export type OperationTier = (typeof PLAN_ORDER)[number];
 
 export type OperationCli = { action: null | string; group: string; positional: null | string };
 
+export type OperationSdkParamKind = "boolean" | "date" | "datetime" | "number" | "string";
+
+/** The SDK call of an operation (`sdk-contract.json`): TS / Python method, each parameter's names, the body argument. */
+export type OperationSdk = {
+    body: null | { model: string; py: string; ts: string };
+    className: string;
+    params: Record<string, { kind: OperationSdkParamKind; py: string; ts: string }>;
+    py: string;
+    ts: string;
+};
+
+/** The SDK packages (`sdk-contract.json`). */
+export const SDK_PACKAGES = { npm: "@invinite-org/data-api-client", pypi: "invinite-data-api", pythonImport: "invinite_data_api" } as const;
+
 export type Operation = {
     cli: null | OperationCli;
     credits: null | number;
     docsUrl: string;
     method: OperationMethod;
     path: string;
+    sdk: null | OperationSdk;
     summary: string;
     tier: null | OperationTier;
 };
@@ -30,6 +45,17 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/post--_v1_alerts:batch",
         method: "POST",
         path: "/v1/alerts:batch",
+        sdk: {
+            body: {
+                model: "BatchAlertsRequest",
+                py: "batch_alerts_request",
+                ts: "batchAlertsRequest",
+            },
+            className: "AlertsApi",
+            params: {},
+            py: "batch_alerts",
+            ts: "batchAlerts",
+        },
         summary: "Change alerts in bulk",
         tier: "lite",
     },
@@ -43,6 +69,17 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/post--_v1_alert-users:batch",
         method: "POST",
         path: "/v1/alert-users:batch",
+        sdk: {
+            body: {
+                model: "BatchAlertUsersRequest",
+                py: "batch_alert_users_request",
+                ts: "batchAlertUsersRequest",
+            },
+            className: "AlertUsersApi",
+            params: {},
+            py: "batch_alert_users",
+            ts: "batchAlertUsers",
+        },
         summary: "Create or update end users in bulk",
         tier: "lite",
     },
@@ -56,6 +93,23 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/post--_v1_alerts",
         method: "POST",
         path: "/v1/alerts",
+        sdk: {
+            body: {
+                model: "CreateAlertRequest",
+                py: "create_alert_request",
+                ts: "createAlertRequest",
+            },
+            className: "AlertsApi",
+            params: {
+                validate_only: {
+                    kind: "boolean",
+                    py: "validate_only",
+                    ts: "validateOnly",
+                },
+            },
+            py: "create_alert",
+            ts: "createAlert",
+        },
         summary: "Create an alert",
         tier: "lite",
     },
@@ -69,6 +123,17 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/post--_v1_destinations",
         method: "POST",
         path: "/v1/destinations",
+        sdk: {
+            body: {
+                model: "CreateDestinationRequest",
+                py: "create_destination_request",
+                ts: "createDestinationRequest",
+            },
+            className: "DestinationsApi",
+            params: {},
+            py: "create_destination",
+            ts: "createDestination",
+        },
         summary: "Create a destination",
         tier: "lite",
     },
@@ -82,6 +147,17 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/post--_v1_scripts",
         method: "POST",
         path: "/v1/scripts",
+        sdk: {
+            body: {
+                model: "CreateScriptRequest",
+                py: "create_script_request",
+                ts: "createScriptRequest",
+            },
+            className: "ScriptsApi",
+            params: {},
+            py: "create_script",
+            ts: "createScript",
+        },
         summary: "Upload a script",
         tier: "lite",
     },
@@ -95,6 +171,23 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/post--_v1_scripts_{id}_versions",
         method: "POST",
         path: "/v1/scripts/{id}/versions",
+        sdk: {
+            body: {
+                model: "CreateScriptVersionRequest",
+                py: "create_script_version_request",
+                ts: "createScriptVersionRequest",
+            },
+            className: "ScriptsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "create_script_version",
+            ts: "createScriptVersion",
+        },
         summary: "Upload a new script version",
         tier: "lite",
     },
@@ -108,6 +201,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/delete--_v1_alerts_{id}",
         method: "DELETE",
         path: "/v1/alerts/{id}",
+        sdk: {
+            body: null,
+            className: "AlertsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "delete_alert",
+            ts: "deleteAlert",
+        },
         summary: "Delete an alert",
         tier: "lite",
     },
@@ -121,6 +227,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/delete--_v1_alert-users_{external_user_id}",
         method: "DELETE",
         path: "/v1/alert-users/{external_user_id}",
+        sdk: {
+            body: null,
+            className: "AlertUsersApi",
+            params: {
+                external_user_id: {
+                    kind: "string",
+                    py: "external_user_id",
+                    ts: "externalUserId",
+                },
+            },
+            py: "delete_alert_user",
+            ts: "deleteAlertUser",
+        },
         summary: "Delete an end user",
         tier: "lite",
     },
@@ -134,6 +253,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/delete--_v1_destinations_{id}",
         method: "DELETE",
         path: "/v1/destinations/{id}",
+        sdk: {
+            body: null,
+            className: "DestinationsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "delete_destination",
+            ts: "deleteDestination",
+        },
         summary: "Delete a destination",
         tier: "lite",
     },
@@ -147,6 +279,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/delete--_v1_scripts_{id}",
         method: "DELETE",
         path: "/v1/scripts/{id}",
+        sdk: {
+            body: null,
+            className: "ScriptsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "delete_script",
+            ts: "deleteScript",
+        },
         summary: "Delete a script",
         tier: "lite",
     },
@@ -160,6 +305,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_alerts_{id}",
         method: "GET",
         path: "/v1/alerts/{id}",
+        sdk: {
+            body: null,
+            className: "AlertsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "get_alert",
+            ts: "getAlert",
+        },
         summary: "Get an alert",
         tier: "lite",
     },
@@ -173,6 +331,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_alert-events_{id}",
         method: "GET",
         path: "/v1/alert-events/{id}",
+        sdk: {
+            body: null,
+            className: "AlertEventsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "get_alert_event",
+            ts: "getAlertEvent",
+        },
         summary: "Get an alert event",
         tier: "lite",
     },
@@ -186,6 +357,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_alert-users_{external_user_id}",
         method: "GET",
         path: "/v1/alert-users/{external_user_id}",
+        sdk: {
+            body: null,
+            className: "AlertUsersApi",
+            params: {
+                external_user_id: {
+                    kind: "string",
+                    py: "external_user_id",
+                    ts: "externalUserId",
+                },
+            },
+            py: "get_alert_user",
+            ts: "getAlertUser",
+        },
         summary: "Get an end user",
         tier: "lite",
     },
@@ -199,6 +383,13 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_me_alert-user-defaults",
         method: "GET",
         path: "/v1/me/alert-user-defaults",
+        sdk: {
+            body: null,
+            className: "AlertUsersApi",
+            params: {},
+            py: "get_alert_user_defaults",
+            ts: "getAlertUserDefaults",
+        },
         summary: "Get the end-user defaults",
         tier: "free",
     },
@@ -212,6 +403,104 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_financials_as-reported",
         method: "GET",
         path: "/v1/financials/as-reported",
+        sdk: {
+            body: null,
+            className: "FinancialsApi",
+            params: {
+                "as_of": {
+                    kind: "date",
+                    py: "as_of",
+                    ts: "asOf",
+                },
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "display_sign": {
+                    kind: "string",
+                    py: "display_sign",
+                    ts: "displaySign",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "filing": {
+                    kind: "string",
+                    py: "filing",
+                    ts: "filing",
+                },
+                "fiscal_quarter": {
+                    kind: "number",
+                    py: "fiscal_quarter",
+                    ts: "fiscalQuarter",
+                },
+                "fiscal_year": {
+                    kind: "number",
+                    py: "fiscal_year",
+                    ts: "fiscalYear",
+                },
+                "fiscal_year.gt": {
+                    kind: "number",
+                    py: "fiscal_year_gt",
+                    ts: "fiscalYearGt",
+                },
+                "fiscal_year.gte": {
+                    kind: "number",
+                    py: "fiscal_year_gte",
+                    ts: "fiscalYearGte",
+                },
+                "fiscal_year.lt": {
+                    kind: "number",
+                    py: "fiscal_year_lt",
+                    ts: "fiscalYearLt",
+                },
+                "fiscal_year.lte": {
+                    kind: "number",
+                    py: "fiscal_year_lte",
+                    ts: "fiscalYearLte",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "metrics": {
+                    kind: "string",
+                    py: "metrics",
+                    ts: "metrics",
+                },
+                "period": {
+                    kind: "string",
+                    py: "period",
+                    ts: "period",
+                },
+                "reported_only": {
+                    kind: "boolean",
+                    py: "reported_only",
+                    ts: "reportedOnly",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "statement": {
+                    kind: "string",
+                    py: "statement",
+                    ts: "statement",
+                },
+            },
+            py: "get_as_reported_financials",
+            ts: "getAsReportedFinancials",
+        },
         summary: "As-reported statements",
         tier: "lite",
     },
@@ -225,6 +514,104 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_financials_as-reported_detailed",
         method: "GET",
         path: "/v1/financials/as-reported/detailed",
+        sdk: {
+            body: null,
+            className: "FinancialsApi",
+            params: {
+                "as_of": {
+                    kind: "date",
+                    py: "as_of",
+                    ts: "asOf",
+                },
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "display_sign": {
+                    kind: "string",
+                    py: "display_sign",
+                    ts: "displaySign",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "filing": {
+                    kind: "string",
+                    py: "filing",
+                    ts: "filing",
+                },
+                "fiscal_quarter": {
+                    kind: "number",
+                    py: "fiscal_quarter",
+                    ts: "fiscalQuarter",
+                },
+                "fiscal_year": {
+                    kind: "number",
+                    py: "fiscal_year",
+                    ts: "fiscalYear",
+                },
+                "fiscal_year.gt": {
+                    kind: "number",
+                    py: "fiscal_year_gt",
+                    ts: "fiscalYearGt",
+                },
+                "fiscal_year.gte": {
+                    kind: "number",
+                    py: "fiscal_year_gte",
+                    ts: "fiscalYearGte",
+                },
+                "fiscal_year.lt": {
+                    kind: "number",
+                    py: "fiscal_year_lt",
+                    ts: "fiscalYearLt",
+                },
+                "fiscal_year.lte": {
+                    kind: "number",
+                    py: "fiscal_year_lte",
+                    ts: "fiscalYearLte",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "metrics": {
+                    kind: "string",
+                    py: "metrics",
+                    ts: "metrics",
+                },
+                "period": {
+                    kind: "string",
+                    py: "period",
+                    ts: "period",
+                },
+                "reported_only": {
+                    kind: "boolean",
+                    py: "reported_only",
+                    ts: "reportedOnly",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "statement": {
+                    kind: "string",
+                    py: "statement",
+                    ts: "statement",
+                },
+            },
+            py: "get_as_reported_financials_detailed",
+            ts: "getAsReportedFinancialsDetailed",
+        },
         summary: "As-reported statements with labels",
         tier: "pro",
     },
@@ -238,6 +625,104 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_financials_as-reported_presentation",
         method: "GET",
         path: "/v1/financials/as-reported/presentation",
+        sdk: {
+            body: null,
+            className: "FinancialsApi",
+            params: {
+                "as_of": {
+                    kind: "date",
+                    py: "as_of",
+                    ts: "asOf",
+                },
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "display_sign": {
+                    kind: "string",
+                    py: "display_sign",
+                    ts: "displaySign",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "filing": {
+                    kind: "string",
+                    py: "filing",
+                    ts: "filing",
+                },
+                "fiscal_quarter": {
+                    kind: "number",
+                    py: "fiscal_quarter",
+                    ts: "fiscalQuarter",
+                },
+                "fiscal_year": {
+                    kind: "number",
+                    py: "fiscal_year",
+                    ts: "fiscalYear",
+                },
+                "fiscal_year.gt": {
+                    kind: "number",
+                    py: "fiscal_year_gt",
+                    ts: "fiscalYearGt",
+                },
+                "fiscal_year.gte": {
+                    kind: "number",
+                    py: "fiscal_year_gte",
+                    ts: "fiscalYearGte",
+                },
+                "fiscal_year.lt": {
+                    kind: "number",
+                    py: "fiscal_year_lt",
+                    ts: "fiscalYearLt",
+                },
+                "fiscal_year.lte": {
+                    kind: "number",
+                    py: "fiscal_year_lte",
+                    ts: "fiscalYearLte",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "metrics": {
+                    kind: "string",
+                    py: "metrics",
+                    ts: "metrics",
+                },
+                "period": {
+                    kind: "string",
+                    py: "period",
+                    ts: "period",
+                },
+                "reported_only": {
+                    kind: "boolean",
+                    py: "reported_only",
+                    ts: "reportedOnly",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "statement": {
+                    kind: "string",
+                    py: "statement",
+                    ts: "statement",
+                },
+            },
+            py: "get_as_reported_financials_presentation",
+            ts: "getAsReportedFinancialsPresentation",
+        },
         summary: "As-reported statements as the filer's tree",
         tier: "pro",
     },
@@ -251,6 +736,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_audio",
         method: "GET",
         path: "/v1/events/{event_id}/audio",
+        sdk: {
+            body: null,
+            className: "EventsApi",
+            params: {
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+            },
+            py: "get_audio",
+            ts: "getAudio",
+        },
         summary: "Get an event's recording",
         tier: "pro",
     },
@@ -264,6 +762,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_companies_{company}",
         method: "GET",
         path: "/v1/companies/{company}",
+        sdk: {
+            body: null,
+            className: "CompaniesApi",
+            params: {
+                company: {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                expand: {
+                    kind: "string",
+                    py: "expand",
+                    ts: "expand",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+            },
+            py: "get_company",
+            ts: "getCompany",
+        },
         summary: "Get a company",
         tier: "free",
     },
@@ -277,6 +798,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_destinations_{id}",
         method: "GET",
         path: "/v1/destinations/{id}",
+        sdk: {
+            body: null,
+            className: "DestinationsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "get_destination",
+            ts: "getDestination",
+        },
         summary: "Get a destination",
         tier: "lite",
     },
@@ -290,6 +824,24 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_document-versions_{version_id}_figures_{block_id}",
         method: "GET",
         path: "/v1/document-versions/{version_id}/figures/{block_id}",
+        sdk: {
+            body: null,
+            className: "FilingsApi",
+            params: {
+                block_id: {
+                    kind: "string",
+                    py: "block_id",
+                    ts: "blockId",
+                },
+                version_id: {
+                    kind: "string",
+                    py: "version_id",
+                    ts: "versionId",
+                },
+            },
+            py: "get_document_figure",
+            ts: "getDocumentFigure",
+        },
         summary: "Get a figure",
         tier: "lite",
     },
@@ -303,6 +855,44 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_document-versions_{version_id}",
         method: "GET",
         path: "/v1/document-versions/{version_id}",
+        sdk: {
+            body: null,
+            className: "FilingsApi",
+            params: {
+                blocks: {
+                    kind: "string",
+                    py: "blocks",
+                    ts: "blocks",
+                },
+                footnotes: {
+                    kind: "boolean",
+                    py: "footnotes",
+                    ts: "footnotes",
+                },
+                neighbors: {
+                    kind: "number",
+                    py: "neighbors",
+                    ts: "neighbors",
+                },
+                pages: {
+                    kind: "string",
+                    py: "pages",
+                    ts: "pages",
+                },
+                printed: {
+                    kind: "string",
+                    py: "printed",
+                    ts: "printed",
+                },
+                version_id: {
+                    kind: "string",
+                    py: "version_id",
+                    ts: "versionId",
+                },
+            },
+            py: "get_document_version",
+            ts: "getDocumentVersion",
+        },
         summary: "Get a document version",
         tier: "lite",
     },
@@ -316,6 +906,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}",
         method: "GET",
         path: "/v1/events/{event_id}",
+        sdk: {
+            body: null,
+            className: "EventsApi",
+            params: {
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+                expand: {
+                    kind: "string",
+                    py: "expand",
+                    ts: "expand",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+            },
+            py: "get_event",
+            ts: "getEvent",
+        },
         summary: "Get an event",
         tier: "free",
     },
@@ -329,6 +942,24 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_comparison",
         method: "GET",
         path: "/v1/events/{event_id}/comparison",
+        sdk: {
+            body: null,
+            className: "CallAnalyticsApi",
+            params: {
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+                prior: {
+                    kind: "string",
+                    py: "prior",
+                    ts: "prior",
+                },
+            },
+            py: "get_event_comparison",
+            ts: "getEventComparison",
+        },
         summary: "Compare an event with a prior one",
         tier: "pro",
     },
@@ -342,6 +973,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_stats",
         method: "GET",
         path: "/v1/events/{event_id}/stats",
+        sdk: {
+            body: null,
+            className: "CallAnalyticsApi",
+            params: {
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+            },
+            py: "get_event_stats",
+            ts: "getEventStats",
+        },
         summary: "Get an event's call statistics",
         tier: "pro",
     },
@@ -355,6 +999,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_facts_{fact_id}",
         method: "GET",
         path: "/v1/facts/{fact_id}",
+        sdk: {
+            body: null,
+            className: "FinancialsApi",
+            params: {
+                fact_id: {
+                    kind: "string",
+                    py: "fact_id",
+                    ts: "factId",
+                },
+                max_depth: {
+                    kind: "number",
+                    py: "max_depth",
+                    ts: "maxDepth",
+                },
+                max_members: {
+                    kind: "number",
+                    py: "max_members",
+                    ts: "maxMembers",
+                },
+            },
+            py: "get_fact",
+            ts: "getFact",
+        },
         summary: "Explain a standardized fact",
         tier: "lite",
     },
@@ -368,6 +1035,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_filers_{cik}",
         method: "GET",
         path: "/v1/filers/{cik}",
+        sdk: {
+            body: null,
+            className: "CompaniesApi",
+            params: {
+                cik: {
+                    kind: "string",
+                    py: "cik",
+                    ts: "cik",
+                },
+                expand: {
+                    kind: "string",
+                    py: "expand",
+                    ts: "expand",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+            },
+            py: "get_filer",
+            ts: "getFiler",
+        },
         summary: "Get a filer",
         tier: "lite",
     },
@@ -381,6 +1071,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_filings_{accession}",
         method: "GET",
         path: "/v1/filings/{accession}",
+        sdk: {
+            body: null,
+            className: "FilingsApi",
+            params: {
+                accession: {
+                    kind: "string",
+                    py: "accession",
+                    ts: "accession",
+                },
+                expand: {
+                    kind: "string",
+                    py: "expand",
+                    ts: "expand",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+            },
+            py: "get_filing",
+            ts: "getFiling",
+        },
         summary: "Get a filing",
         tier: "lite",
     },
@@ -394,6 +1107,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_funds_{fund}",
         method: "GET",
         path: "/v1/funds/{fund}",
+        sdk: {
+            body: null,
+            className: "FundsApi",
+            params: {
+                expand: {
+                    kind: "string",
+                    py: "expand",
+                    ts: "expand",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                fund: {
+                    kind: "string",
+                    py: "fund",
+                    ts: "fund",
+                },
+            },
+            py: "get_fund",
+            ts: "getFund",
+        },
         summary: "Get a fund",
         tier: "lite",
     },
@@ -407,6 +1143,24 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_insider-trades_{id}",
         method: "GET",
         path: "/v1/insider-trades/{id}",
+        sdk: {
+            body: null,
+            className: "InsiderTradesApi",
+            params: {
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "get_insider_trade",
+            ts: "getInsiderTrade",
+        },
         summary: "Get an insider trade",
         tier: "standard",
     },
@@ -420,6 +1174,24 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_instruments_{symbol}",
         method: "GET",
         path: "/v1/instruments/{symbol}",
+        sdk: {
+            body: null,
+            className: "InstrumentsApi",
+            params: {
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                symbol: {
+                    kind: "string",
+                    py: "symbol",
+                    ts: "symbol",
+                },
+            },
+            py: "get_instrument",
+            ts: "getInstrument",
+        },
         summary: "Get an instrument",
         tier: "free",
     },
@@ -433,6 +1205,24 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_investor-documents_{document_id}",
         method: "GET",
         path: "/v1/investor-documents/{document_id}",
+        sdk: {
+            body: null,
+            className: "InvestorDocumentsApi",
+            params: {
+                document_id: {
+                    kind: "string",
+                    py: "document_id",
+                    ts: "documentId",
+                },
+                expand: {
+                    kind: "string",
+                    py: "expand",
+                    ts: "expand",
+                },
+            },
+            py: "get_investor_document",
+            ts: "getInvestorDocument",
+        },
         summary: "Get an investor document",
         tier: "pro",
     },
@@ -446,6 +1236,24 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_ipos_{ipo_id}",
         method: "GET",
         path: "/v1/ipos/{ipo_id}",
+        sdk: {
+            body: null,
+            className: "OfferingsApi",
+            params: {
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                ipo_id: {
+                    kind: "string",
+                    py: "ipo_id",
+                    ts: "ipoId",
+                },
+            },
+            py: "get_ipo",
+            ts: "getIpo",
+        },
         summary: "Get an offering",
         tier: "lite",
     },
@@ -459,6 +1267,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_live-audio",
         method: "GET",
         path: "/v1/events/{event_id}/live-audio",
+        sdk: {
+            body: null,
+            className: "EventsApi",
+            params: {
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+            },
+            py: "get_live_audio",
+            ts: "getLiveAudio",
+        },
         summary: "Get an event's live audio URL",
         tier: "pro",
     },
@@ -472,6 +1293,34 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_macro_gdp_snapshot",
         method: "GET",
         path: "/v1/macro/gdp/snapshot",
+        sdk: {
+            body: null,
+            className: "MacroApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "get_macro_gdp_snapshot",
+            ts: "getMacroGdpSnapshot",
+        },
         summary: "Get the US GDP and income snapshot",
         tier: "lite",
     },
@@ -485,6 +1334,34 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_macro_inflation_snapshot",
         method: "GET",
         path: "/v1/macro/inflation/snapshot",
+        sdk: {
+            body: null,
+            className: "MacroApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "get_macro_inflation_snapshot",
+            ts: "getMacroInflationSnapshot",
+        },
         summary: "Get the US inflation snapshot",
         tier: "lite",
     },
@@ -498,6 +1375,34 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_macro_labor_snapshot",
         method: "GET",
         path: "/v1/macro/labor/snapshot",
+        sdk: {
+            body: null,
+            className: "MacroApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "get_macro_labor_snapshot",
+            ts: "getMacroLaborSnapshot",
+        },
         summary: "Get the US labor market snapshot",
         tier: "lite",
     },
@@ -511,6 +1416,13 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_me",
         method: "GET",
         path: "/v1/me",
+        sdk: {
+            body: null,
+            className: "AccountApi",
+            params: {},
+            py: "get_me",
+            ts: "getMe",
+        },
         summary: "Who am I",
         tier: "free",
     },
@@ -524,6 +1436,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_me_usage",
         method: "GET",
         path: "/v1/me/usage",
+        sdk: {
+            body: null,
+            className: "AccountApi",
+            params: {
+                days: {
+                    kind: "number",
+                    py: "days",
+                    ts: "days",
+                },
+            },
+            py: "get_my_usage",
+            ts: "getMyUsage",
+        },
         summary: "Get my usage",
         tier: "free",
     },
@@ -537,6 +1462,24 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_news_{id}",
         method: "GET",
         path: "/v1/news/{id}",
+        sdk: {
+            body: null,
+            className: "NewsApi",
+            params: {
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "get_news_item",
+            ts: "getNewsItem",
+        },
         summary: "Get a news item",
         tier: "lite",
     },
@@ -550,6 +1493,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_news_{id}_text",
         method: "GET",
         path: "/v1/news/{id}/text",
+        sdk: {
+            body: null,
+            className: "NewsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+                max_chars: {
+                    kind: "number",
+                    py: "max_chars",
+                    ts: "maxChars",
+                },
+            },
+            py: "get_news_text",
+            ts: "getNewsText",
+        },
         summary: "Get a news item's text",
         tier: "lite",
     },
@@ -563,6 +1529,24 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_offerings_{offering_id}",
         method: "GET",
         path: "/v1/offerings/{offering_id}",
+        sdk: {
+            body: null,
+            className: "OfferingsApi",
+            params: {
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                offering_id: {
+                    kind: "string",
+                    py: "offering_id",
+                    ts: "offeringId",
+                },
+            },
+            py: "get_offering",
+            ts: "getOffering",
+        },
         summary: "Get a Form D private offering",
         tier: "lite",
     },
@@ -576,6 +1560,24 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_people_{person_id}",
         method: "GET",
         path: "/v1/people/{person_id}",
+        sdk: {
+            body: null,
+            className: "CompaniesApi",
+            params: {
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                person_id: {
+                    kind: "string",
+                    py: "person_id",
+                    ts: "personId",
+                },
+            },
+            py: "get_person",
+            ts: "getPerson",
+        },
         summary: "Get a person",
         tier: "lite",
     },
@@ -589,6 +1591,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_press-release",
         method: "GET",
         path: "/v1/events/{event_id}/press-release",
+        sdk: {
+            body: null,
+            className: "EventsApi",
+            params: {
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+            },
+            py: "get_press_release",
+            ts: "getPressRelease",
+        },
         summary: "Get an event's press release",
         tier: "lite",
     },
@@ -602,6 +1617,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_price-attribution",
         method: "GET",
         path: "/v1/events/{event_id}/price-attribution",
+        sdk: {
+            body: null,
+            className: "CallAnalyticsApi",
+            params: {
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+            },
+            py: "get_price_attribution",
+            ts: "getPriceAttribution",
+        },
         summary: "Get an event's price attribution",
         tier: "pro",
     },
@@ -615,6 +1643,24 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_prosody",
         method: "GET",
         path: "/v1/events/{event_id}/prosody",
+        sdk: {
+            body: null,
+            className: "CallAnalyticsApi",
+            params: {
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+                section: {
+                    kind: "string",
+                    py: "section",
+                    ts: "section",
+                },
+            },
+            py: "get_prosody",
+            ts: "getProsody",
+        },
         summary: "Get an event's speech prosody",
         tier: "pro",
     },
@@ -628,6 +1674,39 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_filings_{accession}_review-chain",
         method: "GET",
         path: "/v1/filings/{accession}/review-chain",
+        sdk: {
+            body: null,
+            className: "FilingsApi",
+            params: {
+                accession: {
+                    kind: "string",
+                    py: "accession",
+                    ts: "accession",
+                },
+                direction: {
+                    kind: "string",
+                    py: "direction",
+                    ts: "direction",
+                },
+                kind: {
+                    kind: "string",
+                    py: "kind",
+                    ts: "kind",
+                },
+                max_depth: {
+                    kind: "number",
+                    py: "max_depth",
+                    ts: "maxDepth",
+                },
+                max_nodes: {
+                    kind: "number",
+                    py: "max_nodes",
+                    ts: "maxNodes",
+                },
+            },
+            py: "get_review_chain",
+            ts: "getReviewChain",
+        },
         summary: "Get a filing's review chain",
         tier: "lite",
     },
@@ -641,6 +1720,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_scripts_{id}",
         method: "GET",
         path: "/v1/scripts/{id}",
+        sdk: {
+            body: null,
+            className: "ScriptsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "get_script",
+            ts: "getScript",
+        },
         summary: "Get a script",
         tier: "lite",
     },
@@ -654,6 +1746,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_slides",
         method: "GET",
         path: "/v1/events/{event_id}/slides",
+        sdk: {
+            body: null,
+            className: "EventsApi",
+            params: {
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+                include: {
+                    kind: "string",
+                    py: "include",
+                    ts: "include",
+                },
+                pages: {
+                    kind: "string",
+                    py: "pages",
+                    ts: "pages",
+                },
+            },
+            py: "get_slides",
+            ts: "getSlides",
+        },
         summary: "Get an event's slides",
         tier: "pro",
     },
@@ -667,6 +1782,94 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_financials_standardized",
         method: "GET",
         path: "/v1/financials/standardized",
+        sdk: {
+            body: null,
+            className: "FinancialsApi",
+            params: {
+                "as_of": {
+                    kind: "date",
+                    py: "as_of",
+                    ts: "asOf",
+                },
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "filing": {
+                    kind: "string",
+                    py: "filing",
+                    ts: "filing",
+                },
+                "fiscal_quarter": {
+                    kind: "number",
+                    py: "fiscal_quarter",
+                    ts: "fiscalQuarter",
+                },
+                "fiscal_year": {
+                    kind: "number",
+                    py: "fiscal_year",
+                    ts: "fiscalYear",
+                },
+                "fiscal_year.gt": {
+                    kind: "number",
+                    py: "fiscal_year_gt",
+                    ts: "fiscalYearGt",
+                },
+                "fiscal_year.gte": {
+                    kind: "number",
+                    py: "fiscal_year_gte",
+                    ts: "fiscalYearGte",
+                },
+                "fiscal_year.lt": {
+                    kind: "number",
+                    py: "fiscal_year_lt",
+                    ts: "fiscalYearLt",
+                },
+                "fiscal_year.lte": {
+                    kind: "number",
+                    py: "fiscal_year_lte",
+                    ts: "fiscalYearLte",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "metrics": {
+                    kind: "string",
+                    py: "metrics",
+                    ts: "metrics",
+                },
+                "period": {
+                    kind: "string",
+                    py: "period",
+                    ts: "period",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "statement": {
+                    kind: "string",
+                    py: "statement",
+                    ts: "statement",
+                },
+            },
+            py: "get_standardized_financials",
+            ts: "getStandardizedFinancials",
+        },
         summary: "Standardized statements",
         tier: "lite",
     },
@@ -680,6 +1883,94 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_financials_standardized_detailed",
         method: "GET",
         path: "/v1/financials/standardized/detailed",
+        sdk: {
+            body: null,
+            className: "FinancialsApi",
+            params: {
+                "as_of": {
+                    kind: "date",
+                    py: "as_of",
+                    ts: "asOf",
+                },
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "filing": {
+                    kind: "string",
+                    py: "filing",
+                    ts: "filing",
+                },
+                "fiscal_quarter": {
+                    kind: "number",
+                    py: "fiscal_quarter",
+                    ts: "fiscalQuarter",
+                },
+                "fiscal_year": {
+                    kind: "number",
+                    py: "fiscal_year",
+                    ts: "fiscalYear",
+                },
+                "fiscal_year.gt": {
+                    kind: "number",
+                    py: "fiscal_year_gt",
+                    ts: "fiscalYearGt",
+                },
+                "fiscal_year.gte": {
+                    kind: "number",
+                    py: "fiscal_year_gte",
+                    ts: "fiscalYearGte",
+                },
+                "fiscal_year.lt": {
+                    kind: "number",
+                    py: "fiscal_year_lt",
+                    ts: "fiscalYearLt",
+                },
+                "fiscal_year.lte": {
+                    kind: "number",
+                    py: "fiscal_year_lte",
+                    ts: "fiscalYearLte",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "metrics": {
+                    kind: "string",
+                    py: "metrics",
+                    ts: "metrics",
+                },
+                "period": {
+                    kind: "string",
+                    py: "period",
+                    ts: "period",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "statement": {
+                    kind: "string",
+                    py: "statement",
+                    ts: "statement",
+                },
+            },
+            py: "get_standardized_financials_detailed",
+            ts: "getStandardizedFinancialsDetailed",
+        },
         summary: "Standardized statements with lineage",
         tier: "pro",
     },
@@ -693,6 +1984,94 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_financials_standardized_presentation",
         method: "GET",
         path: "/v1/financials/standardized/presentation",
+        sdk: {
+            body: null,
+            className: "FinancialsApi",
+            params: {
+                "as_of": {
+                    kind: "date",
+                    py: "as_of",
+                    ts: "asOf",
+                },
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "filing": {
+                    kind: "string",
+                    py: "filing",
+                    ts: "filing",
+                },
+                "fiscal_quarter": {
+                    kind: "number",
+                    py: "fiscal_quarter",
+                    ts: "fiscalQuarter",
+                },
+                "fiscal_year": {
+                    kind: "number",
+                    py: "fiscal_year",
+                    ts: "fiscalYear",
+                },
+                "fiscal_year.gt": {
+                    kind: "number",
+                    py: "fiscal_year_gt",
+                    ts: "fiscalYearGt",
+                },
+                "fiscal_year.gte": {
+                    kind: "number",
+                    py: "fiscal_year_gte",
+                    ts: "fiscalYearGte",
+                },
+                "fiscal_year.lt": {
+                    kind: "number",
+                    py: "fiscal_year_lt",
+                    ts: "fiscalYearLt",
+                },
+                "fiscal_year.lte": {
+                    kind: "number",
+                    py: "fiscal_year_lte",
+                    ts: "fiscalYearLte",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "metrics": {
+                    kind: "string",
+                    py: "metrics",
+                    ts: "metrics",
+                },
+                "period": {
+                    kind: "string",
+                    py: "period",
+                    ts: "period",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "statement": {
+                    kind: "string",
+                    py: "statement",
+                    ts: "statement",
+                },
+            },
+            py: "get_standardized_financials_presentation",
+            ts: "getStandardizedFinancialsPresentation",
+        },
         summary: "Standardized statements as a tree",
         tier: "pro",
     },
@@ -706,6 +2085,34 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_transcript",
         method: "GET",
         path: "/v1/events/{event_id}/transcript",
+        sdk: {
+            body: null,
+            className: "TranscriptsApi",
+            params: {
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+                include: {
+                    kind: "string",
+                    py: "include",
+                    ts: "include",
+                },
+                layer: {
+                    kind: "string",
+                    py: "layer",
+                    ts: "layer",
+                },
+                version: {
+                    kind: "number",
+                    py: "version",
+                    ts: "version",
+                },
+            },
+            py: "get_transcript",
+            ts: "getTranscript",
+        },
         summary: "Get an event's transcript",
         tier: "pro",
     },
@@ -719,6 +2126,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_transcript-diff",
         method: "GET",
         path: "/v1/events/{event_id}/transcript-diff",
+        sdk: {
+            body: null,
+            className: "TranscriptsApi",
+            params: {
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+                from: {
+                    kind: "number",
+                    py: "var_from",
+                    ts: "from",
+                },
+                to: {
+                    kind: "number",
+                    py: "to",
+                    ts: "to",
+                },
+            },
+            py: "get_transcript_diff",
+            ts: "getTranscriptDiff",
+        },
         summary: "Diff two transcript versions",
         tier: "pro",
     },
@@ -732,6 +2162,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_transcript-text",
         method: "GET",
         path: "/v1/events/{event_id}/transcript-text",
+        sdk: {
+            body: null,
+            className: "TranscriptsApi",
+            params: {
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+                split: {
+                    kind: "string",
+                    py: "split",
+                    ts: "split",
+                },
+                version: {
+                    kind: "number",
+                    py: "version",
+                    ts: "version",
+                },
+            },
+            py: "get_transcript_text",
+            ts: "getTranscriptText",
+        },
         summary: "Get an event's transcript as text",
         tier: "pro",
     },
@@ -745,6 +2198,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_macro_yield-curve_snapshot",
         method: "GET",
         path: "/v1/macro/yield-curve/snapshot",
+        sdk: {
+            body: null,
+            className: "MacroApi",
+            params: {
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+            },
+            py: "get_treasury_yield_curve_snapshot",
+            ts: "getTreasuryYieldCurveSnapshot",
+        },
         summary: "Get the latest US Treasury yield curve",
         tier: "lite",
     },
@@ -758,6 +2224,7 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_health",
         method: "GET",
         path: "/health",
+        sdk: null,
         summary: "Health check",
         tier: null,
     },
@@ -771,6 +2238,44 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_alert-events",
         method: "GET",
         path: "/v1/alert-events",
+        sdk: {
+            body: null,
+            className: "AlertEventsApi",
+            params: {
+                after: {
+                    kind: "string",
+                    py: "after",
+                    ts: "after",
+                },
+                alert_id: {
+                    kind: "string",
+                    py: "alert_id",
+                    ts: "alertId",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                external_user_id: {
+                    kind: "string",
+                    py: "external_user_id",
+                    ts: "externalUserId",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                type: {
+                    kind: "string",
+                    py: "type",
+                    ts: "type",
+                },
+            },
+            py: "list_alert_events",
+            ts: "listAlertEvents",
+        },
         summary: "List alert events",
         tier: "lite",
     },
@@ -784,6 +2289,34 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_alerts_{id}_events",
         method: "GET",
         path: "/v1/alerts/{id}/events",
+        sdk: {
+            body: null,
+            className: "AlertEventsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                type: {
+                    kind: "string",
+                    py: "type",
+                    ts: "type",
+                },
+            },
+            py: "list_alert_events_for_alert",
+            ts: "listAlertEventsForAlert",
+        },
         summary: "List an alert's events",
         tier: "lite",
     },
@@ -797,6 +2330,54 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_alerts",
         method: "GET",
         path: "/v1/alerts",
+        sdk: {
+            body: null,
+            className: "AlertsApi",
+            params: {
+                client_reference_id: {
+                    kind: "string",
+                    py: "client_reference_id",
+                    ts: "clientReferenceId",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                destination_id: {
+                    kind: "string",
+                    py: "destination_id",
+                    ts: "destinationId",
+                },
+                external_user_id: {
+                    kind: "string",
+                    py: "external_user_id",
+                    ts: "externalUserId",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                status: {
+                    kind: "string",
+                    py: "status",
+                    ts: "status",
+                },
+                symbol: {
+                    kind: "string",
+                    py: "symbol",
+                    ts: "symbol",
+                },
+                type: {
+                    kind: "string",
+                    py: "type",
+                    ts: "type",
+                },
+            },
+            py: "list_alerts",
+            ts: "listAlerts",
+        },
         summary: "List alerts",
         tier: "lite",
     },
@@ -810,6 +2391,24 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_alert-templates",
         method: "GET",
         path: "/v1/alert-templates",
+        sdk: {
+            body: null,
+            className: "ScriptsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_alert_templates",
+            ts: "listAlertTemplates",
+        },
         summary: "List indicator alert templates",
         tier: "lite",
     },
@@ -823,6 +2422,34 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_alert-users",
         method: "GET",
         path: "/v1/alert-users",
+        sdk: {
+            body: null,
+            className: "AlertUsersApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                q: {
+                    kind: "string",
+                    py: "q",
+                    ts: "q",
+                },
+                status: {
+                    kind: "string",
+                    py: "status",
+                    ts: "status",
+                },
+            },
+            py: "list_alert_users",
+            ts: "listAlertUsers",
+        },
         summary: "List end users",
         tier: "lite",
     },
@@ -836,6 +2463,79 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_announcements",
         method: "GET",
         path: "/v1/announcements",
+        sdk: {
+            body: null,
+            className: "NewsApi",
+            params: {
+                "announced_at.gt": {
+                    kind: "datetime",
+                    py: "announced_at_gt",
+                    ts: "announcedAtGt",
+                },
+                "announced_at.gte": {
+                    kind: "datetime",
+                    py: "announced_at_gte",
+                    ts: "announcedAtGte",
+                },
+                "announced_at.lt": {
+                    kind: "datetime",
+                    py: "announced_at_lt",
+                    ts: "announcedAtLt",
+                },
+                "announced_at.lte": {
+                    kind: "datetime",
+                    py: "announced_at_lte",
+                    ts: "announcedAtLte",
+                },
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "effective_from.gte": {
+                    kind: "date",
+                    py: "effective_from_gte",
+                    ts: "effectiveFromGte",
+                },
+                "effective_to.lte": {
+                    kind: "date",
+                    py: "effective_to_lte",
+                    ts: "effectiveToLte",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "item": {
+                    kind: "string",
+                    py: "item",
+                    ts: "item",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "topic": {
+                    kind: "string",
+                    py: "topic",
+                    ts: "topic",
+                },
+            },
+            py: "list_announcements",
+            ts: "listAnnouncements",
+        },
         summary: "List announcements",
         tier: "lite",
     },
@@ -849,6 +2549,69 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_metrics_cagr",
         method: "GET",
         path: "/v1/metrics/cagr",
+        sdk: {
+            body: null,
+            className: "MetricsApi",
+            params: {
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "fiscal_year.gt": {
+                    kind: "number",
+                    py: "fiscal_year_gt",
+                    ts: "fiscalYearGt",
+                },
+                "fiscal_year.gte": {
+                    kind: "number",
+                    py: "fiscal_year_gte",
+                    ts: "fiscalYearGte",
+                },
+                "fiscal_year.lt": {
+                    kind: "number",
+                    py: "fiscal_year_lt",
+                    ts: "fiscalYearLt",
+                },
+                "fiscal_year.lte": {
+                    kind: "number",
+                    py: "fiscal_year_lte",
+                    ts: "fiscalYearLte",
+                },
+                "horizon": {
+                    kind: "number",
+                    py: "horizon",
+                    ts: "horizon",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "period": {
+                    kind: "string",
+                    py: "period",
+                    ts: "period",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_cagr",
+            ts: "listCagr",
+        },
         summary: "List CAGRs",
         tier: "lite",
     },
@@ -862,6 +2625,49 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_companies",
         method: "GET",
         path: "/v1/companies",
+        sdk: {
+            body: null,
+            className: "CompaniesApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                exchange: {
+                    kind: "string",
+                    py: "exchange",
+                    ts: "exchange",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                q: {
+                    kind: "string",
+                    py: "q",
+                    ts: "q",
+                },
+                sector: {
+                    kind: "string",
+                    py: "sector",
+                    ts: "sector",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_companies",
+            ts: "listCompanies",
+        },
         summary: "List listed companies",
         tier: "free",
     },
@@ -875,6 +2681,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_datasets",
         method: "GET",
         path: "/v1/datasets",
+        sdk: {
+            body: null,
+            className: "FilingsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_datasets",
+            ts: "listDatasets",
+        },
         summary: "List SEC dataset releases",
         tier: "enterprise",
     },
@@ -888,6 +2717,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_destinations_{id}_deliveries",
         method: "GET",
         path: "/v1/destinations/{id}/deliveries",
+        sdk: {
+            body: null,
+            className: "DestinationsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_destination_deliveries",
+            ts: "listDestinationDeliveries",
+        },
         summary: "List a destination's deliveries",
         tier: "lite",
     },
@@ -901,6 +2753,24 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_destinations",
         method: "GET",
         path: "/v1/destinations",
+        sdk: {
+            body: null,
+            className: "DestinationsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_destinations",
+            ts: "listDestinations",
+        },
         summary: "List destinations",
         tier: "lite",
     },
@@ -914,6 +2784,59 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_dividends",
         method: "GET",
         path: "/v1/dividends",
+        sdk: {
+            body: null,
+            className: "CorporateActionsApi",
+            params: {
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "ex_date.gt": {
+                    kind: "date",
+                    py: "ex_date_gt",
+                    ts: "exDateGt",
+                },
+                "ex_date.gte": {
+                    kind: "date",
+                    py: "ex_date_gte",
+                    ts: "exDateGte",
+                },
+                "ex_date.lt": {
+                    kind: "date",
+                    py: "ex_date_lt",
+                    ts: "exDateLt",
+                },
+                "ex_date.lte": {
+                    kind: "date",
+                    py: "ex_date_lte",
+                    ts: "exDateLte",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "symbol": {
+                    kind: "string",
+                    py: "symbol",
+                    ts: "symbol",
+                },
+            },
+            py: "list_dividends",
+            ts: "listDividends",
+        },
         summary: "List dividends",
         tier: "lite",
     },
@@ -927,6 +2850,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_document-kinds",
         method: "GET",
         path: "/v1/catalog/document-kinds",
+        sdk: {
+            body: null,
+            className: "CatalogApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_document_kind_catalog",
+            ts: "listDocumentKindCatalog",
+        },
         summary: "List investor-document kinds",
         tier: "free",
     },
@@ -940,6 +2886,34 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_document-versions_{version_id}_sections",
         method: "GET",
         path: "/v1/document-versions/{version_id}/sections",
+        sdk: {
+            body: null,
+            className: "FilingsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                outline: {
+                    kind: "string",
+                    py: "outline",
+                    ts: "outline",
+                },
+                version_id: {
+                    kind: "string",
+                    py: "version_id",
+                    ts: "versionId",
+                },
+            },
+            py: "list_document_sections",
+            ts: "listDocumentSections",
+        },
         summary: "List a document version's sections",
         tier: "lite",
     },
@@ -953,6 +2927,89 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events",
         method: "GET",
         path: "/v1/events",
+        sdk: {
+            body: null,
+            className: "EventsApi",
+            params: {
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "date_kind": {
+                    kind: "string",
+                    py: "date_kind",
+                    ts: "dateKind",
+                },
+                "expand": {
+                    kind: "string",
+                    py: "expand",
+                    ts: "expand",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "fiscal_quarter": {
+                    kind: "number",
+                    py: "fiscal_quarter",
+                    ts: "fiscalQuarter",
+                },
+                "fiscal_year": {
+                    kind: "number",
+                    py: "fiscal_year",
+                    ts: "fiscalYear",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "scheduled_at.gt": {
+                    kind: "date",
+                    py: "scheduled_at_gt",
+                    ts: "scheduledAtGt",
+                },
+                "scheduled_at.gte": {
+                    kind: "date",
+                    py: "scheduled_at_gte",
+                    ts: "scheduledAtGte",
+                },
+                "scheduled_at.lt": {
+                    kind: "date",
+                    py: "scheduled_at_lt",
+                    ts: "scheduledAtLt",
+                },
+                "scheduled_at.lte": {
+                    kind: "date",
+                    py: "scheduled_at_lte",
+                    ts: "scheduledAtLte",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "status": {
+                    kind: "string",
+                    py: "status",
+                    ts: "status",
+                },
+                "type": {
+                    kind: "string",
+                    py: "type",
+                    ts: "type",
+                },
+            },
+            py: "list_events",
+            ts: "listEvents",
+        },
         summary: "List events",
         tier: "free",
     },
@@ -966,6 +3023,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_event-types",
         method: "GET",
         path: "/v1/catalog/event-types",
+        sdk: {
+            body: null,
+            className: "CatalogApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_event_type_catalog",
+            ts: "listEventTypeCatalog",
+        },
         summary: "List event types",
         tier: "free",
     },
@@ -979,6 +3059,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_exchanges",
         method: "GET",
         path: "/v1/catalog/exchanges",
+        sdk: {
+            body: null,
+            className: "CatalogApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_exchange_catalog",
+            ts: "listExchangeCatalog",
+        },
         summary: "List exchanges",
         tier: "free",
     },
@@ -992,6 +3095,39 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_fact-places",
         method: "GET",
         path: "/v1/fact-places",
+        sdk: {
+            body: null,
+            className: "FilingsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                document_version: {
+                    kind: "string",
+                    py: "document_version",
+                    ts: "documentVersion",
+                },
+                fact: {
+                    kind: "string",
+                    py: "fact",
+                    ts: "fact",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                status: {
+                    kind: "string",
+                    py: "status",
+                    ts: "status",
+                },
+            },
+            py: "list_fact_places",
+            ts: "listFactPlaces",
+        },
         summary: "List where facts appear in a document",
         tier: "pro",
     },
@@ -1005,6 +3141,49 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_filers_{cik}_holding-changes",
         method: "GET",
         path: "/v1/filers/{cik}/holding-changes",
+        sdk: {
+            body: null,
+            className: "HoldersApi",
+            params: {
+                cik: {
+                    kind: "string",
+                    py: "cik",
+                    ts: "cik",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                period_end: {
+                    kind: "date",
+                    py: "period_end",
+                    ts: "periodEnd",
+                },
+                prior_period_end: {
+                    kind: "date",
+                    py: "prior_period_end",
+                    ts: "priorPeriodEnd",
+                },
+                type: {
+                    kind: "string",
+                    py: "type",
+                    ts: "type",
+                },
+            },
+            py: "list_filer_holding_changes",
+            ts: "listFilerHoldingChanges",
+        },
         summary: "List a 13F manager's position changes",
         tier: "pro",
     },
@@ -1018,6 +3197,49 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_filers_{cik}_holdings",
         method: "GET",
         path: "/v1/filers/{cik}/holdings",
+        sdk: {
+            body: null,
+            className: "HoldersApi",
+            params: {
+                cik: {
+                    kind: "string",
+                    py: "cik",
+                    ts: "cik",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                instruments: {
+                    kind: "string",
+                    py: "instruments",
+                    ts: "instruments",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                period_end: {
+                    kind: "date",
+                    py: "period_end",
+                    ts: "periodEnd",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_filer_holdings",
+            ts: "listFilerHoldings",
+        },
         summary: "List a 13F manager's holdings",
         tier: "lite",
     },
@@ -1031,6 +3253,54 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_filers",
         method: "GET",
         path: "/v1/filers",
+        sdk: {
+            body: null,
+            className: "CompaniesApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                form: {
+                    kind: "string",
+                    py: "form",
+                    ts: "form",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                listed: {
+                    kind: "boolean",
+                    py: "listed",
+                    ts: "listed",
+                },
+                phase: {
+                    kind: "string",
+                    py: "phase",
+                    ts: "phase",
+                },
+                q: {
+                    kind: "string",
+                    py: "q",
+                    ts: "q",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_filers",
+            ts: "listFilers",
+        },
         summary: "List SEC filers",
         tier: "lite",
     },
@@ -1044,6 +3314,39 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_filings_{accession}_facts",
         method: "GET",
         path: "/v1/filings/{accession}/facts",
+        sdk: {
+            body: null,
+            className: "FilingsApi",
+            params: {
+                accession: {
+                    kind: "string",
+                    py: "accession",
+                    ts: "accession",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                tag: {
+                    kind: "string",
+                    py: "tag",
+                    ts: "tag",
+                },
+            },
+            py: "list_filing_facts",
+            ts: "listFilingFacts",
+        },
         summary: "List a filing's numeric facts",
         tier: "lite",
     },
@@ -1057,6 +3360,34 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_filings_{accession}_holdings",
         method: "GET",
         path: "/v1/filings/{accession}/holdings",
+        sdk: {
+            body: null,
+            className: "FilingsApi",
+            params: {
+                accession: {
+                    kind: "string",
+                    py: "accession",
+                    ts: "accession",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_filing_holdings",
+            ts: "listFilingHoldings",
+        },
         summary: "List a holdings filing's lines",
         tier: "lite",
     },
@@ -1070,6 +3401,39 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_filings_{accession}_notes",
         method: "GET",
         path: "/v1/filings/{accession}/notes",
+        sdk: {
+            body: null,
+            className: "FilingsApi",
+            params: {
+                accession: {
+                    kind: "string",
+                    py: "accession",
+                    ts: "accession",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                tag: {
+                    kind: "string",
+                    py: "tag",
+                    ts: "tag",
+                },
+            },
+            py: "list_filing_notes",
+            ts: "listFilingNotes",
+        },
         summary: "List a filing's text facts",
         tier: "lite",
     },
@@ -1083,6 +3447,69 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_filings",
         method: "GET",
         path: "/v1/filings",
+        sdk: {
+            body: null,
+            className: "FilingsApi",
+            params: {
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "filed_at.gt": {
+                    kind: "date",
+                    py: "filed_at_gt",
+                    ts: "filedAtGt",
+                },
+                "filed_at.gte": {
+                    kind: "date",
+                    py: "filed_at_gte",
+                    ts: "filedAtGte",
+                },
+                "filed_at.lt": {
+                    kind: "date",
+                    py: "filed_at_lt",
+                    ts: "filedAtLt",
+                },
+                "filed_at.lte": {
+                    kind: "date",
+                    py: "filed_at_lte",
+                    ts: "filedAtLte",
+                },
+                "form": {
+                    kind: "string",
+                    py: "form",
+                    ts: "form",
+                },
+                "items": {
+                    kind: "string",
+                    py: "items",
+                    ts: "items",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "symbol": {
+                    kind: "string",
+                    py: "symbol",
+                    ts: "symbol",
+                },
+            },
+            py: "list_filings",
+            ts: "listFilings",
+        },
         summary: "List filings",
         tier: "lite",
     },
@@ -1096,6 +3523,54 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_financials_vintages",
         method: "GET",
         path: "/v1/financials/vintages",
+        sdk: {
+            body: null,
+            className: "FinancialsApi",
+            params: {
+                company: {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                concept: {
+                    kind: "string",
+                    py: "concept",
+                    ts: "concept",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                member: {
+                    kind: "string",
+                    py: "member",
+                    ts: "member",
+                },
+                period_end: {
+                    kind: "date",
+                    py: "period_end",
+                    ts: "periodEnd",
+                },
+                period_start: {
+                    kind: "date",
+                    py: "period_start",
+                    ts: "periodStart",
+                },
+            },
+            py: "list_financial_vintages",
+            ts: "listFinancialVintages",
+        },
         summary: "List the filed values of a fact",
         tier: "pro",
     },
@@ -1109,6 +3584,39 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_fiscal-periods",
         method: "GET",
         path: "/v1/fiscal-periods",
+        sdk: {
+            body: null,
+            className: "CalendarApi",
+            params: {
+                company: {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_fiscal_periods",
+            ts: "listFiscalPeriods",
+        },
         summary: "List fiscal periods",
         tier: "free",
     },
@@ -1122,6 +3630,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_forms",
         method: "GET",
         path: "/v1/catalog/forms",
+        sdk: {
+            body: null,
+            className: "CatalogApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_form_catalog",
+            ts: "listFormCatalog",
+        },
         summary: "List SEC forms",
         tier: "free",
     },
@@ -1135,6 +3666,44 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_funds_{fund}_holdings",
         method: "GET",
         path: "/v1/funds/{fund}/holdings",
+        sdk: {
+            body: null,
+            className: "FundsApi",
+            params: {
+                as_of: {
+                    kind: "date",
+                    py: "as_of",
+                    ts: "asOf",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                fund: {
+                    kind: "string",
+                    py: "fund",
+                    ts: "fund",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_fund_positions",
+            ts: "listFundPositions",
+        },
         summary: "List a fund's holdings",
         tier: "lite",
     },
@@ -1148,6 +3717,54 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_funds",
         method: "GET",
         path: "/v1/funds",
+        sdk: {
+            body: null,
+            className: "FundsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                exchange: {
+                    kind: "string",
+                    py: "exchange",
+                    ts: "exchange",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                q: {
+                    kind: "string",
+                    py: "q",
+                    ts: "q",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                structure: {
+                    kind: "string",
+                    py: "structure",
+                    ts: "structure",
+                },
+                type: {
+                    kind: "string",
+                    py: "type",
+                    ts: "type",
+                },
+            },
+            py: "list_funds",
+            ts: "listFunds",
+        },
         summary: "List funds",
         tier: "lite",
     },
@@ -1161,6 +3778,44 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_funds_{fund}_weights",
         method: "GET",
         path: "/v1/funds/{fund}/weights",
+        sdk: {
+            body: null,
+            className: "FundsApi",
+            params: {
+                as_of: {
+                    kind: "date",
+                    py: "as_of",
+                    ts: "asOf",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                dimension: {
+                    kind: "string",
+                    py: "dimension",
+                    ts: "dimension",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                fund: {
+                    kind: "string",
+                    py: "fund",
+                    ts: "fund",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_fund_weights",
+            ts: "listFundWeights",
+        },
         summary: "List a fund's sector, country and asset-class weights",
         tier: "lite",
     },
@@ -1174,6 +3829,69 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_metrics_growth",
         method: "GET",
         path: "/v1/metrics/growth",
+        sdk: {
+            body: null,
+            className: "MetricsApi",
+            params: {
+                "basis": {
+                    kind: "string",
+                    py: "basis",
+                    ts: "basis",
+                },
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "fiscal_year.gt": {
+                    kind: "number",
+                    py: "fiscal_year_gt",
+                    ts: "fiscalYearGt",
+                },
+                "fiscal_year.gte": {
+                    kind: "number",
+                    py: "fiscal_year_gte",
+                    ts: "fiscalYearGte",
+                },
+                "fiscal_year.lt": {
+                    kind: "number",
+                    py: "fiscal_year_lt",
+                    ts: "fiscalYearLt",
+                },
+                "fiscal_year.lte": {
+                    kind: "number",
+                    py: "fiscal_year_lte",
+                    ts: "fiscalYearLte",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "period": {
+                    kind: "string",
+                    py: "period",
+                    ts: "period",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_growth",
+            ts: "listGrowth",
+        },
         summary: "List growth rates",
         tier: "lite",
     },
@@ -1187,6 +3905,64 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_guidance",
         method: "GET",
         path: "/v1/guidance",
+        sdk: {
+            body: null,
+            className: "GuidanceApi",
+            params: {
+                basis: {
+                    kind: "string",
+                    py: "basis",
+                    ts: "basis",
+                },
+                company: {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                event: {
+                    kind: "string",
+                    py: "event",
+                    ts: "event",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                metric: {
+                    kind: "string",
+                    py: "metric",
+                    ts: "metric",
+                },
+                period_kind: {
+                    kind: "string",
+                    py: "period_kind",
+                    ts: "periodKind",
+                },
+                review: {
+                    kind: "string",
+                    py: "review",
+                    ts: "review",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_guidance",
+            ts: "listGuidance",
+        },
         summary: "List guidance items",
         tier: "lite",
     },
@@ -1200,6 +3976,54 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_holder-changes",
         method: "GET",
         path: "/v1/holder-changes",
+        sdk: {
+            body: null,
+            className: "HoldersApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                filer: {
+                    kind: "string",
+                    py: "filer",
+                    ts: "filer",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                period_end: {
+                    kind: "date",
+                    py: "period_end",
+                    ts: "periodEnd",
+                },
+                prior_period_end: {
+                    kind: "date",
+                    py: "prior_period_end",
+                    ts: "priorPeriodEnd",
+                },
+                symbol: {
+                    kind: "string",
+                    py: "symbol",
+                    ts: "symbol",
+                },
+                type: {
+                    kind: "string",
+                    py: "type",
+                    ts: "type",
+                },
+            },
+            py: "list_holder_changes",
+            ts: "listHolderChanges",
+        },
         summary: "List 13F position changes in a stock or a fund",
         tier: "pro",
     },
@@ -1213,6 +4037,54 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_holders",
         method: "GET",
         path: "/v1/holders",
+        sdk: {
+            body: null,
+            className: "HoldersApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                instruments: {
+                    kind: "string",
+                    py: "instruments",
+                    ts: "instruments",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                period_end: {
+                    kind: "date",
+                    py: "period_end",
+                    ts: "periodEnd",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                source: {
+                    kind: "string",
+                    py: "source",
+                    ts: "source",
+                },
+                symbol: {
+                    kind: "string",
+                    py: "symbol",
+                    ts: "symbol",
+                },
+            },
+            py: "list_holders",
+            ts: "listHolders",
+        },
         summary: "List who holds a stock or a fund",
         tier: "lite",
     },
@@ -1226,6 +4098,69 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_insider-holdings",
         method: "GET",
         path: "/v1/insider-holdings",
+        sdk: {
+            body: null,
+            className: "InsiderTradesApi",
+            params: {
+                "as_of.gt": {
+                    kind: "date",
+                    py: "as_of_gt",
+                    ts: "asOfGt",
+                },
+                "as_of.gte": {
+                    kind: "date",
+                    py: "as_of_gte",
+                    ts: "asOfGte",
+                },
+                "as_of.lt": {
+                    kind: "date",
+                    py: "as_of_lt",
+                    ts: "asOfLt",
+                },
+                "as_of.lte": {
+                    kind: "date",
+                    py: "as_of_lte",
+                    ts: "asOfLte",
+                },
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "is_derivative": {
+                    kind: "boolean",
+                    py: "is_derivative",
+                    ts: "isDerivative",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "owner": {
+                    kind: "string",
+                    py: "owner",
+                    ts: "owner",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_insider_holdings",
+            ts: "listInsiderHoldings",
+        },
         summary: "List insider holdings",
         tier: "standard",
     },
@@ -1239,6 +4174,84 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_insider-trades",
         method: "GET",
         path: "/v1/insider-trades",
+        sdk: {
+            body: null,
+            className: "InsiderTradesApi",
+            params: {
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "filed_at.gt": {
+                    kind: "date",
+                    py: "filed_at_gt",
+                    ts: "filedAtGt",
+                },
+                "filed_at.gte": {
+                    kind: "date",
+                    py: "filed_at_gte",
+                    ts: "filedAtGte",
+                },
+                "filed_at.lt": {
+                    kind: "date",
+                    py: "filed_at_lt",
+                    ts: "filedAtLt",
+                },
+                "filed_at.lte": {
+                    kind: "date",
+                    py: "filed_at_lte",
+                    ts: "filedAtLte",
+                },
+                "is_derivative": {
+                    kind: "boolean",
+                    py: "is_derivative",
+                    ts: "isDerivative",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "owner": {
+                    kind: "string",
+                    py: "owner",
+                    ts: "owner",
+                },
+                "side": {
+                    kind: "string",
+                    py: "side",
+                    ts: "side",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "transaction_date.gte": {
+                    kind: "date",
+                    py: "transaction_date_gte",
+                    ts: "transactionDateGte",
+                },
+                "transaction_date.lte": {
+                    kind: "date",
+                    py: "transaction_date_lte",
+                    ts: "transactionDateLte",
+                },
+            },
+            py: "list_insider_trades",
+            ts: "listInsiderTrades",
+        },
         summary: "List insider trades",
         tier: "standard",
     },
@@ -1252,6 +4265,59 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_instruments",
         method: "GET",
         path: "/v1/instruments",
+        sdk: {
+            body: null,
+            className: "InstrumentsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                exchange: {
+                    kind: "string",
+                    py: "exchange",
+                    ts: "exchange",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                is_active: {
+                    kind: "boolean",
+                    py: "is_active",
+                    ts: "isActive",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                q: {
+                    kind: "string",
+                    py: "q",
+                    ts: "q",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                structure: {
+                    kind: "string",
+                    py: "structure",
+                    ts: "structure",
+                },
+                type: {
+                    kind: "string",
+                    py: "type",
+                    ts: "type",
+                },
+            },
+            py: "list_instruments",
+            ts: "listInstruments",
+        },
         summary: "List instruments",
         tier: "free",
     },
@@ -1265,6 +4331,59 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_investor-documents",
         method: "GET",
         path: "/v1/investor-documents",
+        sdk: {
+            body: null,
+            className: "InvestorDocumentsApi",
+            params: {
+                category: {
+                    kind: "string",
+                    py: "category",
+                    ts: "category",
+                },
+                company: {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                event: {
+                    kind: "string",
+                    py: "event",
+                    ts: "event",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                fiscal_year: {
+                    kind: "number",
+                    py: "fiscal_year",
+                    ts: "fiscalYear",
+                },
+                kind: {
+                    kind: "string",
+                    py: "kind",
+                    ts: "kind",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_investor_documents",
+            ts: "listInvestorDocuments",
+        },
         summary: "List investor documents",
         tier: "pro",
     },
@@ -1278,6 +4397,69 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_ipos",
         method: "GET",
         path: "/v1/ipos",
+        sdk: {
+            body: null,
+            className: "OfferingsApi",
+            params: {
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "is_spac": {
+                    kind: "boolean",
+                    py: "is_spac",
+                    ts: "isSpac",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "listing_date.gt": {
+                    kind: "date",
+                    py: "listing_date_gt",
+                    ts: "listingDateGt",
+                },
+                "listing_date.gte": {
+                    kind: "date",
+                    py: "listing_date_gte",
+                    ts: "listingDateGte",
+                },
+                "listing_date.lt": {
+                    kind: "date",
+                    py: "listing_date_lt",
+                    ts: "listingDateLt",
+                },
+                "listing_date.lte": {
+                    kind: "date",
+                    py: "listing_date_lte",
+                    ts: "listingDateLte",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "stage": {
+                    kind: "string",
+                    py: "stage",
+                    ts: "stage",
+                },
+            },
+            py: "list_ipos",
+            ts: "listIpos",
+        },
         summary: "List offerings",
         tier: "lite",
     },
@@ -1291,6 +4473,49 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_kpis",
         method: "GET",
         path: "/v1/kpis",
+        sdk: {
+            body: null,
+            className: "GuidanceApi",
+            params: {
+                company: {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                event: {
+                    kind: "string",
+                    py: "event",
+                    ts: "event",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                metric: {
+                    kind: "string",
+                    py: "metric",
+                    ts: "metric",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_kpis",
+            ts: "listKpis",
+        },
         summary: "List KPI mentions",
         tier: "pro",
     },
@@ -1304,6 +4529,59 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_macro_gdp",
         method: "GET",
         path: "/v1/macro/gdp",
+        sdk: {
+            body: null,
+            className: "MacroApi",
+            params: {
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "reference_date.gt": {
+                    kind: "date",
+                    py: "reference_date_gt",
+                    ts: "referenceDateGt",
+                },
+                "reference_date.gte": {
+                    kind: "date",
+                    py: "reference_date_gte",
+                    ts: "referenceDateGte",
+                },
+                "reference_date.lt": {
+                    kind: "date",
+                    py: "reference_date_lt",
+                    ts: "referenceDateLt",
+                },
+                "reference_date.lte": {
+                    kind: "date",
+                    py: "reference_date_lte",
+                    ts: "referenceDateLte",
+                },
+                "series": {
+                    kind: "string",
+                    py: "series",
+                    ts: "series",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_macro_gdp",
+            ts: "listMacroGdp",
+        },
         summary: "List US GDP and income readings",
         tier: "lite",
     },
@@ -1317,6 +4595,59 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_macro_inflation",
         method: "GET",
         path: "/v1/macro/inflation",
+        sdk: {
+            body: null,
+            className: "MacroApi",
+            params: {
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "reference_date.gt": {
+                    kind: "date",
+                    py: "reference_date_gt",
+                    ts: "referenceDateGt",
+                },
+                "reference_date.gte": {
+                    kind: "date",
+                    py: "reference_date_gte",
+                    ts: "referenceDateGte",
+                },
+                "reference_date.lt": {
+                    kind: "date",
+                    py: "reference_date_lt",
+                    ts: "referenceDateLt",
+                },
+                "reference_date.lte": {
+                    kind: "date",
+                    py: "reference_date_lte",
+                    ts: "referenceDateLte",
+                },
+                "series": {
+                    kind: "string",
+                    py: "series",
+                    ts: "series",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_macro_inflation",
+            ts: "listMacroInflation",
+        },
         summary: "List US inflation readings",
         tier: "lite",
     },
@@ -1330,6 +4661,59 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_macro_labor",
         method: "GET",
         path: "/v1/macro/labor",
+        sdk: {
+            body: null,
+            className: "MacroApi",
+            params: {
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "reference_date.gt": {
+                    kind: "date",
+                    py: "reference_date_gt",
+                    ts: "referenceDateGt",
+                },
+                "reference_date.gte": {
+                    kind: "date",
+                    py: "reference_date_gte",
+                    ts: "referenceDateGte",
+                },
+                "reference_date.lt": {
+                    kind: "date",
+                    py: "reference_date_lt",
+                    ts: "referenceDateLt",
+                },
+                "reference_date.lte": {
+                    kind: "date",
+                    py: "reference_date_lte",
+                    ts: "referenceDateLte",
+                },
+                "series": {
+                    kind: "string",
+                    py: "series",
+                    ts: "series",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_macro_labor",
+            ts: "listMacroLabor",
+        },
         summary: "List US labor readings",
         tier: "lite",
     },
@@ -1343,6 +4727,39 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_macro_series",
         method: "GET",
         path: "/v1/macro/series",
+        sdk: {
+            body: null,
+            className: "MacroApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                family: {
+                    kind: "string",
+                    py: "family",
+                    ts: "family",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_macro_series",
+            ts: "listMacroSeries",
+        },
         summary: "List US macro series",
         tier: "free",
     },
@@ -1356,6 +4773,39 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_mapping-rules",
         method: "GET",
         path: "/v1/catalog/mapping-rules",
+        sdk: {
+            body: null,
+            className: "CatalogApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                metric_id: {
+                    kind: "string",
+                    py: "metric_id",
+                    ts: "metricId",
+                },
+                statement: {
+                    kind: "string",
+                    py: "statement",
+                    ts: "statement",
+                },
+            },
+            py: "list_mapping_rules",
+            ts: "listMappingRules",
+        },
         summary: "List standardized mapping rules",
         tier: "free",
     },
@@ -1369,6 +4819,54 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_market-holidays",
         method: "GET",
         path: "/v1/market-holidays",
+        sdk: {
+            body: null,
+            className: "CalendarApi",
+            params: {
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "date.gt": {
+                    kind: "date",
+                    py: "date_gt",
+                    ts: "dateGt",
+                },
+                "date.gte": {
+                    kind: "date",
+                    py: "date_gte",
+                    ts: "dateGte",
+                },
+                "date.lt": {
+                    kind: "date",
+                    py: "date_lt",
+                    ts: "dateLt",
+                },
+                "date.lte": {
+                    kind: "date",
+                    py: "date_lte",
+                    ts: "dateLte",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_market_holidays",
+            ts: "listMarketHolidays",
+        },
         summary: "List market holidays",
         tier: "free",
     },
@@ -1382,6 +4880,34 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_metrics",
         method: "GET",
         path: "/v1/catalog/metrics",
+        sdk: {
+            body: null,
+            className: "CatalogApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                statement: {
+                    kind: "string",
+                    py: "statement",
+                    ts: "statement",
+                },
+            },
+            py: "list_metric_catalog",
+            ts: "listMetricCatalog",
+        },
         summary: "List standardized metrics",
         tier: "free",
     },
@@ -1395,6 +4921,74 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_news",
         method: "GET",
         path: "/v1/news",
+        sdk: {
+            body: null,
+            className: "NewsApi",
+            params: {
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "event": {
+                    kind: "string",
+                    py: "event",
+                    ts: "event",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "kind": {
+                    kind: "string",
+                    py: "kind",
+                    ts: "kind",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "published_at.gt": {
+                    kind: "datetime",
+                    py: "published_at_gt",
+                    ts: "publishedAtGt",
+                },
+                "published_at.gte": {
+                    kind: "datetime",
+                    py: "published_at_gte",
+                    ts: "publishedAtGte",
+                },
+                "published_at.lt": {
+                    kind: "datetime",
+                    py: "published_at_lt",
+                    ts: "publishedAtLt",
+                },
+                "published_at.lte": {
+                    kind: "datetime",
+                    py: "published_at_lte",
+                    ts: "publishedAtLte",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "topic": {
+                    kind: "string",
+                    py: "topic",
+                    ts: "topic",
+                },
+            },
+            py: "list_news",
+            ts: "listNews",
+        },
         summary: "List news items",
         tier: "lite",
     },
@@ -1408,6 +5002,69 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_offerings",
         method: "GET",
         path: "/v1/offerings",
+        sdk: {
+            body: null,
+            className: "OfferingsApi",
+            params: {
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "exemption": {
+                    kind: "string",
+                    py: "exemption",
+                    ts: "exemption",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "filed_at.gte": {
+                    kind: "date",
+                    py: "filed_at_gte",
+                    ts: "filedAtGte",
+                },
+                "filed_at.lte": {
+                    kind: "date",
+                    py: "filed_at_lte",
+                    ts: "filedAtLte",
+                },
+                "industry": {
+                    kind: "string",
+                    py: "industry",
+                    ts: "industry",
+                },
+                "is_amendment": {
+                    kind: "boolean",
+                    py: "is_amendment",
+                    ts: "isAmendment",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "total_sold.gte": {
+                    kind: "number",
+                    py: "total_sold_gte",
+                    ts: "totalSoldGte",
+                },
+            },
+            py: "list_offerings",
+            ts: "listOfferings",
+        },
         summary: "List Form D private offerings",
         tier: "lite",
     },
@@ -1421,6 +5078,44 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_participants",
         method: "GET",
         path: "/v1/participants",
+        sdk: {
+            body: null,
+            className: "EventsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                event: {
+                    kind: "string",
+                    py: "event",
+                    ts: "event",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                person: {
+                    kind: "string",
+                    py: "person",
+                    ts: "person",
+                },
+                role: {
+                    kind: "string",
+                    py: "role",
+                    ts: "role",
+                },
+            },
+            py: "list_participants",
+            ts: "listParticipants",
+        },
         summary: "List event participations",
         tier: "lite",
     },
@@ -1434,6 +5129,54 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_people",
         method: "GET",
         path: "/v1/people",
+        sdk: {
+            body: null,
+            className: "CompaniesApi",
+            params: {
+                company: {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                event: {
+                    kind: "string",
+                    py: "event",
+                    ts: "event",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                q: {
+                    kind: "string",
+                    py: "q",
+                    ts: "q",
+                },
+                role: {
+                    kind: "string",
+                    py: "role",
+                    ts: "role",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_people",
+            ts: "listPeople",
+        },
         summary: "List people",
         tier: "lite",
     },
@@ -1447,6 +5190,34 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_qa",
         method: "GET",
         path: "/v1/events/{event_id}/qa",
+        sdk: {
+            body: null,
+            className: "EventsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+                include: {
+                    kind: "string",
+                    py: "include",
+                    ts: "include",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_qa",
+            ts: "listQa",
+        },
         summary: "List an event's Q&A pairs",
         tier: "pro",
     },
@@ -1460,6 +5231,69 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_metrics_ratios",
         method: "GET",
         path: "/v1/metrics/ratios",
+        sdk: {
+            body: null,
+            className: "MetricsApi",
+            params: {
+                "category": {
+                    kind: "string",
+                    py: "category",
+                    ts: "category",
+                },
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "fiscal_year.gt": {
+                    kind: "number",
+                    py: "fiscal_year_gt",
+                    ts: "fiscalYearGt",
+                },
+                "fiscal_year.gte": {
+                    kind: "number",
+                    py: "fiscal_year_gte",
+                    ts: "fiscalYearGte",
+                },
+                "fiscal_year.lt": {
+                    kind: "number",
+                    py: "fiscal_year_lt",
+                    ts: "fiscalYearLt",
+                },
+                "fiscal_year.lte": {
+                    kind: "number",
+                    py: "fiscal_year_lte",
+                    ts: "fiscalYearLte",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "period": {
+                    kind: "string",
+                    py: "period",
+                    ts: "period",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_ratios",
+            ts: "listRatios",
+        },
         summary: "List ratios",
         tier: "lite",
     },
@@ -1473,6 +5307,24 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_scripts",
         method: "GET",
         path: "/v1/scripts",
+        sdk: {
+            body: null,
+            className: "ScriptsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_scripts",
+            ts: "listScripts",
+        },
         summary: "List scripts",
         tier: "lite",
     },
@@ -1486,6 +5338,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_scripts_{id}_versions",
         method: "GET",
         path: "/v1/scripts/{id}/versions",
+        sdk: {
+            body: null,
+            className: "ScriptsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_script_versions",
+            ts: "listScriptVersions",
+        },
         summary: "List script versions",
         tier: "lite",
     },
@@ -1499,6 +5374,34 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_sections",
         method: "GET",
         path: "/v1/catalog/sections",
+        sdk: {
+            body: null,
+            className: "CatalogApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                form: {
+                    kind: "string",
+                    py: "form",
+                    ts: "form",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_section_catalog",
+            ts: "listSectionCatalog",
+        },
         summary: "List filing section ids",
         tier: "free",
     },
@@ -1512,6 +5415,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_sectors",
         method: "GET",
         path: "/v1/catalog/sectors",
+        sdk: {
+            body: null,
+            className: "CatalogApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_sector_catalog",
+            ts: "listSectorCatalog",
+        },
         summary: "List sectors",
         tier: "free",
     },
@@ -1525,6 +5451,74 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_segments",
         method: "GET",
         path: "/v1/segments",
+        sdk: {
+            body: null,
+            className: "FinancialsApi",
+            params: {
+                "axis": {
+                    kind: "string",
+                    py: "axis",
+                    ts: "axis",
+                },
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "fiscal_year.gt": {
+                    kind: "number",
+                    py: "fiscal_year_gt",
+                    ts: "fiscalYearGt",
+                },
+                "fiscal_year.gte": {
+                    kind: "number",
+                    py: "fiscal_year_gte",
+                    ts: "fiscalYearGte",
+                },
+                "fiscal_year.lt": {
+                    kind: "number",
+                    py: "fiscal_year_lt",
+                    ts: "fiscalYearLt",
+                },
+                "fiscal_year.lte": {
+                    kind: "number",
+                    py: "fiscal_year_lte",
+                    ts: "fiscalYearLte",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "metric": {
+                    kind: "string",
+                    py: "metric",
+                    ts: "metric",
+                },
+                "period": {
+                    kind: "string",
+                    py: "period",
+                    ts: "period",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_segments",
+            ts: "listSegments",
+        },
         summary: "List segment values",
         tier: "standard",
     },
@@ -1538,6 +5532,74 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_segments_detailed",
         method: "GET",
         path: "/v1/segments/detailed",
+        sdk: {
+            body: null,
+            className: "FinancialsApi",
+            params: {
+                "axis": {
+                    kind: "string",
+                    py: "axis",
+                    ts: "axis",
+                },
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "fiscal_year.gt": {
+                    kind: "number",
+                    py: "fiscal_year_gt",
+                    ts: "fiscalYearGt",
+                },
+                "fiscal_year.gte": {
+                    kind: "number",
+                    py: "fiscal_year_gte",
+                    ts: "fiscalYearGte",
+                },
+                "fiscal_year.lt": {
+                    kind: "number",
+                    py: "fiscal_year_lt",
+                    ts: "fiscalYearLt",
+                },
+                "fiscal_year.lte": {
+                    kind: "number",
+                    py: "fiscal_year_lte",
+                    ts: "fiscalYearLte",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "metric": {
+                    kind: "string",
+                    py: "metric",
+                    ts: "metric",
+                },
+                "period": {
+                    kind: "string",
+                    py: "period",
+                    ts: "period",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_segments_detailed",
+            ts: "listSegmentsDetailed",
+        },
         summary: "List segment values with lineage",
         tier: "pro",
     },
@@ -1551,6 +5613,39 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_splits",
         method: "GET",
         path: "/v1/splits",
+        sdk: {
+            body: null,
+            className: "CorporateActionsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                sort: {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                symbol: {
+                    kind: "string",
+                    py: "symbol",
+                    ts: "symbol",
+                },
+            },
+            py: "list_splits",
+            ts: "listSplits",
+        },
         summary: "List stock splits",
         tier: "lite",
     },
@@ -1564,6 +5659,29 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_transcript-versions",
         method: "GET",
         path: "/v1/events/{event_id}/transcript-versions",
+        sdk: {
+            body: null,
+            className: "TranscriptsApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                event_id: {
+                    kind: "string",
+                    py: "event_id",
+                    ts: "eventId",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_transcript_versions",
+            ts: "listTranscriptVersions",
+        },
         summary: "List an event's transcript versions",
         tier: "pro",
     },
@@ -1577,6 +5695,54 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_macro_yield-curve",
         method: "GET",
         path: "/v1/macro/yield-curve",
+        sdk: {
+            body: null,
+            className: "MacroApi",
+            params: {
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "date.gt": {
+                    kind: "date",
+                    py: "date_gt",
+                    ts: "dateGt",
+                },
+                "date.gte": {
+                    kind: "date",
+                    py: "date_gte",
+                    ts: "dateGte",
+                },
+                "date.lt": {
+                    kind: "date",
+                    py: "date_lt",
+                    ts: "dateLt",
+                },
+                "date.lte": {
+                    kind: "date",
+                    py: "date_lte",
+                    ts: "dateLte",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_treasury_yield_curves",
+            ts: "listTreasuryYieldCurves",
+        },
         summary: "List US Treasury yield curves",
         tier: "lite",
     },
@@ -1590,6 +5756,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/post--_v1_alerts_{id}:pause",
         method: "POST",
         path: "/v1/alerts/{id}:pause",
+        sdk: {
+            body: null,
+            className: "AlertsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "pause_alert",
+            ts: "pauseAlert",
+        },
         summary: "Pause an alert",
         tier: "lite",
     },
@@ -1603,6 +5782,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/post--_v1_alert-users_{external_user_id}:pause",
         method: "POST",
         path: "/v1/alert-users/{external_user_id}:pause",
+        sdk: {
+            body: null,
+            className: "AlertUsersApi",
+            params: {
+                external_user_id: {
+                    kind: "string",
+                    py: "external_user_id",
+                    ts: "externalUserId",
+                },
+            },
+            py: "pause_alert_user",
+            ts: "pauseAlertUser",
+        },
         summary: "Pause an end user",
         tier: "lite",
     },
@@ -1616,6 +5808,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/post--_v1_alerts_{id}:resume",
         method: "POST",
         path: "/v1/alerts/{id}:resume",
+        sdk: {
+            body: null,
+            className: "AlertsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "resume_alert",
+            ts: "resumeAlert",
+        },
         summary: "Resume an alert",
         tier: "lite",
     },
@@ -1629,6 +5834,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/post--_v1_alert-users_{external_user_id}:resume",
         method: "POST",
         path: "/v1/alert-users/{external_user_id}:resume",
+        sdk: {
+            body: null,
+            className: "AlertUsersApi",
+            params: {
+                external_user_id: {
+                    kind: "string",
+                    py: "external_user_id",
+                    ts: "externalUserId",
+                },
+            },
+            py: "resume_alert_user",
+            ts: "resumeAlertUser",
+        },
         summary: "Resume an end user",
         tier: "lite",
     },
@@ -1642,6 +5860,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/post--_v1_destinations_{id}:rotate-secret",
         method: "POST",
         path: "/v1/destinations/{id}:rotate-secret",
+        sdk: {
+            body: null,
+            className: "DestinationsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "rotate_destination_secret",
+            ts: "rotateDestinationSecret",
+        },
         summary: "Rotate a destination's secret",
         tier: "lite",
     },
@@ -1655,6 +5886,74 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_search_filings",
         method: "GET",
         path: "/v1/search/filings",
+        sdk: {
+            body: null,
+            className: "FilingsApi",
+            params: {
+                "case_sensitive": {
+                    kind: "boolean",
+                    py: "case_sensitive",
+                    ts: "caseSensitive",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "filed_at.gt": {
+                    kind: "date",
+                    py: "filed_at_gt",
+                    ts: "filedAtGt",
+                },
+                "filed_at.gte": {
+                    kind: "date",
+                    py: "filed_at_gte",
+                    ts: "filedAtGte",
+                },
+                "filed_at.lt": {
+                    kind: "date",
+                    py: "filed_at_lt",
+                    ts: "filedAtLt",
+                },
+                "filed_at.lte": {
+                    kind: "date",
+                    py: "filed_at_lte",
+                    ts: "filedAtLte",
+                },
+                "form": {
+                    kind: "string",
+                    py: "form",
+                    ts: "form",
+                },
+                "item": {
+                    kind: "string",
+                    py: "item",
+                    ts: "item",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "mode": {
+                    kind: "string",
+                    py: "mode",
+                    ts: "mode",
+                },
+                "q": {
+                    kind: "string",
+                    py: "q",
+                    ts: "q",
+                },
+                "symbol": {
+                    kind: "string",
+                    py: "symbol",
+                    ts: "symbol",
+                },
+            },
+            py: "search_filings",
+            ts: "searchFilings",
+        },
         summary: "Search filings",
         tier: "standard",
     },
@@ -1668,6 +5967,44 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_search_investor-documents",
         method: "GET",
         path: "/v1/search/investor-documents",
+        sdk: {
+            body: null,
+            className: "InvestorDocumentsApi",
+            params: {
+                company: {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                kind: {
+                    kind: "string",
+                    py: "kind",
+                    ts: "kind",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                mode: {
+                    kind: "string",
+                    py: "mode",
+                    ts: "mode",
+                },
+                q: {
+                    kind: "string",
+                    py: "q",
+                    ts: "q",
+                },
+            },
+            py: "search_investor_documents",
+            ts: "searchInvestorDocuments",
+        },
         summary: "Search investor documents",
         tier: "pro",
     },
@@ -1681,6 +6018,64 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_search_news",
         method: "GET",
         path: "/v1/search/news",
+        sdk: {
+            body: null,
+            className: "NewsApi",
+            params: {
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "field": {
+                    kind: "string",
+                    py: "var_field",
+                    ts: "field",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "mode": {
+                    kind: "string",
+                    py: "mode",
+                    ts: "mode",
+                },
+                "published_at.gt": {
+                    kind: "datetime",
+                    py: "published_at_gt",
+                    ts: "publishedAtGt",
+                },
+                "published_at.gte": {
+                    kind: "datetime",
+                    py: "published_at_gte",
+                    ts: "publishedAtGte",
+                },
+                "published_at.lt": {
+                    kind: "datetime",
+                    py: "published_at_lt",
+                    ts: "publishedAtLt",
+                },
+                "published_at.lte": {
+                    kind: "datetime",
+                    py: "published_at_lte",
+                    ts: "publishedAtLte",
+                },
+                "q": {
+                    kind: "string",
+                    py: "q",
+                    ts: "q",
+                },
+            },
+            py: "search_news",
+            ts: "searchNews",
+        },
         summary: "Search news",
         tier: "standard",
     },
@@ -1694,6 +6089,69 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_v1_search_transcripts",
         method: "GET",
         path: "/v1/search/transcripts",
+        sdk: {
+            body: null,
+            className: "TranscriptsApi",
+            params: {
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "conference_date.gt": {
+                    kind: "date",
+                    py: "conference_date_gt",
+                    ts: "conferenceDateGt",
+                },
+                "conference_date.gte": {
+                    kind: "date",
+                    py: "conference_date_gte",
+                    ts: "conferenceDateGte",
+                },
+                "conference_date.lt": {
+                    kind: "date",
+                    py: "conference_date_lt",
+                    ts: "conferenceDateLt",
+                },
+                "conference_date.lte": {
+                    kind: "date",
+                    py: "conference_date_lte",
+                    ts: "conferenceDateLte",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "event": {
+                    kind: "string",
+                    py: "event",
+                    ts: "event",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "mode": {
+                    kind: "string",
+                    py: "mode",
+                    ts: "mode",
+                },
+                "q": {
+                    kind: "string",
+                    py: "q",
+                    ts: "q",
+                },
+                "type": {
+                    kind: "string",
+                    py: "type",
+                    ts: "type",
+                },
+            },
+            py: "search_transcripts",
+            ts: "searchTranscripts",
+        },
         summary: "Search transcripts",
         tier: "pro",
     },
@@ -1707,6 +6165,7 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_status",
         method: "GET",
         path: "/status",
+        sdk: null,
         summary: "Service status",
         tier: null,
     },
@@ -1720,6 +6179,7 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/get--_status_licensing",
         method: "GET",
         path: "/status/licensing",
+        sdk: null,
         summary: "Licensing policy",
         tier: null,
     },
@@ -1733,6 +6193,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/post--_v1_alerts_{id}:test",
         method: "POST",
         path: "/v1/alerts/{id}:test",
+        sdk: {
+            body: null,
+            className: "AlertEventsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "test_alert",
+            ts: "testAlert",
+        },
         summary: "Send a test event",
         tier: "lite",
     },
@@ -1746,6 +6219,19 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/post--_v1_destinations_{id}:test",
         method: "POST",
         path: "/v1/destinations/{id}:test",
+        sdk: {
+            body: null,
+            className: "DestinationsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "test_destination",
+            ts: "testDestination",
+        },
         summary: "Send a test delivery",
         tier: "lite",
     },
@@ -1759,6 +6245,23 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/patch--_v1_alerts_{id}",
         method: "PATCH",
         path: "/v1/alerts/{id}",
+        sdk: {
+            body: {
+                model: "UpdateAlertRequest",
+                py: "update_alert_request",
+                ts: "updateAlertRequest",
+            },
+            className: "AlertsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "update_alert",
+            ts: "updateAlert",
+        },
         summary: "Update an alert",
         tier: "lite",
     },
@@ -1772,6 +6275,23 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/patch--_v1_alert-users_{external_user_id}",
         method: "PATCH",
         path: "/v1/alert-users/{external_user_id}",
+        sdk: {
+            body: {
+                model: "UpdateAlertUserRequest",
+                py: "update_alert_user_request",
+                ts: "updateAlertUserRequest",
+            },
+            className: "AlertUsersApi",
+            params: {
+                external_user_id: {
+                    kind: "string",
+                    py: "external_user_id",
+                    ts: "externalUserId",
+                },
+            },
+            py: "update_alert_user",
+            ts: "updateAlertUser",
+        },
         summary: "Create or update an end user",
         tier: "lite",
     },
@@ -1785,6 +6305,17 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/patch--_v1_me_alert-user-defaults",
         method: "PATCH",
         path: "/v1/me/alert-user-defaults",
+        sdk: {
+            body: {
+                model: "UpdateAlertUserDefaultsRequest",
+                py: "update_alert_user_defaults_request",
+                ts: "updateAlertUserDefaultsRequest",
+            },
+            className: "AlertUsersApi",
+            params: {},
+            py: "update_alert_user_defaults",
+            ts: "updateAlertUserDefaults",
+        },
         summary: "Update the end-user defaults",
         tier: "free",
     },
@@ -1798,6 +6329,23 @@ export const OPERATIONS = {
         docsUrl: "https://data.invinite.com/docs/patch--_v1_destinations_{id}",
         method: "PATCH",
         path: "/v1/destinations/{id}",
+        sdk: {
+            body: {
+                model: "UpdateDestinationRequest",
+                py: "update_destination_request",
+                ts: "updateDestinationRequest",
+            },
+            className: "DestinationsApi",
+            params: {
+                id: {
+                    kind: "string",
+                    py: "id",
+                    ts: "id",
+                },
+            },
+            py: "update_destination",
+            ts: "updateDestination",
+        },
         summary: "Update a destination",
         tier: "lite",
     },

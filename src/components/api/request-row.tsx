@@ -4,6 +4,7 @@ import * as React from "react";
 import type { RequestRun } from "@/components/api/request-groups";
 import type { ViewRequest } from "@/components/api/use-view-requests";
 import type { RequestMeta } from "@/lib/api/request-meta";
+import type { SnippetFormat } from "@/lib/api/request-snippets";
 
 import { JsonTree } from "@/components/api/json-tree";
 import { Badge } from "@/components/ui/badge";
@@ -11,9 +12,11 @@ import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { TIER_BADGE_LABELS } from "@/components/ui/credit-hint";
 import { ApiRequestError } from "@/lib/api/errors";
-import { cliOf, curlOf, operationOf, queryString } from "@/lib/api/request-meta";
+import { operationOf, queryString } from "@/lib/api/request-meta";
+import { hasSnippet, SNIPPET_FORMATS, snippetFormatLabel, snippetOf } from "@/lib/api/request-snippets";
 import { saveJsonFile } from "@/lib/download";
 import { formatNumber } from "@/lib/format";
+import { useRequestPanelStore } from "@/lib/stores/request-panel-store";
 import { cn } from "@/lib/utils";
 
 /** Whether a row is expanded, and how to change it (local to the panel, keyed by `request.key`). */
@@ -94,12 +97,12 @@ function AnswerBlock({ answer, fileStem }: { answer: unknown; fileStem: string }
     return (
         <div className="flex flex-col gap-1">
             <div className="flex items-center justify-end gap-1">
-                <CopyButton label="Copy the answer as JSON" value={json} />
+                <CopyButton label="Copy the response as JSON" value={json} />
                 <Button
-                    aria-label="Download the answer as JSON"
+                    aria-label="Download the response as JSON"
                     onClick={() => saveJsonFile(answer, `${fileStem}.json`)}
                     size="icon-xs"
-                    title="Download the answer as JSON"
+                    title="Download the response as JSON"
                     type="button"
                     variant="ghost"
                 >
@@ -111,44 +114,58 @@ function AnswerBlock({ answer, fileStem }: { answer: unknown; fileStem: string }
     );
 }
 
-type DetailView = "answer" | "cli" | "curl";
+/** Why a request has no code in a format. */
+function missingText(format: SnippetFormat) {
+    return format === "cli" ? "This operation has no CLI command." : `This operation is not in the ${snippetFormatLabel(format)} SDK.`;
+}
 
-/** The expanded part of a row: curl | CLI | Answer (one at a time), request id, docs link, the error of a failed one. */
+/**
+ * The expanded part of a row: curl | CLI | Python | TypeScript | Response (one at a time), request id, docs link, the
+ * error of a failed one. The code format is the panel's (`useRequestPanelStore().format`): picking one in a row picks it
+ * for every row and for "Copy all as …"; Response is this row's alone.
+ */
 function RequestDetails({ baseUrl, request }: { baseUrl: string; request: ViewRequest }) {
     const { answer, error, meta } = request;
 
     const operation = operationOf(meta.operationId);
 
-    const cli = cliOf(meta);
+    const format = useRequestPanelStore(state => state.format);
 
-    const [view, setView] = React.useState<DetailView>("curl");
+    const setFormat = useRequestPanelStore(state => state.setFormat);
 
-    const views: Array<{ label: string; value: DetailView }> = [
-        { label: "curl", value: "curl" },
-        ...(cli ? [{ label: "CLI", value: "cli" as const }] : []),
-        ...(answer === undefined ? [] : [{ label: "Answer", value: "answer" as const }]),
-    ];
+    const [answerShown, setAnswerShown] = React.useState(false);
 
-    const shown = views.some(item => item.value === view) ? view : "curl";
+    const showAnswer = answerShown && answer !== undefined;
 
     const day = new Date().toISOString().slice(0, 10);
+
+    const tabClass = "rounded-sm px-2 py-0.5 text-xs text-muted-foreground hover:text-foreground aria-pressed:bg-muted aria-pressed:font-medium aria-pressed:text-foreground";
 
     return (
         <div className="flex flex-col gap-2 pt-1 pb-3 pl-13 pr-3" data-testid="api-request-details">
             {error !== null && error !== undefined && <p className="text-destructive">{errorText(error)}</p>}
             <div className="flex flex-wrap items-center justify-between gap-2">
-                <div aria-label="Show the request as" className="inline-flex rounded-md border p-0.5" role="group">
-                    {views.map(item => (
+                <div aria-label="Show the request as" className="inline-flex flex-wrap rounded-md border p-0.5" role="group">
+                    {SNIPPET_FORMATS.map(item => (
                         <button
-                            aria-pressed={shown === item.value}
-                            className="rounded-sm px-2 py-0.5 text-xs text-muted-foreground aria-pressed:bg-muted aria-pressed:font-medium aria-pressed:text-foreground"
+                            aria-pressed={!showAnswer && format === item.value}
+                            className={tabClass}
                             key={item.value}
-                            onClick={() => setView(item.value)}
+                            onClick={() => {
+                                setFormat(item.value);
+
+                                setAnswerShown(false);
+                            }}
                             type="button"
                         >
                             {item.label}
                         </button>
                     ))}
+                    {answer !== undefined && (
+                        <button aria-pressed={showAnswer} className={tabClass} onClick={() => setAnswerShown(true)} type="button">
+                            Response
+                        </button>
+                    )}
                 </div>
                 {operation && (
                     <a className="inline-flex items-center gap-1 text-xs underline-offset-2 hover:underline" href={operation.docsUrl} rel="noopener noreferrer" target="_blank">
@@ -158,9 +175,11 @@ function RequestDetails({ baseUrl, request }: { baseUrl: string; request: ViewRe
                     </a>
                 )}
             </div>
-            {shown === "curl" && <CodeBlock label="Copy curl" text={curlOf(baseUrl, meta)} />}
-            {shown === "cli" && cli && <CodeBlock label="Copy the CLI command" text={cli} />}
-            {shown === "answer" && <AnswerBlock answer={answer} fileStem={`${meta.operationId}-${day}`} />}
+            {showAnswer
+                ? <AnswerBlock answer={answer} fileStem={`${meta.operationId}-${day}`} />
+                : hasSnippet(meta, format)
+                    ? <CodeBlock label={format === "cli" ? "Copy the CLI command" : `Copy ${snippetFormatLabel(format)}`} text={snippetOf(format, baseUrl, [meta])} />
+                    : <p className="text-xs text-muted-foreground">{missingText(format)}</p>}
             {meta.requestId && (
                 <div className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground">
                     <span className="shrink-0">Request id</span>

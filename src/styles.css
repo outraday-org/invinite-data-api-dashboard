@@ -212,8 +212,9 @@
     cursor: default;
 }
 
+/* `.hover-fill` (the sidebar rows) shows its hover by a background fill alone: no dimming, no text colour change. */
 @media (hover: hover) {
-    :where(a[href], button, summary, select, [role="button"], [role="link"]):hover:not(:disabled, [aria-disabled="true"], [data-disabled], [role="tab"]),
+    :where(a[href], button, summary, select, [role="button"], [role="link"]):hover:not(:disabled, [aria-disabled="true"], [data-disabled], [role="tab"], .hover-fill),
     .clickable-financial-row > td:hover:not(:has(:is(button, a):hover)) {
         opacity: 0.85;
     }

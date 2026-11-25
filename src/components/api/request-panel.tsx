@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useApiBaseUrl } from "@/lib/api/queries";
-import { curlOf } from "@/lib/api/request-meta";
+import { snippetFormatLabel, snippetOf } from "@/lib/api/request-snippets";
 import { docsUrl } from "@/lib/app-url";
 import { formatNumber } from "@/lib/format";
 import { DOCKED_PANEL_MIN_PX, useRequestPanelStore } from "@/lib/stores/request-panel-store";
@@ -93,7 +93,8 @@ function FoldedGroup({ baseUrl, expansion, hint, requests, title }: {
 /**
  * The request panel's body (pure, tested): the page's own requests first (the first one expanded), the shell's folded
  * under "App requests", the writes under "Writes"; a summary line with the count, the credits charged and the API host,
- * and "Copy all as curl". The key never appears: `curlOf` writes `$INVINITE_API_KEY`.
+ * and "Copy all as …" in the format the rows show (curl, CLI, Python, TypeScript). The key never appears: every format
+ * reads `$INVINITE_API_KEY` / `INVINITE_API_KEY`.
  */
 export function RequestPanelView({ baseUrl, onClose, pathname, requests }: {
     baseUrl: string;
@@ -109,7 +110,11 @@ export function RequestPanelView({ baseUrl, onClose, pathname, requests }: {
 
     const host = baseUrl.replace(/^https?:\/\//, "").replace(/\/+$/, "");
 
-    const allCurl = page.map(request => curlOf(baseUrl, request.meta)).join("\n");
+    const format = useRequestPanelStore(state => state.format);
+
+    const formatLabel = snippetFormatLabel(format);
+
+    const allCode = React.useMemo(() => snippetOf(format, baseUrl, page.map(request => request.meta)), [baseUrl, format, page]);
 
     return (
         <div className="flex min-h-full flex-col" data-testid="request-panel-view">
@@ -118,10 +123,9 @@ export function RequestPanelView({ baseUrl, onClose, pathname, requests }: {
                     <h2 className="text-section">Requests on this page</h2>
                     <span className="flex shrink-0 items-center gap-1">
                         {page.length > 0 && (
-                            <span className="flex items-center gap-0.5 text-xs text-muted-foreground">
-                                Copy all as curl
-                                <CopyButton label="Copy all as curl" value={allCurl} />
-                            </span>
+                            <CopyButton label={`Copy all as ${formatLabel}`} value={allCode}>
+                                {`Copy all as ${formatLabel}`}
+                            </CopyButton>
                         )}
                         {onClose && (
                             <Button aria-label="Close the request panel" onClick={onClose} size="icon-sm" type="button" variant="ghost">
@@ -140,7 +144,7 @@ export function RequestPanelView({ baseUrl, onClose, pathname, requests }: {
                         <div className="flex flex-col gap-1 px-3 py-6">
                             <p>This page has not asked the Data API yet.</p>
                             <p className="text-xs text-muted-foreground">
-                                Each request it sends appears here as it is made, with its curl and CLI line, its cost and its answer.
+                                Each request it sends appears here as it is made, as curl, CLI, Python and TypeScript, with its cost and its answer.
                             </p>
                         </div>
                     )
