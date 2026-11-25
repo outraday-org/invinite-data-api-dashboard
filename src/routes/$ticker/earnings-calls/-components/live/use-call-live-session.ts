@@ -3,6 +3,7 @@ import * as React from "react";
 import type { V2Event } from "@/lib/api/types";
 
 import { isEarningsEventLiveish, useV2LiveEvents } from "@/lib/api/queries";
+import { isReplayCapture } from "@/lib/earnings/capture-mode";
 
 /** After the end, the page waits this long for the recording (`has_audio`), polling the event every 30 s. */
 export const RECORDING_WAIT_MS = 60 * 60 * 1000;
@@ -44,11 +45,15 @@ export type CallLiveSession = {
 /**
  * The call page's live session (O4; the sticky rule of the former `LivePlayerSlot`): a call is followed live once it
  * is `capturing` or listed by `/v1/events?status=live` (asked only while `isEarningsEventLiveish` — never for an `armed`
- * call hours ahead, which would bill `/live-audio`). `clock` feeds `recordingWaitInterval` from `useV2Event`'s
+ * call hours ahead, which would bill `/live-audio`). A replay capture (`capture_mode` "replay") is never followed live:
+ * the earnings app publishes no live frame for a past call (`isPastReplay`), so the page shows the recorded-call
+ * player and waits for publication through `useV2Event`'s poll. `clock` feeds `recordingWaitInterval` from `useV2Event`'s
  * `refetchInterval` option (evaluated by the query, outside render, so the page keeps it in a ref).
  */
 export function useCallLiveSession(event: null | V2Event): CallLiveSession {
-    const { data: live } = useV2LiveEvents(event !== null && isEarningsEventLiveish(event));
+    const replay = event !== null && isReplayCapture(event);
+
+    const { data: live } = useV2LiveEvents(event !== null && !replay && isEarningsEventLiveish(event));
 
     const listed = event !== null && live?.data.some(item => item.event_id === event.event_id) === true;
 
@@ -58,7 +63,7 @@ export function useCallLiveSession(event: null | V2Event): CallLiveSession {
 
     const [gaveUp, setGaveUp] = React.useState(false);
 
-    if (!sawLive && event !== null && (event.capture_status === "capturing" || listed)) setSawLive(true);
+    if (!sawLive && event !== null && !replay && (event.capture_status === "capturing" || listed)) setSawLive(true);
 
     // `armed` is not over: a call listed live a moment before its capture starts has not ended yet.
     const ended = sawLive && event !== null && !NOT_ENDED_CAPTURE_STATUSES.has(event.capture_status);

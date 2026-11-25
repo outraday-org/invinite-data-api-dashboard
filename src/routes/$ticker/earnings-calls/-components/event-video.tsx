@@ -5,6 +5,7 @@ import * as React from "react";
 import type { V2Event, V2EventVideo } from "@/lib/api/types";
 
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { isReplayCapture } from "@/lib/earnings/capture-mode";
 import { httpsUrl, videoEmbedSrc, videoProviderLabel } from "@/lib/earnings/video";
 
 function ChannelNote({ video }: { video: V2EventVideo }) {
@@ -111,18 +112,20 @@ export function EventVideo({ onPlay, video }: { onPlay?: () => void; video: null
 /**
  * The video's place on the call page, above the tabs. During a live capture the live player
  * stays primary and the video waits under "Watch the broadcast"; before and after the call it
- * is shown. The disclosure button is the only conditional sibling, so a playing video keeps its
- * iframe when the capture ends; a video the user started stays mounted when a capture starts
- * (the 30-s refetch would otherwise tear the player down mid-play).
+ * is shown (a replay capture is not live: the video stays shown). The disclosure button is the
+ * only conditional sibling, so a playing video keeps its iframe when the capture ends; a video the
+ * user started stays mounted when a capture starts (the 30-s refetch would otherwise tear the
+ * player down mid-play).
  */
-export function EventVideoSlot({ event }: { event: Pick<V2Event, "capture_status" | "video"> }) {
+export function EventVideoSlot({ event }: { event: Pick<V2Event, "capture_mode" | "capture_status" | "video"> }) {
     const [open, setOpen] = React.useState(false);
 
     const [started, setStarted] = React.useState(false);
 
     if (!event.video) return null;
 
-    const live = event.capture_status === "capturing";
+    // A capturing replay (a recording taken after the call) is no live capture: the video stays shown.
+    const live = event.capture_status === "capturing" && !isReplayCapture(event);
 
     const DisclosureIcon = open ? ChevronDown : ChevronRight;
 

@@ -761,6 +761,26 @@ describe("quality pass", () => {
         expect(mocks.audioIds.every(id => id === "")).toBe(true);
     });
 
+    it("the live session: a replay capture is never followed live, even capturing and listed", () => {
+        const replay = (capture_status: string) => ({ ...eventOf(), capture_mode: "replay", capture_status }) as V2Event;
+
+        mocks.liveList = [{ event_id: "evt" }];
+
+        const { rerender, result } = renderHook(({ current }: { current: V2Event }) => useCallLiveSession(current), { initialProps: { current: replay("armed") } });
+
+        expect(result.current.sawLive).toBe(false);
+
+        rerender({ current: replay("capturing") });
+
+        expect(result.current.sawLive).toBe(false);
+
+        rerender({ current: replay("captured") });
+
+        expect(result.current.ended).toBe(false);
+
+        expect(result.current.recordingWait).toBeNull();
+    });
+
     it("the live session: armed + listed is not ended; the wait counts from the last end, a capture restart resets it", () => {
         const event = (capture_status: string) => ({ ...eventOf(), capture_status }) as V2Event;
 

@@ -16,6 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { isEarningsEventLiveish, useV2Participants, useV2PriceAttribution } from "@/lib/api/queries";
+import { isReplayCapture } from "@/lib/earnings/capture-mode";
 import { formatDecimal, formatSigned } from "@/lib/earnings/labels";
 import { speakerName } from "@/lib/earnings/transcript";
 
@@ -266,7 +267,7 @@ export function PriceAttributionView({ data, error, isLoading, speakerNames = NO
  * minute; refetched every minute while the call may be live.
  */
 export function PriceAttributionTab({ event, eventId }: CallTabProps) {
-    const { data, error, isLoading } = useV2PriceAttribution(eventId, { live: isEarningsEventLiveish(event) });
+    const { data, error, isLoading } = useV2PriceAttribution(eventId, { live: isEarningsEventLiveish(event) && !isReplayCapture(event) });
 
     // The Transcript tab's cached query (same key): asked only once there are utterances to name.
     const participants = useV2Participants(data && data.buckets.length > 0 ? eventId : "");

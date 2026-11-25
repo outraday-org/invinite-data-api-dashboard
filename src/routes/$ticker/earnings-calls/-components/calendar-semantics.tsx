@@ -58,10 +58,10 @@ export function CalendarStatusBadge({ calendar }: { calendar: null | undefined |
 
 /**
  * ONE status badge per calendar row (`callBadgeStatus`): the capture's outcome once there is one ("Live", "Processing",
- * "Published", "Missed", "No call", "Expired", …), else the call's date status; date, capture and event status in its
- * tooltip.
+ * "Published", "Replay", "Awaiting replay", "Missed", "No call", "Expired", …), else the call's date status; date, capture,
+ * run kind and event status in its tooltip.
  */
-export function CalendarRowStatus({ event }: { event: Pick<V2Event, "calendar" | "capture_status" | "date_status" | "expired_reason" | "scheduled_at"> }) {
+export function CalendarRowStatus({ event }: { event: Pick<V2Event, "awaiting_replay" | "calendar" | "capture_mode" | "capture_status" | "date_status" | "expired_reason" | "scheduled_at"> }) {
     const eventStatus = event.calendar?.status ? CALENDAR_STATUS_LABELS[event.calendar.status] : null;
 
     return <CallStatusTag status={callBadgeStatus(event)} title={callStatusDetail(event, eventStatus)} />;
