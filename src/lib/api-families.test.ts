@@ -39,6 +39,10 @@ describe("API_FAMILIES (the landing page's coverage list)", () => {
 
         expect(apiFamilyOf("/v1/filers/{cik}")?.id).toBe("filings");
 
+        expect(apiFamilyOf("/v1/beneficial-ownership")?.id).toBe("ownership");
+
+        expect(apiFamilyOf("/v1/insider-sale-notices")?.id).toBe("ownership");
+
         expect(apiFamilyOf("/v1/me/alert-user-defaults")?.id).toBe("alerts");
 
         expect(apiFamilyOf("/v1/alerts:batch")?.id).toBe("alerts");

@@ -411,6 +411,17 @@ export type V2OfferingDetail = ApiResponse<"/v1/offerings/{offering_id}", "get">
 export type V2FilerHoldingChangesResponse = ApiResponse<"/v1/filers/{cik}/holding-changes", "get">;
 export type V2FundAdviser = V2Fund["advisers"][number];
 
+// Ownership forms (Data API 11.5, tag Ownership): Schedule 13D / 13G filings and Form 144 notices (`/ownership-filings`).
+/** A page of Schedule 13D (activist) / 13G (passive) filings (`GET /v1/beneficial-ownership`). */
+export type V2BeneficialOwnershipResponse = ApiResponse<"/v1/beneficial-ownership", "get">;
+export type V2BeneficialOwnershipFiling = V2BeneficialOwnershipResponse["data"][number];
+export type V2BeneficialOwnershipHolder = V2BeneficialOwnershipFiling["holders"][number];
+/** `type=activist` (13D) | `passive` (13G). */
+export type V2BeneficialOwnershipType = NonNullable<ApiQuery<"/v1/beneficial-ownership">["type"]>;
+/** A page of Form 144 notices of a PROPOSED sale (`GET /v1/insider-sale-notices`). */
+export type V2InsiderSaleNoticesResponse = ApiResponse<"/v1/insider-sale-notices", "get">;
+export type V2InsiderSaleNotice = V2InsiderSaleNoticesResponse["data"][number];
+
 // Alerts (backend tasks/data-api-dashboard 2-alerts task 2; Data API 7.1): the alert rules, their event log and the
 // indicator templates. `condition` / `metadata` / an event's `payload` are free JSON in the spec (`additionalProperties`):
 // narrowed to `JsonValue` (`SecJson`) so a server function may return them.

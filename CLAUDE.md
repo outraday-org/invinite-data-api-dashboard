@@ -19,7 +19,7 @@ This is a TanStack Start (React SSR) dashboard for the Invinite financial data A
 
 ### API Layer (`src/lib/api/`)
 
-- **openapi.json**: the pinned data API spec, adopted from the API's versioned `reference/openapi.json` (see "Data contract ownership"). **Pin: Data API 11.4** (backend `earnings/tasks/capture-mode-on-events` task 3, 2026-11-25): `reference/openapi.json` + `reference/sdk-contract.json` of tag `data-sdk-v11.4.0` (invinite-data-api `1a16da6`, SDK 11.4.0, Fly v187). 11.4 adds `Event.capture_mode` / `Event.awaiting_replay` (the call status badge); 11.3 added the insider `source` `edgar` ("Realtime SEC filing feed" in `insider-trades` `SOURCE_LABELS`). Before: 11.2 (`4d55509`). Earlier history: it was the US macro reference pinned in "US macro pages" (API commit `d19ac33`, byte-identical to the one of `eb6efa3d3923c38bf26ec67cd88da994ef5ec0ed`), based on the Data API 11.0.0 contract (tag `data-sdk-v11.0.0`, API commit `79fe20a`). Its status groups include Corporate actions, Calendar, Offerings and Macro. 10.3.0 spells a pay-as-you-go account `payg` in `/v1/me/usage` too, so `PLAN_LABELS` has no `prepaid`, and the earnings-call transcript / document alert events need PRO; 10.1 / 10.2 were additive. 10.0 (tag `data-sdk-v10.0.0`; invinite `tasks-julian/todo-0/data-api-pricing-v2` task 4): 10.0 moved 32 STANDARD operations to LITE (filings, filers, documents, guidance, holders, metrics, news items, people, IPOs, offerings) and 8 to PRO (transcript, Q&A, stats, investor documents and their two searches), added `payg` to `/v1/me.plan` (credits without a plan, reaches what PRO reaches except live data, the API's 403 says which) and made LITE internal use (no licensing right) with the note `internal_use`; 9.0 had introduced the five tiers and `by_contract`. Copy it over, then `pnpm generate:api` (its output is committed after `pnpm run check`'s `eslint --fix`, which re-sorts it). `pnpm-workspace.yaml` holds pnpm 11's `allowBuilds` (esbuild `true`; `@parcel/watcher`, `msw`, `sharp`, `unrs-resolver` `false` — prebuilt binaries / an unused msw worker): without a decision for every dependency build script pnpm 11 stops with `ERR_PNPM_IGNORED_BUILDS`. A new dependency with a build script needs its own entry
+- **openapi.json**: the pinned data API spec, adopted from the API's versioned `reference/openapi.json` (see "Data contract ownership"). **Pin: Data API 11.5 candidate** ("ownership forms", branch `feature/ownership-forms`, 2026-11-25): `reference/openapi.json` + `reference/sdk-contract.json` of invinite-data-api `cdd8ff6` (not yet tagged: the release re-adopts the tagged bundle and regenerates). 11.5 adds the tag Ownership: `GET /v1/beneficial-ownership` (Schedule 13D / 13G) and `GET /v1/insider-sale-notices` (Form 144), both on `/ownership-filings`. Before: **Data API 11.4** (backend `earnings/tasks/capture-mode-on-events` task 3, 2026-11-25): `reference/openapi.json` + `reference/sdk-contract.json` of tag `data-sdk-v11.4.0` (invinite-data-api `1a16da6`, SDK 11.4.0, Fly v187). 11.4 adds `Event.capture_mode` / `Event.awaiting_replay` (the call status badge); 11.3 added the insider `source` `edgar` ("Realtime SEC filing feed" in `insider-trades` `SOURCE_LABELS`). Before: 11.2 (`4d55509`). Earlier history: it was the US macro reference pinned in "US macro pages" (API commit `d19ac33`, byte-identical to the one of `eb6efa3d3923c38bf26ec67cd88da994ef5ec0ed`), based on the Data API 11.0.0 contract (tag `data-sdk-v11.0.0`, API commit `79fe20a`). Its status groups include Corporate actions, Calendar, Offerings and Macro. 10.3.0 spells a pay-as-you-go account `payg` in `/v1/me/usage` too, so `PLAN_LABELS` has no `prepaid`, and the earnings-call transcript / document alert events need PRO; 10.1 / 10.2 were additive. 10.0 (tag `data-sdk-v10.0.0`; invinite `tasks-julian/todo-0/data-api-pricing-v2` task 4): 10.0 moved 32 STANDARD operations to LITE (filings, filers, documents, guidance, holders, metrics, news items, people, IPOs, offerings) and 8 to PRO (transcript, Q&A, stats, investor documents and their two searches), added `payg` to `/v1/me.plan` (credits without a plan, reaches what PRO reaches except live data, the API's 403 says which) and made LITE internal use (no licensing right) with the note `internal_use`; 9.0 had introduced the five tiers and `by_contract`. Copy it over, then `pnpm generate:api` (its output is committed after `pnpm run check`'s `eslint --fix`, which re-sorts it). `pnpm-workspace.yaml` holds pnpm 11's `allowBuilds` (esbuild `true`; `@parcel/watcher`, `msw`, `sharp`, `unrs-resolver` `false` — prebuilt binaries / an unused msw worker): without a decision for every dependency build script pnpm 11 stops with `ERR_PNPM_IGNORED_BUILDS`. A new dependency with a build script needs its own entry
 - **schema.d.ts**: Auto-generated TypeScript types from OpenAPI spec. Regenerate with `pnpm run generate:api`
 - **types.ts**: Derived response/entity types using the `ApiResponse` helper to extract typed responses from schema
 - **client.server.ts**: Creates typed `openapi-fetch` client with Bearer auth
@@ -778,6 +778,26 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   (`FundAdvisersView`: role, CRD, LEI, affiliated) and the website (https only); holdings add ISIN and sector / country
   with their basis as a short tag (`BasisValue`); weights: `?dim=sector|country|asset_class` and the weight sum line
   (`weightSumText`: `meta.weight_pct_sum` + `weight_basis`; a leveraged fund is said to be far from 100 %).
+- **`/ownership-filings`** (`BROWSE_NAV` "Ownership filings", sidebar group Securities after Institutions; Data API 11.5,
+  tag Ownership, both STANDARD, 1 credit a page): line tabs "13D / 13G" (default) and "Form 144" (`?tab=form-144`).
+  URL `?company=` (`CompanyFilter`, ≤ 50 tickers / CIKs, both tabs), `?filer=` (13D / 13G reporting-person CIKs) and
+  `?owner=` (Form 144 seller CIKs; both typed lists through `parseCikList`, ignored tokens named under the bar), `?from=&to=`
+  (filed days, put in order); 13D / 13G only: `?type=activist|passive` and `?chain=full` ("Latest only / Full amendment
+  chain" `SegmentedButtons` → `current=false`; absent = the API's default, latest per company / primary holder / class).
+  The API needs a company or a person: without one no request is sent and the tab shows "Pick a company or enter a CIK"
+  (`beneficialOwnershipRequest` / `insiderSaleNoticesRequest` of `src/lib/sec/ownership-forms.ts` answer null). Only the
+  open tab's list is asked. 13D / 13G columns (`BENEFICIAL_OWNERSHIP_COLUMNS`, `src/components/sec/ownership-forms-views.tsx`):
+  Filed (accepted instant as title), Company (`/$ticker`, else `/sec/$cik`), Schedule ("13D · activist" / "13G · passive"),
+  Form (+ amendment no.), Class (CUSIP as title), Holders · shares · % of class (each reporting person → `/sec/$cik`, a
+  "Group" marker; a `parse_state` other than `parsed` says so), Chain ("Latest" / "Superseded" + "after
+  <supersedes_accession>", so a full chain reads row by row), Filing (EDGAR index page, `FilingLink`). Form 144 columns
+  (`INSIDER_SALE_NOTICE_COLUMNS`): Filed, Company, Seller, Relationships, Shares to sell, Market value, Approx. sale date,
+  Broker (one line per security), Form with "Replaces <accession>" / "Replaced by <accession>" markers
+  (`noticeChainMarkers`), Filing; the tab says a notice is a PROPOSED sale, not an executed trade. Both lists: export,
+  `V2MetaLine`, "Load more" by `next_cursor`. Hooks `useV2BeneficialOwnershipInfinite` / `useV2InsiderSaleNoticesInfinite`
+  (idle without a subject), server functions `getV2BeneficialOwnership` / `getV2InsiderSaleNotices` (refine: company or
+  person). `API_FAMILIES` Ownership holds both prefixes. Tests: `ownership-filings-page` (`src/routes/-tests/`),
+  `src/lib/sec/ownership-forms.test.ts`; fixtures `V2_BENEFICIAL_OWNERSHIP` / `V2_INSIDER_SALE_NOTICES` (`v2-fixtures.ts`).
 - Shared files touched in place (beside appends): the insider hook / server function ([FU2994], assigned), the optional
   fields of `getHolderChanges`, `getV2Offerings` / `useV2OfferingsInfinite` (company optional), `getFund` / `useFund`
   (`expand`), `useFilerHoldingsInfinite` (`instruments`). Tests: `sec-v2-pages`, `sec-filer`, `holdings-page`,
@@ -1029,8 +1049,9 @@ calls, with its page. Created by O7 group 1 from `server-functions.ts` at `ab8a8
 `searchTranscripts`, `getEventComparison`, `listInvestorDocuments`, `getInvestorDocument`). Every O7
 group appended its rows, the alerts tasklist its 36 (30 alert / destination + 6 script operations); an operation
 with no view states why here. Data API 11.2 (backend financialdatasets-parity 1-exposure task 4) adds four rows
-(`listInsiderHoldings`, `listFinancialVintages`, `listExchangeCatalog`, `listSectorCatalog`). **Complete (2026-11-24): 138
-rows = the 138 operation ids of `openapi.json`, each exactly once** — the 137 HTTP operations of `operations.gen.ts` plus the WebSocket `streamEvents` (`WS /v1/stream`, one
+(`listInsiderHoldings`, `listFinancialVintages`, `listExchangeCatalog`, `listSectorCatalog`); Data API 11.5 (ownership forms) two
+(`listBeneficialOwnershipFilings`, `listInsiderSaleNotices`). **Complete (2026-11-25): 140
+rows = the 140 operation ids of `openapi.json`, each exactly once** — the 139 HTTP operations of `operations.gen.ts` plus the WebSocket `streamEvents` (`WS /v1/stream`, one
 row naming its channels). `src/lib/api/coverage.test.ts` parses this table against `openapi.json` and fails on a
 missing, duplicate or unknown id: a new operation of the spec needs its row (page or reason) here.
 
@@ -1100,6 +1121,8 @@ missing, duplicate or unknown id: a new operation of the spec needs its row (pag
 | `listHolders` | `GET /v1/holders` | `/$ticker/holders` (`instruments=` on the overview / 13F) |
 | `listInsiderTrades` | `GET /v1/insider-trades` | `/$ticker/insider-trades` (filed / traded days, `is_derivative`, `sort`, `owner` = "Insider CIKs") |
 | `listInsiderHoldings` | `GET /v1/insider-holdings` | `/$ticker/insider-trades?tab=holdings` (`company`, `owner`, `is_derivative`, `sort`; Data API 11.2) |
+| `listBeneficialOwnershipFilings` | `GET /v1/beneficial-ownership` | `/ownership-filings` 13D / 13G tab (`company` list, `filer`, `type`, `current=false` = "Full amendment chain", `filed_at`; Data API 11.5) |
+| `listInsiderSaleNotices` | `GET /v1/insider-sale-notices` | `/ownership-filings?tab=form-144` (`company` list, `owner`, `filed_at`; Data API 11.5) |
 | `listInstruments` | `GET /v1/instruments` | `/instruments`; top-bar search |
 | `listInvestorDocuments` | `GET /v1/investor-documents` | `/$ticker/documents`; call page · Documents tab (`sort`) |
 | `listIpos` | `GET /v1/ipos` | `/ipo-calendar`; `/` |

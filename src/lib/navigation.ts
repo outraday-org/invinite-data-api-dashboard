@@ -27,6 +27,7 @@ import {
     ListIcon,
     MicIcon,
     NewspaperIcon,
+    PercentIcon,
     PieChartIcon,
     RadioIcon,
     RocketIcon,
@@ -93,6 +94,8 @@ const FUNDS_NAV: NavPage = { description: "Every listed ETF and closed-end fund 
 
 const INSTITUTIONS_NAV: NavPage = { description: "13F investment managers and their portfolios.", icon: LandmarkIcon, keywords: ["institutions", "managers", "13f", "holders", "filers"], label: "Institutions", to: "/institutions" };
 
+const OWNERSHIP_FILINGS_NAV: NavPage = { description: "Schedule 13D / 13G filings of holders above 5 %, and Form 144 notices of proposed insider sales.", icon: PercentIcon, keywords: ["ownership", "13d", "13g", "activist", "passive", "beneficial", "form 144", "proposed sale", "insider"], label: "Ownership filings", to: "/ownership-filings" };
+
 const PEOPLE_NAV: NavPage = { description: "Executives and analysts who speak on calls, with every call of each.", icon: ContactIcon, keywords: ["people", "persons", "executives", "analysts", "speakers", "participants"], label: "People", to: "/people" };
 
 const NEWS_FEED_NAV: NavPage = { description: "Your watchlist's news in one list, and every company's new items live.", icon: RssIcon, keywords: ["news", "feed", "watchlist", "live", "press releases"], label: "News feed", to: "/news-feed" };
@@ -117,6 +120,7 @@ export const BROWSE_NAV: ReadonlyArray<NavPage> = [
     INSTRUMENTS_NAV,
     FUNDS_NAV,
     INSTITUTIONS_NAV,
+    OWNERSHIP_FILINGS_NAV,
     PEOPLE_NAV,
     NEWS_FEED_NAV,
     FILINGS_NAV,
@@ -133,7 +137,7 @@ export type NavGroup = { defaultOpen: boolean; id: string; label: string; pages:
 /** The sidebar's groups: every page of `MARKET_NAV` and `BROWSE_NAV` in exactly one (`navigation.test.ts`). */
 export const NAV_GROUPS: ReadonlyArray<NavGroup> = [
     { defaultOpen: true, id: "market", label: "Market", pages: [HOME_NAV, CALENDAR_NAV, LIVE_CALLS_NAV, IPOS_NAV, HOLIDAYS_NAV] },
-    { defaultOpen: true, id: "securities", label: "Securities", pages: [INSTRUMENTS_NAV, FUNDS_NAV, INSTITUTIONS_NAV, PEOPLE_NAV] },
+    { defaultOpen: true, id: "securities", label: "Securities", pages: [INSTRUMENTS_NAV, FUNDS_NAV, INSTITUTIONS_NAV, OWNERSHIP_FILINGS_NAV, PEOPLE_NAV] },
     { defaultOpen: false, id: "filings", label: "Filings", pages: [FILINGS_NAV, OFFERINGS_NAV, DATASETS_NAV] },
     { defaultOpen: false, id: "research", label: "News & search", pages: [NEWS_FEED_NAV, TRANSCRIPT_SEARCH_NAV] },
     { defaultOpen: false, id: "macro", label: "US macro", pages: MACRO_NAV },
@@ -359,11 +363,11 @@ export const API_FAMILIES: ReadonlyArray<ApiFamily> = [
         prefixes: ["/v1/financials", "/v1/metrics", "/v1/segments", "/v1/facts", "/v1/fact-places", "/v1/fiscal-periods"],
     },
     {
-        description: "13F and N-PORT holders, quarter-on-quarter changes, manager portfolios and insider trades and holdings.",
+        description: "13F and N-PORT holders, quarter-on-quarter changes, manager portfolios, insider trades and holdings, 13D / 13G and Form 144.",
         id: "ownership",
         label: "Ownership",
         link: { to: "/institutions" },
-        prefixes: ["/v1/holders", "/v1/holder-changes", "/v1/insider-trades", "/v1/insider-holdings", "/v1/filers/{cik}/holdings", "/v1/filers/{cik}/holding-changes"],
+        prefixes: ["/v1/holders", "/v1/holder-changes", "/v1/insider-trades", "/v1/insider-holdings", "/v1/filers/{cik}/holdings", "/v1/filers/{cik}/holding-changes", "/v1/beneficial-ownership", "/v1/insider-sale-notices"],
     },
     {
         description: "ETFs and closed-end funds with net assets, positions and weights.",

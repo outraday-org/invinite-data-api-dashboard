@@ -9,6 +9,8 @@ import type {
     V2AsReportedPresentationResponse,
     V2AsReportedResponse,
     V2AudioResponse,
+    V2BeneficialOwnershipResponse,
+    V2BeneficialOwnershipType,
     V2CagrResponse,
     V2CompaniesResponse,
     V2CompaniesSort,
@@ -66,6 +68,7 @@ import type {
     V2HoldersResponse,
     V2InsiderHoldingsResponse,
     V2InsiderHoldingsSort,
+    V2InsiderSaleNoticesResponse,
     V2InsiderSide,
     V2InsiderTradeDetail,
     V2InsiderTradesResponse,
@@ -2208,6 +2211,66 @@ export const getOffering = createServerFn({ method: "POST" })
     .handler(async ({ data }): Promise<V2OfferingDetail> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/offerings/{offering_id}", {
             params: { path: { offering_id: data.offeringId } },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+// Ownership forms (Data API 11.5, tag Ownership; `/ownership-filings`): Schedule 13D / 13G filings and Form 144 notices,
+// newest filed first (`-filed_at`, the one order), 1 credit a page. Each needs a company list or a person list (both =
+// that person's filings on those companies).
+
+/** 1–50 tickers / CIKs, comma-joined by the caller (`company=`). */
+const companyListSchema = z.string().trim().min(1).max(800).optional();
+
+const v2BeneficialOwnershipSchema = z.object({
+    apiKey: apiKeySchema,
+    company: companyListSchema,
+    /** false = the whole amendment chain (linked by `supersedes_accession`); omitted = the API's default, latest only. */
+    current: z.boolean().optional(),
+    cursor: cursorSchema,
+    filedAtGte: z.iso.date().optional(),
+    filedAtLte: z.iso.date().optional(),
+    /** Reporting-person CIKs (`filer=`). */
+    filer: ownerSchema,
+    limit: pageLimitSchema,
+    type: z.enum(["activist", "passive"] as const satisfies ReadonlyArray<V2BeneficialOwnershipType>).optional(),
+}).refine(data => Boolean(data.company || data.filer), "company or filer is required");
+
+/** Schedule 13D (activist) / 13G (passive) filings of holders above 5 % of a class (`GET /v1/beneficial-ownership`). */
+export const getV2BeneficialOwnership = createServerFn({ method: "POST" })
+    .inputValidator(v2BeneficialOwnershipSchema)
+    .handler(async ({ data }): Promise<V2BeneficialOwnershipResponse> => {
+        const { apiKey, company, current, cursor, filedAtGte, filedAtLte, filer, limit, type } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/beneficial-ownership", {
+            params: { query: v2Query({ company, current, cursor, "filed_at.gte": filedAtGte, "filed_at.lte": filedAtLte, filer, limit, type }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** Form 144 notices of a PROPOSED sale of restricted or control securities (`GET /v1/insider-sale-notices`). */
+export const getV2InsiderSaleNotices = createServerFn({ method: "POST" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        company: companyListSchema,
+        cursor: cursorSchema,
+        filedAtGte: z.iso.date().optional(),
+        filedAtLte: z.iso.date().optional(),
+        limit: pageLimitSchema,
+        /** Seller CIKs (`owner=`). */
+        owner: ownerSchema,
+    }).refine(companyOrOwner, "company or owner is required"))
+    .handler(async ({ data }): Promise<V2InsiderSaleNoticesResponse> => {
+        const { apiKey, company, cursor, filedAtGte, filedAtLte, limit, owner } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/insider-sale-notices", {
+            params: { query: v2Query({ company, cursor, "filed_at.gte": filedAtGte, "filed_at.lte": filedAtLte, limit, owner }) },
         });
 
         if (error) throwApiError(error, response);

@@ -2539,6 +2539,87 @@ export const OPERATIONS = {
         summary: "List announcements",
         tier: "lite",
     },
+    listBeneficialOwnershipFilings: {
+        cli: {
+            action: "beneficial",
+            group: "ownership",
+            positional: "company",
+        },
+        credits: 1,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_beneficial-ownership",
+        method: "GET",
+        path: "/v1/beneficial-ownership",
+        sdk: {
+            body: null,
+            className: "OwnershipApi",
+            params: {
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "current": {
+                    kind: "boolean",
+                    py: "current",
+                    ts: "current",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "filed_at.gt": {
+                    kind: "date",
+                    py: "filed_at_gt",
+                    ts: "filedAtGt",
+                },
+                "filed_at.gte": {
+                    kind: "date",
+                    py: "filed_at_gte",
+                    ts: "filedAtGte",
+                },
+                "filed_at.lt": {
+                    kind: "date",
+                    py: "filed_at_lt",
+                    ts: "filedAtLt",
+                },
+                "filed_at.lte": {
+                    kind: "date",
+                    py: "filed_at_lte",
+                    ts: "filedAtLte",
+                },
+                "filer": {
+                    kind: "string",
+                    py: "filer",
+                    ts: "filer",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+                "type": {
+                    kind: "string",
+                    py: "type",
+                    ts: "type",
+                },
+            },
+            py: "list_beneficial_ownership_filings",
+            ts: "listBeneficialOwnershipFilings",
+        },
+        summary: "List beneficial ownership filings (13D / 13G)",
+        tier: "standard",
+    },
     listCagr: {
         cli: {
             action: "cagr",
@@ -4162,6 +4243,77 @@ export const OPERATIONS = {
             ts: "listInsiderHoldings",
         },
         summary: "List insider holdings",
+        tier: "standard",
+    },
+    listInsiderSaleNotices: {
+        cli: {
+            action: "sale-notices",
+            group: "ownership",
+            positional: "company",
+        },
+        credits: 1,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_insider-sale-notices",
+        method: "GET",
+        path: "/v1/insider-sale-notices",
+        sdk: {
+            body: null,
+            className: "OwnershipApi",
+            params: {
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "filed_at.gt": {
+                    kind: "date",
+                    py: "filed_at_gt",
+                    ts: "filedAtGt",
+                },
+                "filed_at.gte": {
+                    kind: "date",
+                    py: "filed_at_gte",
+                    ts: "filedAtGte",
+                },
+                "filed_at.lt": {
+                    kind: "date",
+                    py: "filed_at_lt",
+                    ts: "filedAtLt",
+                },
+                "filed_at.lte": {
+                    kind: "date",
+                    py: "filed_at_lte",
+                    ts: "filedAtLte",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "owner": {
+                    kind: "string",
+                    py: "owner",
+                    ts: "owner",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_insider_sale_notices",
+            ts: "listInsiderSaleNotices",
+        },
+        summary: "List insider sale notices (Form 144)",
         tier: "standard",
     },
     listInsiderTrades: {
@@ -7071,6 +7223,7 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
     "GET /v1/alerts/{id}": "getAlert",
     "GET /v1/alerts/{id}/events": "listAlertEventsForAlert",
     "GET /v1/announcements": "listAnnouncements",
+    "GET /v1/beneficial-ownership": "listBeneficialOwnershipFilings",
     "GET /v1/catalog/document-kinds": "listDocumentKindCatalog",
     "GET /v1/catalog/event-types": "listEventTypeCatalog",
     "GET /v1/catalog/exchanges": "listExchangeCatalog",
@@ -7132,6 +7285,7 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
     "GET /v1/holder-changes": "listHolderChanges",
     "GET /v1/holders": "listHolders",
     "GET /v1/insider-holdings": "listInsiderHoldings",
+    "GET /v1/insider-sale-notices": "listInsiderSaleNotices",
     "GET /v1/insider-trades": "listInsiderTrades",
     "GET /v1/insider-trades/{id}": "getInsiderTrade",
     "GET /v1/instruments": "listInstruments",
