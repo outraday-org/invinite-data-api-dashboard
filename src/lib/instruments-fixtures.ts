@@ -158,9 +158,9 @@ export const VOO_FUND: V2Fund = {
 
 export const FUNDS_PAGE: V2FundsResponse = {
     data: [
-        { exchange: "ARCX", fund_key: "cik:1222333", logo_url: null, name: "SPDR Gold Shares", net_assets_usd: null, structure: "exchange_traded_trust", symbol: "GLD", type: "etf" },
-        { exchange: "XNYS", fund_key: "cik:1510599", logo_url: null, name: "PIMCO Dynamic Income Fund", net_assets_usd: 5_200_000_000, structure: "registered_fund", symbol: "PDI", type: "closed_end_fund" },
-        { exchange: "ARCX", fund_key: "cik:884394", logo_url: null, name: "SPDR S&P 500 ETF Trust", net_assets_usd: 640_000_000_000, structure: "registered_fund", symbol: "SPY", type: "etf" },
+        { exchange: "ARCX", fund_key: "cik:1222333", is_active: true, logo_url: null, name: "SPDR Gold Shares", net_assets_usd: null, structure: "exchange_traded_trust", symbol: "GLD", type: "etf" },
+        { exchange: "XNYS", fund_key: "cik:1510599", is_active: true, logo_url: null, name: "PIMCO Dynamic Income Fund", net_assets_usd: 5_200_000_000, structure: "registered_fund", symbol: "PDI", type: "closed_end_fund" },
+        { exchange: "ARCX", fund_key: "cik:884394", is_active: true, logo_url: null, name: "SPDR S&P 500 ETF Trust", net_assets_usd: 640_000_000_000, structure: "registered_fund", symbol: "SPY", type: "etf" },
     ],
     has_more: true,
     meta: { coverage: { state: "complete" } },
