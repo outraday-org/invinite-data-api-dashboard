@@ -8,6 +8,7 @@ import { useInstrument } from "@/lib/api/queries";
 import { isFundType } from "@/lib/instruments";
 import { tickerHead } from "@/lib/layout";
 
+import { DelistedNotice } from "./-components/delisted-notice";
 import { CompanyOverview } from "./-overview/company-overview";
 import { FundOverview, InstrumentOverview } from "./-overview/fund-overview";
 import { OverviewSkeleton } from "./-overview/overview-parts";
@@ -45,14 +46,22 @@ function TickerOverview() {
     // The layout renders the unknown / failed instrument states.
     if (!instrument) return null;
 
-    const overview = instrument.type === "stock"
-        ? <CompanyOverview datasets={instrument.datasets} ticker={ticker} />
-        : isFundType(instrument.type) ? <FundOverview instrument={instrument} ticker={ticker} /> : <InstrumentOverview instrument={instrument} />;
+    // A delisted symbol has no company or fund profile in the API: its listing, said to be delisted.
+    const overview = !instrument.is_active
+        ? (
+                <>
+                    <DelistedNotice instrument={instrument} onOverview />
+                    <InstrumentOverview instrument={instrument} />
+                </>
+            )
+        : instrument.type === "stock"
+            ? <CompanyOverview datasets={instrument.datasets} ticker={ticker} />
+            : isFundType(instrument.type) ? <FundOverview instrument={instrument} ticker={ticker} /> : <InstrumentOverview instrument={instrument} />;
 
     return (
         <div className="flex flex-col gap-6">
             {/* "Create alert" (price types; a stock's metrics too) and the ticker's alerts link (alerts task 4). */}
-            <PageHeader actions={<AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.overview} />} description={OVERVIEW_DESCRIPTIONS[overviewKind(instrument.type)]} title="Overview" />
+            <PageHeader actions={<AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.overview} />} description={instrument.is_active ? OVERVIEW_DESCRIPTIONS[overviewKind(instrument.type)] : "The listing of this delisted symbol."} title="Overview" />
             {overview}
         </div>
     );

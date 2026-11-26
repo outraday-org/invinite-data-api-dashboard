@@ -149,6 +149,29 @@ describe("$ticker layout (the sidebar's sections: app-sidebar.test.tsx)", () => 
         expect(screen.queryByTestId("outlet")).toBeNull();
     });
 
+    it("a delisted stock's section says it is delisted (no page, no Not covered) and links its listing and SEC filer record", () => {
+        show({ ...AAPL_INSTRUMENT, is_active: false }, "/AAPL/filings");
+
+        expect(screen.queryByTestId("outlet")).toBeNull();
+
+        expect(screen.getByText("AAPL is delisted")).toBeInTheDocument();
+
+        expect(screen.queryByText(/not covered/i)).toBeNull();
+
+        expect(screen.getByRole("link", { name: "The listing" })).toHaveAttribute("href", "/AAPL");
+
+        expect(screen.getByRole("link", { name: "SEC filer record" })).toHaveAttribute("href", "/sec/0000320193");
+
+        // Its only tab is the Overview (the API answers no other read for a delisted symbol).
+        expect(tabLabels()).toEqual(["Overview"]);
+    });
+
+    it("a delisted symbol's Overview mounts (its listing)", () => {
+        show({ ...SPY_INSTRUMENT, is_active: false }, "/SPY");
+
+        expect(screen.getByTestId("outlet")).toBeInTheDocument();
+    });
+
     describe("section tabs (the sidebar context group's twin)", () => {
         it("follow the instrument's datasets: a stock without Holdings, a fund without Financials / Calls, a trust, an ETN", () => {
             show(AAPL_INSTRUMENT);

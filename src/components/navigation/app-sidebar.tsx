@@ -27,7 +27,7 @@ import { useInstrument, useKeyState, useV2Filer, useV2FilingsInfinite, useV2Live
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
 import { INVINITE_APP_URL } from "@/lib/app-url";
 import { brandIconHref } from "@/lib/brand";
-import { isSymbolParam } from "@/lib/instruments";
+import { isSymbolParam, servedDatasets } from "@/lib/instruments";
 import {
     ACCOUNT_NAV,
     FILER_FILINGS_PAGE,
@@ -169,7 +169,7 @@ function InstrumentContext({ enabled, ticker }: { enabled: boolean; ticker: stri
     if (!isSymbolParam(ticker) || isNotFound(error)) return null;
 
     // A failed read (not a 404) shows every section: the page renders the error.
-    const groups: Array<InstrumentSectionGroup> = isLoading || !enabled ? [] : instrumentSectionGroups(instrument?.datasets ?? null);
+    const groups: Array<InstrumentSectionGroup> = isLoading || !enabled ? [] : instrumentSectionGroups(instrument ? servedDatasets(instrument) : null);
 
     const label = instrument ? instrumentSubjectLabel(instrument) : ticker.toUpperCase();
 
