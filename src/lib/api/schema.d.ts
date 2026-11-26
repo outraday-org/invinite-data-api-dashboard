@@ -24972,6 +24972,37 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "sector": "airlines",
+                     *           "kpi_key": "asm",
+                     *           "label": "Available seat miles",
+                     *           "unit": "count",
+                     *           "period_kinds": [
+                     *             "quarter"
+                     *           ]
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyJhdXRvbW90aXZlXHUwMDAwZmxlZXRfc2FsZXNfc2hhcmUiXSwiZiI6ImZjYjEyOGE0YzI5NTQwYzUifQ",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["KpiCatalogEntry"]>;
