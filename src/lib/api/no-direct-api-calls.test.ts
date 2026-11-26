@@ -49,6 +49,13 @@ describe("no direct Data API traffic from the browser", () => {
         const macro = files.find(file => file.path === "lib/api/server-functions-macro.ts")!.text;
 
         expect(macro.match(/createServerFn\(\{ method: "POST" \}\)/g)).toHaveLength(5);
+
+        // The six SEC bulk data server functions (sec-bulk-downloads task 8): all POST, the downloads included.
+        const bulk = files.find(file => file.path === "lib/api/server-functions-bulk.ts")!.text;
+
+        expect(bulk.match(/createServerFn\(\{ method: "POST" \}\)/g)).toHaveLength(6);
+
+        expect(bulk.match(/createServerFn\(/g)).toHaveLength(6);
     });
 
     it("keeps a synthetic key out of URLs in the installed Start transport", async () => {
@@ -147,6 +154,16 @@ describe("no direct Data API traffic from the browser", () => {
         expect(naming).toEqual(["components/api/request-panel.tsx", "lib/env.ts"]);
 
         expect(files.find(({ path }) => path === "components/api/request-panel.tsx")!.text).not.toMatch(/(?<![\w.])fetch\(/);
+    });
+
+    it("the bulk server functions and requests go through the server client; the signed URL is never fetched", () => {
+        const bulk = files.filter(({ path }) => path === "lib/api/server-functions-bulk.ts" || path === "lib/api/bulk-requests.ts");
+
+        expect(bulk).toHaveLength(2);
+
+        for (const { text } of bulk) expect(text).not.toMatch(/(?<![\w.])fetch\(/);
+
+        expect(bulk[0].text + bulk[1].text).toContain("createApiClient");
     });
 
     it("the alert server functions and requests go through the server client", () => {

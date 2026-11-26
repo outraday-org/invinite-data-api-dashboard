@@ -29,6 +29,29 @@ export function saveBlob(blob: Blob, filename: string) {
     setTimeout(() => URL.revokeObjectURL(objectUrl), OBJECT_URL_REVOKE_DELAY_MS);
 }
 
+/**
+ * Starts the browser's download of a short-lived signed URL (a bulk file, sec-bulk-downloads task 8): a hidden
+ * `<a href download>` clicked once, then removed. The storage answer carries `Content-Disposition: attachment`, so the
+ * page stays. No `fetch`: the bytes never pass through this app, and the URL is kept nowhere.
+ */
+export function saveSignedUrl(url: string, filename: string) {
+    const anchor = document.createElement("a");
+
+    anchor.href = url;
+
+    anchor.download = filename;
+
+    anchor.rel = "noopener";
+
+    anchor.style.display = "none";
+
+    document.body.append(anchor);
+
+    anchor.click();
+
+    anchor.remove();
+}
+
 /** Saves text as a UTF-8 file. */
 export function saveTextFile(text: string, filename: string) {
     saveBlob(new Blob([text], { type: "text/plain;charset=utf-8" }), filename);

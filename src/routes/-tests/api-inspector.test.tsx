@@ -257,6 +257,81 @@ describe("Request panel view", () => {
 
         expect(document.body.innerHTML).toContain("[redacted]");
     });
+
+    it("a bulk download's signed URL never reaches the panel, its Copy or its Download as JSON (redacted by operation)", async () => {
+        const writeText = vi.fn((_text: string) => Promise.resolve());
+
+        Object.assign(navigator, { clipboard: { writeText } });
+
+        const blobs: Array<Blob> = [];
+
+        vi.spyOn(URL, "createObjectURL").mockImplementation((blob) => {
+            blobs.push(blob as Blob);
+
+            return "blob:test";
+        });
+
+        vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => undefined);
+
+        const client = newClient();
+
+        const signed = "https://storage.example.com/bulk/x.csv.gz?X-Amz-Signature=live-signature";
+
+        for (const operationId of ["getBulkFileDownload", "getBulkExportDownload"]) {
+            const answer = { bytes: 1, content_type: "application/gzip", expires_at: "2026-11-26T16:15:00Z", filename: "x.csv.gz", sha256: "ab", url: signed };
+
+            fileRequests(answer, [meta({ operationId, path: "/v1/bulk/files/bf_1/download", query: {} })]);
+
+            await client.getMutationCache().build(client, { mutationFn: () => Promise.resolve(answer) }).execute(undefined);
+        }
+
+        const writes = writeRequestsOf(client.getMutationCache().getAll());
+
+        expect(writes.map(write => (write.answer as { url: string }).url)).toEqual(["[redacted]", "[redacted]"]);
+
+        // `url` stays visible where it is a public value (another operation's answer).
+        const other = { url: "https://hooks.test" };
+
+        fileRequests(other, [meta({ method: "POST", operationId: "createDestination", path: "/v1/destinations", query: {} })]);
+
+        await client.getMutationCache().build(client, { mutationFn: () => Promise.resolve(other) }).execute(undefined);
+
+        expect((writeRequestsOf(client.getMutationCache().getAll())[2].answer as { url: string }).url).toBe("https://hooks.test");
+
+        render(view(writes.slice(0, 1), "/sec/datasets"));
+
+        fireEvent.click(screen.getByRole("button", { name: /Writes \(1\)/ }));
+
+        fireEvent.click(screen.getByRole("button", { expanded: false, name: /\/v1\/bulk\/files/ }));
+
+        fireEvent.click(screen.getByRole("button", { name: "Response" }));
+
+        expect(document.body.innerHTML).not.toContain("live-signature");
+
+        fireEvent.click(screen.getByRole("button", { name: "Copy the response as JSON" }));
+
+        await waitFor(() => expect(writeText).toHaveBeenCalled());
+
+        expect(writeText.mock.calls.map(([text]) => text).join("")).not.toContain("live-signature");
+
+        fireEvent.click(screen.getByRole("button", { name: "Download the response as JSON" }));
+
+        expect(blobs).toHaveLength(1);
+
+        const saved = await new Promise<string>((resolve) => {
+            const reader = new FileReader();
+
+            reader.onload = () => resolve(String(reader.result));
+
+            reader.readAsText(blobs[0]);
+        });
+
+        expect(saved).not.toContain("live-signature");
+
+        expect(saved).toContain("[redacted]");
+
+        vi.restoreAllMocks();
+    });
 });
 
 describe("useViewRequests / useViewRequestCount", () => {

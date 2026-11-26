@@ -8,7 +8,7 @@ import type { JsonValue } from "@/lib/api/types";
 
 import { splitRequests } from "@/components/api/request-groups";
 import { isMeQueryKey } from "@/lib/api/queries";
-import { redactSecrets, requestsOf } from "@/lib/api/request-meta";
+import { redactAnswerFor, requestsOf, SECRET_ANSWER_FIELDS } from "@/lib/api/request-meta";
 
 /** One request behind the view: its descriptor, the answer it produced (one page of a list) or the error. */
 export type ViewRequest = {
@@ -46,7 +46,10 @@ export function viewRequestsOf(queries: ReadonlyArray<Query>): Array<ViewRequest
 
         answersOf(query.state.data).forEach((answer, pageIndex) => {
             requestsOf(answer).forEach((meta, index) => {
-                out.push({ answer, error: null, key: `${query.queryHash}:${pageIndex}:${index}`, meta, queryKey: query.queryKey });
+                // An operation whose answer field is secret (a bulk download's signed URL) is never a query; redacted anyway.
+                const shown = SECRET_ANSWER_FIELDS[meta.operationId] ? redactAnswerFor(meta.operationId, answer as JsonValue) : answer;
+
+                out.push({ answer: shown, error: null, key: `${query.queryHash}:${pageIndex}:${index}`, meta, queryKey: query.queryKey });
             });
         });
 
@@ -64,7 +67,9 @@ export function viewRequestsOf(queries: ReadonlyArray<Query>): Array<ViewRequest
 /**
  * The writes that ran (alerts task 2): every settled mutation of the cache (kept 5 minutes after its page let go), oldest
  * first, with the requests its server function made. The answer is shown redacted like the body (`redactSecrets`): a
- * secret the API returns once (A3's destination secret) never reaches the JSON view.
+ * secret the API returns once (A3's destination secret) never reaches the JSON view. A field secret for one operation
+ * only — the signed `url` of the two bulk downloads (sec-bulk-downloads task 8) — is redacted by the request's
+ * operation id (`redactAnswerFor`), so neither the panel nor its Copy / Download as JSON ever carries it.
  */
 export function writeRequestsOf(mutations: ReadonlyArray<Mutation<unknown, Error, unknown, unknown>>): Array<ViewRequest> {
     const out: Array<ViewRequest> = [];
@@ -78,7 +83,7 @@ export function writeRequestsOf(mutations: ReadonlyArray<Mutation<unknown, Error
 
         requestsOf(target).forEach((meta, index) => {
             out.push({
-                answer: status === "success" ? redactSecrets(data as JsonValue) : undefined,
+                answer: status === "success" ? redactAnswerFor(meta.operationId, data as JsonValue) : undefined,
                 error: status === "error" ? error : null,
                 key: `write:${mutation.mutationId}:${index}`,
                 meta,

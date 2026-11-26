@@ -45,10 +45,10 @@ function coverageRows(markdown: string): Array<{ id: string; page: string; reque
 const rows = coverageRows(readFileSync(resolve(ROOT, "CLAUDE.md"), "utf8"));
 
 describe("CLAUDE.md operation coverage table", () => {
-    it("lists every operation id of openapi.json exactly once (142 HTTP + WS streamEvents = 143)", () => {
+    it("lists every operation id of openapi.json exactly once (148 HTTP + WS streamEvents = 149)", () => {
         const ids = rows.map(row => row.id);
 
-        expect(specOperations).toHaveLength(143);
+        expect(specOperations).toHaveLength(149);
 
         expect(ids.filter((id, index) => ids.indexOf(id) !== index)).toEqual([]);
 

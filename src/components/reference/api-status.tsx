@@ -47,6 +47,7 @@ const DOT_CLASSES: Record<OverallStatus, string> = {
 export const FAMILY_LABELS: Record<Family["family"] | Service["family"], string> = {
     account: "Account",
     alerts: "Alerts",
+    bulk_data: "Bulk data",
     company: "Company",
     earnings_calls: "Earnings calls",
     financials: "Financials",

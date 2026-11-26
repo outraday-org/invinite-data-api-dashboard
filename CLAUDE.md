@@ -19,7 +19,8 @@ This is a TanStack Start (React SSR) dashboard for the Invinite financial data A
 
 ### API Layer (`src/lib/api/`)
 
-- **openapi.json**: the pinned data API spec, adopted from the API's versioned `reference/openapi.json` (see "Data contract ownership"). **Pin: Data API 12.1** ("earnings extraction", backend financialdatasets-parity 3/6, 2026-11-26): `reference/openapi.json` + `reference/sdk-contract.json` of tag `data-sdk-v12.1.0` (invinite-data-api `f196ad7`, SDK 12.1.0, Fly v195; it also carries the additive `FundListItem.is_active`). 12.1 adds `GET /v1/non-gaap` (`listNonGaapMetrics`, PRO: adjusted figures of the results releases with GAAP start, adjustment lines, `reconciled`; call page Non-GAAP tab), `GET /v1/kpi-series` (`listKpiSeries`, PRO: catalog KPIs as series; call page KPI series tab), `GET /v1/catalog/kpis` (`listKpiCatalog`, FREE; `/catalog?tab=kpis`) and qualitative guidance (`GuidanceItem.statement_text` / `qualifier` / `source_url` / `source_accession`, `listGuidance` `qualitative`; the guidance table shows the statement and its qualifier in the Range column and a "Release" link in Sources). Before: **Data API 12.0** (invinite-data-api `tasks/directory-listed-default` task 7, 2026-11-26): `reference/openapi.json` + `reference/sdk-contract.json` of tag `data-sdk-v12.0.0` (invinite-data-api `d541344`, SDK 12.0.0, Fly v193). 12.0 (major): `is_active` of `/v1/instruments` and `/v1/funds` is `"true" | "false" | "all"` (absent = listed today; type `V2ActiveFilter`), `Company.is_delisted` is gone (a delisted stock has no company profile: `/v1/companies/{symbol}` answers 404 `not_covered`; the dashboard never asks it for a delisted symbol, see "Navigation from `datasets`"), `/v1/people` leaves call operators out unless `role=operator`. Before: **Data API 11.5** ("ownership forms", backend financialdatasets-parity 2/4, 2026-11-26): `reference/openapi.json` + `reference/sdk-contract.json` of tag `data-sdk-v11.5.0` (invinite-data-api `c39e99e`, SDK 11.5.0). 11.5 adds the tag Ownership: `GET /v1/beneficial-ownership` (Schedule 13D / 13G) and `GET /v1/insider-sale-notices` (Form 144), both on `/ownership-filings`. Before: **Data API 11.4** (backend `earnings/tasks/capture-mode-on-events` task 3, 2026-11-25): `reference/openapi.json` + `reference/sdk-contract.json` of tag `data-sdk-v11.4.0` (invinite-data-api `1a16da6`, SDK 11.4.0, Fly v187). 11.4 adds `Event.capture_mode` / `Event.awaiting_replay` (the call status badge); 11.3 added the insider `source` `edgar` ("Realtime SEC filing feed" in `insider-trades` `SOURCE_LABELS`). Before: 11.2 (`4d55509`). Earlier history: it was the US macro reference pinned in "US macro pages" (API commit `d19ac33`, byte-identical to the one of `eb6efa3d3923c38bf26ec67cd88da994ef5ec0ed`), based on the Data API 11.0.0 contract (tag `data-sdk-v11.0.0`, API commit `79fe20a`). Its status groups include Corporate actions, Calendar, Offerings and Macro. 10.3.0 spells a pay-as-you-go account `payg` in `/v1/me/usage` too, so `PLAN_LABELS` has no `prepaid`, and the earnings-call transcript / document alert events need PRO; 10.1 / 10.2 were additive. 10.0 (tag `data-sdk-v10.0.0`; invinite `tasks-julian/todo-0/data-api-pricing-v2` task 4): 10.0 moved 32 STANDARD operations to LITE (filings, filers, documents, guidance, holders, metrics, news items, people, IPOs, offerings) and 8 to PRO (transcript, Q&A, stats, investor documents and their two searches), added `payg` to `/v1/me.plan` (credits without a plan, reaches what PRO reaches except live data, the API's 403 says which) and made LITE internal use (no licensing right) with the note `internal_use`; 9.0 had introduced the five tiers and `by_contract`. Copy it over, then `pnpm generate:api` (its output is committed after `pnpm run check`'s `eslint --fix`, which re-sorts it). `pnpm-workspace.yaml` holds pnpm 11's `allowBuilds` (esbuild `true`; `@parcel/watcher`, `msw`, `sharp`, `unrs-resolver` `false` — prebuilt binaries / an unused msw worker): without a decision for every dependency build script pnpm 11 stops with `ERR_PNPM_IGNORED_BUILDS`. A new dependency with a build script needs its own entry
+- **openapi.json**: the pinned data API spec, adopted from the API's versioned `reference/openapi.json` (see "Data contract ownership"). **Pin: Data API 12.2** (backend `tasks/sec-bulk-downloads` task 8, 2026-11-26): `reference/openapi.json` + `reference/sdk-contract.json` of the 12.2.0 release candidate (invinite-data-api branch `sec-bulk-downloads-6`, `67afac4`, rebased on 12.1.0: 148 HTTP operations; re-pinned to the tag `data-sdk-v12.2.0` once it is published). 12.2 adds the tag "Bulk data" (Enterprise, 0 credits): `listBulkFiles`, `getBulkFileDownload`, `createBulkExport` (`Idempotency-Key`; 202 new, 200 replay), `listBulkExports`, `getBulkExport`, `getBulkExportDownload` (a download answers `{ url, expires_at, filename, bytes, sha256, content_type }`, `Cache-Control: no-store`), all on `/sec/datasets` (see "Filings"), and the `/status` family / group `bulk_data` (`FAMILY_LABELS` "Bulk data"). Before: **Data API 12.1** ("earnings extraction", backend financialdatasets-parity 3/6, 2026-11-26): `reference/openapi.json` + `reference/sdk-contract.json` of tag `data-sdk-v12.1.0` (invinite-data-api `f196ad7`, SDK 12.1.0, Fly v195; it also carries the additive `FundListItem.is_active`). 12.1 adds `GET /v1/non-gaap` (`listNonGaapMetrics`, PRO: adjusted figures of the results releases with GAAP start, adjustment lines, `reconciled`; call page Non-GAAP tab), `GET /v1/kpi-series` (`listKpiSeries`, PRO: catalog KPIs as series; call page KPI series tab), `GET /v1/catalog/kpis` (`listKpiCatalog`, FREE; `/catalog?tab=kpis`) and qualitative guidance (`GuidanceItem.statement_text` / `qualifier` / `source_url` / `source_accession`, `listGuidance` `qualitative`; the guidance table shows the statement and its qualifier in the Range column and a "Release" link in Sources). Before: **Data API 12.0** (invinite-data-api `tasks/directory-listed-default` task 7, 2026-11-26): `reference/openapi.json` + `reference/sdk-contract.json` of tag `data-sdk-v12.0.0` (invinite-data-api `d541344`, SDK 12.0.0, Fly v193). 12.0 (major): `is_active` of `/v1/instruments` and `/v1/funds` is `"true" | "false" | "all"` (absent = listed today; type `V2ActiveFilter`), `Company.is_delisted` is gone (a delisted stock has no company profile: `/v1/companies/{symbol}` answers 404 `not_covered`; the dashboard never asks it for a delisted symbol, see "Navigation from `datasets`"), `/v1/people` leaves call operators out unless `role=operator`. Before: **Data API 11.5** ("ownership forms", backend financialdatasets-parity 2/4, 2026-11-26): `reference/openapi.json` + `reference/sdk-contract.json` of tag `data-sdk-v11.5.0` (invinite-data-api `c39e99e`, SDK 11.5.0). 11.5 adds the tag Ownership: `GET /v1/beneficial-ownership` (Schedule 13D / 13G) and `GET /v1/insider-sale-notices` (Form 144), both on `/ownership-filings`. Before: **Data API 11.4** (backend `earnings/tasks/capture-mode-on-events` task 3, 2026-11-25): `reference/openapi.json` + `reference/sdk-contract.json` of tag `data-sdk-v11.4.0` (invinite-data-api `1a16da6`, SDK 11.4.0, Fly v187). 11.4 adds `Event.capture_mode` / `Event.awaiting_replay` (the call status badge); 11.3 added the insider `source` `edgar` ("Realtime SEC filing feed" in `insider-trades` `SOURCE_LABELS`). Before: 11.2 (`4d55509`). Earlier history: it was the US macro reference pinned in "US macro pages" (API commit `d19ac33`, byte-identical to the one of `eb6efa3d3923c38bf26ec67cd88da994ef5ec0ed`), based on the Data API 11.0.0 contract (tag `data-sdk-v11.0.0`, API commit `79fe20a`). Its status groups include Corporate actions, Calendar, Offerings and Macro. 10.3.0 spells a pay-as-you-go account `payg` in `/v1/me/usage` too, so `PLAN_LABELS` has no `prepaid`, and the earnings-call transcript / document alert events need PRO; 10.1 / 10.2 were additive. 10.0 (tag `data-sdk-v10.0.0`; invinite `tasks-julian/todo-0/data-api-pricing-v2` task 4): 10.0 moved 32 STANDARD operations to LITE (filings, filers, documents, guidance, holders, metrics, news items, people, IPOs, offerings) and 8 to PRO (transcript, Q&A, stats, investor documents and their two searches), added `payg` to `/v1/me.plan` (credits without a plan, reaches what PRO reaches except live data, the API's 403 says which) and made LITE internal use (no licensing right) with the note `internal_use`; 9.0 had introduced the five tiers and `by_contract`. Copy it over, then `pnpm generate:api` (its output is committed after `pnpm run check`'s `eslint --fix`, which re-sorts it). `pnpm-workspace.yaml` holds pnpm 11's `allowBuilds` (esbuild `true`; `@parcel/watcher`, `msw`, `sharp`, `unrs-resolver` `false` — prebuilt binaries / an unused msw worker): without a decision for every dependency build script pnpm 11 stops with `ERR_PNPM_IGNORED_BUILDS`. A new dependency with a build script needs its own entry
+- **schema.d.ts**: Auto-generated TypeScript types from OpenAPI spec. Regenerate with `pnpm run generate:api`
 - **types.ts**: Derived response/entity types using the `ApiResponse` helper to extract typed responses from schema
 - **client.server.ts**: Creates typed `openapi-fetch` client with Bearer auth
 - **server-functions.ts**: TanStack Start server functions (`createServerFn`) with Zod validation. These run on the server and handle API calls. Every RPC whose input includes a key uses POST to keep the key out of its URL. Upstream reads retain GET
@@ -97,9 +98,40 @@ This is a TanStack Start (React SSR) dashboard for the Invinite financial data A
   places (title via `tierLabel("listFactPlaces")`); the open version is a `Section` (file name, `SegmentedButtons`
   Text / Sections / Fact places + plan badge, Close); concept, hops / direction and outline filters are `FilterBar`s.
   `SecListFrame` puts `V2MetaLine` in the `DataTable` toolbar beside the count.
-- **`/sec/datasets`** (`src/routes/sec/datasets.tsx`): `GET /v1/datasets` (`useV2DatasetsInfinite`), each SEC code with
-  its name (`DATASET_LABELS`; an unknown code shown as stated), newest release, date, forms and "Where to see it" (`DatasetPageLink`: the page that shows its rows — Institutions, a company's insider trades, Private offerings, Filings, Funds). No export: the page lists the sets, it downloads none (owner 2026-11-26).
-- Tests: `src/routes/-tests/filing-detail.test.tsx` (tabs, data sets, live list), `filings-page.test.tsx` (items,
+- **`/sec/datasets` "SEC bulk data"** (`src/routes/sec/datasets.tsx`, Data API 12.2, backend `tasks/sec-bulk-downloads`
+  task 8; nav label "SEC bulk data"): line tabs `?tab=` Files (default) · Company exports (`exports`) · Releases
+  (`releases`). Every operation of the page is Enterprise (0 credits): a known plan without it (`bulkPlanGate` of
+  `src/lib/sec/bulk.ts`, from `useKeyState`) shows `BulkPlanNotice` ("Bulk downloads are part of the Enterprise plan",
+  link to the Data app's billing page) on each tab and the page asks nothing; only the open tab asks. **Files**
+  (`-components/bulk-files-view.tsx` `BulkFilesView`): a `FilterBar` (Data set, Kind Parsed / Raw SEC file, Format —
+  the kind's formats: parsed CSV.gz / Parquet, raw Zip / CSV (`icsc` is a bare CSV) —, Released `DayRange`, Current /
+  Show superseded) in the URL `?dataset=&kind=&format=&from=&to=&superseded=true` (a changed kind drops a format it
+  lacks, `kindPatch`), the `listBulkFiles` rows (`useBulkFilesInfinite`; Data set, Period = `period_key` + coverage
+  days, Kind · format (+ "Superseded"), Size, Rows, Released, Schema) with a Download button each; "No files match
+  these filters." only for a genuine empty answer. **Company exports** (`-components/bulk-exports-tab.tsx` wiring,
+  pure views in `bulk-exports-view.tsx`): `BulkExportForm` (Data set, Companies = `CompanyFilter` ≤ 50, Filer CIKs =
+  `TokenInput` digits only — `parseCikList`; none for Form D —, Date field per data set (`DATE_FIELDS_BY_DATASET`),
+  Range, Format; the N-PORT scope sentence when N-PORT is picked) → `createBulkExport` through `useApiMutation` with
+  ONE `Idempotency-Key` per submission (`useIdempotencyKey`); a 400's `param` / `errors[]` land on their fields
+  (`bulkExportFieldErrorsOf` over `problemFieldErrors`), any other refusal toasts once. Below it `BulkExportsView`
+  (`useBulkExportsInfinite`, asked again every 5 s while a loaded export is queued / running —
+  `refetchWhileExportsOpen`; Created (opens `?export=<id>`), Data set with the coverage sentences under it
+  (`before_postgres_window` → "Older periods are available as raw SEC zips on the Files tab.", an N-PORT scope),
+  Subjects, Date range, Status `StatusBadge` with its meaning, Rows, Size, Expires, Download while `ready` and not past
+  `expires_at`), and `BulkExportDetail` (`getBulkExport`, `useBulkExport`, polled while open) for `?export=`.
+  **Releases**: `SecDatasetsView` = `GET /v1/datasets` (`useV2DatasetsInfinite(enabled)`), each SEC code with its name
+  (`DATASET_LABELS` of `src/lib/sec/datasets.ts`; an unknown code shown as stated), newest release, date, forms and
+  "Where to see it" (`DatasetPageLink`). **Download** (`-components/bulk-download-button.tsx`): the download operation
+  runs on the click only (never on render or prefetched; each call counts against the daily download cap) as a write
+  with `gcTime: 0`; `takeDownloadUrl` takes the signed URL out of the answer, `saveSignedUrl` (`src/lib/download.ts`)
+  clicks one hidden `<a href download>` (the storage answer is `Content-Disposition: attachment`: the page stays; no
+  `fetch`), then the mutation is reset — the URL is kept in no cache, URL, toast or request panel (the panel also
+  redacts the `url` of these two operations by operation id, `SECRET_ANSWER_FIELDS` / `redactAnswerFor`).
+  "Preparing…" while pending; a refusal toasts once (`bulkRefusalText`: a 429 of a daily cap names the cap and the
+  reset at 00:00 UTC); a refused export download (409 not ready / 404 expired) refreshes the list.
+- Tests: `src/routes/-tests/bulk-downloads.test.tsx` (bulk data page: filters → URL, download on click only, 429,
+  plan gate, form 400 / idempotency, polling, expired rows), `src/lib/sec/bulk.test.ts`, `src/lib/api/bulk-requests.test.ts`,
+  `src/routes/-tests/filing-detail.test.tsx` (tabs, data sets, live list), `filings-page.test.tsx` (items,
   EDGAR, details, live row, facet line), `sec-search.test.tsx` (market-wide cap note, filters on submit),
   `src/lib/live/live-filings.test.ts`, the filings cases of `ws-frames.test.ts`, `v2-sec-queries.test.tsx`; fixtures
   `src/lib/sec/filing-detail-fixtures.ts` (tests only).
@@ -564,7 +596,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   stopping at the last page, after a page that added no row (failed / empty) or after `LOAD_ALL_MAX_PAGES` (25). On:
   dividends, splits, insider trades, filings, holders (each source + changes), fund holdings, calls list, market
   holidays, funds, instruments, institutions, and every O7 / alerts list that names it in its section below (people,
-  offerings, catalog, data sets, the filing page's tabs, transcript search, news, announcements). The calendar and
+  offerings, catalog, the filing page's tabs, transcript search, news, announcements). The calendar and
   `/ipo-calendar` have none yet (their rows are grouped / split client-side).
 - **Hints**: `src/components/ui/credit-hint.tsx` — `creditText(operationId)`, `CreditHint` (tooltip),
   `PlanBadge({ operationId })` (`useMe()` plan vs `x-tier` in `PLAN_ORDER`; nothing while the plan is unknown or
@@ -666,7 +698,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   writes): runs the server function with the stored key, refetches the listed query-key prefixes on success
   (`ALERT_QUERY_KEYS` in `queries.ts`), hands the revived `ApiRequestError` to the caller, NEVER toasts (the caller says
   it once), never retries, no optimistic update. **Idempotency**: `useIdempotencyKey` — one `Idempotency-Key` per
-  submission of `createAlert` (A3: `createDestination`), the same body keeps its key (double click, retry after a lost
+  submission of `createAlert` (A3: `createDestination`; sec-bulk-downloads task 8: `createBulkExport`), the same body keeps its key (double click, retry after a lost
   answer), any API answer or a success ends it. The other writes have no key: their buttons disable while pending.
 - **Confirm rule**: every destructive or outward action asks first through `src/components/ui/confirm-action.tsx`
   (`ConfirmAction`: title, the effect in words, the ids / count, the confirm verb, `noun` for A3's destinations):
@@ -676,7 +708,10 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   `requestMetaOf` redacts it before it is stored (`redactSecrets`: keys `secret`, `authorization`, `password`, `token`,
   `api_key`, `signing_key`, `private_key`, …, and every value of a `headers` object; a `null` stays `null`, a `…_at` timestamp such as `previous_secret_expires_at` is shown); the sheet shows a write's ANSWER
   redacted the same way (`writeRequestsOf` in `use-view-requests.ts`: settled mutations, oldest first). A secret the API
-  returns once (A3) is shown only in its dialog, never stored in the browser, never logged.
+  returns once (A3) is shown only in its dialog, never stored in the browser, never logged. A field secret for ONE
+  operation only is redacted by operation id (`SECRET_ANSWER_FIELDS` / `redactAnswerFor` in `request-meta.ts`): the
+  signed `url` of `getBulkFileDownload` / `getBulkExportDownload` (sec-bulk-downloads task 8), which run as writes with
+  `useApiMutation(…, { gcTime: 0 })` and are reset after the click (a settled write otherwise stays 5 minutes).
 - **No browser request to the API host**: `src/lib/api/no-direct-api-calls.test.ts` — one openapi-fetch client
   (`client.server.ts`), `fetch(` only in the reviewed public-file readers, no XHR / beacon / EventSource, `new WebSocket`
   only in `lib/live/use-live-*.ts` through `liveWsUrl` (`/v1/stream`) and in `lib/live/stream-socket.ts`, whose every
@@ -1065,8 +1100,9 @@ group appended its rows, the alerts tasklist its 36 (30 alert / destination + 6 
 with no view states why here. Data API 11.2 (backend financialdatasets-parity 1-exposure task 4) adds four rows
 (`listInsiderHoldings`, `listFinancialVintages`, `listExchangeCatalog`, `listSectorCatalog`); Data API 11.5 (ownership forms) two
 (`listBeneficialOwnershipFilings`, `listInsiderSaleNotices`); Data API 12.1 (earnings extraction) three (`listNonGaapMetrics`,
-`listKpiSeries`, `listKpiCatalog`). **Complete (2026-11-26): 143
-rows = the 143 operation ids of `openapi.json`, each exactly once** — the 142 HTTP operations of `operations.gen.ts` plus the WebSocket `streamEvents` (`WS /v1/stream`, one
+`listKpiSeries`, `listKpiCatalog`); Data API 12.2 (SEC bulk data, backend sec-bulk-downloads task 8) six
+(`listBulkFiles`, `getBulkFileDownload`, `createBulkExport`, `listBulkExports`, `getBulkExport`, `getBulkExportDownload`). **Complete (2026-11-26): 149
+rows = the 149 operation ids of `openapi.json`, each exactly once** — the 148 HTTP operations of `operations.gen.ts` plus the WebSocket `streamEvents` (`WS /v1/stream`, one
 row naming its channels). `src/lib/api/coverage.test.ts` parses this table against `openapi.json` and fails on a
 missing, duplicate or unknown id: a new operation of the spec needs its row (page or reason) here.
 
@@ -1160,7 +1196,13 @@ missing, duplicate or unknown id: a new operation of the spec needs its row (pag
 | `searchTranscripts` | `GET /v1/search/transcripts` | call page / calls list · Search this call; `/search` (every company, O7 group 5) |
 | `searchNews` | `GET /v1/search/news` | `/$ticker/news` search box (company); `/news-feed` search box (watchlist comma list, or no company = every company) |
 | `getReviewChain` | `GET /v1/filings/{accession}/review-chain` | `/filings/$accession` Review chain tab (O7 group 3) |
-| `listDatasets` | `GET /v1/datasets` | `/sec/datasets` (O7 group 3) |
+| `listDatasets` | `GET /v1/datasets` | `/sec/datasets?tab=releases` (O7 group 3; Enterprise plan gate, sec-bulk-downloads task 8) |
+| `listBulkFiles` | `GET /v1/bulk/files` | `/sec/datasets` Files tab (`dataset`, `kind`, `format`, `released_at.gte` / `.lte`, `include_superseded`; Data API 12.2) |
+| `getBulkFileDownload` | `GET /v1/bulk/files/{file_id}/download` | `/sec/datasets` Files tab · Download (on the click only; URL used once, never kept; Data API 12.2) |
+| `createBulkExport` | `POST /v1/bulk/exports` | `/sec/datasets?tab=exports` · Create export (`Idempotency-Key` per submission; 400 `param` on its field; Data API 12.2) |
+| `listBulkExports` | `GET /v1/bulk/exports` | `/sec/datasets?tab=exports` (the exports list, every 5 s while one is queued / running; Data API 12.2) |
+| `getBulkExport` | `GET /v1/bulk/exports/{export_id}` | `/sec/datasets?tab=exports&export=<id>` (the export's detail, polled while queued / running; Data API 12.2) |
+| `getBulkExportDownload` | `GET /v1/bulk/exports/{export_id}/download` | `/sec/datasets?tab=exports` · Download of a ready export (list row and detail; on the click only; Data API 12.2) |
 | `listDocumentSections` | `GET /v1/document-versions/{version_id}/sections` | `/filings/$accession` Documents → Sections (O7 group 3) |
 | `listFilingFacts` | `GET /v1/filings/{accession}/facts` | `/filings/$accession` Facts tab (O7 group 3) |
 | `listFilingHoldings` | `GET /v1/filings/{accession}/holdings` | `/filings/$accession` Holdings tab, 13F-HR / NPORT-P only (O7 group 3) |

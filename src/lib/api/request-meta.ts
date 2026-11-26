@@ -69,6 +69,31 @@ export function redactSecrets(value: JsonValue): JsonValue {
     }));
 }
 
+/**
+ * Answer fields that are secret for ONE operation only (redacted by operation id, not by key name): a bulk download's
+ * `url` is a signed link that grants the file for 15 minutes, while `url` elsewhere (a destination, a filing's public
+ * document) is a harmless public value.
+ */
+export const SECRET_ANSWER_FIELDS: Readonly<Partial<Record<string, ReadonlyArray<string>>>> = {
+    getBulkExportDownload: ["url"],
+    getBulkFileDownload: ["url"],
+};
+
+/**
+ * An answer as the request panel may show it (pure): `redactSecrets`, then the top-level fields the operation marks
+ * secret (`SECRET_ANSWER_FIELDS`) replaced by `REDACTED` (a `null` stays `null`). The panel, its "Copy" and its
+ * "Download as JSON" all read this copy.
+ */
+export function redactAnswerFor(operationId: string, answer: JsonValue): JsonValue {
+    const redacted = redactSecrets(answer);
+
+    const fields = SECRET_ANSWER_FIELDS[operationId];
+
+    if (!fields || redacted === null || typeof redacted !== "object" || Array.isArray(redacted)) return redacted;
+
+    return Object.fromEntries(Object.entries(redacted).map(([key, item]): [string, JsonValue] => [key, fields.includes(key) && item !== null ? REDACTED : item]));
+}
+
 /** The descriptor of a sent request (server side; pure). A write's JSON `body` is recorded redacted. */
 export function requestMetaOf(input: {
     body?: JsonValue;
