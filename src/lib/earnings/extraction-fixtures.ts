@@ -1,6 +1,6 @@
 import type { V2GuidanceItem, V2KpiCatalogEntry, V2KpiSeriesPoint, V2NonGaapMetric } from "@/lib/api/types";
 
-// Tests only: rows of the Data API 12.1 earnings extraction in the contract's shapes (spec of invinite-data-api 64cb88b).
+// Tests only: rows of the Data API 12.1 earnings extraction in the contract's shapes (spec of invinite-data-api 20e6487).
 
 const COMPANY = { cik: "0000320193", ticker: "AAPL" };
 

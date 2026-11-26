@@ -888,7 +888,7 @@
       },
       "FundListItem": {
         "type": "object",
-        "description": "One listed fund (an ETF or a closed-end fund)",
+        "description": "One fund with a ticker (an ETF or a closed-end fund)",
         "required": [
           "symbol",
           "name",
@@ -896,6 +896,7 @@
           "structure",
           "exchange",
           "fund_key",
+          "is_active",
           "net_assets_usd",
           "logo_url"
         ],
@@ -938,6 +939,10 @@
             "description": "SEC series id, else `cik:<registrant>`; null for an ETF not linked to its trust yet",
             "example": "S000024908",
             "nullable": true
+          },
+          "is_active": {
+            "type": "boolean",
+            "description": "false for a delisted symbol"
           },
           "net_assets_usd": {
             "type": "number",
@@ -11475,15 +11480,15 @@
               },
               "table": {
                 "type": "integer",
-                "description": "Table of the release (0-based)"
+                "description": "The release's data table, in document order (0-based; layout tables are not counted)"
               },
               "row": {
                 "type": "integer",
-                "description": "Row of the table (0-based)"
+                "description": "Data row of that table, below its header rows (0-based)"
               },
               "col": {
                 "type": "integer",
-                "description": "Column of the table (0-based)"
+                "description": "Value column of that table, the label column not counted (0-based)"
               }
             }
           }
@@ -22942,6 +22947,7 @@
                       "structure": "registered_fund",
                       "exchange": "XNAS",
                       "fund_key": "S000024908",
+                      "is_active": true,
                       "net_assets_usd": 39772685912.05,
                       "logo_url": null
                     }
@@ -23008,6 +23014,7 @@
             "name",
             "type",
             "exchange",
+            "is_active",
             "net_assets_usd"
           ]
         },
@@ -58626,7 +58633,7 @@
     },
     {
       "name": "Catalog",
-      "description": "Static catalogs: metrics, sections, forms, event types, document kinds, mapping rules, exchanges, sectors"
+      "description": "Static catalogs: metrics, sections, forms, event types, document kinds, mapping rules, exchanges, sectors, KPIs"
     },
     {
       "name": "Macro",
@@ -58682,7 +58689,7 @@
     },
     {
       "name": "Guidance",
-      "description": "Guidance items and KPI mentions"
+      "description": "Guidance items, KPI mentions, KPI series and reported non-GAAP figures"
     },
     {
       "name": "Investor documents",

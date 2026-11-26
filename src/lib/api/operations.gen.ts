@@ -21,7 +21,7 @@ export type OperationSdk = {
 };
 
 /** The SDK packages (`sdk-contract.json`). */
-export const SDK_PACKAGES = { npm: "@invinite-org/data-api-client", pypi: "invinite-data-api", pythonImport: "invinite_data_api" } as const;
+export const SDK_PACKAGES = {"npm":"@invinite-org/data-api-client","pypi":"invinite-data-api","pythonImport":"invinite_data_api"} as const;
 
 export type Operation = {
     cli: null | OperationCli;
@@ -35,7392 +35,7392 @@ export type Operation = {
 };
 
 export const OPERATIONS = {
-    batchAlerts: {
-        cli: {
-            action: "batch",
-            group: "alerts",
-            positional: null,
+    "batchAlerts": {
+        "cli": {
+            "action": "batch",
+            "group": "alerts",
+            "positional": null
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/post--_v1_alerts:batch",
-        method: "POST",
-        path: "/v1/alerts:batch",
-        sdk: {
-            body: {
-                model: "BatchAlertsRequest",
-                py: "batch_alerts_request",
-                ts: "batchAlertsRequest",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/post--_v1_alerts:batch",
+        "method": "POST",
+        "path": "/v1/alerts:batch",
+        "sdk": {
+            "body": {
+                "model": "BatchAlertsRequest",
+                "py": "batch_alerts_request",
+                "ts": "batchAlertsRequest"
             },
-            className: "AlertsApi",
-            params: {},
-            py: "batch_alerts",
-            ts: "batchAlerts",
+            "className": "AlertsApi",
+            "params": {},
+            "py": "batch_alerts",
+            "ts": "batchAlerts"
         },
-        summary: "Change alerts in bulk",
-        tier: "lite",
+        "summary": "Change alerts in bulk",
+        "tier": "lite"
     },
-    batchAlertUsers: {
-        cli: {
-            action: "batch",
-            group: "alert-users",
-            positional: null,
+    "batchAlertUsers": {
+        "cli": {
+            "action": "batch",
+            "group": "alert-users",
+            "positional": null
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/post--_v1_alert-users:batch",
-        method: "POST",
-        path: "/v1/alert-users:batch",
-        sdk: {
-            body: {
-                model: "BatchAlertUsersRequest",
-                py: "batch_alert_users_request",
-                ts: "batchAlertUsersRequest",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/post--_v1_alert-users:batch",
+        "method": "POST",
+        "path": "/v1/alert-users:batch",
+        "sdk": {
+            "body": {
+                "model": "BatchAlertUsersRequest",
+                "py": "batch_alert_users_request",
+                "ts": "batchAlertUsersRequest"
             },
-            className: "AlertUsersApi",
-            params: {},
-            py: "batch_alert_users",
-            ts: "batchAlertUsers",
+            "className": "AlertUsersApi",
+            "params": {},
+            "py": "batch_alert_users",
+            "ts": "batchAlertUsers"
         },
-        summary: "Create or update end users in bulk",
-        tier: "lite",
+        "summary": "Create or update end users in bulk",
+        "tier": "lite"
     },
-    createAlert: {
-        cli: {
-            action: "create",
-            group: "alerts",
-            positional: null,
+    "createAlert": {
+        "cli": {
+            "action": "create",
+            "group": "alerts",
+            "positional": null
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/post--_v1_alerts",
-        method: "POST",
-        path: "/v1/alerts",
-        sdk: {
-            body: {
-                model: "CreateAlertRequest",
-                py: "create_alert_request",
-                ts: "createAlertRequest",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/post--_v1_alerts",
+        "method": "POST",
+        "path": "/v1/alerts",
+        "sdk": {
+            "body": {
+                "model": "CreateAlertRequest",
+                "py": "create_alert_request",
+                "ts": "createAlertRequest"
             },
-            className: "AlertsApi",
-            params: {
-                validate_only: {
-                    kind: "boolean",
-                    py: "validate_only",
-                    ts: "validateOnly",
-                },
+            "className": "AlertsApi",
+            "params": {
+                "validate_only": {
+                    "kind": "boolean",
+                    "py": "validate_only",
+                    "ts": "validateOnly"
+                }
             },
-            py: "create_alert",
-            ts: "createAlert",
+            "py": "create_alert",
+            "ts": "createAlert"
         },
-        summary: "Create an alert",
-        tier: "lite",
+        "summary": "Create an alert",
+        "tier": "lite"
     },
-    createDestination: {
-        cli: {
-            action: "create",
-            group: "destinations",
-            positional: null,
+    "createDestination": {
+        "cli": {
+            "action": "create",
+            "group": "destinations",
+            "positional": null
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/post--_v1_destinations",
-        method: "POST",
-        path: "/v1/destinations",
-        sdk: {
-            body: {
-                model: "CreateDestinationRequest",
-                py: "create_destination_request",
-                ts: "createDestinationRequest",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/post--_v1_destinations",
+        "method": "POST",
+        "path": "/v1/destinations",
+        "sdk": {
+            "body": {
+                "model": "CreateDestinationRequest",
+                "py": "create_destination_request",
+                "ts": "createDestinationRequest"
             },
-            className: "DestinationsApi",
-            params: {},
-            py: "create_destination",
-            ts: "createDestination",
+            "className": "DestinationsApi",
+            "params": {},
+            "py": "create_destination",
+            "ts": "createDestination"
         },
-        summary: "Create a destination",
-        tier: "lite",
+        "summary": "Create a destination",
+        "tier": "lite"
     },
-    createScript: {
-        cli: {
-            action: "create",
-            group: "scripts",
-            positional: null,
+    "createScript": {
+        "cli": {
+            "action": "create",
+            "group": "scripts",
+            "positional": null
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/post--_v1_scripts",
-        method: "POST",
-        path: "/v1/scripts",
-        sdk: {
-            body: {
-                model: "CreateScriptRequest",
-                py: "create_script_request",
-                ts: "createScriptRequest",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/post--_v1_scripts",
+        "method": "POST",
+        "path": "/v1/scripts",
+        "sdk": {
+            "body": {
+                "model": "CreateScriptRequest",
+                "py": "create_script_request",
+                "ts": "createScriptRequest"
             },
-            className: "ScriptsApi",
-            params: {},
-            py: "create_script",
-            ts: "createScript",
+            "className": "ScriptsApi",
+            "params": {},
+            "py": "create_script",
+            "ts": "createScript"
         },
-        summary: "Upload a script",
-        tier: "lite",
+        "summary": "Upload a script",
+        "tier": "lite"
     },
-    createScriptVersion: {
-        cli: {
-            action: "create",
-            group: "script-versions",
-            positional: "id",
+    "createScriptVersion": {
+        "cli": {
+            "action": "create",
+            "group": "script-versions",
+            "positional": "id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/post--_v1_scripts_{id}_versions",
-        method: "POST",
-        path: "/v1/scripts/{id}/versions",
-        sdk: {
-            body: {
-                model: "CreateScriptVersionRequest",
-                py: "create_script_version_request",
-                ts: "createScriptVersionRequest",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/post--_v1_scripts_{id}_versions",
+        "method": "POST",
+        "path": "/v1/scripts/{id}/versions",
+        "sdk": {
+            "body": {
+                "model": "CreateScriptVersionRequest",
+                "py": "create_script_version_request",
+                "ts": "createScriptVersionRequest"
             },
-            className: "ScriptsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
+            "className": "ScriptsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
             },
-            py: "create_script_version",
-            ts: "createScriptVersion",
+            "py": "create_script_version",
+            "ts": "createScriptVersion"
         },
-        summary: "Upload a new script version",
-        tier: "lite",
+        "summary": "Upload a new script version",
+        "tier": "lite"
     },
-    deleteAlert: {
-        cli: {
-            action: "delete",
-            group: "alerts",
-            positional: "id",
+    "deleteAlert": {
+        "cli": {
+            "action": "delete",
+            "group": "alerts",
+            "positional": "id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/delete--_v1_alerts_{id}",
-        method: "DELETE",
-        path: "/v1/alerts/{id}",
-        sdk: {
-            body: null,
-            className: "AlertsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/delete--_v1_alerts_{id}",
+        "method": "DELETE",
+        "path": "/v1/alerts/{id}",
+        "sdk": {
+            "body": null,
+            "className": "AlertsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
             },
-            py: "delete_alert",
-            ts: "deleteAlert",
+            "py": "delete_alert",
+            "ts": "deleteAlert"
         },
-        summary: "Delete an alert",
-        tier: "lite",
+        "summary": "Delete an alert",
+        "tier": "lite"
     },
-    deleteAlertUser: {
-        cli: {
-            action: "delete",
-            group: "alert-users",
-            positional: "external_user_id",
+    "deleteAlertUser": {
+        "cli": {
+            "action": "delete",
+            "group": "alert-users",
+            "positional": "external_user_id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/delete--_v1_alert-users_{external_user_id}",
-        method: "DELETE",
-        path: "/v1/alert-users/{external_user_id}",
-        sdk: {
-            body: null,
-            className: "AlertUsersApi",
-            params: {
-                external_user_id: {
-                    kind: "string",
-                    py: "external_user_id",
-                    ts: "externalUserId",
-                },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/delete--_v1_alert-users_{external_user_id}",
+        "method": "DELETE",
+        "path": "/v1/alert-users/{external_user_id}",
+        "sdk": {
+            "body": null,
+            "className": "AlertUsersApi",
+            "params": {
+                "external_user_id": {
+                    "kind": "string",
+                    "py": "external_user_id",
+                    "ts": "externalUserId"
+                }
             },
-            py: "delete_alert_user",
-            ts: "deleteAlertUser",
+            "py": "delete_alert_user",
+            "ts": "deleteAlertUser"
         },
-        summary: "Delete an end user",
-        tier: "lite",
+        "summary": "Delete an end user",
+        "tier": "lite"
     },
-    deleteDestination: {
-        cli: {
-            action: "delete",
-            group: "destinations",
-            positional: "id",
+    "deleteDestination": {
+        "cli": {
+            "action": "delete",
+            "group": "destinations",
+            "positional": "id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/delete--_v1_destinations_{id}",
-        method: "DELETE",
-        path: "/v1/destinations/{id}",
-        sdk: {
-            body: null,
-            className: "DestinationsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/delete--_v1_destinations_{id}",
+        "method": "DELETE",
+        "path": "/v1/destinations/{id}",
+        "sdk": {
+            "body": null,
+            "className": "DestinationsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
             },
-            py: "delete_destination",
-            ts: "deleteDestination",
+            "py": "delete_destination",
+            "ts": "deleteDestination"
         },
-        summary: "Delete a destination",
-        tier: "lite",
+        "summary": "Delete a destination",
+        "tier": "lite"
     },
-    deleteScript: {
-        cli: {
-            action: "delete",
-            group: "scripts",
-            positional: "id",
+    "deleteScript": {
+        "cli": {
+            "action": "delete",
+            "group": "scripts",
+            "positional": "id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/delete--_v1_scripts_{id}",
-        method: "DELETE",
-        path: "/v1/scripts/{id}",
-        sdk: {
-            body: null,
-            className: "ScriptsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/delete--_v1_scripts_{id}",
+        "method": "DELETE",
+        "path": "/v1/scripts/{id}",
+        "sdk": {
+            "body": null,
+            "className": "ScriptsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
             },
-            py: "delete_script",
-            ts: "deleteScript",
+            "py": "delete_script",
+            "ts": "deleteScript"
         },
-        summary: "Delete a script",
-        tier: "lite",
+        "summary": "Delete a script",
+        "tier": "lite"
     },
-    getAlert: {
-        cli: {
-            action: "get",
-            group: "alerts",
-            positional: "id",
+    "getAlert": {
+        "cli": {
+            "action": "get",
+            "group": "alerts",
+            "positional": "id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_alerts_{id}",
-        method: "GET",
-        path: "/v1/alerts/{id}",
-        sdk: {
-            body: null,
-            className: "AlertsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_alerts_{id}",
+        "method": "GET",
+        "path": "/v1/alerts/{id}",
+        "sdk": {
+            "body": null,
+            "className": "AlertsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
             },
-            py: "get_alert",
-            ts: "getAlert",
+            "py": "get_alert",
+            "ts": "getAlert"
         },
-        summary: "Get an alert",
-        tier: "lite",
+        "summary": "Get an alert",
+        "tier": "lite"
     },
-    getAlertEvent: {
-        cli: {
-            action: "get",
-            group: "alert-events",
-            positional: "id",
+    "getAlertEvent": {
+        "cli": {
+            "action": "get",
+            "group": "alert-events",
+            "positional": "id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_alert-events_{id}",
-        method: "GET",
-        path: "/v1/alert-events/{id}",
-        sdk: {
-            body: null,
-            className: "AlertEventsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_alert-events_{id}",
+        "method": "GET",
+        "path": "/v1/alert-events/{id}",
+        "sdk": {
+            "body": null,
+            "className": "AlertEventsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
             },
-            py: "get_alert_event",
-            ts: "getAlertEvent",
+            "py": "get_alert_event",
+            "ts": "getAlertEvent"
         },
-        summary: "Get an alert event",
-        tier: "lite",
+        "summary": "Get an alert event",
+        "tier": "lite"
     },
-    getAlertUser: {
-        cli: {
-            action: "get",
-            group: "alert-users",
-            positional: "external_user_id",
+    "getAlertUser": {
+        "cli": {
+            "action": "get",
+            "group": "alert-users",
+            "positional": "external_user_id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_alert-users_{external_user_id}",
-        method: "GET",
-        path: "/v1/alert-users/{external_user_id}",
-        sdk: {
-            body: null,
-            className: "AlertUsersApi",
-            params: {
-                external_user_id: {
-                    kind: "string",
-                    py: "external_user_id",
-                    ts: "externalUserId",
-                },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_alert-users_{external_user_id}",
+        "method": "GET",
+        "path": "/v1/alert-users/{external_user_id}",
+        "sdk": {
+            "body": null,
+            "className": "AlertUsersApi",
+            "params": {
+                "external_user_id": {
+                    "kind": "string",
+                    "py": "external_user_id",
+                    "ts": "externalUserId"
+                }
             },
-            py: "get_alert_user",
-            ts: "getAlertUser",
+            "py": "get_alert_user",
+            "ts": "getAlertUser"
         },
-        summary: "Get an end user",
-        tier: "lite",
+        "summary": "Get an end user",
+        "tier": "lite"
     },
-    getAlertUserDefaults: {
-        cli: {
-            action: "alert-user-defaults-get",
-            group: "me",
-            positional: null,
+    "getAlertUserDefaults": {
+        "cli": {
+            "action": "alert-user-defaults-get",
+            "group": "me",
+            "positional": null
         },
-        credits: 0,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_me_alert-user-defaults",
-        method: "GET",
-        path: "/v1/me/alert-user-defaults",
-        sdk: {
-            body: null,
-            className: "AlertUsersApi",
-            params: {},
-            py: "get_alert_user_defaults",
-            ts: "getAlertUserDefaults",
+        "credits": 0,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_me_alert-user-defaults",
+        "method": "GET",
+        "path": "/v1/me/alert-user-defaults",
+        "sdk": {
+            "body": null,
+            "className": "AlertUsersApi",
+            "params": {},
+            "py": "get_alert_user_defaults",
+            "ts": "getAlertUserDefaults"
         },
-        summary: "Get the end-user defaults",
-        tier: "free",
+        "summary": "Get the end-user defaults",
+        "tier": "free"
     },
-    getAsReportedFinancials: {
-        cli: {
-            action: "get",
-            group: "financials",
-            positional: "company",
+    "getAsReportedFinancials": {
+        "cli": {
+            "action": "get",
+            "group": "financials",
+            "positional": "company"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_financials_as-reported",
-        method: "GET",
-        path: "/v1/financials/as-reported",
-        sdk: {
-            body: null,
-            className: "FinancialsApi",
-            params: {
-                "as_of": {
-                    kind: "date",
-                    py: "as_of",
-                    ts: "asOf",
-                },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_financials_as-reported",
+        "method": "GET",
+        "path": "/v1/financials/as-reported",
+        "sdk": {
+            "body": null,
+            "className": "FinancialsApi",
+            "params": {
                 "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
                 },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "display_sign": {
-                    kind: "string",
-                    py: "display_sign",
-                    ts: "displaySign",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "filing": {
-                    kind: "string",
-                    py: "filing",
-                    ts: "filing",
-                },
-                "fiscal_quarter": {
-                    kind: "number",
-                    py: "fiscal_quarter",
-                    ts: "fiscalQuarter",
-                },
-                "fiscal_year": {
-                    kind: "number",
-                    py: "fiscal_year",
-                    ts: "fiscalYear",
-                },
-                "fiscal_year.gt": {
-                    kind: "number",
-                    py: "fiscal_year_gt",
-                    ts: "fiscalYearGt",
-                },
-                "fiscal_year.gte": {
-                    kind: "number",
-                    py: "fiscal_year_gte",
-                    ts: "fiscalYearGte",
-                },
-                "fiscal_year.lt": {
-                    kind: "number",
-                    py: "fiscal_year_lt",
-                    ts: "fiscalYearLt",
-                },
-                "fiscal_year.lte": {
-                    kind: "number",
-                    py: "fiscal_year_lte",
-                    ts: "fiscalYearLte",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "metrics": {
-                    kind: "string",
-                    py: "metrics",
-                    ts: "metrics",
+                "statement": {
+                    "kind": "string",
+                    "py": "statement",
+                    "ts": "statement"
                 },
                 "period": {
-                    kind: "string",
-                    py: "period",
-                    ts: "period",
+                    "kind": "string",
+                    "py": "period",
+                    "ts": "period"
+                },
+                "fiscal_year": {
+                    "kind": "number",
+                    "py": "fiscal_year",
+                    "ts": "fiscalYear"
+                },
+                "fiscal_quarter": {
+                    "kind": "number",
+                    "py": "fiscal_quarter",
+                    "ts": "fiscalQuarter"
+                },
+                "fiscal_year.gte": {
+                    "kind": "number",
+                    "py": "fiscal_year_gte",
+                    "ts": "fiscalYearGte"
+                },
+                "fiscal_year.gt": {
+                    "kind": "number",
+                    "py": "fiscal_year_gt",
+                    "ts": "fiscalYearGt"
+                },
+                "fiscal_year.lte": {
+                    "kind": "number",
+                    "py": "fiscal_year_lte",
+                    "ts": "fiscalYearLte"
+                },
+                "fiscal_year.lt": {
+                    "kind": "number",
+                    "py": "fiscal_year_lt",
+                    "ts": "fiscalYearLt"
+                },
+                "as_of": {
+                    "kind": "date",
+                    "py": "as_of",
+                    "ts": "asOf"
+                },
+                "filing": {
+                    "kind": "string",
+                    "py": "filing",
+                    "ts": "filing"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "metrics": {
+                    "kind": "string",
+                    "py": "metrics",
+                    "ts": "metrics"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
                 },
                 "reported_only": {
-                    kind: "boolean",
-                    py: "reported_only",
-                    ts: "reportedOnly",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                "statement": {
-                    kind: "string",
-                    py: "statement",
-                    ts: "statement",
-                },
-            },
-            py: "get_as_reported_financials",
-            ts: "getAsReportedFinancials",
-        },
-        summary: "As-reported statements",
-        tier: "lite",
-    },
-    getAsReportedFinancialsDetailed: {
-        cli: {
-            action: "get",
-            group: "financials",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_financials_as-reported_detailed",
-        method: "GET",
-        path: "/v1/financials/as-reported/detailed",
-        sdk: {
-            body: null,
-            className: "FinancialsApi",
-            params: {
-                "as_of": {
-                    kind: "date",
-                    py: "as_of",
-                    ts: "asOf",
-                },
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
+                    "kind": "boolean",
+                    "py": "reported_only",
+                    "ts": "reportedOnly"
                 },
                 "display_sign": {
-                    kind: "string",
-                    py: "display_sign",
-                    ts: "displaySign",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "filing": {
-                    kind: "string",
-                    py: "filing",
-                    ts: "filing",
-                },
-                "fiscal_quarter": {
-                    kind: "number",
-                    py: "fiscal_quarter",
-                    ts: "fiscalQuarter",
-                },
-                "fiscal_year": {
-                    kind: "number",
-                    py: "fiscal_year",
-                    ts: "fiscalYear",
-                },
-                "fiscal_year.gt": {
-                    kind: "number",
-                    py: "fiscal_year_gt",
-                    ts: "fiscalYearGt",
-                },
-                "fiscal_year.gte": {
-                    kind: "number",
-                    py: "fiscal_year_gte",
-                    ts: "fiscalYearGte",
-                },
-                "fiscal_year.lt": {
-                    kind: "number",
-                    py: "fiscal_year_lt",
-                    ts: "fiscalYearLt",
-                },
-                "fiscal_year.lte": {
-                    kind: "number",
-                    py: "fiscal_year_lte",
-                    ts: "fiscalYearLte",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "metrics": {
-                    kind: "string",
-                    py: "metrics",
-                    ts: "metrics",
-                },
-                "period": {
-                    kind: "string",
-                    py: "period",
-                    ts: "period",
-                },
-                "reported_only": {
-                    kind: "boolean",
-                    py: "reported_only",
-                    ts: "reportedOnly",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
+                    "kind": "string",
+                    "py": "display_sign",
+                    "ts": "displaySign"
+                }
+            },
+            "py": "get_as_reported_financials",
+            "ts": "getAsReportedFinancials"
+        },
+        "summary": "As-reported statements",
+        "tier": "lite"
+    },
+    "getAsReportedFinancialsDetailed": {
+        "cli": {
+            "action": "get",
+            "group": "financials",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_financials_as-reported_detailed",
+        "method": "GET",
+        "path": "/v1/financials/as-reported/detailed",
+        "sdk": {
+            "body": null,
+            "className": "FinancialsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
                 },
                 "statement": {
-                    kind: "string",
-                    py: "statement",
-                    ts: "statement",
+                    "kind": "string",
+                    "py": "statement",
+                    "ts": "statement"
                 },
-            },
-            py: "get_as_reported_financials_detailed",
-            ts: "getAsReportedFinancialsDetailed",
-        },
-        summary: "As-reported statements with labels",
-        tier: "pro",
-    },
-    getAsReportedFinancialsPresentation: {
-        cli: {
-            action: "get",
-            group: "financials",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_financials_as-reported_presentation",
-        method: "GET",
-        path: "/v1/financials/as-reported/presentation",
-        sdk: {
-            body: null,
-            className: "FinancialsApi",
-            params: {
+                "period": {
+                    "kind": "string",
+                    "py": "period",
+                    "ts": "period"
+                },
+                "fiscal_year": {
+                    "kind": "number",
+                    "py": "fiscal_year",
+                    "ts": "fiscalYear"
+                },
+                "fiscal_quarter": {
+                    "kind": "number",
+                    "py": "fiscal_quarter",
+                    "ts": "fiscalQuarter"
+                },
+                "fiscal_year.gte": {
+                    "kind": "number",
+                    "py": "fiscal_year_gte",
+                    "ts": "fiscalYearGte"
+                },
+                "fiscal_year.gt": {
+                    "kind": "number",
+                    "py": "fiscal_year_gt",
+                    "ts": "fiscalYearGt"
+                },
+                "fiscal_year.lte": {
+                    "kind": "number",
+                    "py": "fiscal_year_lte",
+                    "ts": "fiscalYearLte"
+                },
+                "fiscal_year.lt": {
+                    "kind": "number",
+                    "py": "fiscal_year_lt",
+                    "ts": "fiscalYearLt"
+                },
                 "as_of": {
-                    kind: "date",
-                    py: "as_of",
-                    ts: "asOf",
+                    "kind": "date",
+                    "py": "as_of",
+                    "ts": "asOf"
                 },
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
+                "filing": {
+                    "kind": "string",
+                    "py": "filing",
+                    "ts": "filing"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "metrics": {
+                    "kind": "string",
+                    "py": "metrics",
+                    "ts": "metrics"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
                 },
                 "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "reported_only": {
+                    "kind": "boolean",
+                    "py": "reported_only",
+                    "ts": "reportedOnly"
                 },
                 "display_sign": {
-                    kind: "string",
-                    py: "display_sign",
-                    ts: "displaySign",
+                    "kind": "string",
+                    "py": "display_sign",
+                    "ts": "displaySign"
+                }
+            },
+            "py": "get_as_reported_financials_detailed",
+            "ts": "getAsReportedFinancialsDetailed"
+        },
+        "summary": "As-reported statements with labels",
+        "tier": "pro"
+    },
+    "getAsReportedFinancialsPresentation": {
+        "cli": {
+            "action": "get",
+            "group": "financials",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_financials_as-reported_presentation",
+        "method": "GET",
+        "path": "/v1/financials/as-reported/presentation",
+        "sdk": {
+            "body": null,
+            "className": "FinancialsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
                 },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "filing": {
-                    kind: "string",
-                    py: "filing",
-                    ts: "filing",
-                },
-                "fiscal_quarter": {
-                    kind: "number",
-                    py: "fiscal_quarter",
-                    ts: "fiscalQuarter",
-                },
-                "fiscal_year": {
-                    kind: "number",
-                    py: "fiscal_year",
-                    ts: "fiscalYear",
-                },
-                "fiscal_year.gt": {
-                    kind: "number",
-                    py: "fiscal_year_gt",
-                    ts: "fiscalYearGt",
-                },
-                "fiscal_year.gte": {
-                    kind: "number",
-                    py: "fiscal_year_gte",
-                    ts: "fiscalYearGte",
-                },
-                "fiscal_year.lt": {
-                    kind: "number",
-                    py: "fiscal_year_lt",
-                    ts: "fiscalYearLt",
-                },
-                "fiscal_year.lte": {
-                    kind: "number",
-                    py: "fiscal_year_lte",
-                    ts: "fiscalYearLte",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "metrics": {
-                    kind: "string",
-                    py: "metrics",
-                    ts: "metrics",
+                "statement": {
+                    "kind": "string",
+                    "py": "statement",
+                    "ts": "statement"
                 },
                 "period": {
-                    kind: "string",
-                    py: "period",
-                    ts: "period",
+                    "kind": "string",
+                    "py": "period",
+                    "ts": "period"
+                },
+                "fiscal_year": {
+                    "kind": "number",
+                    "py": "fiscal_year",
+                    "ts": "fiscalYear"
+                },
+                "fiscal_quarter": {
+                    "kind": "number",
+                    "py": "fiscal_quarter",
+                    "ts": "fiscalQuarter"
+                },
+                "fiscal_year.gte": {
+                    "kind": "number",
+                    "py": "fiscal_year_gte",
+                    "ts": "fiscalYearGte"
+                },
+                "fiscal_year.gt": {
+                    "kind": "number",
+                    "py": "fiscal_year_gt",
+                    "ts": "fiscalYearGt"
+                },
+                "fiscal_year.lte": {
+                    "kind": "number",
+                    "py": "fiscal_year_lte",
+                    "ts": "fiscalYearLte"
+                },
+                "fiscal_year.lt": {
+                    "kind": "number",
+                    "py": "fiscal_year_lt",
+                    "ts": "fiscalYearLt"
+                },
+                "as_of": {
+                    "kind": "date",
+                    "py": "as_of",
+                    "ts": "asOf"
+                },
+                "filing": {
+                    "kind": "string",
+                    "py": "filing",
+                    "ts": "filing"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "metrics": {
+                    "kind": "string",
+                    "py": "metrics",
+                    "ts": "metrics"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
                 },
                 "reported_only": {
-                    kind: "boolean",
-                    py: "reported_only",
-                    ts: "reportedOnly",
+                    "kind": "boolean",
+                    "py": "reported_only",
+                    "ts": "reportedOnly"
                 },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                "statement": {
-                    kind: "string",
-                    py: "statement",
-                    ts: "statement",
-                },
+                "display_sign": {
+                    "kind": "string",
+                    "py": "display_sign",
+                    "ts": "displaySign"
+                }
             },
-            py: "get_as_reported_financials_presentation",
-            ts: "getAsReportedFinancialsPresentation",
+            "py": "get_as_reported_financials_presentation",
+            "ts": "getAsReportedFinancialsPresentation"
         },
-        summary: "As-reported statements as the filer's tree",
-        tier: "pro",
+        "summary": "As-reported statements as the filer's tree",
+        "tier": "pro"
     },
-    getAudio: {
-        cli: {
-            action: "audio",
-            group: "events",
-            positional: "event_id",
+    "getAudio": {
+        "cli": {
+            "action": "audio",
+            "group": "events",
+            "positional": "event_id"
         },
-        credits: 5,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_audio",
-        method: "GET",
-        path: "/v1/events/{event_id}/audio",
-        sdk: {
-            body: null,
-            className: "EventsApi",
-            params: {
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
+        "credits": 5,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}_audio",
+        "method": "GET",
+        "path": "/v1/events/{event_id}/audio",
+        "sdk": {
+            "body": null,
+            "className": "EventsApi",
+            "params": {
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
             },
-            py: "get_audio",
-            ts: "getAudio",
+            "py": "get_audio",
+            "ts": "getAudio"
         },
-        summary: "Get an event's recording",
-        tier: "pro",
+        "summary": "Get an event's recording",
+        "tier": "pro"
     },
-    getCompany: {
-        cli: {
-            action: "get",
-            group: "companies",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_companies_{company}",
-        method: "GET",
-        path: "/v1/companies/{company}",
-        sdk: {
-            body: null,
-            className: "CompaniesApi",
-            params: {
-                company: {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                expand: {
-                    kind: "string",
-                    py: "expand",
-                    ts: "expand",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-            },
-            py: "get_company",
-            ts: "getCompany",
-        },
-        summary: "Get a company",
-        tier: "free",
-    },
-    getDestination: {
-        cli: {
-            action: "get",
-            group: "destinations",
-            positional: "id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_destinations_{id}",
-        method: "GET",
-        path: "/v1/destinations/{id}",
-        sdk: {
-            body: null,
-            className: "DestinationsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
-            },
-            py: "get_destination",
-            ts: "getDestination",
-        },
-        summary: "Get a destination",
-        tier: "lite",
-    },
-    getDocumentFigure: {
-        cli: {
-            action: "figure",
-            group: "documents",
-            positional: "version_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_document-versions_{version_id}_figures_{block_id}",
-        method: "GET",
-        path: "/v1/document-versions/{version_id}/figures/{block_id}",
-        sdk: {
-            body: null,
-            className: "FilingsApi",
-            params: {
-                block_id: {
-                    kind: "string",
-                    py: "block_id",
-                    ts: "blockId",
-                },
-                version_id: {
-                    kind: "string",
-                    py: "version_id",
-                    ts: "versionId",
-                },
-            },
-            py: "get_document_figure",
-            ts: "getDocumentFigure",
-        },
-        summary: "Get a figure",
-        tier: "lite",
-    },
-    getDocumentVersion: {
-        cli: {
-            action: "get",
-            group: "documents",
-            positional: "version_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_document-versions_{version_id}",
-        method: "GET",
-        path: "/v1/document-versions/{version_id}",
-        sdk: {
-            body: null,
-            className: "FilingsApi",
-            params: {
-                blocks: {
-                    kind: "string",
-                    py: "blocks",
-                    ts: "blocks",
-                },
-                footnotes: {
-                    kind: "boolean",
-                    py: "footnotes",
-                    ts: "footnotes",
-                },
-                neighbors: {
-                    kind: "number",
-                    py: "neighbors",
-                    ts: "neighbors",
-                },
-                pages: {
-                    kind: "string",
-                    py: "pages",
-                    ts: "pages",
-                },
-                printed: {
-                    kind: "string",
-                    py: "printed",
-                    ts: "printed",
-                },
-                version_id: {
-                    kind: "string",
-                    py: "version_id",
-                    ts: "versionId",
-                },
-            },
-            py: "get_document_version",
-            ts: "getDocumentVersion",
-        },
-        summary: "Get a document version",
-        tier: "lite",
-    },
-    getEvent: {
-        cli: {
-            action: "get",
-            group: "events",
-            positional: "event_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}",
-        method: "GET",
-        path: "/v1/events/{event_id}",
-        sdk: {
-            body: null,
-            className: "EventsApi",
-            params: {
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
-                expand: {
-                    kind: "string",
-                    py: "expand",
-                    ts: "expand",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-            },
-            py: "get_event",
-            ts: "getEvent",
-        },
-        summary: "Get an event",
-        tier: "free",
-    },
-    getEventComparison: {
-        cli: {
-            action: "comparison",
-            group: "events",
-            positional: "event_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_comparison",
-        method: "GET",
-        path: "/v1/events/{event_id}/comparison",
-        sdk: {
-            body: null,
-            className: "CallAnalyticsApi",
-            params: {
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
-                prior: {
-                    kind: "string",
-                    py: "prior",
-                    ts: "prior",
-                },
-            },
-            py: "get_event_comparison",
-            ts: "getEventComparison",
-        },
-        summary: "Compare an event with a prior one",
-        tier: "pro",
-    },
-    getEventStats: {
-        cli: {
-            action: "stats",
-            group: "events",
-            positional: "event_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_stats",
-        method: "GET",
-        path: "/v1/events/{event_id}/stats",
-        sdk: {
-            body: null,
-            className: "CallAnalyticsApi",
-            params: {
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
-            },
-            py: "get_event_stats",
-            ts: "getEventStats",
-        },
-        summary: "Get an event's call statistics",
-        tier: "pro",
-    },
-    getFact: {
-        cli: {
-            action: "explain",
-            group: "metrics",
-            positional: "fact_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_facts_{fact_id}",
-        method: "GET",
-        path: "/v1/facts/{fact_id}",
-        sdk: {
-            body: null,
-            className: "FinancialsApi",
-            params: {
-                fact_id: {
-                    kind: "string",
-                    py: "fact_id",
-                    ts: "factId",
-                },
-                max_depth: {
-                    kind: "number",
-                    py: "max_depth",
-                    ts: "maxDepth",
-                },
-                max_members: {
-                    kind: "number",
-                    py: "max_members",
-                    ts: "maxMembers",
-                },
-            },
-            py: "get_fact",
-            ts: "getFact",
-        },
-        summary: "Explain a standardized fact",
-        tier: "lite",
-    },
-    getFiler: {
-        cli: {
-            action: "get",
-            group: "filers",
-            positional: "cik",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_filers_{cik}",
-        method: "GET",
-        path: "/v1/filers/{cik}",
-        sdk: {
-            body: null,
-            className: "CompaniesApi",
-            params: {
-                cik: {
-                    kind: "string",
-                    py: "cik",
-                    ts: "cik",
-                },
-                expand: {
-                    kind: "string",
-                    py: "expand",
-                    ts: "expand",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-            },
-            py: "get_filer",
-            ts: "getFiler",
-        },
-        summary: "Get a filer",
-        tier: "lite",
-    },
-    getFiling: {
-        cli: {
-            action: "get",
-            group: "filings",
-            positional: "accession",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_filings_{accession}",
-        method: "GET",
-        path: "/v1/filings/{accession}",
-        sdk: {
-            body: null,
-            className: "FilingsApi",
-            params: {
-                accession: {
-                    kind: "string",
-                    py: "accession",
-                    ts: "accession",
-                },
-                expand: {
-                    kind: "string",
-                    py: "expand",
-                    ts: "expand",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-            },
-            py: "get_filing",
-            ts: "getFiling",
-        },
-        summary: "Get a filing",
-        tier: "lite",
-    },
-    getFund: {
-        cli: {
-            action: "get",
-            group: "funds",
-            positional: "fund",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_funds_{fund}",
-        method: "GET",
-        path: "/v1/funds/{fund}",
-        sdk: {
-            body: null,
-            className: "FundsApi",
-            params: {
-                expand: {
-                    kind: "string",
-                    py: "expand",
-                    ts: "expand",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                fund: {
-                    kind: "string",
-                    py: "fund",
-                    ts: "fund",
-                },
-            },
-            py: "get_fund",
-            ts: "getFund",
-        },
-        summary: "Get a fund",
-        tier: "lite",
-    },
-    getInsiderTrade: {
-        cli: {
-            action: "get",
-            group: "insider-trades",
-            positional: "id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_insider-trades_{id}",
-        method: "GET",
-        path: "/v1/insider-trades/{id}",
-        sdk: {
-            body: null,
-            className: "InsiderTradesApi",
-            params: {
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
-            },
-            py: "get_insider_trade",
-            ts: "getInsiderTrade",
-        },
-        summary: "Get an insider trade",
-        tier: "standard",
-    },
-    getInstrument: {
-        cli: {
-            action: "get",
-            group: "instruments",
-            positional: "symbol",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_instruments_{symbol}",
-        method: "GET",
-        path: "/v1/instruments/{symbol}",
-        sdk: {
-            body: null,
-            className: "InstrumentsApi",
-            params: {
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                symbol: {
-                    kind: "string",
-                    py: "symbol",
-                    ts: "symbol",
-                },
-            },
-            py: "get_instrument",
-            ts: "getInstrument",
-        },
-        summary: "Get an instrument",
-        tier: "free",
-    },
-    getInvestorDocument: {
-        cli: {
-            action: "get",
-            group: "investor-documents",
-            positional: "document_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_investor-documents_{document_id}",
-        method: "GET",
-        path: "/v1/investor-documents/{document_id}",
-        sdk: {
-            body: null,
-            className: "InvestorDocumentsApi",
-            params: {
-                document_id: {
-                    kind: "string",
-                    py: "document_id",
-                    ts: "documentId",
-                },
-                expand: {
-                    kind: "string",
-                    py: "expand",
-                    ts: "expand",
-                },
-            },
-            py: "get_investor_document",
-            ts: "getInvestorDocument",
-        },
-        summary: "Get an investor document",
-        tier: "pro",
-    },
-    getIpo: {
-        cli: {
-            action: "get",
-            group: "ipos",
-            positional: "ipo_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_ipos_{ipo_id}",
-        method: "GET",
-        path: "/v1/ipos/{ipo_id}",
-        sdk: {
-            body: null,
-            className: "OfferingsApi",
-            params: {
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                ipo_id: {
-                    kind: "string",
-                    py: "ipo_id",
-                    ts: "ipoId",
-                },
-            },
-            py: "get_ipo",
-            ts: "getIpo",
-        },
-        summary: "Get an offering",
-        tier: "lite",
-    },
-    getLiveAudio: {
-        cli: {
-            action: "live-audio",
-            group: "events",
-            positional: "event_id",
-        },
-        credits: 5,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_live-audio",
-        method: "GET",
-        path: "/v1/events/{event_id}/live-audio",
-        sdk: {
-            body: null,
-            className: "EventsApi",
-            params: {
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
-            },
-            py: "get_live_audio",
-            ts: "getLiveAudio",
-        },
-        summary: "Get an event's live audio URL",
-        tier: "pro",
-    },
-    getMacroGdpSnapshot: {
-        cli: {
-            action: "gdp-snapshot",
-            group: "macro",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_macro_gdp_snapshot",
-        method: "GET",
-        path: "/v1/macro/gdp/snapshot",
-        sdk: {
-            body: null,
-            className: "MacroApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "get_macro_gdp_snapshot",
-            ts: "getMacroGdpSnapshot",
-        },
-        summary: "Get the US GDP and income snapshot",
-        tier: "lite",
-    },
-    getMacroInflationSnapshot: {
-        cli: {
-            action: "inflation-snapshot",
-            group: "macro",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_macro_inflation_snapshot",
-        method: "GET",
-        path: "/v1/macro/inflation/snapshot",
-        sdk: {
-            body: null,
-            className: "MacroApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "get_macro_inflation_snapshot",
-            ts: "getMacroInflationSnapshot",
-        },
-        summary: "Get the US inflation snapshot",
-        tier: "lite",
-    },
-    getMacroLaborSnapshot: {
-        cli: {
-            action: "labor-snapshot",
-            group: "macro",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_macro_labor_snapshot",
-        method: "GET",
-        path: "/v1/macro/labor/snapshot",
-        sdk: {
-            body: null,
-            className: "MacroApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "get_macro_labor_snapshot",
-            ts: "getMacroLaborSnapshot",
-        },
-        summary: "Get the US labor market snapshot",
-        tier: "lite",
-    },
-    getMe: {
-        cli: {
-            action: "show",
-            group: "me",
-            positional: null,
-        },
-        credits: 0,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_me",
-        method: "GET",
-        path: "/v1/me",
-        sdk: {
-            body: null,
-            className: "AccountApi",
-            params: {},
-            py: "get_me",
-            ts: "getMe",
-        },
-        summary: "Who am I",
-        tier: "free",
-    },
-    getMyUsage: {
-        cli: {
-            action: "usage",
-            group: "me",
-            positional: null,
-        },
-        credits: 0,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_me_usage",
-        method: "GET",
-        path: "/v1/me/usage",
-        sdk: {
-            body: null,
-            className: "AccountApi",
-            params: {
-                days: {
-                    kind: "number",
-                    py: "days",
-                    ts: "days",
-                },
-            },
-            py: "get_my_usage",
-            ts: "getMyUsage",
-        },
-        summary: "Get my usage",
-        tier: "free",
-    },
-    getNewsItem: {
-        cli: {
-            action: "get",
-            group: "news",
-            positional: "id",
-        },
-        credits: 2,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_news_{id}",
-        method: "GET",
-        path: "/v1/news/{id}",
-        sdk: {
-            body: null,
-            className: "NewsApi",
-            params: {
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
-            },
-            py: "get_news_item",
-            ts: "getNewsItem",
-        },
-        summary: "Get a news item",
-        tier: "lite",
-    },
-    getNewsText: {
-        cli: {
-            action: "text",
-            group: "news",
-            positional: "id",
-        },
-        credits: 2,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_news_{id}_text",
-        method: "GET",
-        path: "/v1/news/{id}/text",
-        sdk: {
-            body: null,
-            className: "NewsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
-                max_chars: {
-                    kind: "number",
-                    py: "max_chars",
-                    ts: "maxChars",
-                },
-            },
-            py: "get_news_text",
-            ts: "getNewsText",
-        },
-        summary: "Get a news item's text",
-        tier: "lite",
-    },
-    getOffering: {
-        cli: {
-            action: "get",
-            group: "offerings",
-            positional: "offering_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_offerings_{offering_id}",
-        method: "GET",
-        path: "/v1/offerings/{offering_id}",
-        sdk: {
-            body: null,
-            className: "OfferingsApi",
-            params: {
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                offering_id: {
-                    kind: "string",
-                    py: "offering_id",
-                    ts: "offeringId",
-                },
-            },
-            py: "get_offering",
-            ts: "getOffering",
-        },
-        summary: "Get a Form D private offering",
-        tier: "lite",
-    },
-    getPerson: {
-        cli: {
-            action: "get",
-            group: "people",
-            positional: "person_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_people_{person_id}",
-        method: "GET",
-        path: "/v1/people/{person_id}",
-        sdk: {
-            body: null,
-            className: "CompaniesApi",
-            params: {
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                person_id: {
-                    kind: "string",
-                    py: "person_id",
-                    ts: "personId",
-                },
-            },
-            py: "get_person",
-            ts: "getPerson",
-        },
-        summary: "Get a person",
-        tier: "lite",
-    },
-    getPressRelease: {
-        cli: {
-            action: "press-release",
-            group: "events",
-            positional: "event_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_press-release",
-        method: "GET",
-        path: "/v1/events/{event_id}/press-release",
-        sdk: {
-            body: null,
-            className: "EventsApi",
-            params: {
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
-            },
-            py: "get_press_release",
-            ts: "getPressRelease",
-        },
-        summary: "Get an event's press release",
-        tier: "lite",
-    },
-    getPriceAttribution: {
-        cli: {
-            action: "price-attribution",
-            group: "events",
-            positional: "event_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_price-attribution",
-        method: "GET",
-        path: "/v1/events/{event_id}/price-attribution",
-        sdk: {
-            body: null,
-            className: "CallAnalyticsApi",
-            params: {
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
-            },
-            py: "get_price_attribution",
-            ts: "getPriceAttribution",
-        },
-        summary: "Get an event's price attribution",
-        tier: "pro",
-    },
-    getProsody: {
-        cli: {
-            action: "prosody",
-            group: "events",
-            positional: "event_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_prosody",
-        method: "GET",
-        path: "/v1/events/{event_id}/prosody",
-        sdk: {
-            body: null,
-            className: "CallAnalyticsApi",
-            params: {
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
-                section: {
-                    kind: "string",
-                    py: "section",
-                    ts: "section",
-                },
-            },
-            py: "get_prosody",
-            ts: "getProsody",
-        },
-        summary: "Get an event's speech prosody",
-        tier: "pro",
-    },
-    getReviewChain: {
-        cli: {
-            action: "review-chain",
-            group: "filings",
-            positional: "accession",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_filings_{accession}_review-chain",
-        method: "GET",
-        path: "/v1/filings/{accession}/review-chain",
-        sdk: {
-            body: null,
-            className: "FilingsApi",
-            params: {
-                accession: {
-                    kind: "string",
-                    py: "accession",
-                    ts: "accession",
-                },
-                direction: {
-                    kind: "string",
-                    py: "direction",
-                    ts: "direction",
-                },
-                kind: {
-                    kind: "string",
-                    py: "kind",
-                    ts: "kind",
-                },
-                max_depth: {
-                    kind: "number",
-                    py: "max_depth",
-                    ts: "maxDepth",
-                },
-                max_nodes: {
-                    kind: "number",
-                    py: "max_nodes",
-                    ts: "maxNodes",
-                },
-            },
-            py: "get_review_chain",
-            ts: "getReviewChain",
-        },
-        summary: "Get a filing's review chain",
-        tier: "lite",
-    },
-    getScript: {
-        cli: {
-            action: "get",
-            group: "scripts",
-            positional: "id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_scripts_{id}",
-        method: "GET",
-        path: "/v1/scripts/{id}",
-        sdk: {
-            body: null,
-            className: "ScriptsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
-            },
-            py: "get_script",
-            ts: "getScript",
-        },
-        summary: "Get a script",
-        tier: "lite",
-    },
-    getSlides: {
-        cli: {
-            action: "slides",
-            group: "events",
-            positional: "event_id",
-        },
-        credits: 5,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_slides",
-        method: "GET",
-        path: "/v1/events/{event_id}/slides",
-        sdk: {
-            body: null,
-            className: "EventsApi",
-            params: {
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
-                include: {
-                    kind: "string",
-                    py: "include",
-                    ts: "include",
-                },
-                pages: {
-                    kind: "string",
-                    py: "pages",
-                    ts: "pages",
-                },
-            },
-            py: "get_slides",
-            ts: "getSlides",
-        },
-        summary: "Get an event's slides",
-        tier: "pro",
-    },
-    getStandardizedFinancials: {
-        cli: {
-            action: "get",
-            group: "financials",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_financials_standardized",
-        method: "GET",
-        path: "/v1/financials/standardized",
-        sdk: {
-            body: null,
-            className: "FinancialsApi",
-            params: {
-                "as_of": {
-                    kind: "date",
-                    py: "as_of",
-                    ts: "asOf",
-                },
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "filing": {
-                    kind: "string",
-                    py: "filing",
-                    ts: "filing",
-                },
-                "fiscal_quarter": {
-                    kind: "number",
-                    py: "fiscal_quarter",
-                    ts: "fiscalQuarter",
-                },
-                "fiscal_year": {
-                    kind: "number",
-                    py: "fiscal_year",
-                    ts: "fiscalYear",
-                },
-                "fiscal_year.gt": {
-                    kind: "number",
-                    py: "fiscal_year_gt",
-                    ts: "fiscalYearGt",
-                },
-                "fiscal_year.gte": {
-                    kind: "number",
-                    py: "fiscal_year_gte",
-                    ts: "fiscalYearGte",
-                },
-                "fiscal_year.lt": {
-                    kind: "number",
-                    py: "fiscal_year_lt",
-                    ts: "fiscalYearLt",
-                },
-                "fiscal_year.lte": {
-                    kind: "number",
-                    py: "fiscal_year_lte",
-                    ts: "fiscalYearLte",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "metrics": {
-                    kind: "string",
-                    py: "metrics",
-                    ts: "metrics",
-                },
-                "period": {
-                    kind: "string",
-                    py: "period",
-                    ts: "period",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                "statement": {
-                    kind: "string",
-                    py: "statement",
-                    ts: "statement",
-                },
-            },
-            py: "get_standardized_financials",
-            ts: "getStandardizedFinancials",
-        },
-        summary: "Standardized statements",
-        tier: "lite",
-    },
-    getStandardizedFinancialsDetailed: {
-        cli: {
-            action: "get",
-            group: "financials",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_financials_standardized_detailed",
-        method: "GET",
-        path: "/v1/financials/standardized/detailed",
-        sdk: {
-            body: null,
-            className: "FinancialsApi",
-            params: {
-                "as_of": {
-                    kind: "date",
-                    py: "as_of",
-                    ts: "asOf",
-                },
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "filing": {
-                    kind: "string",
-                    py: "filing",
-                    ts: "filing",
-                },
-                "fiscal_quarter": {
-                    kind: "number",
-                    py: "fiscal_quarter",
-                    ts: "fiscalQuarter",
-                },
-                "fiscal_year": {
-                    kind: "number",
-                    py: "fiscal_year",
-                    ts: "fiscalYear",
-                },
-                "fiscal_year.gt": {
-                    kind: "number",
-                    py: "fiscal_year_gt",
-                    ts: "fiscalYearGt",
-                },
-                "fiscal_year.gte": {
-                    kind: "number",
-                    py: "fiscal_year_gte",
-                    ts: "fiscalYearGte",
-                },
-                "fiscal_year.lt": {
-                    kind: "number",
-                    py: "fiscal_year_lt",
-                    ts: "fiscalYearLt",
-                },
-                "fiscal_year.lte": {
-                    kind: "number",
-                    py: "fiscal_year_lte",
-                    ts: "fiscalYearLte",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "metrics": {
-                    kind: "string",
-                    py: "metrics",
-                    ts: "metrics",
-                },
-                "period": {
-                    kind: "string",
-                    py: "period",
-                    ts: "period",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                "statement": {
-                    kind: "string",
-                    py: "statement",
-                    ts: "statement",
-                },
-            },
-            py: "get_standardized_financials_detailed",
-            ts: "getStandardizedFinancialsDetailed",
-        },
-        summary: "Standardized statements with lineage",
-        tier: "pro",
-    },
-    getStandardizedFinancialsPresentation: {
-        cli: {
-            action: "get",
-            group: "financials",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_financials_standardized_presentation",
-        method: "GET",
-        path: "/v1/financials/standardized/presentation",
-        sdk: {
-            body: null,
-            className: "FinancialsApi",
-            params: {
-                "as_of": {
-                    kind: "date",
-                    py: "as_of",
-                    ts: "asOf",
-                },
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "filing": {
-                    kind: "string",
-                    py: "filing",
-                    ts: "filing",
-                },
-                "fiscal_quarter": {
-                    kind: "number",
-                    py: "fiscal_quarter",
-                    ts: "fiscalQuarter",
-                },
-                "fiscal_year": {
-                    kind: "number",
-                    py: "fiscal_year",
-                    ts: "fiscalYear",
-                },
-                "fiscal_year.gt": {
-                    kind: "number",
-                    py: "fiscal_year_gt",
-                    ts: "fiscalYearGt",
-                },
-                "fiscal_year.gte": {
-                    kind: "number",
-                    py: "fiscal_year_gte",
-                    ts: "fiscalYearGte",
-                },
-                "fiscal_year.lt": {
-                    kind: "number",
-                    py: "fiscal_year_lt",
-                    ts: "fiscalYearLt",
-                },
-                "fiscal_year.lte": {
-                    kind: "number",
-                    py: "fiscal_year_lte",
-                    ts: "fiscalYearLte",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "metrics": {
-                    kind: "string",
-                    py: "metrics",
-                    ts: "metrics",
-                },
-                "period": {
-                    kind: "string",
-                    py: "period",
-                    ts: "period",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                "statement": {
-                    kind: "string",
-                    py: "statement",
-                    ts: "statement",
-                },
-            },
-            py: "get_standardized_financials_presentation",
-            ts: "getStandardizedFinancialsPresentation",
-        },
-        summary: "Standardized statements as a tree",
-        tier: "pro",
-    },
-    getTranscript: {
-        cli: {
-            action: "transcript",
-            group: "events",
-            positional: "event_id",
-        },
-        credits: 5,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_transcript",
-        method: "GET",
-        path: "/v1/events/{event_id}/transcript",
-        sdk: {
-            body: null,
-            className: "TranscriptsApi",
-            params: {
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
-                include: {
-                    kind: "string",
-                    py: "include",
-                    ts: "include",
-                },
-                layer: {
-                    kind: "string",
-                    py: "layer",
-                    ts: "layer",
-                },
-                version: {
-                    kind: "number",
-                    py: "version",
-                    ts: "version",
-                },
-            },
-            py: "get_transcript",
-            ts: "getTranscript",
-        },
-        summary: "Get an event's transcript",
-        tier: "pro",
-    },
-    getTranscriptDiff: {
-        cli: {
-            action: "transcript-diff",
-            group: "events",
-            positional: "event_id",
-        },
-        credits: 5,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_transcript-diff",
-        method: "GET",
-        path: "/v1/events/{event_id}/transcript-diff",
-        sdk: {
-            body: null,
-            className: "TranscriptsApi",
-            params: {
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
-                from: {
-                    kind: "number",
-                    py: "var_from",
-                    ts: "from",
-                },
-                to: {
-                    kind: "number",
-                    py: "to",
-                    ts: "to",
-                },
-            },
-            py: "get_transcript_diff",
-            ts: "getTranscriptDiff",
-        },
-        summary: "Diff two transcript versions",
-        tier: "pro",
-    },
-    getTranscriptText: {
-        cli: {
-            action: "transcript-text",
-            group: "events",
-            positional: "event_id",
-        },
-        credits: 5,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_transcript-text",
-        method: "GET",
-        path: "/v1/events/{event_id}/transcript-text",
-        sdk: {
-            body: null,
-            className: "TranscriptsApi",
-            params: {
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
-                split: {
-                    kind: "string",
-                    py: "split",
-                    ts: "split",
-                },
-                version: {
-                    kind: "number",
-                    py: "version",
-                    ts: "version",
-                },
-            },
-            py: "get_transcript_text",
-            ts: "getTranscriptText",
-        },
-        summary: "Get an event's transcript as text",
-        tier: "pro",
-    },
-    getTreasuryYieldCurveSnapshot: {
-        cli: {
-            action: "yield-curve-snapshot",
-            group: "macro",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_macro_yield-curve_snapshot",
-        method: "GET",
-        path: "/v1/macro/yield-curve/snapshot",
-        sdk: {
-            body: null,
-            className: "MacroApi",
-            params: {
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-            },
-            py: "get_treasury_yield_curve_snapshot",
-            ts: "getTreasuryYieldCurveSnapshot",
-        },
-        summary: "Get the latest US Treasury yield curve",
-        tier: "lite",
-    },
-    healthGet: {
-        cli: {
-            action: null,
-            group: "health",
-            positional: null,
-        },
-        credits: null,
-        docsUrl: "https://data.invinite.com/docs/get--_health",
-        method: "GET",
-        path: "/health",
-        sdk: null,
-        summary: "Health check",
-        tier: null,
-    },
-    listAlertEvents: {
-        cli: {
-            action: "list",
-            group: "alert-events",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_alert-events",
-        method: "GET",
-        path: "/v1/alert-events",
-        sdk: {
-            body: null,
-            className: "AlertEventsApi",
-            params: {
-                after: {
-                    kind: "string",
-                    py: "after",
-                    ts: "after",
-                },
-                alert_id: {
-                    kind: "string",
-                    py: "alert_id",
-                    ts: "alertId",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                external_user_id: {
-                    kind: "string",
-                    py: "external_user_id",
-                    ts: "externalUserId",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                type: {
-                    kind: "string",
-                    py: "type",
-                    ts: "type",
-                },
-            },
-            py: "list_alert_events",
-            ts: "listAlertEvents",
-        },
-        summary: "List alert events",
-        tier: "lite",
-    },
-    listAlertEventsForAlert: {
-        cli: {
-            action: "events",
-            group: "alerts",
-            positional: "id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_alerts_{id}_events",
-        method: "GET",
-        path: "/v1/alerts/{id}/events",
-        sdk: {
-            body: null,
-            className: "AlertEventsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                type: {
-                    kind: "string",
-                    py: "type",
-                    ts: "type",
-                },
-            },
-            py: "list_alert_events_for_alert",
-            ts: "listAlertEventsForAlert",
-        },
-        summary: "List an alert's events",
-        tier: "lite",
-    },
-    listAlerts: {
-        cli: {
-            action: "list",
-            group: "alerts",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_alerts",
-        method: "GET",
-        path: "/v1/alerts",
-        sdk: {
-            body: null,
-            className: "AlertsApi",
-            params: {
-                client_reference_id: {
-                    kind: "string",
-                    py: "client_reference_id",
-                    ts: "clientReferenceId",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                destination_id: {
-                    kind: "string",
-                    py: "destination_id",
-                    ts: "destinationId",
-                },
-                external_user_id: {
-                    kind: "string",
-                    py: "external_user_id",
-                    ts: "externalUserId",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                status: {
-                    kind: "string",
-                    py: "status",
-                    ts: "status",
-                },
-                symbol: {
-                    kind: "string",
-                    py: "symbol",
-                    ts: "symbol",
-                },
-                type: {
-                    kind: "string",
-                    py: "type",
-                    ts: "type",
-                },
-            },
-            py: "list_alerts",
-            ts: "listAlerts",
-        },
-        summary: "List alerts",
-        tier: "lite",
-    },
-    listAlertTemplates: {
-        cli: {
-            action: "list",
-            group: "alert-templates",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_alert-templates",
-        method: "GET",
-        path: "/v1/alert-templates",
-        sdk: {
-            body: null,
-            className: "ScriptsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-            },
-            py: "list_alert_templates",
-            ts: "listAlertTemplates",
-        },
-        summary: "List indicator alert templates",
-        tier: "lite",
-    },
-    listAlertUsers: {
-        cli: {
-            action: "list",
-            group: "alert-users",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_alert-users",
-        method: "GET",
-        path: "/v1/alert-users",
-        sdk: {
-            body: null,
-            className: "AlertUsersApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                q: {
-                    kind: "string",
-                    py: "q",
-                    ts: "q",
-                },
-                status: {
-                    kind: "string",
-                    py: "status",
-                    ts: "status",
-                },
-            },
-            py: "list_alert_users",
-            ts: "listAlertUsers",
-        },
-        summary: "List end users",
-        tier: "lite",
-    },
-    listAnnouncements: {
-        cli: {
-            action: "announcements",
-            group: "news",
-            positional: "company",
-        },
-        credits: 2,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_announcements",
-        method: "GET",
-        path: "/v1/announcements",
-        sdk: {
-            body: null,
-            className: "NewsApi",
-            params: {
-                "announced_at.gt": {
-                    kind: "datetime",
-                    py: "announced_at_gt",
-                    ts: "announcedAtGt",
-                },
-                "announced_at.gte": {
-                    kind: "datetime",
-                    py: "announced_at_gte",
-                    ts: "announcedAtGte",
-                },
-                "announced_at.lt": {
-                    kind: "datetime",
-                    py: "announced_at_lt",
-                    ts: "announcedAtLt",
-                },
-                "announced_at.lte": {
-                    kind: "datetime",
-                    py: "announced_at_lte",
-                    ts: "announcedAtLte",
-                },
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "effective_from.gte": {
-                    kind: "date",
-                    py: "effective_from_gte",
-                    ts: "effectiveFromGte",
-                },
-                "effective_to.lte": {
-                    kind: "date",
-                    py: "effective_to_lte",
-                    ts: "effectiveToLte",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "item": {
-                    kind: "string",
-                    py: "item",
-                    ts: "item",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                "topic": {
-                    kind: "string",
-                    py: "topic",
-                    ts: "topic",
-                },
-            },
-            py: "list_announcements",
-            ts: "listAnnouncements",
-        },
-        summary: "List announcements",
-        tier: "lite",
-    },
-    listBeneficialOwnershipFilings: {
-        cli: {
-            action: "beneficial",
-            group: "ownership",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_beneficial-ownership",
-        method: "GET",
-        path: "/v1/beneficial-ownership",
-        sdk: {
-            body: null,
-            className: "OwnershipApi",
-            params: {
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "current": {
-                    kind: "boolean",
-                    py: "current",
-                    ts: "current",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "filed_at.gt": {
-                    kind: "date",
-                    py: "filed_at_gt",
-                    ts: "filedAtGt",
-                },
-                "filed_at.gte": {
-                    kind: "date",
-                    py: "filed_at_gte",
-                    ts: "filedAtGte",
-                },
-                "filed_at.lt": {
-                    kind: "date",
-                    py: "filed_at_lt",
-                    ts: "filedAtLt",
-                },
-                "filed_at.lte": {
-                    kind: "date",
-                    py: "filed_at_lte",
-                    ts: "filedAtLte",
-                },
-                "filer": {
-                    kind: "string",
-                    py: "filer",
-                    ts: "filer",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                "type": {
-                    kind: "string",
-                    py: "type",
-                    ts: "type",
-                },
-            },
-            py: "list_beneficial_ownership_filings",
-            ts: "listBeneficialOwnershipFilings",
-        },
-        summary: "List beneficial ownership filings (13D / 13G)",
-        tier: "standard",
-    },
-    listCagr: {
-        cli: {
-            action: "cagr",
-            group: "metrics",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_metrics_cagr",
-        method: "GET",
-        path: "/v1/metrics/cagr",
-        sdk: {
-            body: null,
-            className: "MetricsApi",
-            params: {
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "fiscal_year.gt": {
-                    kind: "number",
-                    py: "fiscal_year_gt",
-                    ts: "fiscalYearGt",
-                },
-                "fiscal_year.gte": {
-                    kind: "number",
-                    py: "fiscal_year_gte",
-                    ts: "fiscalYearGte",
-                },
-                "fiscal_year.lt": {
-                    kind: "number",
-                    py: "fiscal_year_lt",
-                    ts: "fiscalYearLt",
-                },
-                "fiscal_year.lte": {
-                    kind: "number",
-                    py: "fiscal_year_lte",
-                    ts: "fiscalYearLte",
-                },
-                "horizon": {
-                    kind: "number",
-                    py: "horizon",
-                    ts: "horizon",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "period": {
-                    kind: "string",
-                    py: "period",
-                    ts: "period",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_cagr",
-            ts: "listCagr",
-        },
-        summary: "List CAGRs",
-        tier: "lite",
-    },
-    listCompanies: {
-        cli: {
-            action: "list",
-            group: "companies",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_companies",
-        method: "GET",
-        path: "/v1/companies",
-        sdk: {
-            body: null,
-            className: "CompaniesApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                exchange: {
-                    kind: "string",
-                    py: "exchange",
-                    ts: "exchange",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                q: {
-                    kind: "string",
-                    py: "q",
-                    ts: "q",
-                },
-                sector: {
-                    kind: "string",
-                    py: "sector",
-                    ts: "sector",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_companies",
-            ts: "listCompanies",
-        },
-        summary: "List listed companies",
-        tier: "free",
-    },
-    listDatasets: {
-        cli: {
-            action: "datasets",
-            group: "filings",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_datasets",
-        method: "GET",
-        path: "/v1/datasets",
-        sdk: {
-            body: null,
-            className: "FilingsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-            },
-            py: "list_datasets",
-            ts: "listDatasets",
-        },
-        summary: "List SEC dataset releases",
-        tier: "enterprise",
-    },
-    listDestinationDeliveries: {
-        cli: {
-            action: "deliveries",
-            group: "destinations",
-            positional: "id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_destinations_{id}_deliveries",
-        method: "GET",
-        path: "/v1/destinations/{id}/deliveries",
-        sdk: {
-            body: null,
-            className: "DestinationsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-            },
-            py: "list_destination_deliveries",
-            ts: "listDestinationDeliveries",
-        },
-        summary: "List a destination's deliveries",
-        tier: "lite",
-    },
-    listDestinations: {
-        cli: {
-            action: "list",
-            group: "destinations",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_destinations",
-        method: "GET",
-        path: "/v1/destinations",
-        sdk: {
-            body: null,
-            className: "DestinationsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-            },
-            py: "list_destinations",
-            ts: "listDestinations",
-        },
-        summary: "List destinations",
-        tier: "lite",
-    },
-    listDividends: {
-        cli: {
-            action: "list",
-            group: "dividends",
-            positional: "symbol",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_dividends",
-        method: "GET",
-        path: "/v1/dividends",
-        sdk: {
-            body: null,
-            className: "CorporateActionsApi",
-            params: {
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "ex_date.gt": {
-                    kind: "date",
-                    py: "ex_date_gt",
-                    ts: "exDateGt",
-                },
-                "ex_date.gte": {
-                    kind: "date",
-                    py: "ex_date_gte",
-                    ts: "exDateGte",
-                },
-                "ex_date.lt": {
-                    kind: "date",
-                    py: "ex_date_lt",
-                    ts: "exDateLt",
-                },
-                "ex_date.lte": {
-                    kind: "date",
-                    py: "ex_date_lte",
-                    ts: "exDateLte",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                "symbol": {
-                    kind: "string",
-                    py: "symbol",
-                    ts: "symbol",
-                },
-            },
-            py: "list_dividends",
-            ts: "listDividends",
-        },
-        summary: "List dividends",
-        tier: "lite",
-    },
-    listDocumentKindCatalog: {
-        cli: {
-            action: "document-kinds",
-            group: "catalog",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_document-kinds",
-        method: "GET",
-        path: "/v1/catalog/document-kinds",
-        sdk: {
-            body: null,
-            className: "CatalogApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-            },
-            py: "list_document_kind_catalog",
-            ts: "listDocumentKindCatalog",
-        },
-        summary: "List investor-document kinds",
-        tier: "free",
-    },
-    listDocumentSections: {
-        cli: {
-            action: "sections",
-            group: "documents",
-            positional: "version_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_document-versions_{version_id}_sections",
-        method: "GET",
-        path: "/v1/document-versions/{version_id}/sections",
-        sdk: {
-            body: null,
-            className: "FilingsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                outline: {
-                    kind: "string",
-                    py: "outline",
-                    ts: "outline",
-                },
-                version_id: {
-                    kind: "string",
-                    py: "version_id",
-                    ts: "versionId",
-                },
-            },
-            py: "list_document_sections",
-            ts: "listDocumentSections",
-        },
-        summary: "List a document version's sections",
-        tier: "lite",
-    },
-    listEvents: {
-        cli: {
-            action: "list",
-            group: "events",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events",
-        method: "GET",
-        path: "/v1/events",
-        sdk: {
-            body: null,
-            className: "EventsApi",
-            params: {
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "date_kind": {
-                    kind: "string",
-                    py: "date_kind",
-                    ts: "dateKind",
-                },
+    "getCompany": {
+        "cli": {
+            "action": "get",
+            "group": "companies",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_companies_{company}",
+        "method": "GET",
+        "path": "/v1/companies/{company}",
+        "sdk": {
+            "body": null,
+            "className": "CompaniesApi",
+            "params": {
                 "expand": {
-                    kind: "string",
-                    py: "expand",
-                    ts: "expand",
+                    "kind": "string",
+                    "py": "expand",
+                    "ts": "expand"
                 },
                 "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
-                "fiscal_quarter": {
-                    kind: "number",
-                    py: "fiscal_quarter",
-                    ts: "fiscalQuarter",
-                },
-                "fiscal_year": {
-                    kind: "number",
-                    py: "fiscal_year",
-                    ts: "fiscalYear",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "scheduled_at.gt": {
-                    kind: "date",
-                    py: "scheduled_at_gt",
-                    ts: "scheduledAtGt",
-                },
-                "scheduled_at.gte": {
-                    kind: "date",
-                    py: "scheduled_at_gte",
-                    ts: "scheduledAtGte",
-                },
-                "scheduled_at.lt": {
-                    kind: "date",
-                    py: "scheduled_at_lt",
-                    ts: "scheduledAtLt",
-                },
-                "scheduled_at.lte": {
-                    kind: "date",
-                    py: "scheduled_at_lte",
-                    ts: "scheduledAtLte",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                "status": {
-                    kind: "string",
-                    py: "status",
-                    ts: "status",
-                },
-                "type": {
-                    kind: "string",
-                    py: "type",
-                    ts: "type",
-                },
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                }
             },
-            py: "list_events",
-            ts: "listEvents",
+            "py": "get_company",
+            "ts": "getCompany"
         },
-        summary: "List events",
-        tier: "free",
+        "summary": "Get a company",
+        "tier": "free"
     },
-    listEventTypeCatalog: {
-        cli: {
-            action: "event-types",
-            group: "catalog",
-            positional: null,
+    "getDestination": {
+        "cli": {
+            "action": "get",
+            "group": "destinations",
+            "positional": "id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_event-types",
-        method: "GET",
-        path: "/v1/catalog/event-types",
-        sdk: {
-            body: null,
-            className: "CatalogApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_destinations_{id}",
+        "method": "GET",
+        "path": "/v1/destinations/{id}",
+        "sdk": {
+            "body": null,
+            "className": "DestinationsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
             },
-            py: "list_event_type_catalog",
-            ts: "listEventTypeCatalog",
+            "py": "get_destination",
+            "ts": "getDestination"
         },
-        summary: "List event types",
-        tier: "free",
+        "summary": "Get a destination",
+        "tier": "lite"
     },
-    listExchangeCatalog: {
-        cli: {
-            action: "exchanges",
-            group: "catalog",
-            positional: null,
+    "getDocumentFigure": {
+        "cli": {
+            "action": "figure",
+            "group": "documents",
+            "positional": "version_id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_exchanges",
-        method: "GET",
-        path: "/v1/catalog/exchanges",
-        sdk: {
-            body: null,
-            className: "CatalogApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_document-versions_{version_id}_figures_{block_id}",
+        "method": "GET",
+        "path": "/v1/document-versions/{version_id}/figures/{block_id}",
+        "sdk": {
+            "body": null,
+            "className": "FilingsApi",
+            "params": {
+                "version_id": {
+                    "kind": "string",
+                    "py": "version_id",
+                    "ts": "versionId"
                 },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
+                "block_id": {
+                    "kind": "string",
+                    "py": "block_id",
+                    "ts": "blockId"
+                }
             },
-            py: "list_exchange_catalog",
-            ts: "listExchangeCatalog",
+            "py": "get_document_figure",
+            "ts": "getDocumentFigure"
         },
-        summary: "List exchanges",
-        tier: "free",
+        "summary": "Get a figure",
+        "tier": "lite"
     },
-    listFactPlaces: {
-        cli: {
-            action: "fact-places",
-            group: "documents",
-            positional: null,
+    "getDocumentVersion": {
+        "cli": {
+            "action": "get",
+            "group": "documents",
+            "positional": "version_id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_fact-places",
-        method: "GET",
-        path: "/v1/fact-places",
-        sdk: {
-            body: null,
-            className: "FilingsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_document-versions_{version_id}",
+        "method": "GET",
+        "path": "/v1/document-versions/{version_id}",
+        "sdk": {
+            "body": null,
+            "className": "FilingsApi",
+            "params": {
+                "blocks": {
+                    "kind": "string",
+                    "py": "blocks",
+                    "ts": "blocks"
                 },
-                document_version: {
-                    kind: "string",
-                    py: "document_version",
-                    ts: "documentVersion",
+                "pages": {
+                    "kind": "string",
+                    "py": "pages",
+                    "ts": "pages"
                 },
-                fact: {
-                    kind: "string",
-                    py: "fact",
-                    ts: "fact",
+                "printed": {
+                    "kind": "string",
+                    "py": "printed",
+                    "ts": "printed"
                 },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
+                "neighbors": {
+                    "kind": "number",
+                    "py": "neighbors",
+                    "ts": "neighbors"
                 },
-                status: {
-                    kind: "string",
-                    py: "status",
-                    ts: "status",
+                "footnotes": {
+                    "kind": "boolean",
+                    "py": "footnotes",
+                    "ts": "footnotes"
                 },
+                "version_id": {
+                    "kind": "string",
+                    "py": "version_id",
+                    "ts": "versionId"
+                }
             },
-            py: "list_fact_places",
-            ts: "listFactPlaces",
+            "py": "get_document_version",
+            "ts": "getDocumentVersion"
         },
-        summary: "List where facts appear in a document",
-        tier: "pro",
+        "summary": "Get a document version",
+        "tier": "lite"
     },
-    listFilerHoldingChanges: {
-        cli: {
-            action: "holding-changes",
-            group: "filers",
-            positional: "cik",
+    "getEvent": {
+        "cli": {
+            "action": "get",
+            "group": "events",
+            "positional": "event_id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_filers_{cik}_holding-changes",
-        method: "GET",
-        path: "/v1/filers/{cik}/holding-changes",
-        sdk: {
-            body: null,
-            className: "HoldersApi",
-            params: {
-                cik: {
-                    kind: "string",
-                    py: "cik",
-                    ts: "cik",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                period_end: {
-                    kind: "date",
-                    py: "period_end",
-                    ts: "periodEnd",
-                },
-                prior_period_end: {
-                    kind: "date",
-                    py: "prior_period_end",
-                    ts: "priorPeriodEnd",
-                },
-                type: {
-                    kind: "string",
-                    py: "type",
-                    ts: "type",
-                },
-            },
-            py: "list_filer_holding_changes",
-            ts: "listFilerHoldingChanges",
-        },
-        summary: "List a 13F manager's position changes",
-        tier: "pro",
-    },
-    listFilerHoldings: {
-        cli: {
-            action: "holdings",
-            group: "filers",
-            positional: "cik",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_filers_{cik}_holdings",
-        method: "GET",
-        path: "/v1/filers/{cik}/holdings",
-        sdk: {
-            body: null,
-            className: "HoldersApi",
-            params: {
-                cik: {
-                    kind: "string",
-                    py: "cik",
-                    ts: "cik",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                instruments: {
-                    kind: "string",
-                    py: "instruments",
-                    ts: "instruments",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                period_end: {
-                    kind: "date",
-                    py: "period_end",
-                    ts: "periodEnd",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_filer_holdings",
-            ts: "listFilerHoldings",
-        },
-        summary: "List a 13F manager's holdings",
-        tier: "lite",
-    },
-    listFilers: {
-        cli: {
-            action: "list",
-            group: "filers",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_filers",
-        method: "GET",
-        path: "/v1/filers",
-        sdk: {
-            body: null,
-            className: "CompaniesApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                form: {
-                    kind: "string",
-                    py: "form",
-                    ts: "form",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                listed: {
-                    kind: "boolean",
-                    py: "listed",
-                    ts: "listed",
-                },
-                phase: {
-                    kind: "string",
-                    py: "phase",
-                    ts: "phase",
-                },
-                q: {
-                    kind: "string",
-                    py: "q",
-                    ts: "q",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_filers",
-            ts: "listFilers",
-        },
-        summary: "List SEC filers",
-        tier: "lite",
-    },
-    listFilingFacts: {
-        cli: {
-            action: "facts",
-            group: "filings",
-            positional: "accession",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_filings_{accession}_facts",
-        method: "GET",
-        path: "/v1/filings/{accession}/facts",
-        sdk: {
-            body: null,
-            className: "FilingsApi",
-            params: {
-                accession: {
-                    kind: "string",
-                    py: "accession",
-                    ts: "accession",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                tag: {
-                    kind: "string",
-                    py: "tag",
-                    ts: "tag",
-                },
-            },
-            py: "list_filing_facts",
-            ts: "listFilingFacts",
-        },
-        summary: "List a filing's numeric facts",
-        tier: "lite",
-    },
-    listFilingHoldings: {
-        cli: {
-            action: "holdings",
-            group: "filings",
-            positional: "accession",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_filings_{accession}_holdings",
-        method: "GET",
-        path: "/v1/filings/{accession}/holdings",
-        sdk: {
-            body: null,
-            className: "FilingsApi",
-            params: {
-                accession: {
-                    kind: "string",
-                    py: "accession",
-                    ts: "accession",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-            },
-            py: "list_filing_holdings",
-            ts: "listFilingHoldings",
-        },
-        summary: "List a holdings filing's lines",
-        tier: "lite",
-    },
-    listFilingNotes: {
-        cli: {
-            action: "notes",
-            group: "filings",
-            positional: "accession",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_filings_{accession}_notes",
-        method: "GET",
-        path: "/v1/filings/{accession}/notes",
-        sdk: {
-            body: null,
-            className: "FilingsApi",
-            params: {
-                accession: {
-                    kind: "string",
-                    py: "accession",
-                    ts: "accession",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                tag: {
-                    kind: "string",
-                    py: "tag",
-                    ts: "tag",
-                },
-            },
-            py: "list_filing_notes",
-            ts: "listFilingNotes",
-        },
-        summary: "List a filing's text facts",
-        tier: "lite",
-    },
-    listFilings: {
-        cli: {
-            action: "list",
-            group: "filings",
-            positional: "symbol",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_filings",
-        method: "GET",
-        path: "/v1/filings",
-        sdk: {
-            body: null,
-            className: "FilingsApi",
-            params: {
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}",
+        "method": "GET",
+        "path": "/v1/events/{event_id}",
+        "sdk": {
+            "body": null,
+            "className": "EventsApi",
+            "params": {
+                "expand": {
+                    "kind": "string",
+                    "py": "expand",
+                    "ts": "expand"
                 },
                 "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
-                "filed_at.gt": {
-                    kind: "date",
-                    py: "filed_at_gt",
-                    ts: "filedAtGt",
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
+            },
+            "py": "get_event",
+            "ts": "getEvent"
+        },
+        "summary": "Get an event",
+        "tier": "free"
+    },
+    "getEventComparison": {
+        "cli": {
+            "action": "comparison",
+            "group": "events",
+            "positional": "event_id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}_comparison",
+        "method": "GET",
+        "path": "/v1/events/{event_id}/comparison",
+        "sdk": {
+            "body": null,
+            "className": "CallAnalyticsApi",
+            "params": {
+                "prior": {
+                    "kind": "string",
+                    "py": "prior",
+                    "ts": "prior"
                 },
-                "filed_at.gte": {
-                    kind: "date",
-                    py: "filed_at_gte",
-                    ts: "filedAtGte",
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
+            },
+            "py": "get_event_comparison",
+            "ts": "getEventComparison"
+        },
+        "summary": "Compare an event with a prior one",
+        "tier": "pro"
+    },
+    "getEventStats": {
+        "cli": {
+            "action": "stats",
+            "group": "events",
+            "positional": "event_id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}_stats",
+        "method": "GET",
+        "path": "/v1/events/{event_id}/stats",
+        "sdk": {
+            "body": null,
+            "className": "CallAnalyticsApi",
+            "params": {
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
+            },
+            "py": "get_event_stats",
+            "ts": "getEventStats"
+        },
+        "summary": "Get an event's call statistics",
+        "tier": "pro"
+    },
+    "getFact": {
+        "cli": {
+            "action": "explain",
+            "group": "metrics",
+            "positional": "fact_id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_facts_{fact_id}",
+        "method": "GET",
+        "path": "/v1/facts/{fact_id}",
+        "sdk": {
+            "body": null,
+            "className": "FinancialsApi",
+            "params": {
+                "max_depth": {
+                    "kind": "number",
+                    "py": "max_depth",
+                    "ts": "maxDepth"
                 },
-                "filed_at.lt": {
-                    kind: "date",
-                    py: "filed_at_lt",
-                    ts: "filedAtLt",
+                "max_members": {
+                    "kind": "number",
+                    "py": "max_members",
+                    "ts": "maxMembers"
                 },
-                "filed_at.lte": {
-                    kind: "date",
-                    py: "filed_at_lte",
-                    ts: "filedAtLte",
+                "fact_id": {
+                    "kind": "string",
+                    "py": "fact_id",
+                    "ts": "factId"
+                }
+            },
+            "py": "get_fact",
+            "ts": "getFact"
+        },
+        "summary": "Explain a standardized fact",
+        "tier": "lite"
+    },
+    "getFiler": {
+        "cli": {
+            "action": "get",
+            "group": "filers",
+            "positional": "cik"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_filers_{cik}",
+        "method": "GET",
+        "path": "/v1/filers/{cik}",
+        "sdk": {
+            "body": null,
+            "className": "CompaniesApi",
+            "params": {
+                "expand": {
+                    "kind": "string",
+                    "py": "expand",
+                    "ts": "expand"
                 },
-                "form": {
-                    kind: "string",
-                    py: "form",
-                    ts: "form",
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
-                "items": {
-                    kind: "string",
-                    py: "items",
-                    ts: "items",
+                "cik": {
+                    "kind": "string",
+                    "py": "cik",
+                    "ts": "cik"
+                }
+            },
+            "py": "get_filer",
+            "ts": "getFiler"
+        },
+        "summary": "Get a filer",
+        "tier": "lite"
+    },
+    "getFiling": {
+        "cli": {
+            "action": "get",
+            "group": "filings",
+            "positional": "accession"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_filings_{accession}",
+        "method": "GET",
+        "path": "/v1/filings/{accession}",
+        "sdk": {
+            "body": null,
+            "className": "FilingsApi",
+            "params": {
+                "expand": {
+                    "kind": "string",
+                    "py": "expand",
+                    "ts": "expand"
                 },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
+                "accession": {
+                    "kind": "string",
+                    "py": "accession",
+                    "ts": "accession"
+                }
+            },
+            "py": "get_filing",
+            "ts": "getFiling"
+        },
+        "summary": "Get a filing",
+        "tier": "lite"
+    },
+    "getFund": {
+        "cli": {
+            "action": "get",
+            "group": "funds",
+            "positional": "fund"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_funds_{fund}",
+        "method": "GET",
+        "path": "/v1/funds/{fund}",
+        "sdk": {
+            "body": null,
+            "className": "FundsApi",
+            "params": {
+                "expand": {
+                    "kind": "string",
+                    "py": "expand",
+                    "ts": "expand"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "fund": {
+                    "kind": "string",
+                    "py": "fund",
+                    "ts": "fund"
+                }
+            },
+            "py": "get_fund",
+            "ts": "getFund"
+        },
+        "summary": "Get a fund",
+        "tier": "lite"
+    },
+    "getInsiderTrade": {
+        "cli": {
+            "action": "get",
+            "group": "insider-trades",
+            "positional": "id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_insider-trades_{id}",
+        "method": "GET",
+        "path": "/v1/insider-trades/{id}",
+        "sdk": {
+            "body": null,
+            "className": "InsiderTradesApi",
+            "params": {
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
+            },
+            "py": "get_insider_trade",
+            "ts": "getInsiderTrade"
+        },
+        "summary": "Get an insider trade",
+        "tier": "standard"
+    },
+    "getInstrument": {
+        "cli": {
+            "action": "get",
+            "group": "instruments",
+            "positional": "symbol"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_instruments_{symbol}",
+        "method": "GET",
+        "path": "/v1/instruments/{symbol}",
+        "sdk": {
+            "body": null,
+            "className": "InstrumentsApi",
+            "params": {
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
                 "symbol": {
-                    kind: "string",
-                    py: "symbol",
-                    ts: "symbol",
-                },
+                    "kind": "string",
+                    "py": "symbol",
+                    "ts": "symbol"
+                }
             },
-            py: "list_filings",
-            ts: "listFilings",
+            "py": "get_instrument",
+            "ts": "getInstrument"
         },
-        summary: "List filings",
-        tier: "lite",
+        "summary": "Get an instrument",
+        "tier": "free"
     },
-    listFinancialVintages: {
-        cli: {
-            action: "vintages",
-            group: "metrics",
-            positional: "company",
+    "getInvestorDocument": {
+        "cli": {
+            "action": "get",
+            "group": "investor-documents",
+            "positional": "document_id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_financials_vintages",
-        method: "GET",
-        path: "/v1/financials/vintages",
-        sdk: {
-            body: null,
-            className: "FinancialsApi",
-            params: {
-                company: {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_investor-documents_{document_id}",
+        "method": "GET",
+        "path": "/v1/investor-documents/{document_id}",
+        "sdk": {
+            "body": null,
+            "className": "InvestorDocumentsApi",
+            "params": {
+                "expand": {
+                    "kind": "string",
+                    "py": "expand",
+                    "ts": "expand"
                 },
-                concept: {
-                    kind: "string",
-                    py: "concept",
-                    ts: "concept",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                member: {
-                    kind: "string",
-                    py: "member",
-                    ts: "member",
-                },
-                period_end: {
-                    kind: "date",
-                    py: "period_end",
-                    ts: "periodEnd",
-                },
-                period_start: {
-                    kind: "date",
-                    py: "period_start",
-                    ts: "periodStart",
-                },
+                "document_id": {
+                    "kind": "string",
+                    "py": "document_id",
+                    "ts": "documentId"
+                }
             },
-            py: "list_financial_vintages",
-            ts: "listFinancialVintages",
+            "py": "get_investor_document",
+            "ts": "getInvestorDocument"
         },
-        summary: "List the filed values of a fact",
-        tier: "pro",
+        "summary": "Get an investor document",
+        "tier": "pro"
     },
-    listFiscalPeriods: {
-        cli: {
-            action: "fiscal-periods",
-            group: "companies",
-            positional: "company",
+    "getIpo": {
+        "cli": {
+            "action": "get",
+            "group": "ipos",
+            "positional": "ipo_id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_fiscal-periods",
-        method: "GET",
-        path: "/v1/fiscal-periods",
-        sdk: {
-            body: null,
-            className: "CalendarApi",
-            params: {
-                company: {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_ipos_{ipo_id}",
+        "method": "GET",
+        "path": "/v1/ipos/{ipo_id}",
+        "sdk": {
+            "body": null,
+            "className": "OfferingsApi",
+            "params": {
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
+                "ipo_id": {
+                    "kind": "string",
+                    "py": "ipo_id",
+                    "ts": "ipoId"
+                }
             },
-            py: "list_fiscal_periods",
-            ts: "listFiscalPeriods",
+            "py": "get_ipo",
+            "ts": "getIpo"
         },
-        summary: "List fiscal periods",
-        tier: "free",
+        "summary": "Get an offering",
+        "tier": "lite"
     },
-    listFormCatalog: {
-        cli: {
-            action: "forms",
-            group: "catalog",
-            positional: null,
+    "getLiveAudio": {
+        "cli": {
+            "action": "live-audio",
+            "group": "events",
+            "positional": "event_id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_forms",
-        method: "GET",
-        path: "/v1/catalog/forms",
-        sdk: {
-            body: null,
-            className: "CatalogApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
+        "credits": 5,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}_live-audio",
+        "method": "GET",
+        "path": "/v1/events/{event_id}/live-audio",
+        "sdk": {
+            "body": null,
+            "className": "EventsApi",
+            "params": {
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
             },
-            py: "list_form_catalog",
-            ts: "listFormCatalog",
+            "py": "get_live_audio",
+            "ts": "getLiveAudio"
         },
-        summary: "List SEC forms",
-        tier: "free",
+        "summary": "Get an event's live audio URL",
+        "tier": "pro"
     },
-    listFundPositions: {
-        cli: {
-            action: "holdings",
-            group: "funds",
-            positional: "fund",
+    "getMacroGdpSnapshot": {
+        "cli": {
+            "action": "gdp-snapshot",
+            "group": "macro",
+            "positional": null
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_funds_{fund}_holdings",
-        method: "GET",
-        path: "/v1/funds/{fund}/holdings",
-        sdk: {
-            body: null,
-            className: "FundsApi",
-            params: {
-                as_of: {
-                    kind: "date",
-                    py: "as_of",
-                    ts: "asOf",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                fund: {
-                    kind: "string",
-                    py: "fund",
-                    ts: "fund",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_fund_positions",
-            ts: "listFundPositions",
-        },
-        summary: "List a fund's holdings",
-        tier: "lite",
-    },
-    listFunds: {
-        cli: {
-            action: "list",
-            group: "funds",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_funds",
-        method: "GET",
-        path: "/v1/funds",
-        sdk: {
-            body: null,
-            className: "FundsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                exchange: {
-                    kind: "string",
-                    py: "exchange",
-                    ts: "exchange",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                is_active: {
-                    kind: "string",
-                    py: "is_active",
-                    ts: "isActive",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                q: {
-                    kind: "string",
-                    py: "q",
-                    ts: "q",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                structure: {
-                    kind: "string",
-                    py: "structure",
-                    ts: "structure",
-                },
-                type: {
-                    kind: "string",
-                    py: "type",
-                    ts: "type",
-                },
-            },
-            py: "list_funds",
-            ts: "listFunds",
-        },
-        summary: "List funds",
-        tier: "lite",
-    },
-    listFundWeights: {
-        cli: {
-            action: "weights",
-            group: "funds",
-            positional: "fund",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_funds_{fund}_weights",
-        method: "GET",
-        path: "/v1/funds/{fund}/weights",
-        sdk: {
-            body: null,
-            className: "FundsApi",
-            params: {
-                as_of: {
-                    kind: "date",
-                    py: "as_of",
-                    ts: "asOf",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                dimension: {
-                    kind: "string",
-                    py: "dimension",
-                    ts: "dimension",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                fund: {
-                    kind: "string",
-                    py: "fund",
-                    ts: "fund",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-            },
-            py: "list_fund_weights",
-            ts: "listFundWeights",
-        },
-        summary: "List a fund's sector, country and asset-class weights",
-        tier: "lite",
-    },
-    listGrowth: {
-        cli: {
-            action: "growth",
-            group: "metrics",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_metrics_growth",
-        method: "GET",
-        path: "/v1/metrics/growth",
-        sdk: {
-            body: null,
-            className: "MetricsApi",
-            params: {
-                "basis": {
-                    kind: "string",
-                    py: "basis",
-                    ts: "basis",
-                },
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_macro_gdp_snapshot",
+        "method": "GET",
+        "path": "/v1/macro/gdp/snapshot",
+        "sdk": {
+            "body": null,
+            "className": "MacroApi",
+            "params": {
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
                 },
                 "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "fiscal_year.gt": {
-                    kind: "number",
-                    py: "fiscal_year_gt",
-                    ts: "fiscalYearGt",
-                },
-                "fiscal_year.gte": {
-                    kind: "number",
-                    py: "fiscal_year_gte",
-                    ts: "fiscalYearGte",
-                },
-                "fiscal_year.lt": {
-                    kind: "number",
-                    py: "fiscal_year_lt",
-                    ts: "fiscalYearLt",
-                },
-                "fiscal_year.lte": {
-                    kind: "number",
-                    py: "fiscal_year_lte",
-                    ts: "fiscalYearLte",
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
                 "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "period": {
-                    kind: "string",
-                    py: "period",
-                    ts: "period",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_growth",
-            ts: "listGrowth",
-        },
-        summary: "List growth rates",
-        tier: "lite",
-    },
-    listGuidance: {
-        cli: {
-            action: "list",
-            group: "guidance",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_guidance",
-        method: "GET",
-        path: "/v1/guidance",
-        sdk: {
-            body: null,
-            className: "GuidanceApi",
-            params: {
-                basis: {
-                    kind: "string",
-                    py: "basis",
-                    ts: "basis",
-                },
-                company: {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                event: {
-                    kind: "string",
-                    py: "event",
-                    ts: "event",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                metric: {
-                    kind: "string",
-                    py: "metric",
-                    ts: "metric",
-                },
-                period_kind: {
-                    kind: "string",
-                    py: "period_kind",
-                    ts: "periodKind",
-                },
-                qualitative: {
-                    kind: "boolean",
-                    py: "qualitative",
-                    ts: "qualitative",
-                },
-                review: {
-                    kind: "string",
-                    py: "review",
-                    ts: "review",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_guidance",
-            ts: "listGuidance",
-        },
-        summary: "List guidance items",
-        tier: "lite",
-    },
-    listHolderChanges: {
-        cli: {
-            action: "changes",
-            group: "holders",
-            positional: "symbol",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_holder-changes",
-        method: "GET",
-        path: "/v1/holder-changes",
-        sdk: {
-            body: null,
-            className: "HoldersApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                filer: {
-                    kind: "string",
-                    py: "filer",
-                    ts: "filer",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                period_end: {
-                    kind: "date",
-                    py: "period_end",
-                    ts: "periodEnd",
-                },
-                prior_period_end: {
-                    kind: "date",
-                    py: "prior_period_end",
-                    ts: "priorPeriodEnd",
-                },
-                symbol: {
-                    kind: "string",
-                    py: "symbol",
-                    ts: "symbol",
-                },
-                type: {
-                    kind: "string",
-                    py: "type",
-                    ts: "type",
-                },
-            },
-            py: "list_holder_changes",
-            ts: "listHolderChanges",
-        },
-        summary: "List 13F position changes in a stock or a fund",
-        tier: "pro",
-    },
-    listHolders: {
-        cli: {
-            action: "list",
-            group: "holders",
-            positional: "symbol",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_holders",
-        method: "GET",
-        path: "/v1/holders",
-        sdk: {
-            body: null,
-            className: "HoldersApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                instruments: {
-                    kind: "string",
-                    py: "instruments",
-                    ts: "instruments",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                period_end: {
-                    kind: "date",
-                    py: "period_end",
-                    ts: "periodEnd",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                source: {
-                    kind: "string",
-                    py: "source",
-                    ts: "source",
-                },
-                symbol: {
-                    kind: "string",
-                    py: "symbol",
-                    ts: "symbol",
-                },
-            },
-            py: "list_holders",
-            ts: "listHolders",
-        },
-        summary: "List who holds a stock or a fund",
-        tier: "lite",
-    },
-    listInsiderHoldings: {
-        cli: {
-            action: "holdings",
-            group: "insider-trades",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_insider-holdings",
-        method: "GET",
-        path: "/v1/insider-holdings",
-        sdk: {
-            body: null,
-            className: "InsiderTradesApi",
-            params: {
-                "as_of.gt": {
-                    kind: "date",
-                    py: "as_of_gt",
-                    ts: "asOfGt",
-                },
-                "as_of.gte": {
-                    kind: "date",
-                    py: "as_of_gte",
-                    ts: "asOfGte",
-                },
-                "as_of.lt": {
-                    kind: "date",
-                    py: "as_of_lt",
-                    ts: "asOfLt",
-                },
-                "as_of.lte": {
-                    kind: "date",
-                    py: "as_of_lte",
-                    ts: "asOfLte",
-                },
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
                 },
                 "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "get_macro_gdp_snapshot",
+            "ts": "getMacroGdpSnapshot"
+        },
+        "summary": "Get the US GDP and income snapshot",
+        "tier": "lite"
+    },
+    "getMacroInflationSnapshot": {
+        "cli": {
+            "action": "inflation-snapshot",
+            "group": "macro",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_macro_inflation_snapshot",
+        "method": "GET",
+        "path": "/v1/macro/inflation/snapshot",
+        "sdk": {
+            "body": null,
+            "className": "MacroApi",
+            "params": {
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
                 },
                 "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "is_derivative": {
-                    kind: "boolean",
-                    py: "is_derivative",
-                    ts: "isDerivative",
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
                 "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "owner": {
-                    kind: "string",
-                    py: "owner",
-                    ts: "owner",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_insider_holdings",
-            ts: "listInsiderHoldings",
-        },
-        summary: "List insider holdings",
-        tier: "standard",
-    },
-    listInsiderSaleNotices: {
-        cli: {
-            action: "sale-notices",
-            group: "ownership",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_insider-sale-notices",
-        method: "GET",
-        path: "/v1/insider-sale-notices",
-        sdk: {
-            body: null,
-            className: "OwnershipApi",
-            params: {
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
                 },
                 "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "get_macro_inflation_snapshot",
+            "ts": "getMacroInflationSnapshot"
+        },
+        "summary": "Get the US inflation snapshot",
+        "tier": "lite"
+    },
+    "getMacroLaborSnapshot": {
+        "cli": {
+            "action": "labor-snapshot",
+            "group": "macro",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_macro_labor_snapshot",
+        "method": "GET",
+        "path": "/v1/macro/labor/snapshot",
+        "sdk": {
+            "body": null,
+            "className": "MacroApi",
+            "params": {
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
                 },
                 "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "filed_at.gt": {
-                    kind: "date",
-                    py: "filed_at_gt",
-                    ts: "filedAtGt",
-                },
-                "filed_at.gte": {
-                    kind: "date",
-                    py: "filed_at_gte",
-                    ts: "filedAtGte",
-                },
-                "filed_at.lt": {
-                    kind: "date",
-                    py: "filed_at_lt",
-                    ts: "filedAtLt",
-                },
-                "filed_at.lte": {
-                    kind: "date",
-                    py: "filed_at_lte",
-                    ts: "filedAtLte",
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
                 "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "owner": {
-                    kind: "string",
-                    py: "owner",
-                    ts: "owner",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_insider_sale_notices",
-            ts: "listInsiderSaleNotices",
-        },
-        summary: "List insider sale notices (Form 144)",
-        tier: "standard",
-    },
-    listInsiderTrades: {
-        cli: {
-            action: "list",
-            group: "insider-trades",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_insider-trades",
-        method: "GET",
-        path: "/v1/insider-trades",
-        sdk: {
-            body: null,
-            className: "InsiderTradesApi",
-            params: {
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
                 },
                 "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "get_macro_labor_snapshot",
+            "ts": "getMacroLaborSnapshot"
+        },
+        "summary": "Get the US labor market snapshot",
+        "tier": "lite"
+    },
+    "getMe": {
+        "cli": {
+            "action": "show",
+            "group": "me",
+            "positional": null
+        },
+        "credits": 0,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_me",
+        "method": "GET",
+        "path": "/v1/me",
+        "sdk": {
+            "body": null,
+            "className": "AccountApi",
+            "params": {},
+            "py": "get_me",
+            "ts": "getMe"
+        },
+        "summary": "Who am I",
+        "tier": "free"
+    },
+    "getMyUsage": {
+        "cli": {
+            "action": "usage",
+            "group": "me",
+            "positional": null
+        },
+        "credits": 0,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_me_usage",
+        "method": "GET",
+        "path": "/v1/me/usage",
+        "sdk": {
+            "body": null,
+            "className": "AccountApi",
+            "params": {
+                "days": {
+                    "kind": "number",
+                    "py": "days",
+                    "ts": "days"
+                }
+            },
+            "py": "get_my_usage",
+            "ts": "getMyUsage"
+        },
+        "summary": "Get my usage",
+        "tier": "free"
+    },
+    "getNewsItem": {
+        "cli": {
+            "action": "get",
+            "group": "news",
+            "positional": "id"
+        },
+        "credits": 2,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_news_{id}",
+        "method": "GET",
+        "path": "/v1/news/{id}",
+        "sdk": {
+            "body": null,
+            "className": "NewsApi",
+            "params": {
                 "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
-                "filed_at.gt": {
-                    kind: "date",
-                    py: "filed_at_gt",
-                    ts: "filedAtGt",
-                },
-                "filed_at.gte": {
-                    kind: "date",
-                    py: "filed_at_gte",
-                    ts: "filedAtGte",
-                },
-                "filed_at.lt": {
-                    kind: "date",
-                    py: "filed_at_lt",
-                    ts: "filedAtLt",
-                },
-                "filed_at.lte": {
-                    kind: "date",
-                    py: "filed_at_lte",
-                    ts: "filedAtLte",
-                },
-                "is_derivative": {
-                    kind: "boolean",
-                    py: "is_derivative",
-                    ts: "isDerivative",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "owner": {
-                    kind: "string",
-                    py: "owner",
-                    ts: "owner",
-                },
-                "side": {
-                    kind: "string",
-                    py: "side",
-                    ts: "side",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                "transaction_date.gte": {
-                    kind: "date",
-                    py: "transaction_date_gte",
-                    ts: "transactionDateGte",
-                },
-                "transaction_date.lte": {
-                    kind: "date",
-                    py: "transaction_date_lte",
-                    ts: "transactionDateLte",
-                },
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
             },
-            py: "list_insider_trades",
-            ts: "listInsiderTrades",
+            "py": "get_news_item",
+            "ts": "getNewsItem"
         },
-        summary: "List insider trades",
-        tier: "standard",
+        "summary": "Get a news item",
+        "tier": "lite"
     },
-    listInstruments: {
-        cli: {
-            action: "list",
-            group: "instruments",
-            positional: null,
+    "getNewsText": {
+        "cli": {
+            "action": "text",
+            "group": "news",
+            "positional": "id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_instruments",
-        method: "GET",
-        path: "/v1/instruments",
-        sdk: {
-            body: null,
-            className: "InstrumentsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                exchange: {
-                    kind: "string",
-                    py: "exchange",
-                    ts: "exchange",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                is_active: {
-                    kind: "string",
-                    py: "is_active",
-                    ts: "isActive",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                q: {
-                    kind: "string",
-                    py: "q",
-                    ts: "q",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                structure: {
-                    kind: "string",
-                    py: "structure",
-                    ts: "structure",
-                },
-                type: {
-                    kind: "string",
-                    py: "type",
-                    ts: "type",
-                },
-            },
-            py: "list_instruments",
-            ts: "listInstruments",
-        },
-        summary: "List instruments",
-        tier: "free",
-    },
-    listInvestorDocuments: {
-        cli: {
-            action: "list",
-            group: "investor-documents",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_investor-documents",
-        method: "GET",
-        path: "/v1/investor-documents",
-        sdk: {
-            body: null,
-            className: "InvestorDocumentsApi",
-            params: {
-                category: {
-                    kind: "string",
-                    py: "category",
-                    ts: "category",
-                },
-                company: {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                event: {
-                    kind: "string",
-                    py: "event",
-                    ts: "event",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                fiscal_year: {
-                    kind: "number",
-                    py: "fiscal_year",
-                    ts: "fiscalYear",
-                },
-                kind: {
-                    kind: "string",
-                    py: "kind",
-                    ts: "kind",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_investor_documents",
-            ts: "listInvestorDocuments",
-        },
-        summary: "List investor documents",
-        tier: "pro",
-    },
-    listIpos: {
-        cli: {
-            action: "list",
-            group: "ipos",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_ipos",
-        method: "GET",
-        path: "/v1/ipos",
-        sdk: {
-            body: null,
-            className: "OfferingsApi",
-            params: {
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
+        "credits": 2,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_news_{id}_text",
+        "method": "GET",
+        "path": "/v1/news/{id}/text",
+        "sdk": {
+            "body": null,
+            "className": "NewsApi",
+            "params": {
                 "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
                 },
+                "max_chars": {
+                    "kind": "number",
+                    "py": "max_chars",
+                    "ts": "maxChars"
+                },
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
+            },
+            "py": "get_news_text",
+            "ts": "getNewsText"
+        },
+        "summary": "Get a news item's text",
+        "tier": "lite"
+    },
+    "getOffering": {
+        "cli": {
+            "action": "get",
+            "group": "offerings",
+            "positional": "offering_id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_offerings_{offering_id}",
+        "method": "GET",
+        "path": "/v1/offerings/{offering_id}",
+        "sdk": {
+            "body": null,
+            "className": "OfferingsApi",
+            "params": {
                 "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
-                "is_spac": {
-                    kind: "boolean",
-                    py: "is_spac",
-                    ts: "isSpac",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "listing_date.gt": {
-                    kind: "date",
-                    py: "listing_date_gt",
-                    ts: "listingDateGt",
-                },
-                "listing_date.gte": {
-                    kind: "date",
-                    py: "listing_date_gte",
-                    ts: "listingDateGte",
-                },
-                "listing_date.lt": {
-                    kind: "date",
-                    py: "listing_date_lt",
-                    ts: "listingDateLt",
-                },
-                "listing_date.lte": {
-                    kind: "date",
-                    py: "listing_date_lte",
-                    ts: "listingDateLte",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                "stage": {
-                    kind: "string",
-                    py: "stage",
-                    ts: "stage",
-                },
+                "offering_id": {
+                    "kind": "string",
+                    "py": "offering_id",
+                    "ts": "offeringId"
+                }
             },
-            py: "list_ipos",
-            ts: "listIpos",
+            "py": "get_offering",
+            "ts": "getOffering"
         },
-        summary: "List offerings",
-        tier: "lite",
+        "summary": "Get a Form D private offering",
+        "tier": "lite"
     },
-    listKpiCatalog: {
-        cli: {
-            action: "kpis",
-            group: "catalog",
-            positional: null,
+    "getPerson": {
+        "cli": {
+            "action": "get",
+            "group": "people",
+            "positional": "person_id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_kpis",
-        method: "GET",
-        path: "/v1/catalog/kpis",
-        sdk: {
-            body: null,
-            className: "CatalogApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                sector: {
-                    kind: "string",
-                    py: "sector",
-                    ts: "sector",
-                },
-            },
-            py: "list_kpi_catalog",
-            ts: "listKpiCatalog",
-        },
-        summary: "List KPIs by sector",
-        tier: "free",
-    },
-    listKpis: {
-        cli: {
-            action: "kpis",
-            group: "guidance",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_kpis",
-        method: "GET",
-        path: "/v1/kpis",
-        sdk: {
-            body: null,
-            className: "GuidanceApi",
-            params: {
-                company: {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                event: {
-                    kind: "string",
-                    py: "event",
-                    ts: "event",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                metric: {
-                    kind: "string",
-                    py: "metric",
-                    ts: "metric",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_kpis",
-            ts: "listKpis",
-        },
-        summary: "List KPI mentions",
-        tier: "pro",
-    },
-    listKpiSeries: {
-        cli: {
-            action: "kpi-series",
-            group: "guidance",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_kpi-series",
-        method: "GET",
-        path: "/v1/kpi-series",
-        sdk: {
-            body: null,
-            className: "GuidanceApi",
-            params: {
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_people_{person_id}",
+        "method": "GET",
+        "path": "/v1/people/{person_id}",
+        "sdk": {
+            "body": null,
+            "className": "CompaniesApi",
+            "params": {
                 "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
-                "kpi": {
-                    kind: "string",
-                    py: "kpi",
-                    ts: "kpi",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "period_end.gt": {
-                    kind: "date",
-                    py: "period_end_gt",
-                    ts: "periodEndGt",
-                },
-                "period_end.gte": {
-                    kind: "date",
-                    py: "period_end_gte",
-                    ts: "periodEndGte",
-                },
-                "period_end.lt": {
-                    kind: "date",
-                    py: "period_end_lt",
-                    ts: "periodEndLt",
-                },
-                "period_end.lte": {
-                    kind: "date",
-                    py: "period_end_lte",
-                    ts: "periodEndLte",
-                },
-                "period_kind": {
-                    kind: "string",
-                    py: "period_kind",
-                    ts: "periodKind",
-                },
-                "segment": {
-                    kind: "string",
-                    py: "segment",
-                    ts: "segment",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
+                "person_id": {
+                    "kind": "string",
+                    "py": "person_id",
+                    "ts": "personId"
+                }
             },
-            py: "list_kpi_series",
-            ts: "listKpiSeries",
+            "py": "get_person",
+            "ts": "getPerson"
         },
-        summary: "List KPI time series",
-        tier: "pro",
+        "summary": "Get a person",
+        "tier": "lite"
     },
-    listMacroGdp: {
-        cli: {
-            action: "gdp",
-            group: "macro",
-            positional: "series",
+    "getPressRelease": {
+        "cli": {
+            "action": "press-release",
+            "group": "events",
+            "positional": "event_id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_macro_gdp",
-        method: "GET",
-        path: "/v1/macro/gdp",
-        sdk: {
-            body: null,
-            className: "MacroApi",
-            params: {
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "reference_date.gt": {
-                    kind: "date",
-                    py: "reference_date_gt",
-                    ts: "referenceDateGt",
-                },
-                "reference_date.gte": {
-                    kind: "date",
-                    py: "reference_date_gte",
-                    ts: "referenceDateGte",
-                },
-                "reference_date.lt": {
-                    kind: "date",
-                    py: "reference_date_lt",
-                    ts: "referenceDateLt",
-                },
-                "reference_date.lte": {
-                    kind: "date",
-                    py: "reference_date_lte",
-                    ts: "referenceDateLte",
-                },
-                "series": {
-                    kind: "string",
-                    py: "series",
-                    ts: "series",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}_press-release",
+        "method": "GET",
+        "path": "/v1/events/{event_id}/press-release",
+        "sdk": {
+            "body": null,
+            "className": "EventsApi",
+            "params": {
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
             },
-            py: "list_macro_gdp",
-            ts: "listMacroGdp",
+            "py": "get_press_release",
+            "ts": "getPressRelease"
         },
-        summary: "List US GDP and income readings",
-        tier: "lite",
+        "summary": "Get an event's press release",
+        "tier": "lite"
     },
-    listMacroInflation: {
-        cli: {
-            action: "inflation",
-            group: "macro",
-            positional: "series",
+    "getPriceAttribution": {
+        "cli": {
+            "action": "price-attribution",
+            "group": "events",
+            "positional": "event_id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_macro_inflation",
-        method: "GET",
-        path: "/v1/macro/inflation",
-        sdk: {
-            body: null,
-            className: "MacroApi",
-            params: {
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "reference_date.gt": {
-                    kind: "date",
-                    py: "reference_date_gt",
-                    ts: "referenceDateGt",
-                },
-                "reference_date.gte": {
-                    kind: "date",
-                    py: "reference_date_gte",
-                    ts: "referenceDateGte",
-                },
-                "reference_date.lt": {
-                    kind: "date",
-                    py: "reference_date_lt",
-                    ts: "referenceDateLt",
-                },
-                "reference_date.lte": {
-                    kind: "date",
-                    py: "reference_date_lte",
-                    ts: "referenceDateLte",
-                },
-                "series": {
-                    kind: "string",
-                    py: "series",
-                    ts: "series",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}_price-attribution",
+        "method": "GET",
+        "path": "/v1/events/{event_id}/price-attribution",
+        "sdk": {
+            "body": null,
+            "className": "CallAnalyticsApi",
+            "params": {
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
             },
-            py: "list_macro_inflation",
-            ts: "listMacroInflation",
+            "py": "get_price_attribution",
+            "ts": "getPriceAttribution"
         },
-        summary: "List US inflation readings",
-        tier: "lite",
+        "summary": "Get an event's price attribution",
+        "tier": "pro"
     },
-    listMacroLabor: {
-        cli: {
-            action: "labor",
-            group: "macro",
-            positional: "series",
+    "getProsody": {
+        "cli": {
+            "action": "prosody",
+            "group": "events",
+            "positional": "event_id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_macro_labor",
-        method: "GET",
-        path: "/v1/macro/labor",
-        sdk: {
-            body: null,
-            className: "MacroApi",
-            params: {
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}_prosody",
+        "method": "GET",
+        "path": "/v1/events/{event_id}/prosody",
+        "sdk": {
+            "body": null,
+            "className": "CallAnalyticsApi",
+            "params": {
+                "section": {
+                    "kind": "string",
+                    "py": "section",
+                    "ts": "section"
                 },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "reference_date.gt": {
-                    kind: "date",
-                    py: "reference_date_gt",
-                    ts: "referenceDateGt",
-                },
-                "reference_date.gte": {
-                    kind: "date",
-                    py: "reference_date_gte",
-                    ts: "referenceDateGte",
-                },
-                "reference_date.lt": {
-                    kind: "date",
-                    py: "reference_date_lt",
-                    ts: "referenceDateLt",
-                },
-                "reference_date.lte": {
-                    kind: "date",
-                    py: "reference_date_lte",
-                    ts: "referenceDateLte",
-                },
-                "series": {
-                    kind: "string",
-                    py: "series",
-                    ts: "series",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
             },
-            py: "list_macro_labor",
-            ts: "listMacroLabor",
+            "py": "get_prosody",
+            "ts": "getProsody"
         },
-        summary: "List US labor readings",
-        tier: "lite",
+        "summary": "Get an event's speech prosody",
+        "tier": "pro"
     },
-    listMacroSeries: {
-        cli: {
-            action: "series",
-            group: "macro",
-            positional: null,
+    "getReviewChain": {
+        "cli": {
+            "action": "review-chain",
+            "group": "filings",
+            "positional": "accession"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_macro_series",
-        method: "GET",
-        path: "/v1/macro/series",
-        sdk: {
-            body: null,
-            className: "MacroApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_filings_{accession}_review-chain",
+        "method": "GET",
+        "path": "/v1/filings/{accession}/review-chain",
+        "sdk": {
+            "body": null,
+            "className": "FilingsApi",
+            "params": {
+                "max_depth": {
+                    "kind": "number",
+                    "py": "max_depth",
+                    "ts": "maxDepth"
                 },
-                family: {
-                    kind: "string",
-                    py: "family",
-                    ts: "family",
+                "max_nodes": {
+                    "kind": "number",
+                    "py": "max_nodes",
+                    "ts": "maxNodes"
                 },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_macro_series",
-            ts: "listMacroSeries",
-        },
-        summary: "List US macro series",
-        tier: "free",
-    },
-    listMappingRules: {
-        cli: {
-            action: "mapping-rules",
-            group: "catalog",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_mapping-rules",
-        method: "GET",
-        path: "/v1/catalog/mapping-rules",
-        sdk: {
-            body: null,
-            className: "CatalogApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                metric_id: {
-                    kind: "string",
-                    py: "metric_id",
-                    ts: "metricId",
-                },
-                statement: {
-                    kind: "string",
-                    py: "statement",
-                    ts: "statement",
-                },
-            },
-            py: "list_mapping_rules",
-            ts: "listMappingRules",
-        },
-        summary: "List standardized mapping rules",
-        tier: "free",
-    },
-    listMarketHolidays: {
-        cli: {
-            action: "holidays",
-            group: "market",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_market-holidays",
-        method: "GET",
-        path: "/v1/market-holidays",
-        sdk: {
-            body: null,
-            className: "CalendarApi",
-            params: {
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "date.gt": {
-                    kind: "date",
-                    py: "date_gt",
-                    ts: "dateGt",
-                },
-                "date.gte": {
-                    kind: "date",
-                    py: "date_gte",
-                    ts: "dateGte",
-                },
-                "date.lt": {
-                    kind: "date",
-                    py: "date_lt",
-                    ts: "dateLt",
-                },
-                "date.lte": {
-                    kind: "date",
-                    py: "date_lte",
-                    ts: "dateLte",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_market_holidays",
-            ts: "listMarketHolidays",
-        },
-        summary: "List market holidays",
-        tier: "free",
-    },
-    listMetricCatalog: {
-        cli: {
-            action: "metrics",
-            group: "catalog",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_metrics",
-        method: "GET",
-        path: "/v1/catalog/metrics",
-        sdk: {
-            body: null,
-            className: "CatalogApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                statement: {
-                    kind: "string",
-                    py: "statement",
-                    ts: "statement",
-                },
-            },
-            py: "list_metric_catalog",
-            ts: "listMetricCatalog",
-        },
-        summary: "List standardized metrics",
-        tier: "free",
-    },
-    listNews: {
-        cli: {
-            action: "list",
-            group: "news",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_news",
-        method: "GET",
-        path: "/v1/news",
-        sdk: {
-            body: null,
-            className: "NewsApi",
-            params: {
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "event": {
-                    kind: "string",
-                    py: "event",
-                    ts: "event",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
+                "direction": {
+                    "kind": "string",
+                    "py": "direction",
+                    "ts": "direction"
                 },
                 "kind": {
-                    kind: "string",
-                    py: "kind",
-                    ts: "kind",
+                    "kind": "string",
+                    "py": "kind",
+                    "ts": "kind"
                 },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "published_at.gt": {
-                    kind: "datetime",
-                    py: "published_at_gt",
-                    ts: "publishedAtGt",
-                },
-                "published_at.gte": {
-                    kind: "datetime",
-                    py: "published_at_gte",
-                    ts: "publishedAtGte",
-                },
-                "published_at.lt": {
-                    kind: "datetime",
-                    py: "published_at_lt",
-                    ts: "publishedAtLt",
-                },
-                "published_at.lte": {
-                    kind: "datetime",
-                    py: "published_at_lte",
-                    ts: "publishedAtLte",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                "topic": {
-                    kind: "string",
-                    py: "topic",
-                    ts: "topic",
-                },
+                "accession": {
+                    "kind": "string",
+                    "py": "accession",
+                    "ts": "accession"
+                }
             },
-            py: "list_news",
-            ts: "listNews",
+            "py": "get_review_chain",
+            "ts": "getReviewChain"
         },
-        summary: "List news items",
-        tier: "lite",
+        "summary": "Get a filing's review chain",
+        "tier": "lite"
     },
-    listNonGaapMetrics: {
-        cli: {
-            action: "non-gaap",
-            group: "guidance",
-            positional: "company",
+    "getScript": {
+        "cli": {
+            "action": "get",
+            "group": "scripts",
+            "positional": "id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_non-gaap",
-        method: "GET",
-        path: "/v1/non-gaap",
-        sdk: {
-            body: null,
-            className: "GuidanceApi",
-            params: {
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_scripts_{id}",
+        "method": "GET",
+        "path": "/v1/scripts/{id}",
+        "sdk": {
+            "body": null,
+            "className": "ScriptsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
+            },
+            "py": "get_script",
+            "ts": "getScript"
+        },
+        "summary": "Get a script",
+        "tier": "lite"
+    },
+    "getSlides": {
+        "cli": {
+            "action": "slides",
+            "group": "events",
+            "positional": "event_id"
+        },
+        "credits": 5,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}_slides",
+        "method": "GET",
+        "path": "/v1/events/{event_id}/slides",
+        "sdk": {
+            "body": null,
+            "className": "EventsApi",
+            "params": {
+                "pages": {
+                    "kind": "string",
+                    "py": "pages",
+                    "ts": "pages"
+                },
+                "include": {
+                    "kind": "string",
+                    "py": "include",
+                    "ts": "include"
+                },
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
+            },
+            "py": "get_slides",
+            "ts": "getSlides"
+        },
+        "summary": "Get an event's slides",
+        "tier": "pro"
+    },
+    "getStandardizedFinancials": {
+        "cli": {
+            "action": "get",
+            "group": "financials",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_financials_standardized",
+        "method": "GET",
+        "path": "/v1/financials/standardized",
+        "sdk": {
+            "body": null,
+            "className": "FinancialsApi",
+            "params": {
                 "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
                 },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "event": {
-                    kind: "string",
-                    py: "event",
-                    ts: "event",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "metric": {
-                    kind: "string",
-                    py: "metric",
-                    ts: "metric",
-                },
-                "period_end.gt": {
-                    kind: "date",
-                    py: "period_end_gt",
-                    ts: "periodEndGt",
-                },
-                "period_end.gte": {
-                    kind: "date",
-                    py: "period_end_gte",
-                    ts: "periodEndGte",
-                },
-                "period_end.lt": {
-                    kind: "date",
-                    py: "period_end_lt",
-                    ts: "periodEndLt",
-                },
-                "period_end.lte": {
-                    kind: "date",
-                    py: "period_end_lte",
-                    ts: "periodEndLte",
-                },
-                "period_kind": {
-                    kind: "string",
-                    py: "period_kind",
-                    ts: "periodKind",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_non_gaap_metrics",
-            ts: "listNonGaapMetrics",
-        },
-        summary: "List reported non-GAAP figures",
-        tier: "pro",
-    },
-    listOfferings: {
-        cli: {
-            action: "list",
-            group: "offerings",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_offerings",
-        method: "GET",
-        path: "/v1/offerings",
-        sdk: {
-            body: null,
-            className: "OfferingsApi",
-            params: {
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "exemption": {
-                    kind: "string",
-                    py: "exemption",
-                    ts: "exemption",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "filed_at.gte": {
-                    kind: "date",
-                    py: "filed_at_gte",
-                    ts: "filedAtGte",
-                },
-                "filed_at.lte": {
-                    kind: "date",
-                    py: "filed_at_lte",
-                    ts: "filedAtLte",
-                },
-                "industry": {
-                    kind: "string",
-                    py: "industry",
-                    ts: "industry",
-                },
-                "is_amendment": {
-                    kind: "boolean",
-                    py: "is_amendment",
-                    ts: "isAmendment",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                "total_sold.gte": {
-                    kind: "number",
-                    py: "total_sold_gte",
-                    ts: "totalSoldGte",
-                },
-            },
-            py: "list_offerings",
-            ts: "listOfferings",
-        },
-        summary: "List Form D private offerings",
-        tier: "lite",
-    },
-    listParticipants: {
-        cli: {
-            action: "participants",
-            group: "people",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_participants",
-        method: "GET",
-        path: "/v1/participants",
-        sdk: {
-            body: null,
-            className: "EventsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                event: {
-                    kind: "string",
-                    py: "event",
-                    ts: "event",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                person: {
-                    kind: "string",
-                    py: "person",
-                    ts: "person",
-                },
-                role: {
-                    kind: "string",
-                    py: "role",
-                    ts: "role",
-                },
-            },
-            py: "list_participants",
-            ts: "listParticipants",
-        },
-        summary: "List event participations",
-        tier: "lite",
-    },
-    listPeople: {
-        cli: {
-            action: "list",
-            group: "people",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_people",
-        method: "GET",
-        path: "/v1/people",
-        sdk: {
-            body: null,
-            className: "CompaniesApi",
-            params: {
-                company: {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                event: {
-                    kind: "string",
-                    py: "event",
-                    ts: "event",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                include_operators: {
-                    kind: "boolean",
-                    py: "include_operators",
-                    ts: "includeOperators",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                q: {
-                    kind: "string",
-                    py: "q",
-                    ts: "q",
-                },
-                role: {
-                    kind: "string",
-                    py: "role",
-                    ts: "role",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_people",
-            ts: "listPeople",
-        },
-        summary: "List people",
-        tier: "lite",
-    },
-    listQa: {
-        cli: {
-            action: "qa",
-            group: "events",
-            positional: "event_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_qa",
-        method: "GET",
-        path: "/v1/events/{event_id}/qa",
-        sdk: {
-            body: null,
-            className: "EventsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
-                include: {
-                    kind: "string",
-                    py: "include",
-                    ts: "include",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-            },
-            py: "list_qa",
-            ts: "listQa",
-        },
-        summary: "List an event's Q&A pairs",
-        tier: "pro",
-    },
-    listRatios: {
-        cli: {
-            action: "ratios",
-            group: "metrics",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_metrics_ratios",
-        method: "GET",
-        path: "/v1/metrics/ratios",
-        sdk: {
-            body: null,
-            className: "MetricsApi",
-            params: {
-                "category": {
-                    kind: "string",
-                    py: "category",
-                    ts: "category",
-                },
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "fiscal_year.gt": {
-                    kind: "number",
-                    py: "fiscal_year_gt",
-                    ts: "fiscalYearGt",
-                },
-                "fiscal_year.gte": {
-                    kind: "number",
-                    py: "fiscal_year_gte",
-                    ts: "fiscalYearGte",
-                },
-                "fiscal_year.lt": {
-                    kind: "number",
-                    py: "fiscal_year_lt",
-                    ts: "fiscalYearLt",
-                },
-                "fiscal_year.lte": {
-                    kind: "number",
-                    py: "fiscal_year_lte",
-                    ts: "fiscalYearLte",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
+                "statement": {
+                    "kind": "string",
+                    "py": "statement",
+                    "ts": "statement"
                 },
                 "period": {
-                    kind: "string",
-                    py: "period",
-                    ts: "period",
+                    "kind": "string",
+                    "py": "period",
+                    "ts": "period"
                 },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
+                "fiscal_year": {
+                    "kind": "number",
+                    "py": "fiscal_year",
+                    "ts": "fiscalYear"
                 },
-            },
-            py: "list_ratios",
-            ts: "listRatios",
-        },
-        summary: "List ratios",
-        tier: "lite",
-    },
-    listScripts: {
-        cli: {
-            action: "list",
-            group: "scripts",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_scripts",
-        method: "GET",
-        path: "/v1/scripts",
-        sdk: {
-            body: null,
-            className: "ScriptsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-            },
-            py: "list_scripts",
-            ts: "listScripts",
-        },
-        summary: "List scripts",
-        tier: "lite",
-    },
-    listScriptVersions: {
-        cli: {
-            action: "list",
-            group: "script-versions",
-            positional: "id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_scripts_{id}_versions",
-        method: "GET",
-        path: "/v1/scripts/{id}/versions",
-        sdk: {
-            body: null,
-            className: "ScriptsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-            },
-            py: "list_script_versions",
-            ts: "listScriptVersions",
-        },
-        summary: "List script versions",
-        tier: "lite",
-    },
-    listSectionCatalog: {
-        cli: {
-            action: "sections",
-            group: "catalog",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_sections",
-        method: "GET",
-        path: "/v1/catalog/sections",
-        sdk: {
-            body: null,
-            className: "CatalogApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                form: {
-                    kind: "string",
-                    py: "form",
-                    ts: "form",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-            },
-            py: "list_section_catalog",
-            ts: "listSectionCatalog",
-        },
-        summary: "List filing section ids",
-        tier: "free",
-    },
-    listSectorCatalog: {
-        cli: {
-            action: "sectors",
-            group: "catalog",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_sectors",
-        method: "GET",
-        path: "/v1/catalog/sectors",
-        sdk: {
-            body: null,
-            className: "CatalogApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-            },
-            py: "list_sector_catalog",
-            ts: "listSectorCatalog",
-        },
-        summary: "List sectors",
-        tier: "free",
-    },
-    listSegments: {
-        cli: {
-            action: "list",
-            group: "segments",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_segments",
-        method: "GET",
-        path: "/v1/segments",
-        sdk: {
-            body: null,
-            className: "FinancialsApi",
-            params: {
-                "axis": {
-                    kind: "string",
-                    py: "axis",
-                    ts: "axis",
-                },
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                "fiscal_year.gt": {
-                    kind: "number",
-                    py: "fiscal_year_gt",
-                    ts: "fiscalYearGt",
+                "fiscal_quarter": {
+                    "kind": "number",
+                    "py": "fiscal_quarter",
+                    "ts": "fiscalQuarter"
                 },
                 "fiscal_year.gte": {
-                    kind: "number",
-                    py: "fiscal_year_gte",
-                    ts: "fiscalYearGte",
-                },
-                "fiscal_year.lt": {
-                    kind: "number",
-                    py: "fiscal_year_lt",
-                    ts: "fiscalYearLt",
-                },
-                "fiscal_year.lte": {
-                    kind: "number",
-                    py: "fiscal_year_lte",
-                    ts: "fiscalYearLte",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "metric": {
-                    kind: "string",
-                    py: "metric",
-                    ts: "metric",
-                },
-                "period": {
-                    kind: "string",
-                    py: "period",
-                    ts: "period",
-                },
-                "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-            },
-            py: "list_segments",
-            ts: "listSegments",
-        },
-        summary: "List segment values",
-        tier: "standard",
-    },
-    listSegmentsDetailed: {
-        cli: {
-            action: "list-detailed",
-            group: "segments",
-            positional: "company",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_segments_detailed",
-        method: "GET",
-        path: "/v1/segments/detailed",
-        sdk: {
-            body: null,
-            className: "FinancialsApi",
-            params: {
-                "axis": {
-                    kind: "string",
-                    py: "axis",
-                    ts: "axis",
-                },
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
+                    "kind": "number",
+                    "py": "fiscal_year_gte",
+                    "ts": "fiscalYearGte"
                 },
                 "fiscal_year.gt": {
-                    kind: "number",
-                    py: "fiscal_year_gt",
-                    ts: "fiscalYearGt",
-                },
-                "fiscal_year.gte": {
-                    kind: "number",
-                    py: "fiscal_year_gte",
-                    ts: "fiscalYearGte",
-                },
-                "fiscal_year.lt": {
-                    kind: "number",
-                    py: "fiscal_year_lt",
-                    ts: "fiscalYearLt",
+                    "kind": "number",
+                    "py": "fiscal_year_gt",
+                    "ts": "fiscalYearGt"
                 },
                 "fiscal_year.lte": {
-                    kind: "number",
-                    py: "fiscal_year_lte",
-                    ts: "fiscalYearLte",
+                    "kind": "number",
+                    "py": "fiscal_year_lte",
+                    "ts": "fiscalYearLte"
                 },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
+                "fiscal_year.lt": {
+                    "kind": "number",
+                    "py": "fiscal_year_lt",
+                    "ts": "fiscalYearLt"
                 },
-                "metric": {
-                    kind: "string",
-                    py: "metric",
-                    ts: "metric",
+                "as_of": {
+                    "kind": "date",
+                    "py": "as_of",
+                    "ts": "asOf"
                 },
-                "period": {
-                    kind: "string",
-                    py: "period",
-                    ts: "period",
+                "filing": {
+                    "kind": "string",
+                    "py": "filing",
+                    "ts": "filing"
                 },
                 "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
                 },
-            },
-            py: "list_segments_detailed",
-            ts: "listSegmentsDetailed",
-        },
-        summary: "List segment values with lineage",
-        tier: "pro",
-    },
-    listSplits: {
-        cli: {
-            action: "list",
-            group: "splits",
-            positional: "symbol",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_splits",
-        method: "GET",
-        path: "/v1/splits",
-        sdk: {
-            body: null,
-            className: "CorporateActionsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                fields: {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                sort: {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
-                },
-                symbol: {
-                    kind: "string",
-                    py: "symbol",
-                    ts: "symbol",
-                },
-            },
-            py: "list_splits",
-            ts: "listSplits",
-        },
-        summary: "List stock splits",
-        tier: "lite",
-    },
-    listTranscriptVersions: {
-        cli: {
-            action: "transcript-versions",
-            group: "events",
-            positional: "event_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_events_{event_id}_transcript-versions",
-        method: "GET",
-        path: "/v1/events/{event_id}/transcript-versions",
-        sdk: {
-            body: null,
-            className: "TranscriptsApi",
-            params: {
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                event_id: {
-                    kind: "string",
-                    py: "event_id",
-                    ts: "eventId",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-            },
-            py: "list_transcript_versions",
-            ts: "listTranscriptVersions",
-        },
-        summary: "List an event's transcript versions",
-        tier: "pro",
-    },
-    listTreasuryYieldCurves: {
-        cli: {
-            action: "yield-curve",
-            group: "macro",
-            positional: null,
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_macro_yield-curve",
-        method: "GET",
-        path: "/v1/macro/yield-curve",
-        sdk: {
-            body: null,
-            className: "MacroApi",
-            params: {
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "date.gt": {
-                    kind: "date",
-                    py: "date_gt",
-                    ts: "dateGt",
-                },
-                "date.gte": {
-                    kind: "date",
-                    py: "date_gte",
-                    ts: "dateGte",
-                },
-                "date.lt": {
-                    kind: "date",
-                    py: "date_lt",
-                    ts: "dateLt",
-                },
-                "date.lte": {
-                    kind: "date",
-                    py: "date_lte",
-                    ts: "dateLte",
+                "metrics": {
+                    "kind": "string",
+                    "py": "metrics",
+                    "ts": "metrics"
                 },
                 "fields": {
-                    kind: "string",
-                    py: "fields",
-                    ts: "fields",
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
                 "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "get_standardized_financials",
+            "ts": "getStandardizedFinancials"
+        },
+        "summary": "Standardized statements",
+        "tier": "lite"
+    },
+    "getStandardizedFinancialsDetailed": {
+        "cli": {
+            "action": "get",
+            "group": "financials",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_financials_standardized_detailed",
+        "method": "GET",
+        "path": "/v1/financials/standardized/detailed",
+        "sdk": {
+            "body": null,
+            "className": "FinancialsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "statement": {
+                    "kind": "string",
+                    "py": "statement",
+                    "ts": "statement"
+                },
+                "period": {
+                    "kind": "string",
+                    "py": "period",
+                    "ts": "period"
+                },
+                "fiscal_year": {
+                    "kind": "number",
+                    "py": "fiscal_year",
+                    "ts": "fiscalYear"
+                },
+                "fiscal_quarter": {
+                    "kind": "number",
+                    "py": "fiscal_quarter",
+                    "ts": "fiscalQuarter"
+                },
+                "fiscal_year.gte": {
+                    "kind": "number",
+                    "py": "fiscal_year_gte",
+                    "ts": "fiscalYearGte"
+                },
+                "fiscal_year.gt": {
+                    "kind": "number",
+                    "py": "fiscal_year_gt",
+                    "ts": "fiscalYearGt"
+                },
+                "fiscal_year.lte": {
+                    "kind": "number",
+                    "py": "fiscal_year_lte",
+                    "ts": "fiscalYearLte"
+                },
+                "fiscal_year.lt": {
+                    "kind": "number",
+                    "py": "fiscal_year_lt",
+                    "ts": "fiscalYearLt"
+                },
+                "as_of": {
+                    "kind": "date",
+                    "py": "as_of",
+                    "ts": "asOf"
+                },
+                "filing": {
+                    "kind": "string",
+                    "py": "filing",
+                    "ts": "filing"
                 },
                 "sort": {
-                    kind: "string",
-                    py: "sort",
-                    ts: "sort",
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
                 },
-            },
-            py: "list_treasury_yield_curves",
-            ts: "listTreasuryYieldCurves",
-        },
-        summary: "List US Treasury yield curves",
-        tier: "lite",
-    },
-    pauseAlert: {
-        cli: {
-            action: "pause",
-            group: "alerts",
-            positional: "id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/post--_v1_alerts_{id}:pause",
-        method: "POST",
-        path: "/v1/alerts/{id}:pause",
-        sdk: {
-            body: null,
-            className: "AlertsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
+                "metrics": {
+                    "kind": "string",
+                    "py": "metrics",
+                    "ts": "metrics"
                 },
-            },
-            py: "pause_alert",
-            ts: "pauseAlert",
-        },
-        summary: "Pause an alert",
-        tier: "lite",
-    },
-    pauseAlertUser: {
-        cli: {
-            action: "pause",
-            group: "alert-users",
-            positional: "external_user_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/post--_v1_alert-users_{external_user_id}:pause",
-        method: "POST",
-        path: "/v1/alert-users/{external_user_id}:pause",
-        sdk: {
-            body: null,
-            className: "AlertUsersApi",
-            params: {
-                external_user_id: {
-                    kind: "string",
-                    py: "external_user_id",
-                    ts: "externalUserId",
-                },
-            },
-            py: "pause_alert_user",
-            ts: "pauseAlertUser",
-        },
-        summary: "Pause an end user",
-        tier: "lite",
-    },
-    resumeAlert: {
-        cli: {
-            action: "resume",
-            group: "alerts",
-            positional: "id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/post--_v1_alerts_{id}:resume",
-        method: "POST",
-        path: "/v1/alerts/{id}:resume",
-        sdk: {
-            body: null,
-            className: "AlertsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
-            },
-            py: "resume_alert",
-            ts: "resumeAlert",
-        },
-        summary: "Resume an alert",
-        tier: "lite",
-    },
-    resumeAlertUser: {
-        cli: {
-            action: "resume",
-            group: "alert-users",
-            positional: "external_user_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/post--_v1_alert-users_{external_user_id}:resume",
-        method: "POST",
-        path: "/v1/alert-users/{external_user_id}:resume",
-        sdk: {
-            body: null,
-            className: "AlertUsersApi",
-            params: {
-                external_user_id: {
-                    kind: "string",
-                    py: "external_user_id",
-                    ts: "externalUserId",
-                },
-            },
-            py: "resume_alert_user",
-            ts: "resumeAlertUser",
-        },
-        summary: "Resume an end user",
-        tier: "lite",
-    },
-    rotateDestinationSecret: {
-        cli: {
-            action: "rotate-secret",
-            group: "destinations",
-            positional: "id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/post--_v1_destinations_{id}:rotate-secret",
-        method: "POST",
-        path: "/v1/destinations/{id}:rotate-secret",
-        sdk: {
-            body: null,
-            className: "DestinationsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
-                },
-            },
-            py: "rotate_destination_secret",
-            ts: "rotateDestinationSecret",
-        },
-        summary: "Rotate a destination's secret",
-        tier: "lite",
-    },
-    searchFilings: {
-        cli: {
-            action: "filings",
-            group: "search",
-            positional: "q",
-        },
-        credits: 100,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_search_filings",
-        method: "GET",
-        path: "/v1/search/filings",
-        sdk: {
-            body: null,
-            className: "FilingsApi",
-            params: {
-                "case_sensitive": {
-                    kind: "boolean",
-                    py: "case_sensitive",
-                    ts: "caseSensitive",
-                },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                "filed_at.gt": {
-                    kind: "date",
-                    py: "filed_at_gt",
-                    ts: "filedAtGt",
-                },
-                "filed_at.gte": {
-                    kind: "date",
-                    py: "filed_at_gte",
-                    ts: "filedAtGte",
-                },
-                "filed_at.lt": {
-                    kind: "date",
-                    py: "filed_at_lt",
-                    ts: "filedAtLt",
-                },
-                "filed_at.lte": {
-                    kind: "date",
-                    py: "filed_at_lte",
-                    ts: "filedAtLte",
-                },
-                "form": {
-                    kind: "string",
-                    py: "form",
-                    ts: "form",
-                },
-                "item": {
-                    kind: "string",
-                    py: "item",
-                    ts: "item",
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
                 "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
                 },
-                "mode": {
-                    kind: "string",
-                    py: "mode",
-                    ts: "mode",
-                },
-                "q": {
-                    kind: "string",
-                    py: "q",
-                    ts: "q",
-                },
-                "symbol": {
-                    kind: "string",
-                    py: "symbol",
-                    ts: "symbol",
-                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
             },
-            py: "search_filings",
-            ts: "searchFilings",
+            "py": "get_standardized_financials_detailed",
+            "ts": "getStandardizedFinancialsDetailed"
         },
-        summary: "Search filings",
-        tier: "standard",
+        "summary": "Standardized statements with lineage",
+        "tier": "pro"
     },
-    searchInvestorDocuments: {
-        cli: {
-            action: "investor-documents",
-            group: "search",
-            positional: "q",
+    "getStandardizedFinancialsPresentation": {
+        "cli": {
+            "action": "get",
+            "group": "financials",
+            "positional": "company"
         },
-        credits: 10,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_search_investor-documents",
-        method: "GET",
-        path: "/v1/search/investor-documents",
-        sdk: {
-            body: null,
-            className: "InvestorDocumentsApi",
-            params: {
-                company: {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
-                },
-                cursor: {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
-                },
-                kind: {
-                    kind: "string",
-                    py: "kind",
-                    ts: "kind",
-                },
-                limit: {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                mode: {
-                    kind: "string",
-                    py: "mode",
-                    ts: "mode",
-                },
-                q: {
-                    kind: "string",
-                    py: "q",
-                    ts: "q",
-                },
-            },
-            py: "search_investor_documents",
-            ts: "searchInvestorDocuments",
-        },
-        summary: "Search investor documents",
-        tier: "pro",
-    },
-    searchNews: {
-        cli: {
-            action: "news",
-            group: "search",
-            positional: "q",
-        },
-        credits: 10,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_search_news",
-        method: "GET",
-        path: "/v1/search/news",
-        sdk: {
-            body: null,
-            className: "NewsApi",
-            params: {
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_financials_standardized_presentation",
+        "method": "GET",
+        "path": "/v1/financials/standardized/presentation",
+        "sdk": {
+            "body": null,
+            "className": "FinancialsApi",
+            "params": {
                 "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
                 },
-                "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
+                "statement": {
+                    "kind": "string",
+                    "py": "statement",
+                    "ts": "statement"
                 },
-                "field": {
-                    kind: "string",
-                    py: "var_field",
-                    ts: "field",
+                "period": {
+                    "kind": "string",
+                    "py": "period",
+                    "ts": "period"
+                },
+                "fiscal_year": {
+                    "kind": "number",
+                    "py": "fiscal_year",
+                    "ts": "fiscalYear"
+                },
+                "fiscal_quarter": {
+                    "kind": "number",
+                    "py": "fiscal_quarter",
+                    "ts": "fiscalQuarter"
+                },
+                "fiscal_year.gte": {
+                    "kind": "number",
+                    "py": "fiscal_year_gte",
+                    "ts": "fiscalYearGte"
+                },
+                "fiscal_year.gt": {
+                    "kind": "number",
+                    "py": "fiscal_year_gt",
+                    "ts": "fiscalYearGt"
+                },
+                "fiscal_year.lte": {
+                    "kind": "number",
+                    "py": "fiscal_year_lte",
+                    "ts": "fiscalYearLte"
+                },
+                "fiscal_year.lt": {
+                    "kind": "number",
+                    "py": "fiscal_year_lt",
+                    "ts": "fiscalYearLt"
+                },
+                "as_of": {
+                    "kind": "date",
+                    "py": "as_of",
+                    "ts": "asOf"
+                },
+                "filing": {
+                    "kind": "string",
+                    "py": "filing",
+                    "ts": "filing"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "metrics": {
+                    "kind": "string",
+                    "py": "metrics",
+                    "ts": "metrics"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
                 },
                 "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
                 },
-                "mode": {
-                    kind: "string",
-                    py: "mode",
-                    ts: "mode",
-                },
-                "published_at.gt": {
-                    kind: "datetime",
-                    py: "published_at_gt",
-                    ts: "publishedAtGt",
-                },
-                "published_at.gte": {
-                    kind: "datetime",
-                    py: "published_at_gte",
-                    ts: "publishedAtGte",
-                },
-                "published_at.lt": {
-                    kind: "datetime",
-                    py: "published_at_lt",
-                    ts: "publishedAtLt",
-                },
-                "published_at.lte": {
-                    kind: "datetime",
-                    py: "published_at_lte",
-                    ts: "publishedAtLte",
-                },
-                "q": {
-                    kind: "string",
-                    py: "q",
-                    ts: "q",
-                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
             },
-            py: "search_news",
-            ts: "searchNews",
+            "py": "get_standardized_financials_presentation",
+            "ts": "getStandardizedFinancialsPresentation"
         },
-        summary: "Search news",
-        tier: "standard",
+        "summary": "Standardized statements as a tree",
+        "tier": "pro"
     },
-    searchTranscripts: {
-        cli: {
-            action: "transcripts",
-            group: "search",
-            positional: "q",
+    "getTranscript": {
+        "cli": {
+            "action": "transcript",
+            "group": "events",
+            "positional": "event_id"
         },
-        credits: 10,
-        docsUrl: "https://data.invinite.com/docs/get--_v1_search_transcripts",
-        method: "GET",
-        path: "/v1/search/transcripts",
-        sdk: {
-            body: null,
-            className: "TranscriptsApi",
-            params: {
-                "company": {
-                    kind: "string",
-                    py: "company",
-                    ts: "company",
+        "credits": 5,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}_transcript",
+        "method": "GET",
+        "path": "/v1/events/{event_id}/transcript",
+        "sdk": {
+            "body": null,
+            "className": "TranscriptsApi",
+            "params": {
+                "version": {
+                    "kind": "number",
+                    "py": "version",
+                    "ts": "version"
                 },
-                "conference_date.gt": {
-                    kind: "date",
-                    py: "conference_date_gt",
-                    ts: "conferenceDateGt",
+                "layer": {
+                    "kind": "string",
+                    "py": "layer",
+                    "ts": "layer"
                 },
-                "conference_date.gte": {
-                    kind: "date",
-                    py: "conference_date_gte",
-                    ts: "conferenceDateGte",
+                "include": {
+                    "kind": "string",
+                    "py": "include",
+                    "ts": "include"
                 },
-                "conference_date.lt": {
-                    kind: "date",
-                    py: "conference_date_lt",
-                    ts: "conferenceDateLt",
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
+            },
+            "py": "get_transcript",
+            "ts": "getTranscript"
+        },
+        "summary": "Get an event's transcript",
+        "tier": "pro"
+    },
+    "getTranscriptDiff": {
+        "cli": {
+            "action": "transcript-diff",
+            "group": "events",
+            "positional": "event_id"
+        },
+        "credits": 5,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}_transcript-diff",
+        "method": "GET",
+        "path": "/v1/events/{event_id}/transcript-diff",
+        "sdk": {
+            "body": null,
+            "className": "TranscriptsApi",
+            "params": {
+                "from": {
+                    "kind": "number",
+                    "py": "var_from",
+                    "ts": "from"
                 },
-                "conference_date.lte": {
-                    kind: "date",
-                    py: "conference_date_lte",
-                    ts: "conferenceDateLte",
+                "to": {
+                    "kind": "number",
+                    "py": "to",
+                    "ts": "to"
+                },
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
+            },
+            "py": "get_transcript_diff",
+            "ts": "getTranscriptDiff"
+        },
+        "summary": "Diff two transcript versions",
+        "tier": "pro"
+    },
+    "getTranscriptText": {
+        "cli": {
+            "action": "transcript-text",
+            "group": "events",
+            "positional": "event_id"
+        },
+        "credits": 5,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}_transcript-text",
+        "method": "GET",
+        "path": "/v1/events/{event_id}/transcript-text",
+        "sdk": {
+            "body": null,
+            "className": "TranscriptsApi",
+            "params": {
+                "version": {
+                    "kind": "number",
+                    "py": "version",
+                    "ts": "version"
+                },
+                "split": {
+                    "kind": "string",
+                    "py": "split",
+                    "ts": "split"
+                },
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
+            },
+            "py": "get_transcript_text",
+            "ts": "getTranscriptText"
+        },
+        "summary": "Get an event's transcript as text",
+        "tier": "pro"
+    },
+    "getTreasuryYieldCurveSnapshot": {
+        "cli": {
+            "action": "yield-curve-snapshot",
+            "group": "macro",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_macro_yield-curve_snapshot",
+        "method": "GET",
+        "path": "/v1/macro/yield-curve/snapshot",
+        "sdk": {
+            "body": null,
+            "className": "MacroApi",
+            "params": {
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                }
+            },
+            "py": "get_treasury_yield_curve_snapshot",
+            "ts": "getTreasuryYieldCurveSnapshot"
+        },
+        "summary": "Get the latest US Treasury yield curve",
+        "tier": "lite"
+    },
+    "healthGet": {
+        "cli": {
+            "action": null,
+            "group": "health",
+            "positional": null
+        },
+        "credits": null,
+        "docsUrl": "https://data.invinite.com/docs/get--_health",
+        "method": "GET",
+        "path": "/health",
+        "sdk": null,
+        "summary": "Health check",
+        "tier": null
+    },
+    "listAlertEvents": {
+        "cli": {
+            "action": "list",
+            "group": "alert-events",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_alert-events",
+        "method": "GET",
+        "path": "/v1/alert-events",
+        "sdk": {
+            "body": null,
+            "className": "AlertEventsApi",
+            "params": {
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
                 },
                 "cursor": {
-                    kind: "string",
-                    py: "cursor",
-                    ts: "cursor",
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
                 },
-                "event": {
-                    kind: "string",
-                    py: "event",
-                    ts: "event",
-                },
-                "limit": {
-                    kind: "number",
-                    py: "limit",
-                    ts: "limit",
-                },
-                "mode": {
-                    kind: "string",
-                    py: "mode",
-                    ts: "mode",
-                },
-                "q": {
-                    kind: "string",
-                    py: "q",
-                    ts: "q",
+                "alert_id": {
+                    "kind": "string",
+                    "py": "alert_id",
+                    "ts": "alertId"
                 },
                 "type": {
-                    kind: "string",
-                    py: "type",
-                    ts: "type",
+                    "kind": "string",
+                    "py": "type",
+                    "ts": "type"
                 },
-            },
-            py: "search_transcripts",
-            ts: "searchTranscripts",
-        },
-        summary: "Search transcripts",
-        tier: "pro",
-    },
-    statusGet: {
-        cli: {
-            action: "show",
-            group: "status",
-            positional: null,
-        },
-        credits: null,
-        docsUrl: "https://data.invinite.com/docs/get--_status",
-        method: "GET",
-        path: "/status",
-        sdk: null,
-        summary: "Service status",
-        tier: null,
-    },
-    statusLicensing: {
-        cli: {
-            action: "licensing",
-            group: "status",
-            positional: null,
-        },
-        credits: null,
-        docsUrl: "https://data.invinite.com/docs/get--_status_licensing",
-        method: "GET",
-        path: "/status/licensing",
-        sdk: null,
-        summary: "Licensing policy",
-        tier: null,
-    },
-    testAlert: {
-        cli: {
-            action: "test",
-            group: "alerts",
-            positional: "id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/post--_v1_alerts_{id}:test",
-        method: "POST",
-        path: "/v1/alerts/{id}:test",
-        sdk: {
-            body: null,
-            className: "AlertEventsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
+                "external_user_id": {
+                    "kind": "string",
+                    "py": "external_user_id",
+                    "ts": "externalUserId"
                 },
+                "after": {
+                    "kind": "string",
+                    "py": "after",
+                    "ts": "after"
+                }
             },
-            py: "test_alert",
-            ts: "testAlert",
+            "py": "list_alert_events",
+            "ts": "listAlertEvents"
         },
-        summary: "Send a test event",
-        tier: "lite",
+        "summary": "List alert events",
+        "tier": "lite"
     },
-    testDestination: {
-        cli: {
-            action: "test",
-            group: "destinations",
-            positional: "id",
+    "listAlertEventsForAlert": {
+        "cli": {
+            "action": "events",
+            "group": "alerts",
+            "positional": "id"
         },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/post--_v1_destinations_{id}:test",
-        method: "POST",
-        path: "/v1/destinations/{id}:test",
-        sdk: {
-            body: null,
-            className: "DestinationsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_alerts_{id}_events",
+        "method": "GET",
+        "path": "/v1/alerts/{id}/events",
+        "sdk": {
+            "body": null,
+            "className": "AlertEventsApi",
+            "params": {
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
                 },
-            },
-            py: "test_destination",
-            ts: "testDestination",
-        },
-        summary: "Send a test delivery",
-        tier: "lite",
-    },
-    updateAlert: {
-        cli: {
-            action: "update",
-            group: "alerts",
-            positional: "id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/patch--_v1_alerts_{id}",
-        method: "PATCH",
-        path: "/v1/alerts/{id}",
-        sdk: {
-            body: {
-                model: "UpdateAlertRequest",
-                py: "update_alert_request",
-                ts: "updateAlertRequest",
-            },
-            className: "AlertsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
                 },
-            },
-            py: "update_alert",
-            ts: "updateAlert",
-        },
-        summary: "Update an alert",
-        tier: "lite",
-    },
-    updateAlertUser: {
-        cli: {
-            action: "update",
-            group: "alert-users",
-            positional: "external_user_id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/patch--_v1_alert-users_{external_user_id}",
-        method: "PATCH",
-        path: "/v1/alert-users/{external_user_id}",
-        sdk: {
-            body: {
-                model: "UpdateAlertUserRequest",
-                py: "update_alert_user_request",
-                ts: "updateAlertUserRequest",
-            },
-            className: "AlertUsersApi",
-            params: {
-                external_user_id: {
-                    kind: "string",
-                    py: "external_user_id",
-                    ts: "externalUserId",
+                "type": {
+                    "kind": "string",
+                    "py": "type",
+                    "ts": "type"
                 },
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
             },
-            py: "update_alert_user",
-            ts: "updateAlertUser",
+            "py": "list_alert_events_for_alert",
+            "ts": "listAlertEventsForAlert"
         },
-        summary: "Create or update an end user",
-        tier: "lite",
+        "summary": "List an alert's events",
+        "tier": "lite"
     },
-    updateAlertUserDefaults: {
-        cli: {
-            action: "alert-user-defaults-update",
-            group: "me",
-            positional: null,
+    "listAlerts": {
+        "cli": {
+            "action": "list",
+            "group": "alerts",
+            "positional": null
         },
-        credits: 0,
-        docsUrl: "https://data.invinite.com/docs/patch--_v1_me_alert-user-defaults",
-        method: "PATCH",
-        path: "/v1/me/alert-user-defaults",
-        sdk: {
-            body: {
-                model: "UpdateAlertUserDefaultsRequest",
-                py: "update_alert_user_defaults_request",
-                ts: "updateAlertUserDefaultsRequest",
-            },
-            className: "AlertUsersApi",
-            params: {},
-            py: "update_alert_user_defaults",
-            ts: "updateAlertUserDefaults",
-        },
-        summary: "Update the end-user defaults",
-        tier: "free",
-    },
-    updateDestination: {
-        cli: {
-            action: "update",
-            group: "destinations",
-            positional: "id",
-        },
-        credits: 1,
-        docsUrl: "https://data.invinite.com/docs/patch--_v1_destinations_{id}",
-        method: "PATCH",
-        path: "/v1/destinations/{id}",
-        sdk: {
-            body: {
-                model: "UpdateDestinationRequest",
-                py: "update_destination_request",
-                ts: "updateDestinationRequest",
-            },
-            className: "DestinationsApi",
-            params: {
-                id: {
-                    kind: "string",
-                    py: "id",
-                    ts: "id",
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_alerts",
+        "method": "GET",
+        "path": "/v1/alerts",
+        "sdk": {
+            "body": null,
+            "className": "AlertsApi",
+            "params": {
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
                 },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "status": {
+                    "kind": "string",
+                    "py": "status",
+                    "ts": "status"
+                },
+                "type": {
+                    "kind": "string",
+                    "py": "type",
+                    "ts": "type"
+                },
+                "external_user_id": {
+                    "kind": "string",
+                    "py": "external_user_id",
+                    "ts": "externalUserId"
+                },
+                "client_reference_id": {
+                    "kind": "string",
+                    "py": "client_reference_id",
+                    "ts": "clientReferenceId"
+                },
+                "symbol": {
+                    "kind": "string",
+                    "py": "symbol",
+                    "ts": "symbol"
+                },
+                "destination_id": {
+                    "kind": "string",
+                    "py": "destination_id",
+                    "ts": "destinationId"
+                }
             },
-            py: "update_destination",
-            ts: "updateDestination",
+            "py": "list_alerts",
+            "ts": "listAlerts"
         },
-        summary: "Update a destination",
-        tier: "lite",
+        "summary": "List alerts",
+        "tier": "lite"
     },
+    "listAlertTemplates": {
+        "cli": {
+            "action": "list",
+            "group": "alert-templates",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_alert-templates",
+        "method": "GET",
+        "path": "/v1/alert-templates",
+        "sdk": {
+            "body": null,
+            "className": "ScriptsApi",
+            "params": {
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_alert_templates",
+            "ts": "listAlertTemplates"
+        },
+        "summary": "List indicator alert templates",
+        "tier": "lite"
+    },
+    "listAlertUsers": {
+        "cli": {
+            "action": "list",
+            "group": "alert-users",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_alert-users",
+        "method": "GET",
+        "path": "/v1/alert-users",
+        "sdk": {
+            "body": null,
+            "className": "AlertUsersApi",
+            "params": {
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "status": {
+                    "kind": "string",
+                    "py": "status",
+                    "ts": "status"
+                },
+                "q": {
+                    "kind": "string",
+                    "py": "q",
+                    "ts": "q"
+                }
+            },
+            "py": "list_alert_users",
+            "ts": "listAlertUsers"
+        },
+        "summary": "List end users",
+        "tier": "lite"
+    },
+    "listAnnouncements": {
+        "cli": {
+            "action": "announcements",
+            "group": "news",
+            "positional": "company"
+        },
+        "credits": 2,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_announcements",
+        "method": "GET",
+        "path": "/v1/announcements",
+        "sdk": {
+            "body": null,
+            "className": "NewsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "topic": {
+                    "kind": "string",
+                    "py": "topic",
+                    "ts": "topic"
+                },
+                "item": {
+                    "kind": "string",
+                    "py": "item",
+                    "ts": "item"
+                },
+                "announced_at.gte": {
+                    "kind": "datetime",
+                    "py": "announced_at_gte",
+                    "ts": "announcedAtGte"
+                },
+                "announced_at.gt": {
+                    "kind": "datetime",
+                    "py": "announced_at_gt",
+                    "ts": "announcedAtGt"
+                },
+                "announced_at.lte": {
+                    "kind": "datetime",
+                    "py": "announced_at_lte",
+                    "ts": "announcedAtLte"
+                },
+                "announced_at.lt": {
+                    "kind": "datetime",
+                    "py": "announced_at_lt",
+                    "ts": "announcedAtLt"
+                },
+                "effective_from.gte": {
+                    "kind": "date",
+                    "py": "effective_from_gte",
+                    "ts": "effectiveFromGte"
+                },
+                "effective_to.lte": {
+                    "kind": "date",
+                    "py": "effective_to_lte",
+                    "ts": "effectiveToLte"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_announcements",
+            "ts": "listAnnouncements"
+        },
+        "summary": "List announcements",
+        "tier": "lite"
+    },
+    "listBeneficialOwnershipFilings": {
+        "cli": {
+            "action": "beneficial",
+            "group": "ownership",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_beneficial-ownership",
+        "method": "GET",
+        "path": "/v1/beneficial-ownership",
+        "sdk": {
+            "body": null,
+            "className": "OwnershipApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "filer": {
+                    "kind": "string",
+                    "py": "filer",
+                    "ts": "filer"
+                },
+                "type": {
+                    "kind": "string",
+                    "py": "type",
+                    "ts": "type"
+                },
+                "current": {
+                    "kind": "boolean",
+                    "py": "current",
+                    "ts": "current"
+                },
+                "filed_at.gte": {
+                    "kind": "date",
+                    "py": "filed_at_gte",
+                    "ts": "filedAtGte"
+                },
+                "filed_at.gt": {
+                    "kind": "date",
+                    "py": "filed_at_gt",
+                    "ts": "filedAtGt"
+                },
+                "filed_at.lte": {
+                    "kind": "date",
+                    "py": "filed_at_lte",
+                    "ts": "filedAtLte"
+                },
+                "filed_at.lt": {
+                    "kind": "date",
+                    "py": "filed_at_lt",
+                    "ts": "filedAtLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_beneficial_ownership_filings",
+            "ts": "listBeneficialOwnershipFilings"
+        },
+        "summary": "List beneficial ownership filings (13D / 13G)",
+        "tier": "standard"
+    },
+    "listCagr": {
+        "cli": {
+            "action": "cagr",
+            "group": "metrics",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_metrics_cagr",
+        "method": "GET",
+        "path": "/v1/metrics/cagr",
+        "sdk": {
+            "body": null,
+            "className": "MetricsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "period": {
+                    "kind": "string",
+                    "py": "period",
+                    "ts": "period"
+                },
+                "horizon": {
+                    "kind": "number",
+                    "py": "horizon",
+                    "ts": "horizon"
+                },
+                "fiscal_year.gte": {
+                    "kind": "number",
+                    "py": "fiscal_year_gte",
+                    "ts": "fiscalYearGte"
+                },
+                "fiscal_year.gt": {
+                    "kind": "number",
+                    "py": "fiscal_year_gt",
+                    "ts": "fiscalYearGt"
+                },
+                "fiscal_year.lte": {
+                    "kind": "number",
+                    "py": "fiscal_year_lte",
+                    "ts": "fiscalYearLte"
+                },
+                "fiscal_year.lt": {
+                    "kind": "number",
+                    "py": "fiscal_year_lt",
+                    "ts": "fiscalYearLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_cagr",
+            "ts": "listCagr"
+        },
+        "summary": "List CAGRs",
+        "tier": "lite"
+    },
+    "listCompanies": {
+        "cli": {
+            "action": "list",
+            "group": "companies",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_companies",
+        "method": "GET",
+        "path": "/v1/companies",
+        "sdk": {
+            "body": null,
+            "className": "CompaniesApi",
+            "params": {
+                "q": {
+                    "kind": "string",
+                    "py": "q",
+                    "ts": "q"
+                },
+                "exchange": {
+                    "kind": "string",
+                    "py": "exchange",
+                    "ts": "exchange"
+                },
+                "sector": {
+                    "kind": "string",
+                    "py": "sector",
+                    "ts": "sector"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_companies",
+            "ts": "listCompanies"
+        },
+        "summary": "List listed companies",
+        "tier": "free"
+    },
+    "listDatasets": {
+        "cli": {
+            "action": "datasets",
+            "group": "filings",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_datasets",
+        "method": "GET",
+        "path": "/v1/datasets",
+        "sdk": {
+            "body": null,
+            "className": "FilingsApi",
+            "params": {
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_datasets",
+            "ts": "listDatasets"
+        },
+        "summary": "List SEC dataset releases",
+        "tier": "enterprise"
+    },
+    "listDestinationDeliveries": {
+        "cli": {
+            "action": "deliveries",
+            "group": "destinations",
+            "positional": "id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_destinations_{id}_deliveries",
+        "method": "GET",
+        "path": "/v1/destinations/{id}/deliveries",
+        "sdk": {
+            "body": null,
+            "className": "DestinationsApi",
+            "params": {
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
+            },
+            "py": "list_destination_deliveries",
+            "ts": "listDestinationDeliveries"
+        },
+        "summary": "List a destination's deliveries",
+        "tier": "lite"
+    },
+    "listDestinations": {
+        "cli": {
+            "action": "list",
+            "group": "destinations",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_destinations",
+        "method": "GET",
+        "path": "/v1/destinations",
+        "sdk": {
+            "body": null,
+            "className": "DestinationsApi",
+            "params": {
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_destinations",
+            "ts": "listDestinations"
+        },
+        "summary": "List destinations",
+        "tier": "lite"
+    },
+    "listDividends": {
+        "cli": {
+            "action": "list",
+            "group": "dividends",
+            "positional": "symbol"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_dividends",
+        "method": "GET",
+        "path": "/v1/dividends",
+        "sdk": {
+            "body": null,
+            "className": "CorporateActionsApi",
+            "params": {
+                "symbol": {
+                    "kind": "string",
+                    "py": "symbol",
+                    "ts": "symbol"
+                },
+                "ex_date.gte": {
+                    "kind": "date",
+                    "py": "ex_date_gte",
+                    "ts": "exDateGte"
+                },
+                "ex_date.gt": {
+                    "kind": "date",
+                    "py": "ex_date_gt",
+                    "ts": "exDateGt"
+                },
+                "ex_date.lte": {
+                    "kind": "date",
+                    "py": "ex_date_lte",
+                    "ts": "exDateLte"
+                },
+                "ex_date.lt": {
+                    "kind": "date",
+                    "py": "ex_date_lt",
+                    "ts": "exDateLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_dividends",
+            "ts": "listDividends"
+        },
+        "summary": "List dividends",
+        "tier": "lite"
+    },
+    "listDocumentKindCatalog": {
+        "cli": {
+            "action": "document-kinds",
+            "group": "catalog",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_catalog_document-kinds",
+        "method": "GET",
+        "path": "/v1/catalog/document-kinds",
+        "sdk": {
+            "body": null,
+            "className": "CatalogApi",
+            "params": {
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_document_kind_catalog",
+            "ts": "listDocumentKindCatalog"
+        },
+        "summary": "List investor-document kinds",
+        "tier": "free"
+    },
+    "listDocumentSections": {
+        "cli": {
+            "action": "sections",
+            "group": "documents",
+            "positional": "version_id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_document-versions_{version_id}_sections",
+        "method": "GET",
+        "path": "/v1/document-versions/{version_id}/sections",
+        "sdk": {
+            "body": null,
+            "className": "FilingsApi",
+            "params": {
+                "outline": {
+                    "kind": "string",
+                    "py": "outline",
+                    "ts": "outline"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "version_id": {
+                    "kind": "string",
+                    "py": "version_id",
+                    "ts": "versionId"
+                }
+            },
+            "py": "list_document_sections",
+            "ts": "listDocumentSections"
+        },
+        "summary": "List a document version's sections",
+        "tier": "lite"
+    },
+    "listEvents": {
+        "cli": {
+            "action": "list",
+            "group": "events",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events",
+        "method": "GET",
+        "path": "/v1/events",
+        "sdk": {
+            "body": null,
+            "className": "EventsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "type": {
+                    "kind": "string",
+                    "py": "type",
+                    "ts": "type"
+                },
+                "status": {
+                    "kind": "string",
+                    "py": "status",
+                    "ts": "status"
+                },
+                "scheduled_at.gte": {
+                    "kind": "date",
+                    "py": "scheduled_at_gte",
+                    "ts": "scheduledAtGte"
+                },
+                "scheduled_at.gt": {
+                    "kind": "date",
+                    "py": "scheduled_at_gt",
+                    "ts": "scheduledAtGt"
+                },
+                "scheduled_at.lte": {
+                    "kind": "date",
+                    "py": "scheduled_at_lte",
+                    "ts": "scheduledAtLte"
+                },
+                "scheduled_at.lt": {
+                    "kind": "date",
+                    "py": "scheduled_at_lt",
+                    "ts": "scheduledAtLt"
+                },
+                "fiscal_year": {
+                    "kind": "number",
+                    "py": "fiscal_year",
+                    "ts": "fiscalYear"
+                },
+                "fiscal_quarter": {
+                    "kind": "number",
+                    "py": "fiscal_quarter",
+                    "ts": "fiscalQuarter"
+                },
+                "date_kind": {
+                    "kind": "string",
+                    "py": "date_kind",
+                    "ts": "dateKind"
+                },
+                "expand": {
+                    "kind": "string",
+                    "py": "expand",
+                    "ts": "expand"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_events",
+            "ts": "listEvents"
+        },
+        "summary": "List events",
+        "tier": "free"
+    },
+    "listEventTypeCatalog": {
+        "cli": {
+            "action": "event-types",
+            "group": "catalog",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_catalog_event-types",
+        "method": "GET",
+        "path": "/v1/catalog/event-types",
+        "sdk": {
+            "body": null,
+            "className": "CatalogApi",
+            "params": {
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_event_type_catalog",
+            "ts": "listEventTypeCatalog"
+        },
+        "summary": "List event types",
+        "tier": "free"
+    },
+    "listExchangeCatalog": {
+        "cli": {
+            "action": "exchanges",
+            "group": "catalog",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_catalog_exchanges",
+        "method": "GET",
+        "path": "/v1/catalog/exchanges",
+        "sdk": {
+            "body": null,
+            "className": "CatalogApi",
+            "params": {
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_exchange_catalog",
+            "ts": "listExchangeCatalog"
+        },
+        "summary": "List exchanges",
+        "tier": "free"
+    },
+    "listFactPlaces": {
+        "cli": {
+            "action": "fact-places",
+            "group": "documents",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_fact-places",
+        "method": "GET",
+        "path": "/v1/fact-places",
+        "sdk": {
+            "body": null,
+            "className": "FilingsApi",
+            "params": {
+                "document_version": {
+                    "kind": "string",
+                    "py": "document_version",
+                    "ts": "documentVersion"
+                },
+                "fact": {
+                    "kind": "string",
+                    "py": "fact",
+                    "ts": "fact"
+                },
+                "status": {
+                    "kind": "string",
+                    "py": "status",
+                    "ts": "status"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_fact_places",
+            "ts": "listFactPlaces"
+        },
+        "summary": "List where facts appear in a document",
+        "tier": "pro"
+    },
+    "listFilerHoldingChanges": {
+        "cli": {
+            "action": "holding-changes",
+            "group": "filers",
+            "positional": "cik"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_filers_{cik}_holding-changes",
+        "method": "GET",
+        "path": "/v1/filers/{cik}/holding-changes",
+        "sdk": {
+            "body": null,
+            "className": "HoldersApi",
+            "params": {
+                "period_end": {
+                    "kind": "date",
+                    "py": "period_end",
+                    "ts": "periodEnd"
+                },
+                "prior_period_end": {
+                    "kind": "date",
+                    "py": "prior_period_end",
+                    "ts": "priorPeriodEnd"
+                },
+                "type": {
+                    "kind": "string",
+                    "py": "type",
+                    "ts": "type"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "cik": {
+                    "kind": "string",
+                    "py": "cik",
+                    "ts": "cik"
+                }
+            },
+            "py": "list_filer_holding_changes",
+            "ts": "listFilerHoldingChanges"
+        },
+        "summary": "List a 13F manager's position changes",
+        "tier": "pro"
+    },
+    "listFilerHoldings": {
+        "cli": {
+            "action": "holdings",
+            "group": "filers",
+            "positional": "cik"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_filers_{cik}_holdings",
+        "method": "GET",
+        "path": "/v1/filers/{cik}/holdings",
+        "sdk": {
+            "body": null,
+            "className": "HoldersApi",
+            "params": {
+                "period_end": {
+                    "kind": "date",
+                    "py": "period_end",
+                    "ts": "periodEnd"
+                },
+                "instruments": {
+                    "kind": "string",
+                    "py": "instruments",
+                    "ts": "instruments"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "cik": {
+                    "kind": "string",
+                    "py": "cik",
+                    "ts": "cik"
+                }
+            },
+            "py": "list_filer_holdings",
+            "ts": "listFilerHoldings"
+        },
+        "summary": "List a 13F manager's holdings",
+        "tier": "lite"
+    },
+    "listFilers": {
+        "cli": {
+            "action": "list",
+            "group": "filers",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_filers",
+        "method": "GET",
+        "path": "/v1/filers",
+        "sdk": {
+            "body": null,
+            "className": "CompaniesApi",
+            "params": {
+                "q": {
+                    "kind": "string",
+                    "py": "q",
+                    "ts": "q"
+                },
+                "form": {
+                    "kind": "string",
+                    "py": "form",
+                    "ts": "form"
+                },
+                "phase": {
+                    "kind": "string",
+                    "py": "phase",
+                    "ts": "phase"
+                },
+                "listed": {
+                    "kind": "boolean",
+                    "py": "listed",
+                    "ts": "listed"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_filers",
+            "ts": "listFilers"
+        },
+        "summary": "List SEC filers",
+        "tier": "lite"
+    },
+    "listFilingFacts": {
+        "cli": {
+            "action": "facts",
+            "group": "filings",
+            "positional": "accession"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_filings_{accession}_facts",
+        "method": "GET",
+        "path": "/v1/filings/{accession}/facts",
+        "sdk": {
+            "body": null,
+            "className": "FilingsApi",
+            "params": {
+                "tag": {
+                    "kind": "string",
+                    "py": "tag",
+                    "ts": "tag"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "accession": {
+                    "kind": "string",
+                    "py": "accession",
+                    "ts": "accession"
+                }
+            },
+            "py": "list_filing_facts",
+            "ts": "listFilingFacts"
+        },
+        "summary": "List a filing's numeric facts",
+        "tier": "lite"
+    },
+    "listFilingHoldings": {
+        "cli": {
+            "action": "holdings",
+            "group": "filings",
+            "positional": "accession"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_filings_{accession}_holdings",
+        "method": "GET",
+        "path": "/v1/filings/{accession}/holdings",
+        "sdk": {
+            "body": null,
+            "className": "FilingsApi",
+            "params": {
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "accession": {
+                    "kind": "string",
+                    "py": "accession",
+                    "ts": "accession"
+                }
+            },
+            "py": "list_filing_holdings",
+            "ts": "listFilingHoldings"
+        },
+        "summary": "List a holdings filing's lines",
+        "tier": "lite"
+    },
+    "listFilingNotes": {
+        "cli": {
+            "action": "notes",
+            "group": "filings",
+            "positional": "accession"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_filings_{accession}_notes",
+        "method": "GET",
+        "path": "/v1/filings/{accession}/notes",
+        "sdk": {
+            "body": null,
+            "className": "FilingsApi",
+            "params": {
+                "tag": {
+                    "kind": "string",
+                    "py": "tag",
+                    "ts": "tag"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "accession": {
+                    "kind": "string",
+                    "py": "accession",
+                    "ts": "accession"
+                }
+            },
+            "py": "list_filing_notes",
+            "ts": "listFilingNotes"
+        },
+        "summary": "List a filing's text facts",
+        "tier": "lite"
+    },
+    "listFilings": {
+        "cli": {
+            "action": "list",
+            "group": "filings",
+            "positional": "symbol"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_filings",
+        "method": "GET",
+        "path": "/v1/filings",
+        "sdk": {
+            "body": null,
+            "className": "FilingsApi",
+            "params": {
+                "symbol": {
+                    "kind": "string",
+                    "py": "symbol",
+                    "ts": "symbol"
+                },
+                "form": {
+                    "kind": "string",
+                    "py": "form",
+                    "ts": "form"
+                },
+                "items": {
+                    "kind": "string",
+                    "py": "items",
+                    "ts": "items"
+                },
+                "filed_at.gte": {
+                    "kind": "date",
+                    "py": "filed_at_gte",
+                    "ts": "filedAtGte"
+                },
+                "filed_at.gt": {
+                    "kind": "date",
+                    "py": "filed_at_gt",
+                    "ts": "filedAtGt"
+                },
+                "filed_at.lte": {
+                    "kind": "date",
+                    "py": "filed_at_lte",
+                    "ts": "filedAtLte"
+                },
+                "filed_at.lt": {
+                    "kind": "date",
+                    "py": "filed_at_lt",
+                    "ts": "filedAtLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_filings",
+            "ts": "listFilings"
+        },
+        "summary": "List filings",
+        "tier": "lite"
+    },
+    "listFinancialVintages": {
+        "cli": {
+            "action": "vintages",
+            "group": "metrics",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_financials_vintages",
+        "method": "GET",
+        "path": "/v1/financials/vintages",
+        "sdk": {
+            "body": null,
+            "className": "FinancialsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "concept": {
+                    "kind": "string",
+                    "py": "concept",
+                    "ts": "concept"
+                },
+                "period_end": {
+                    "kind": "date",
+                    "py": "period_end",
+                    "ts": "periodEnd"
+                },
+                "period_start": {
+                    "kind": "date",
+                    "py": "period_start",
+                    "ts": "periodStart"
+                },
+                "member": {
+                    "kind": "string",
+                    "py": "member",
+                    "ts": "member"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_financial_vintages",
+            "ts": "listFinancialVintages"
+        },
+        "summary": "List the filed values of a fact",
+        "tier": "pro"
+    },
+    "listFiscalPeriods": {
+        "cli": {
+            "action": "fiscal-periods",
+            "group": "companies",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_fiscal-periods",
+        "method": "GET",
+        "path": "/v1/fiscal-periods",
+        "sdk": {
+            "body": null,
+            "className": "CalendarApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_fiscal_periods",
+            "ts": "listFiscalPeriods"
+        },
+        "summary": "List fiscal periods",
+        "tier": "free"
+    },
+    "listFormCatalog": {
+        "cli": {
+            "action": "forms",
+            "group": "catalog",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_catalog_forms",
+        "method": "GET",
+        "path": "/v1/catalog/forms",
+        "sdk": {
+            "body": null,
+            "className": "CatalogApi",
+            "params": {
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_form_catalog",
+            "ts": "listFormCatalog"
+        },
+        "summary": "List SEC forms",
+        "tier": "free"
+    },
+    "listFundPositions": {
+        "cli": {
+            "action": "holdings",
+            "group": "funds",
+            "positional": "fund"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_funds_{fund}_holdings",
+        "method": "GET",
+        "path": "/v1/funds/{fund}/holdings",
+        "sdk": {
+            "body": null,
+            "className": "FundsApi",
+            "params": {
+                "as_of": {
+                    "kind": "date",
+                    "py": "as_of",
+                    "ts": "asOf"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "fund": {
+                    "kind": "string",
+                    "py": "fund",
+                    "ts": "fund"
+                }
+            },
+            "py": "list_fund_positions",
+            "ts": "listFundPositions"
+        },
+        "summary": "List a fund's holdings",
+        "tier": "lite"
+    },
+    "listFunds": {
+        "cli": {
+            "action": "list",
+            "group": "funds",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_funds",
+        "method": "GET",
+        "path": "/v1/funds",
+        "sdk": {
+            "body": null,
+            "className": "FundsApi",
+            "params": {
+                "q": {
+                    "kind": "string",
+                    "py": "q",
+                    "ts": "q"
+                },
+                "type": {
+                    "kind": "string",
+                    "py": "type",
+                    "ts": "type"
+                },
+                "structure": {
+                    "kind": "string",
+                    "py": "structure",
+                    "ts": "structure"
+                },
+                "exchange": {
+                    "kind": "string",
+                    "py": "exchange",
+                    "ts": "exchange"
+                },
+                "is_active": {
+                    "kind": "string",
+                    "py": "is_active",
+                    "ts": "isActive"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_funds",
+            "ts": "listFunds"
+        },
+        "summary": "List funds",
+        "tier": "lite"
+    },
+    "listFundWeights": {
+        "cli": {
+            "action": "weights",
+            "group": "funds",
+            "positional": "fund"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_funds_{fund}_weights",
+        "method": "GET",
+        "path": "/v1/funds/{fund}/weights",
+        "sdk": {
+            "body": null,
+            "className": "FundsApi",
+            "params": {
+                "dimension": {
+                    "kind": "string",
+                    "py": "dimension",
+                    "ts": "dimension"
+                },
+                "as_of": {
+                    "kind": "date",
+                    "py": "as_of",
+                    "ts": "asOf"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "fund": {
+                    "kind": "string",
+                    "py": "fund",
+                    "ts": "fund"
+                }
+            },
+            "py": "list_fund_weights",
+            "ts": "listFundWeights"
+        },
+        "summary": "List a fund's sector, country and asset-class weights",
+        "tier": "lite"
+    },
+    "listGrowth": {
+        "cli": {
+            "action": "growth",
+            "group": "metrics",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_metrics_growth",
+        "method": "GET",
+        "path": "/v1/metrics/growth",
+        "sdk": {
+            "body": null,
+            "className": "MetricsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "period": {
+                    "kind": "string",
+                    "py": "period",
+                    "ts": "period"
+                },
+                "basis": {
+                    "kind": "string",
+                    "py": "basis",
+                    "ts": "basis"
+                },
+                "fiscal_year.gte": {
+                    "kind": "number",
+                    "py": "fiscal_year_gte",
+                    "ts": "fiscalYearGte"
+                },
+                "fiscal_year.gt": {
+                    "kind": "number",
+                    "py": "fiscal_year_gt",
+                    "ts": "fiscalYearGt"
+                },
+                "fiscal_year.lte": {
+                    "kind": "number",
+                    "py": "fiscal_year_lte",
+                    "ts": "fiscalYearLte"
+                },
+                "fiscal_year.lt": {
+                    "kind": "number",
+                    "py": "fiscal_year_lt",
+                    "ts": "fiscalYearLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_growth",
+            "ts": "listGrowth"
+        },
+        "summary": "List growth rates",
+        "tier": "lite"
+    },
+    "listGuidance": {
+        "cli": {
+            "action": "list",
+            "group": "guidance",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_guidance",
+        "method": "GET",
+        "path": "/v1/guidance",
+        "sdk": {
+            "body": null,
+            "className": "GuidanceApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "event": {
+                    "kind": "string",
+                    "py": "event",
+                    "ts": "event"
+                },
+                "metric": {
+                    "kind": "string",
+                    "py": "metric",
+                    "ts": "metric"
+                },
+                "period_kind": {
+                    "kind": "string",
+                    "py": "period_kind",
+                    "ts": "periodKind"
+                },
+                "basis": {
+                    "kind": "string",
+                    "py": "basis",
+                    "ts": "basis"
+                },
+                "review": {
+                    "kind": "string",
+                    "py": "review",
+                    "ts": "review"
+                },
+                "qualitative": {
+                    "kind": "boolean",
+                    "py": "qualitative",
+                    "ts": "qualitative"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_guidance",
+            "ts": "listGuidance"
+        },
+        "summary": "List guidance items",
+        "tier": "lite"
+    },
+    "listHolderChanges": {
+        "cli": {
+            "action": "changes",
+            "group": "holders",
+            "positional": "symbol"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_holder-changes",
+        "method": "GET",
+        "path": "/v1/holder-changes",
+        "sdk": {
+            "body": null,
+            "className": "HoldersApi",
+            "params": {
+                "symbol": {
+                    "kind": "string",
+                    "py": "symbol",
+                    "ts": "symbol"
+                },
+                "filer": {
+                    "kind": "string",
+                    "py": "filer",
+                    "ts": "filer"
+                },
+                "period_end": {
+                    "kind": "date",
+                    "py": "period_end",
+                    "ts": "periodEnd"
+                },
+                "prior_period_end": {
+                    "kind": "date",
+                    "py": "prior_period_end",
+                    "ts": "priorPeriodEnd"
+                },
+                "type": {
+                    "kind": "string",
+                    "py": "type",
+                    "ts": "type"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_holder_changes",
+            "ts": "listHolderChanges"
+        },
+        "summary": "List 13F position changes in a stock or a fund",
+        "tier": "pro"
+    },
+    "listHolders": {
+        "cli": {
+            "action": "list",
+            "group": "holders",
+            "positional": "symbol"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_holders",
+        "method": "GET",
+        "path": "/v1/holders",
+        "sdk": {
+            "body": null,
+            "className": "HoldersApi",
+            "params": {
+                "symbol": {
+                    "kind": "string",
+                    "py": "symbol",
+                    "ts": "symbol"
+                },
+                "source": {
+                    "kind": "string",
+                    "py": "source",
+                    "ts": "source"
+                },
+                "period_end": {
+                    "kind": "date",
+                    "py": "period_end",
+                    "ts": "periodEnd"
+                },
+                "instruments": {
+                    "kind": "string",
+                    "py": "instruments",
+                    "ts": "instruments"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_holders",
+            "ts": "listHolders"
+        },
+        "summary": "List who holds a stock or a fund",
+        "tier": "lite"
+    },
+    "listInsiderHoldings": {
+        "cli": {
+            "action": "holdings",
+            "group": "insider-trades",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_insider-holdings",
+        "method": "GET",
+        "path": "/v1/insider-holdings",
+        "sdk": {
+            "body": null,
+            "className": "InsiderTradesApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "owner": {
+                    "kind": "string",
+                    "py": "owner",
+                    "ts": "owner"
+                },
+                "as_of.gte": {
+                    "kind": "date",
+                    "py": "as_of_gte",
+                    "ts": "asOfGte"
+                },
+                "as_of.gt": {
+                    "kind": "date",
+                    "py": "as_of_gt",
+                    "ts": "asOfGt"
+                },
+                "as_of.lte": {
+                    "kind": "date",
+                    "py": "as_of_lte",
+                    "ts": "asOfLte"
+                },
+                "as_of.lt": {
+                    "kind": "date",
+                    "py": "as_of_lt",
+                    "ts": "asOfLt"
+                },
+                "is_derivative": {
+                    "kind": "boolean",
+                    "py": "is_derivative",
+                    "ts": "isDerivative"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_insider_holdings",
+            "ts": "listInsiderHoldings"
+        },
+        "summary": "List insider holdings",
+        "tier": "standard"
+    },
+    "listInsiderSaleNotices": {
+        "cli": {
+            "action": "sale-notices",
+            "group": "ownership",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_insider-sale-notices",
+        "method": "GET",
+        "path": "/v1/insider-sale-notices",
+        "sdk": {
+            "body": null,
+            "className": "OwnershipApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "owner": {
+                    "kind": "string",
+                    "py": "owner",
+                    "ts": "owner"
+                },
+                "filed_at.gte": {
+                    "kind": "date",
+                    "py": "filed_at_gte",
+                    "ts": "filedAtGte"
+                },
+                "filed_at.gt": {
+                    "kind": "date",
+                    "py": "filed_at_gt",
+                    "ts": "filedAtGt"
+                },
+                "filed_at.lte": {
+                    "kind": "date",
+                    "py": "filed_at_lte",
+                    "ts": "filedAtLte"
+                },
+                "filed_at.lt": {
+                    "kind": "date",
+                    "py": "filed_at_lt",
+                    "ts": "filedAtLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_insider_sale_notices",
+            "ts": "listInsiderSaleNotices"
+        },
+        "summary": "List insider sale notices (Form 144)",
+        "tier": "standard"
+    },
+    "listInsiderTrades": {
+        "cli": {
+            "action": "list",
+            "group": "insider-trades",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_insider-trades",
+        "method": "GET",
+        "path": "/v1/insider-trades",
+        "sdk": {
+            "body": null,
+            "className": "InsiderTradesApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "owner": {
+                    "kind": "string",
+                    "py": "owner",
+                    "ts": "owner"
+                },
+                "side": {
+                    "kind": "string",
+                    "py": "side",
+                    "ts": "side"
+                },
+                "filed_at.gte": {
+                    "kind": "date",
+                    "py": "filed_at_gte",
+                    "ts": "filedAtGte"
+                },
+                "filed_at.gt": {
+                    "kind": "date",
+                    "py": "filed_at_gt",
+                    "ts": "filedAtGt"
+                },
+                "filed_at.lte": {
+                    "kind": "date",
+                    "py": "filed_at_lte",
+                    "ts": "filedAtLte"
+                },
+                "filed_at.lt": {
+                    "kind": "date",
+                    "py": "filed_at_lt",
+                    "ts": "filedAtLt"
+                },
+                "transaction_date.gte": {
+                    "kind": "date",
+                    "py": "transaction_date_gte",
+                    "ts": "transactionDateGte"
+                },
+                "transaction_date.lte": {
+                    "kind": "date",
+                    "py": "transaction_date_lte",
+                    "ts": "transactionDateLte"
+                },
+                "is_derivative": {
+                    "kind": "boolean",
+                    "py": "is_derivative",
+                    "ts": "isDerivative"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_insider_trades",
+            "ts": "listInsiderTrades"
+        },
+        "summary": "List insider trades",
+        "tier": "standard"
+    },
+    "listInstruments": {
+        "cli": {
+            "action": "list",
+            "group": "instruments",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_instruments",
+        "method": "GET",
+        "path": "/v1/instruments",
+        "sdk": {
+            "body": null,
+            "className": "InstrumentsApi",
+            "params": {
+                "q": {
+                    "kind": "string",
+                    "py": "q",
+                    "ts": "q"
+                },
+                "type": {
+                    "kind": "string",
+                    "py": "type",
+                    "ts": "type"
+                },
+                "structure": {
+                    "kind": "string",
+                    "py": "structure",
+                    "ts": "structure"
+                },
+                "exchange": {
+                    "kind": "string",
+                    "py": "exchange",
+                    "ts": "exchange"
+                },
+                "is_active": {
+                    "kind": "string",
+                    "py": "is_active",
+                    "ts": "isActive"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_instruments",
+            "ts": "listInstruments"
+        },
+        "summary": "List instruments",
+        "tier": "free"
+    },
+    "listInvestorDocuments": {
+        "cli": {
+            "action": "list",
+            "group": "investor-documents",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_investor-documents",
+        "method": "GET",
+        "path": "/v1/investor-documents",
+        "sdk": {
+            "body": null,
+            "className": "InvestorDocumentsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "event": {
+                    "kind": "string",
+                    "py": "event",
+                    "ts": "event"
+                },
+                "category": {
+                    "kind": "string",
+                    "py": "category",
+                    "ts": "category"
+                },
+                "kind": {
+                    "kind": "string",
+                    "py": "kind",
+                    "ts": "kind"
+                },
+                "fiscal_year": {
+                    "kind": "number",
+                    "py": "fiscal_year",
+                    "ts": "fiscalYear"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_investor_documents",
+            "ts": "listInvestorDocuments"
+        },
+        "summary": "List investor documents",
+        "tier": "pro"
+    },
+    "listIpos": {
+        "cli": {
+            "action": "list",
+            "group": "ipos",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_ipos",
+        "method": "GET",
+        "path": "/v1/ipos",
+        "sdk": {
+            "body": null,
+            "className": "OfferingsApi",
+            "params": {
+                "stage": {
+                    "kind": "string",
+                    "py": "stage",
+                    "ts": "stage"
+                },
+                "is_spac": {
+                    "kind": "boolean",
+                    "py": "is_spac",
+                    "ts": "isSpac"
+                },
+                "listing_date.gte": {
+                    "kind": "date",
+                    "py": "listing_date_gte",
+                    "ts": "listingDateGte"
+                },
+                "listing_date.gt": {
+                    "kind": "date",
+                    "py": "listing_date_gt",
+                    "ts": "listingDateGt"
+                },
+                "listing_date.lte": {
+                    "kind": "date",
+                    "py": "listing_date_lte",
+                    "ts": "listingDateLte"
+                },
+                "listing_date.lt": {
+                    "kind": "date",
+                    "py": "listing_date_lt",
+                    "ts": "listingDateLt"
+                },
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_ipos",
+            "ts": "listIpos"
+        },
+        "summary": "List offerings",
+        "tier": "lite"
+    },
+    "listKpiCatalog": {
+        "cli": {
+            "action": "kpis",
+            "group": "catalog",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_catalog_kpis",
+        "method": "GET",
+        "path": "/v1/catalog/kpis",
+        "sdk": {
+            "body": null,
+            "className": "CatalogApi",
+            "params": {
+                "sector": {
+                    "kind": "string",
+                    "py": "sector",
+                    "ts": "sector"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_kpi_catalog",
+            "ts": "listKpiCatalog"
+        },
+        "summary": "List KPIs by sector",
+        "tier": "free"
+    },
+    "listKpis": {
+        "cli": {
+            "action": "kpis",
+            "group": "guidance",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_kpis",
+        "method": "GET",
+        "path": "/v1/kpis",
+        "sdk": {
+            "body": null,
+            "className": "GuidanceApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "event": {
+                    "kind": "string",
+                    "py": "event",
+                    "ts": "event"
+                },
+                "metric": {
+                    "kind": "string",
+                    "py": "metric",
+                    "ts": "metric"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_kpis",
+            "ts": "listKpis"
+        },
+        "summary": "List KPI mentions",
+        "tier": "pro"
+    },
+    "listKpiSeries": {
+        "cli": {
+            "action": "kpi-series",
+            "group": "guidance",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_kpi-series",
+        "method": "GET",
+        "path": "/v1/kpi-series",
+        "sdk": {
+            "body": null,
+            "className": "GuidanceApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "kpi": {
+                    "kind": "string",
+                    "py": "kpi",
+                    "ts": "kpi"
+                },
+                "period_kind": {
+                    "kind": "string",
+                    "py": "period_kind",
+                    "ts": "periodKind"
+                },
+                "period_end.gte": {
+                    "kind": "date",
+                    "py": "period_end_gte",
+                    "ts": "periodEndGte"
+                },
+                "period_end.gt": {
+                    "kind": "date",
+                    "py": "period_end_gt",
+                    "ts": "periodEndGt"
+                },
+                "period_end.lte": {
+                    "kind": "date",
+                    "py": "period_end_lte",
+                    "ts": "periodEndLte"
+                },
+                "period_end.lt": {
+                    "kind": "date",
+                    "py": "period_end_lt",
+                    "ts": "periodEndLt"
+                },
+                "segment": {
+                    "kind": "string",
+                    "py": "segment",
+                    "ts": "segment"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_kpi_series",
+            "ts": "listKpiSeries"
+        },
+        "summary": "List KPI time series",
+        "tier": "pro"
+    },
+    "listMacroGdp": {
+        "cli": {
+            "action": "gdp",
+            "group": "macro",
+            "positional": "series"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_macro_gdp",
+        "method": "GET",
+        "path": "/v1/macro/gdp",
+        "sdk": {
+            "body": null,
+            "className": "MacroApi",
+            "params": {
+                "series": {
+                    "kind": "string",
+                    "py": "series",
+                    "ts": "series"
+                },
+                "reference_date.gte": {
+                    "kind": "date",
+                    "py": "reference_date_gte",
+                    "ts": "referenceDateGte"
+                },
+                "reference_date.gt": {
+                    "kind": "date",
+                    "py": "reference_date_gt",
+                    "ts": "referenceDateGt"
+                },
+                "reference_date.lte": {
+                    "kind": "date",
+                    "py": "reference_date_lte",
+                    "ts": "referenceDateLte"
+                },
+                "reference_date.lt": {
+                    "kind": "date",
+                    "py": "reference_date_lt",
+                    "ts": "referenceDateLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_macro_gdp",
+            "ts": "listMacroGdp"
+        },
+        "summary": "List US GDP and income readings",
+        "tier": "lite"
+    },
+    "listMacroInflation": {
+        "cli": {
+            "action": "inflation",
+            "group": "macro",
+            "positional": "series"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_macro_inflation",
+        "method": "GET",
+        "path": "/v1/macro/inflation",
+        "sdk": {
+            "body": null,
+            "className": "MacroApi",
+            "params": {
+                "series": {
+                    "kind": "string",
+                    "py": "series",
+                    "ts": "series"
+                },
+                "reference_date.gte": {
+                    "kind": "date",
+                    "py": "reference_date_gte",
+                    "ts": "referenceDateGte"
+                },
+                "reference_date.gt": {
+                    "kind": "date",
+                    "py": "reference_date_gt",
+                    "ts": "referenceDateGt"
+                },
+                "reference_date.lte": {
+                    "kind": "date",
+                    "py": "reference_date_lte",
+                    "ts": "referenceDateLte"
+                },
+                "reference_date.lt": {
+                    "kind": "date",
+                    "py": "reference_date_lt",
+                    "ts": "referenceDateLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_macro_inflation",
+            "ts": "listMacroInflation"
+        },
+        "summary": "List US inflation readings",
+        "tier": "lite"
+    },
+    "listMacroLabor": {
+        "cli": {
+            "action": "labor",
+            "group": "macro",
+            "positional": "series"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_macro_labor",
+        "method": "GET",
+        "path": "/v1/macro/labor",
+        "sdk": {
+            "body": null,
+            "className": "MacroApi",
+            "params": {
+                "series": {
+                    "kind": "string",
+                    "py": "series",
+                    "ts": "series"
+                },
+                "reference_date.gte": {
+                    "kind": "date",
+                    "py": "reference_date_gte",
+                    "ts": "referenceDateGte"
+                },
+                "reference_date.gt": {
+                    "kind": "date",
+                    "py": "reference_date_gt",
+                    "ts": "referenceDateGt"
+                },
+                "reference_date.lte": {
+                    "kind": "date",
+                    "py": "reference_date_lte",
+                    "ts": "referenceDateLte"
+                },
+                "reference_date.lt": {
+                    "kind": "date",
+                    "py": "reference_date_lt",
+                    "ts": "referenceDateLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_macro_labor",
+            "ts": "listMacroLabor"
+        },
+        "summary": "List US labor readings",
+        "tier": "lite"
+    },
+    "listMacroSeries": {
+        "cli": {
+            "action": "series",
+            "group": "macro",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_macro_series",
+        "method": "GET",
+        "path": "/v1/macro/series",
+        "sdk": {
+            "body": null,
+            "className": "MacroApi",
+            "params": {
+                "family": {
+                    "kind": "string",
+                    "py": "family",
+                    "ts": "family"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_macro_series",
+            "ts": "listMacroSeries"
+        },
+        "summary": "List US macro series",
+        "tier": "free"
+    },
+    "listMappingRules": {
+        "cli": {
+            "action": "mapping-rules",
+            "group": "catalog",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_catalog_mapping-rules",
+        "method": "GET",
+        "path": "/v1/catalog/mapping-rules",
+        "sdk": {
+            "body": null,
+            "className": "CatalogApi",
+            "params": {
+                "statement": {
+                    "kind": "string",
+                    "py": "statement",
+                    "ts": "statement"
+                },
+                "metric_id": {
+                    "kind": "string",
+                    "py": "metric_id",
+                    "ts": "metricId"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_mapping_rules",
+            "ts": "listMappingRules"
+        },
+        "summary": "List standardized mapping rules",
+        "tier": "free"
+    },
+    "listMarketHolidays": {
+        "cli": {
+            "action": "holidays",
+            "group": "market",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_market-holidays",
+        "method": "GET",
+        "path": "/v1/market-holidays",
+        "sdk": {
+            "body": null,
+            "className": "CalendarApi",
+            "params": {
+                "date.gte": {
+                    "kind": "date",
+                    "py": "date_gte",
+                    "ts": "dateGte"
+                },
+                "date.gt": {
+                    "kind": "date",
+                    "py": "date_gt",
+                    "ts": "dateGt"
+                },
+                "date.lte": {
+                    "kind": "date",
+                    "py": "date_lte",
+                    "ts": "dateLte"
+                },
+                "date.lt": {
+                    "kind": "date",
+                    "py": "date_lt",
+                    "ts": "dateLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_market_holidays",
+            "ts": "listMarketHolidays"
+        },
+        "summary": "List market holidays",
+        "tier": "free"
+    },
+    "listMetricCatalog": {
+        "cli": {
+            "action": "metrics",
+            "group": "catalog",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_catalog_metrics",
+        "method": "GET",
+        "path": "/v1/catalog/metrics",
+        "sdk": {
+            "body": null,
+            "className": "CatalogApi",
+            "params": {
+                "statement": {
+                    "kind": "string",
+                    "py": "statement",
+                    "ts": "statement"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_metric_catalog",
+            "ts": "listMetricCatalog"
+        },
+        "summary": "List standardized metrics",
+        "tier": "free"
+    },
+    "listNews": {
+        "cli": {
+            "action": "list",
+            "group": "news",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_news",
+        "method": "GET",
+        "path": "/v1/news",
+        "sdk": {
+            "body": null,
+            "className": "NewsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "event": {
+                    "kind": "string",
+                    "py": "event",
+                    "ts": "event"
+                },
+                "kind": {
+                    "kind": "string",
+                    "py": "kind",
+                    "ts": "kind"
+                },
+                "topic": {
+                    "kind": "string",
+                    "py": "topic",
+                    "ts": "topic"
+                },
+                "published_at.gte": {
+                    "kind": "datetime",
+                    "py": "published_at_gte",
+                    "ts": "publishedAtGte"
+                },
+                "published_at.gt": {
+                    "kind": "datetime",
+                    "py": "published_at_gt",
+                    "ts": "publishedAtGt"
+                },
+                "published_at.lte": {
+                    "kind": "datetime",
+                    "py": "published_at_lte",
+                    "ts": "publishedAtLte"
+                },
+                "published_at.lt": {
+                    "kind": "datetime",
+                    "py": "published_at_lt",
+                    "ts": "publishedAtLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_news",
+            "ts": "listNews"
+        },
+        "summary": "List news items",
+        "tier": "lite"
+    },
+    "listNonGaapMetrics": {
+        "cli": {
+            "action": "non-gaap",
+            "group": "guidance",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_non-gaap",
+        "method": "GET",
+        "path": "/v1/non-gaap",
+        "sdk": {
+            "body": null,
+            "className": "GuidanceApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "event": {
+                    "kind": "string",
+                    "py": "event",
+                    "ts": "event"
+                },
+                "metric": {
+                    "kind": "string",
+                    "py": "metric",
+                    "ts": "metric"
+                },
+                "period_kind": {
+                    "kind": "string",
+                    "py": "period_kind",
+                    "ts": "periodKind"
+                },
+                "period_end.gte": {
+                    "kind": "date",
+                    "py": "period_end_gte",
+                    "ts": "periodEndGte"
+                },
+                "period_end.gt": {
+                    "kind": "date",
+                    "py": "period_end_gt",
+                    "ts": "periodEndGt"
+                },
+                "period_end.lte": {
+                    "kind": "date",
+                    "py": "period_end_lte",
+                    "ts": "periodEndLte"
+                },
+                "period_end.lt": {
+                    "kind": "date",
+                    "py": "period_end_lt",
+                    "ts": "periodEndLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_non_gaap_metrics",
+            "ts": "listNonGaapMetrics"
+        },
+        "summary": "List reported non-GAAP figures",
+        "tier": "pro"
+    },
+    "listOfferings": {
+        "cli": {
+            "action": "list",
+            "group": "offerings",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_offerings",
+        "method": "GET",
+        "path": "/v1/offerings",
+        "sdk": {
+            "body": null,
+            "className": "OfferingsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "filed_at.gte": {
+                    "kind": "date",
+                    "py": "filed_at_gte",
+                    "ts": "filedAtGte"
+                },
+                "filed_at.lte": {
+                    "kind": "date",
+                    "py": "filed_at_lte",
+                    "ts": "filedAtLte"
+                },
+                "exemption": {
+                    "kind": "string",
+                    "py": "exemption",
+                    "ts": "exemption"
+                },
+                "industry": {
+                    "kind": "string",
+                    "py": "industry",
+                    "ts": "industry"
+                },
+                "total_sold.gte": {
+                    "kind": "number",
+                    "py": "total_sold_gte",
+                    "ts": "totalSoldGte"
+                },
+                "is_amendment": {
+                    "kind": "boolean",
+                    "py": "is_amendment",
+                    "ts": "isAmendment"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_offerings",
+            "ts": "listOfferings"
+        },
+        "summary": "List Form D private offerings",
+        "tier": "lite"
+    },
+    "listParticipants": {
+        "cli": {
+            "action": "participants",
+            "group": "people",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_participants",
+        "method": "GET",
+        "path": "/v1/participants",
+        "sdk": {
+            "body": null,
+            "className": "EventsApi",
+            "params": {
+                "event": {
+                    "kind": "string",
+                    "py": "event",
+                    "ts": "event"
+                },
+                "person": {
+                    "kind": "string",
+                    "py": "person",
+                    "ts": "person"
+                },
+                "role": {
+                    "kind": "string",
+                    "py": "role",
+                    "ts": "role"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_participants",
+            "ts": "listParticipants"
+        },
+        "summary": "List event participations",
+        "tier": "lite"
+    },
+    "listPeople": {
+        "cli": {
+            "action": "list",
+            "group": "people",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_people",
+        "method": "GET",
+        "path": "/v1/people",
+        "sdk": {
+            "body": null,
+            "className": "CompaniesApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "event": {
+                    "kind": "string",
+                    "py": "event",
+                    "ts": "event"
+                },
+                "role": {
+                    "kind": "string",
+                    "py": "role",
+                    "ts": "role"
+                },
+                "include_operators": {
+                    "kind": "boolean",
+                    "py": "include_operators",
+                    "ts": "includeOperators"
+                },
+                "q": {
+                    "kind": "string",
+                    "py": "q",
+                    "ts": "q"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_people",
+            "ts": "listPeople"
+        },
+        "summary": "List people",
+        "tier": "lite"
+    },
+    "listQa": {
+        "cli": {
+            "action": "qa",
+            "group": "events",
+            "positional": "event_id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}_qa",
+        "method": "GET",
+        "path": "/v1/events/{event_id}/qa",
+        "sdk": {
+            "body": null,
+            "className": "EventsApi",
+            "params": {
+                "include": {
+                    "kind": "string",
+                    "py": "include",
+                    "ts": "include"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
+            },
+            "py": "list_qa",
+            "ts": "listQa"
+        },
+        "summary": "List an event's Q&A pairs",
+        "tier": "pro"
+    },
+    "listRatios": {
+        "cli": {
+            "action": "ratios",
+            "group": "metrics",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_metrics_ratios",
+        "method": "GET",
+        "path": "/v1/metrics/ratios",
+        "sdk": {
+            "body": null,
+            "className": "MetricsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "period": {
+                    "kind": "string",
+                    "py": "period",
+                    "ts": "period"
+                },
+                "category": {
+                    "kind": "string",
+                    "py": "category",
+                    "ts": "category"
+                },
+                "fiscal_year.gte": {
+                    "kind": "number",
+                    "py": "fiscal_year_gte",
+                    "ts": "fiscalYearGte"
+                },
+                "fiscal_year.gt": {
+                    "kind": "number",
+                    "py": "fiscal_year_gt",
+                    "ts": "fiscalYearGt"
+                },
+                "fiscal_year.lte": {
+                    "kind": "number",
+                    "py": "fiscal_year_lte",
+                    "ts": "fiscalYearLte"
+                },
+                "fiscal_year.lt": {
+                    "kind": "number",
+                    "py": "fiscal_year_lt",
+                    "ts": "fiscalYearLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_ratios",
+            "ts": "listRatios"
+        },
+        "summary": "List ratios",
+        "tier": "lite"
+    },
+    "listScripts": {
+        "cli": {
+            "action": "list",
+            "group": "scripts",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_scripts",
+        "method": "GET",
+        "path": "/v1/scripts",
+        "sdk": {
+            "body": null,
+            "className": "ScriptsApi",
+            "params": {
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_scripts",
+            "ts": "listScripts"
+        },
+        "summary": "List scripts",
+        "tier": "lite"
+    },
+    "listScriptVersions": {
+        "cli": {
+            "action": "list",
+            "group": "script-versions",
+            "positional": "id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_scripts_{id}_versions",
+        "method": "GET",
+        "path": "/v1/scripts/{id}/versions",
+        "sdk": {
+            "body": null,
+            "className": "ScriptsApi",
+            "params": {
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
+            },
+            "py": "list_script_versions",
+            "ts": "listScriptVersions"
+        },
+        "summary": "List script versions",
+        "tier": "lite"
+    },
+    "listSectionCatalog": {
+        "cli": {
+            "action": "sections",
+            "group": "catalog",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_catalog_sections",
+        "method": "GET",
+        "path": "/v1/catalog/sections",
+        "sdk": {
+            "body": null,
+            "className": "CatalogApi",
+            "params": {
+                "form": {
+                    "kind": "string",
+                    "py": "form",
+                    "ts": "form"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_section_catalog",
+            "ts": "listSectionCatalog"
+        },
+        "summary": "List filing section ids",
+        "tier": "free"
+    },
+    "listSectorCatalog": {
+        "cli": {
+            "action": "sectors",
+            "group": "catalog",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_catalog_sectors",
+        "method": "GET",
+        "path": "/v1/catalog/sectors",
+        "sdk": {
+            "body": null,
+            "className": "CatalogApi",
+            "params": {
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_sector_catalog",
+            "ts": "listSectorCatalog"
+        },
+        "summary": "List sectors",
+        "tier": "free"
+    },
+    "listSegments": {
+        "cli": {
+            "action": "list",
+            "group": "segments",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_segments",
+        "method": "GET",
+        "path": "/v1/segments",
+        "sdk": {
+            "body": null,
+            "className": "FinancialsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "metric": {
+                    "kind": "string",
+                    "py": "metric",
+                    "ts": "metric"
+                },
+                "axis": {
+                    "kind": "string",
+                    "py": "axis",
+                    "ts": "axis"
+                },
+                "period": {
+                    "kind": "string",
+                    "py": "period",
+                    "ts": "period"
+                },
+                "fiscal_year.gte": {
+                    "kind": "number",
+                    "py": "fiscal_year_gte",
+                    "ts": "fiscalYearGte"
+                },
+                "fiscal_year.gt": {
+                    "kind": "number",
+                    "py": "fiscal_year_gt",
+                    "ts": "fiscalYearGt"
+                },
+                "fiscal_year.lte": {
+                    "kind": "number",
+                    "py": "fiscal_year_lte",
+                    "ts": "fiscalYearLte"
+                },
+                "fiscal_year.lt": {
+                    "kind": "number",
+                    "py": "fiscal_year_lt",
+                    "ts": "fiscalYearLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_segments",
+            "ts": "listSegments"
+        },
+        "summary": "List segment values",
+        "tier": "standard"
+    },
+    "listSegmentsDetailed": {
+        "cli": {
+            "action": "list-detailed",
+            "group": "segments",
+            "positional": "company"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_segments_detailed",
+        "method": "GET",
+        "path": "/v1/segments/detailed",
+        "sdk": {
+            "body": null,
+            "className": "FinancialsApi",
+            "params": {
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "metric": {
+                    "kind": "string",
+                    "py": "metric",
+                    "ts": "metric"
+                },
+                "axis": {
+                    "kind": "string",
+                    "py": "axis",
+                    "ts": "axis"
+                },
+                "period": {
+                    "kind": "string",
+                    "py": "period",
+                    "ts": "period"
+                },
+                "fiscal_year.gte": {
+                    "kind": "number",
+                    "py": "fiscal_year_gte",
+                    "ts": "fiscalYearGte"
+                },
+                "fiscal_year.gt": {
+                    "kind": "number",
+                    "py": "fiscal_year_gt",
+                    "ts": "fiscalYearGt"
+                },
+                "fiscal_year.lte": {
+                    "kind": "number",
+                    "py": "fiscal_year_lte",
+                    "ts": "fiscalYearLte"
+                },
+                "fiscal_year.lt": {
+                    "kind": "number",
+                    "py": "fiscal_year_lt",
+                    "ts": "fiscalYearLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_segments_detailed",
+            "ts": "listSegmentsDetailed"
+        },
+        "summary": "List segment values with lineage",
+        "tier": "pro"
+    },
+    "listSplits": {
+        "cli": {
+            "action": "list",
+            "group": "splits",
+            "positional": "symbol"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_splits",
+        "method": "GET",
+        "path": "/v1/splits",
+        "sdk": {
+            "body": null,
+            "className": "CorporateActionsApi",
+            "params": {
+                "symbol": {
+                    "kind": "string",
+                    "py": "symbol",
+                    "ts": "symbol"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_splits",
+            "ts": "listSplits"
+        },
+        "summary": "List stock splits",
+        "tier": "lite"
+    },
+    "listTranscriptVersions": {
+        "cli": {
+            "action": "transcript-versions",
+            "group": "events",
+            "positional": "event_id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_events_{event_id}_transcript-versions",
+        "method": "GET",
+        "path": "/v1/events/{event_id}/transcript-versions",
+        "sdk": {
+            "body": null,
+            "className": "TranscriptsApi",
+            "params": {
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                },
+                "event_id": {
+                    "kind": "string",
+                    "py": "event_id",
+                    "ts": "eventId"
+                }
+            },
+            "py": "list_transcript_versions",
+            "ts": "listTranscriptVersions"
+        },
+        "summary": "List an event's transcript versions",
+        "tier": "pro"
+    },
+    "listTreasuryYieldCurves": {
+        "cli": {
+            "action": "yield-curve",
+            "group": "macro",
+            "positional": null
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_macro_yield-curve",
+        "method": "GET",
+        "path": "/v1/macro/yield-curve",
+        "sdk": {
+            "body": null,
+            "className": "MacroApi",
+            "params": {
+                "date.gte": {
+                    "kind": "date",
+                    "py": "date_gte",
+                    "ts": "dateGte"
+                },
+                "date.gt": {
+                    "kind": "date",
+                    "py": "date_gt",
+                    "ts": "dateGt"
+                },
+                "date.lte": {
+                    "kind": "date",
+                    "py": "date_lte",
+                    "ts": "dateLte"
+                },
+                "date.lt": {
+                    "kind": "date",
+                    "py": "date_lt",
+                    "ts": "dateLt"
+                },
+                "sort": {
+                    "kind": "string",
+                    "py": "sort",
+                    "ts": "sort"
+                },
+                "fields": {
+                    "kind": "string",
+                    "py": "fields",
+                    "ts": "fields"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "list_treasury_yield_curves",
+            "ts": "listTreasuryYieldCurves"
+        },
+        "summary": "List US Treasury yield curves",
+        "tier": "lite"
+    },
+    "pauseAlert": {
+        "cli": {
+            "action": "pause",
+            "group": "alerts",
+            "positional": "id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/post--_v1_alerts_{id}:pause",
+        "method": "POST",
+        "path": "/v1/alerts/{id}:pause",
+        "sdk": {
+            "body": null,
+            "className": "AlertsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
+            },
+            "py": "pause_alert",
+            "ts": "pauseAlert"
+        },
+        "summary": "Pause an alert",
+        "tier": "lite"
+    },
+    "pauseAlertUser": {
+        "cli": {
+            "action": "pause",
+            "group": "alert-users",
+            "positional": "external_user_id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/post--_v1_alert-users_{external_user_id}:pause",
+        "method": "POST",
+        "path": "/v1/alert-users/{external_user_id}:pause",
+        "sdk": {
+            "body": null,
+            "className": "AlertUsersApi",
+            "params": {
+                "external_user_id": {
+                    "kind": "string",
+                    "py": "external_user_id",
+                    "ts": "externalUserId"
+                }
+            },
+            "py": "pause_alert_user",
+            "ts": "pauseAlertUser"
+        },
+        "summary": "Pause an end user",
+        "tier": "lite"
+    },
+    "resumeAlert": {
+        "cli": {
+            "action": "resume",
+            "group": "alerts",
+            "positional": "id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/post--_v1_alerts_{id}:resume",
+        "method": "POST",
+        "path": "/v1/alerts/{id}:resume",
+        "sdk": {
+            "body": null,
+            "className": "AlertsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
+            },
+            "py": "resume_alert",
+            "ts": "resumeAlert"
+        },
+        "summary": "Resume an alert",
+        "tier": "lite"
+    },
+    "resumeAlertUser": {
+        "cli": {
+            "action": "resume",
+            "group": "alert-users",
+            "positional": "external_user_id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/post--_v1_alert-users_{external_user_id}:resume",
+        "method": "POST",
+        "path": "/v1/alert-users/{external_user_id}:resume",
+        "sdk": {
+            "body": null,
+            "className": "AlertUsersApi",
+            "params": {
+                "external_user_id": {
+                    "kind": "string",
+                    "py": "external_user_id",
+                    "ts": "externalUserId"
+                }
+            },
+            "py": "resume_alert_user",
+            "ts": "resumeAlertUser"
+        },
+        "summary": "Resume an end user",
+        "tier": "lite"
+    },
+    "rotateDestinationSecret": {
+        "cli": {
+            "action": "rotate-secret",
+            "group": "destinations",
+            "positional": "id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/post--_v1_destinations_{id}:rotate-secret",
+        "method": "POST",
+        "path": "/v1/destinations/{id}:rotate-secret",
+        "sdk": {
+            "body": null,
+            "className": "DestinationsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
+            },
+            "py": "rotate_destination_secret",
+            "ts": "rotateDestinationSecret"
+        },
+        "summary": "Rotate a destination's secret",
+        "tier": "lite"
+    },
+    "searchFilings": {
+        "cli": {
+            "action": "filings",
+            "group": "search",
+            "positional": "q"
+        },
+        "credits": 100,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_search_filings",
+        "method": "GET",
+        "path": "/v1/search/filings",
+        "sdk": {
+            "body": null,
+            "className": "FilingsApi",
+            "params": {
+                "q": {
+                    "kind": "string",
+                    "py": "q",
+                    "ts": "q"
+                },
+                "mode": {
+                    "kind": "string",
+                    "py": "mode",
+                    "ts": "mode"
+                },
+                "case_sensitive": {
+                    "kind": "boolean",
+                    "py": "case_sensitive",
+                    "ts": "caseSensitive"
+                },
+                "symbol": {
+                    "kind": "string",
+                    "py": "symbol",
+                    "ts": "symbol"
+                },
+                "form": {
+                    "kind": "string",
+                    "py": "form",
+                    "ts": "form"
+                },
+                "item": {
+                    "kind": "string",
+                    "py": "item",
+                    "ts": "item"
+                },
+                "filed_at.gte": {
+                    "kind": "date",
+                    "py": "filed_at_gte",
+                    "ts": "filedAtGte"
+                },
+                "filed_at.gt": {
+                    "kind": "date",
+                    "py": "filed_at_gt",
+                    "ts": "filedAtGt"
+                },
+                "filed_at.lte": {
+                    "kind": "date",
+                    "py": "filed_at_lte",
+                    "ts": "filedAtLte"
+                },
+                "filed_at.lt": {
+                    "kind": "date",
+                    "py": "filed_at_lt",
+                    "ts": "filedAtLt"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "search_filings",
+            "ts": "searchFilings"
+        },
+        "summary": "Search filings",
+        "tier": "standard"
+    },
+    "searchInvestorDocuments": {
+        "cli": {
+            "action": "investor-documents",
+            "group": "search",
+            "positional": "q"
+        },
+        "credits": 10,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_search_investor-documents",
+        "method": "GET",
+        "path": "/v1/search/investor-documents",
+        "sdk": {
+            "body": null,
+            "className": "InvestorDocumentsApi",
+            "params": {
+                "q": {
+                    "kind": "string",
+                    "py": "q",
+                    "ts": "q"
+                },
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "kind": {
+                    "kind": "string",
+                    "py": "kind",
+                    "ts": "kind"
+                },
+                "mode": {
+                    "kind": "string",
+                    "py": "mode",
+                    "ts": "mode"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "search_investor_documents",
+            "ts": "searchInvestorDocuments"
+        },
+        "summary": "Search investor documents",
+        "tier": "pro"
+    },
+    "searchNews": {
+        "cli": {
+            "action": "news",
+            "group": "search",
+            "positional": "q"
+        },
+        "credits": 10,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_search_news",
+        "method": "GET",
+        "path": "/v1/search/news",
+        "sdk": {
+            "body": null,
+            "className": "NewsApi",
+            "params": {
+                "q": {
+                    "kind": "string",
+                    "py": "q",
+                    "ts": "q"
+                },
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "field": {
+                    "kind": "string",
+                    "py": "var_field",
+                    "ts": "field"
+                },
+                "mode": {
+                    "kind": "string",
+                    "py": "mode",
+                    "ts": "mode"
+                },
+                "published_at.gte": {
+                    "kind": "datetime",
+                    "py": "published_at_gte",
+                    "ts": "publishedAtGte"
+                },
+                "published_at.gt": {
+                    "kind": "datetime",
+                    "py": "published_at_gt",
+                    "ts": "publishedAtGt"
+                },
+                "published_at.lte": {
+                    "kind": "datetime",
+                    "py": "published_at_lte",
+                    "ts": "publishedAtLte"
+                },
+                "published_at.lt": {
+                    "kind": "datetime",
+                    "py": "published_at_lt",
+                    "ts": "publishedAtLt"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "search_news",
+            "ts": "searchNews"
+        },
+        "summary": "Search news",
+        "tier": "standard"
+    },
+    "searchTranscripts": {
+        "cli": {
+            "action": "transcripts",
+            "group": "search",
+            "positional": "q"
+        },
+        "credits": 10,
+        "docsUrl": "https://data.invinite.com/docs/get--_v1_search_transcripts",
+        "method": "GET",
+        "path": "/v1/search/transcripts",
+        "sdk": {
+            "body": null,
+            "className": "TranscriptsApi",
+            "params": {
+                "q": {
+                    "kind": "string",
+                    "py": "q",
+                    "ts": "q"
+                },
+                "company": {
+                    "kind": "string",
+                    "py": "company",
+                    "ts": "company"
+                },
+                "event": {
+                    "kind": "string",
+                    "py": "event",
+                    "ts": "event"
+                },
+                "type": {
+                    "kind": "string",
+                    "py": "type",
+                    "ts": "type"
+                },
+                "mode": {
+                    "kind": "string",
+                    "py": "mode",
+                    "ts": "mode"
+                },
+                "conference_date.gte": {
+                    "kind": "date",
+                    "py": "conference_date_gte",
+                    "ts": "conferenceDateGte"
+                },
+                "conference_date.gt": {
+                    "kind": "date",
+                    "py": "conference_date_gt",
+                    "ts": "conferenceDateGt"
+                },
+                "conference_date.lte": {
+                    "kind": "date",
+                    "py": "conference_date_lte",
+                    "ts": "conferenceDateLte"
+                },
+                "conference_date.lt": {
+                    "kind": "date",
+                    "py": "conference_date_lt",
+                    "ts": "conferenceDateLt"
+                },
+                "limit": {
+                    "kind": "number",
+                    "py": "limit",
+                    "ts": "limit"
+                },
+                "cursor": {
+                    "kind": "string",
+                    "py": "cursor",
+                    "ts": "cursor"
+                }
+            },
+            "py": "search_transcripts",
+            "ts": "searchTranscripts"
+        },
+        "summary": "Search transcripts",
+        "tier": "pro"
+    },
+    "statusGet": {
+        "cli": {
+            "action": "show",
+            "group": "status",
+            "positional": null
+        },
+        "credits": null,
+        "docsUrl": "https://data.invinite.com/docs/get--_status",
+        "method": "GET",
+        "path": "/status",
+        "sdk": null,
+        "summary": "Service status",
+        "tier": null
+    },
+    "statusLicensing": {
+        "cli": {
+            "action": "licensing",
+            "group": "status",
+            "positional": null
+        },
+        "credits": null,
+        "docsUrl": "https://data.invinite.com/docs/get--_status_licensing",
+        "method": "GET",
+        "path": "/status/licensing",
+        "sdk": null,
+        "summary": "Licensing policy",
+        "tier": null
+    },
+    "testAlert": {
+        "cli": {
+            "action": "test",
+            "group": "alerts",
+            "positional": "id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/post--_v1_alerts_{id}:test",
+        "method": "POST",
+        "path": "/v1/alerts/{id}:test",
+        "sdk": {
+            "body": null,
+            "className": "AlertEventsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
+            },
+            "py": "test_alert",
+            "ts": "testAlert"
+        },
+        "summary": "Send a test event",
+        "tier": "lite"
+    },
+    "testDestination": {
+        "cli": {
+            "action": "test",
+            "group": "destinations",
+            "positional": "id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/post--_v1_destinations_{id}:test",
+        "method": "POST",
+        "path": "/v1/destinations/{id}:test",
+        "sdk": {
+            "body": null,
+            "className": "DestinationsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
+            },
+            "py": "test_destination",
+            "ts": "testDestination"
+        },
+        "summary": "Send a test delivery",
+        "tier": "lite"
+    },
+    "updateAlert": {
+        "cli": {
+            "action": "update",
+            "group": "alerts",
+            "positional": "id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/patch--_v1_alerts_{id}",
+        "method": "PATCH",
+        "path": "/v1/alerts/{id}",
+        "sdk": {
+            "body": {
+                "model": "UpdateAlertRequest",
+                "py": "update_alert_request",
+                "ts": "updateAlertRequest"
+            },
+            "className": "AlertsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
+            },
+            "py": "update_alert",
+            "ts": "updateAlert"
+        },
+        "summary": "Update an alert",
+        "tier": "lite"
+    },
+    "updateAlertUser": {
+        "cli": {
+            "action": "update",
+            "group": "alert-users",
+            "positional": "external_user_id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/patch--_v1_alert-users_{external_user_id}",
+        "method": "PATCH",
+        "path": "/v1/alert-users/{external_user_id}",
+        "sdk": {
+            "body": {
+                "model": "UpdateAlertUserRequest",
+                "py": "update_alert_user_request",
+                "ts": "updateAlertUserRequest"
+            },
+            "className": "AlertUsersApi",
+            "params": {
+                "external_user_id": {
+                    "kind": "string",
+                    "py": "external_user_id",
+                    "ts": "externalUserId"
+                }
+            },
+            "py": "update_alert_user",
+            "ts": "updateAlertUser"
+        },
+        "summary": "Create or update an end user",
+        "tier": "lite"
+    },
+    "updateAlertUserDefaults": {
+        "cli": {
+            "action": "alert-user-defaults-update",
+            "group": "me",
+            "positional": null
+        },
+        "credits": 0,
+        "docsUrl": "https://data.invinite.com/docs/patch--_v1_me_alert-user-defaults",
+        "method": "PATCH",
+        "path": "/v1/me/alert-user-defaults",
+        "sdk": {
+            "body": {
+                "model": "UpdateAlertUserDefaultsRequest",
+                "py": "update_alert_user_defaults_request",
+                "ts": "updateAlertUserDefaultsRequest"
+            },
+            "className": "AlertUsersApi",
+            "params": {},
+            "py": "update_alert_user_defaults",
+            "ts": "updateAlertUserDefaults"
+        },
+        "summary": "Update the end-user defaults",
+        "tier": "free"
+    },
+    "updateDestination": {
+        "cli": {
+            "action": "update",
+            "group": "destinations",
+            "positional": "id"
+        },
+        "credits": 1,
+        "docsUrl": "https://data.invinite.com/docs/patch--_v1_destinations_{id}",
+        "method": "PATCH",
+        "path": "/v1/destinations/{id}",
+        "sdk": {
+            "body": {
+                "model": "UpdateDestinationRequest",
+                "py": "update_destination_request",
+                "ts": "updateDestinationRequest"
+            },
+            "className": "DestinationsApi",
+            "params": {
+                "id": {
+                    "kind": "string",
+                    "py": "id",
+                    "ts": "id"
+                }
+            },
+            "py": "update_destination",
+            "ts": "updateDestination"
+        },
+        "summary": "Update a destination",
+        "tier": "lite"
+    }
 } as const satisfies Record<string, Operation>;
 
 export type OperationId = keyof typeof OPERATIONS;
 
 export const MACRO_ALERT_SERIES = {
-    consumer_spending_contribution: {
-        family: "gdp",
-        label: "Consumer spending contribution to GDP growth",
-        series_id: "consumer_spending_contribution",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percentage points",
-        },
-        unit: "percentage points",
-    },
-    continued_claims_4_week_sa: {
-        family: "labor",
-        label: "Continued unemployment claims, four-week moving average (SA)",
-        series_id: "continued_claims_4_week_sa",
-        threshold_fields: {
-            change_prior: "claims",
-            change_year: "claims",
-            change_year_pct: "percent",
-            value: "claims",
-        },
-        unit: "claims",
-    },
-    continued_claims_nsa: {
-        family: "labor",
-        label: "Continued unemployment claims (NSA)",
-        series_id: "continued_claims_nsa",
-        threshold_fields: {
-            change_prior: "claims",
-            change_year: "claims",
-            change_year_pct: "percent",
-            value: "claims",
-        },
-        unit: "claims",
-    },
-    continued_claims_sa: {
-        family: "labor",
-        label: "Continued unemployment claims (SA)",
-        series_id: "continued_claims_sa",
-        threshold_fields: {
-            change_prior: "claims",
-            change_year: "claims",
-            change_year_pct: "percent",
-            value: "claims",
-        },
-        unit: "claims",
-    },
-    corporate_profits: {
-        family: "gdp",
-        label: "Corporate profits with inventory valuation and capital consumption adjustments",
-        series_id: "corporate_profits",
-        threshold_fields: {
-            change_prior: "billion USD",
-            change_year: "billion USD",
-            change_year_pct: "percent",
-            value: "billion USD",
-        },
-        unit: "billion USD",
-    },
-    cpi_all_nsa: {
-        family: "inflation",
-        label: "CPI-U: All items (NSA)",
-        series_id: "cpi_all_nsa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    cpi_all_sa: {
-        family: "inflation",
-        label: "CPI-U: All items (SA)",
-        series_id: "cpi_all_sa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    cpi_core_nsa: {
-        family: "inflation",
-        label: "CPI-U: All items less food and energy (NSA)",
-        series_id: "cpi_core_nsa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    cpi_core_sa: {
-        family: "inflation",
-        label: "CPI-U: All items less food and energy (SA)",
-        series_id: "cpi_core_sa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    cpi_energy_nsa: {
-        family: "inflation",
-        label: "CPI-U: Energy (NSA)",
-        series_id: "cpi_energy_nsa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    cpi_energy_sa: {
-        family: "inflation",
-        label: "CPI-U: Energy (SA)",
-        series_id: "cpi_energy_sa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    cpi_food_nsa: {
-        family: "inflation",
-        label: "CPI-U: Food (NSA)",
-        series_id: "cpi_food_nsa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    cpi_food_sa: {
-        family: "inflation",
-        label: "CPI-U: Food (SA)",
-        series_id: "cpi_food_sa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    cpi_services_less_energy_nsa: {
-        family: "inflation",
-        label: "CPI-U: Services less energy services (NSA)",
-        series_id: "cpi_services_less_energy_nsa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    cpi_services_less_energy_sa: {
-        family: "inflation",
-        label: "CPI-U: Services less energy services (SA)",
-        series_id: "cpi_services_less_energy_sa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    cpi_shelter_nsa: {
-        family: "inflation",
-        label: "CPI-U: Shelter (NSA)",
-        series_id: "cpi_shelter_nsa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    cpi_shelter_sa: {
-        family: "inflation",
-        label: "CPI-U: Shelter (SA)",
-        series_id: "cpi_shelter_sa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    government_contribution: {
-        family: "gdp",
-        label: "Government contribution to GDP growth",
-        series_id: "government_contribution",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percentage points",
-        },
-        unit: "percentage points",
-    },
-    hires_nsa: {
-        family: "labor",
-        label: "Total nonfarm hires (NSA)",
-        series_id: "hires_nsa",
-        threshold_fields: {
-            change_prior: "thousand hires",
-            change_year: "thousand hires",
-            change_year_pct: "percent",
-            value: "thousand hires",
-        },
-        unit: "thousand hires",
-    },
-    hires_sa: {
-        family: "labor",
-        label: "Total nonfarm hires (SA)",
-        series_id: "hires_sa",
-        threshold_fields: {
-            change_prior: "thousand hires",
-            change_year: "thousand hires",
-            change_year_pct: "percent",
-            value: "thousand hires",
-        },
-        unit: "thousand hires",
-    },
-    hourly_earnings_nsa: {
-        family: "labor",
-        label: "Average hourly earnings, all private employees (NSA)",
-        series_id: "hourly_earnings_nsa",
-        threshold_fields: {
-            change_prior: "USD/hour",
-            change_year: "USD/hour",
-            change_year_pct: "percent",
-            value: "USD/hour",
-        },
-        unit: "USD/hour",
-    },
-    hourly_earnings_sa: {
-        family: "labor",
-        label: "Average hourly earnings, all private employees (SA)",
-        series_id: "hourly_earnings_sa",
-        threshold_fields: {
-            change_prior: "USD/hour",
-            change_year: "USD/hour",
-            change_year_pct: "percent",
-            value: "USD/hour",
-        },
-        unit: "USD/hour",
-    },
-    initial_claims_4_week_sa: {
-        family: "labor",
-        label: "Initial unemployment claims, four-week moving average (SA)",
-        series_id: "initial_claims_4_week_sa",
-        threshold_fields: {
-            change_prior: "claims",
-            change_year: "claims",
-            change_year_pct: "percent",
-            value: "claims",
-        },
-        unit: "claims",
-    },
-    initial_claims_nsa: {
-        family: "labor",
-        label: "Initial unemployment claims (NSA)",
-        series_id: "initial_claims_nsa",
-        threshold_fields: {
-            change_prior: "claims",
-            change_year: "claims",
-            change_year_pct: "percent",
-            value: "claims",
-        },
-        unit: "claims",
-    },
-    initial_claims_sa: {
-        family: "labor",
-        label: "Initial unemployment claims (SA)",
-        series_id: "initial_claims_sa",
-        threshold_fields: {
-            change_prior: "claims",
-            change_year: "claims",
-            change_year_pct: "percent",
-            value: "claims",
-        },
-        unit: "claims",
-    },
-    insured_unemployment_rate_nsa: {
-        family: "labor",
-        label: "Insured unemployment rate (NSA)",
-        series_id: "insured_unemployment_rate_nsa",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    insured_unemployment_rate_sa: {
-        family: "labor",
-        label: "Insured unemployment rate (SA)",
-        series_id: "insured_unemployment_rate_sa",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    investment_contribution: {
-        family: "gdp",
-        label: "Private investment contribution to GDP growth",
-        series_id: "investment_contribution",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percentage points",
-        },
-        unit: "percentage points",
-    },
-    job_openings_nsa: {
-        family: "labor",
-        label: "Total nonfarm job openings (NSA)",
-        series_id: "job_openings_nsa",
-        threshold_fields: {
-            change_prior: "thousand openings",
-            change_year: "thousand openings",
-            change_year_pct: "percent",
-            value: "thousand openings",
-        },
-        unit: "thousand openings",
-    },
-    job_openings_sa: {
-        family: "labor",
-        label: "Total nonfarm job openings (SA)",
-        series_id: "job_openings_sa",
-        threshold_fields: {
-            change_prior: "thousand openings",
-            change_year: "thousand openings",
-            change_year_pct: "percent",
-            value: "thousand openings",
-        },
-        unit: "thousand openings",
-    },
-    net_exports_contribution: {
-        family: "gdp",
-        label: "Net exports contribution to GDP growth",
-        series_id: "net_exports_contribution",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percentage points",
-        },
-        unit: "percentage points",
-    },
-    nominal_gdp: {
-        family: "gdp",
-        label: "Nominal GDP",
-        series_id: "nominal_gdp",
-        threshold_fields: {
-            change_prior: "billion USD",
-            change_year: "billion USD",
-            change_year_pct: "percent",
-            value: "billion USD",
-        },
-        unit: "billion USD",
-    },
-    participation_rate_nsa: {
-        family: "labor",
-        label: "Labor force participation rate (NSA)",
-        series_id: "participation_rate_nsa",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    participation_rate_sa: {
-        family: "labor",
-        label: "Labor force participation rate (SA)",
-        series_id: "participation_rate_sa",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    payrolls_nsa: {
-        family: "labor",
-        label: "Total nonfarm payroll employment (NSA)",
-        series_id: "payrolls_nsa",
-        threshold_fields: {
-            change_prior: "thousand jobs",
-            change_year: "thousand jobs",
-            change_year_pct: "percent",
-            value: "thousand jobs",
-        },
-        unit: "thousand jobs",
-    },
-    payrolls_sa: {
-        family: "labor",
-        label: "Total nonfarm payroll employment (SA)",
-        series_id: "payrolls_sa",
-        threshold_fields: {
-            change_prior: "thousand jobs",
-            change_year: "thousand jobs",
-            change_year_pct: "percent",
-            value: "thousand jobs",
-        },
-        unit: "thousand jobs",
-    },
-    pce_all_sa: {
-        family: "inflation",
-        label: "PCE price index",
-        series_id: "pce_all_sa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    pce_core_sa: {
-        family: "inflation",
-        label: "PCE price index excluding food and energy",
-        series_id: "pce_core_sa",
-        threshold_fields: {
-            change_1m_pct: "percent",
-            change_12m_pct: "percent",
-            value: "index",
-        },
-        unit: "index",
-    },
-    personal_income: {
-        family: "gdp",
-        label: "Personal income",
-        series_id: "personal_income",
-        threshold_fields: {
-            change_prior: "billion USD",
-            change_year: "billion USD",
-            change_year_pct: "percent",
-            value: "billion USD",
-        },
-        unit: "billion USD",
-    },
-    quits_nsa: {
-        family: "labor",
-        label: "Total nonfarm quits (NSA)",
-        series_id: "quits_nsa",
-        threshold_fields: {
-            change_prior: "thousand quits",
-            change_year: "thousand quits",
-            change_year_pct: "percent",
-            value: "thousand quits",
-        },
-        unit: "thousand quits",
-    },
-    quits_sa: {
-        family: "labor",
-        label: "Total nonfarm quits (SA)",
-        series_id: "quits_sa",
-        threshold_fields: {
-            change_prior: "thousand quits",
-            change_year: "thousand quits",
-            change_year_pct: "percent",
-            value: "thousand quits",
-        },
-        unit: "thousand quits",
-    },
-    real_consumer_spending: {
-        family: "gdp",
-        label: "Real personal consumption expenditures",
-        series_id: "real_consumer_spending",
-        threshold_fields: {
-            change_prior: "billion chained USD",
-            change_year: "billion chained USD",
-            change_year_pct: "percent",
-            value: "billion chained USD",
-        },
-        unit: "billion chained USD",
-    },
-    real_gdi_growth: {
-        family: "gdp",
-        label: "Real GDI growth (annualized)",
-        series_id: "real_gdi_growth",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    real_gdp: {
-        family: "gdp",
-        label: "Real GDP",
-        series_id: "real_gdp",
-        threshold_fields: {
-            change_prior: "billion chained USD",
-            change_year: "billion chained USD",
-            change_year_pct: "percent",
-            value: "billion chained USD",
-        },
-        unit: "billion chained USD",
-    },
-    real_gdp_growth: {
-        family: "gdp",
-        label: "Real GDP growth (annualized)",
-        series_id: "real_gdp_growth",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    saving_rate: {
-        family: "gdp",
-        label: "Personal saving rate",
-        series_id: "saving_rate",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_m1: {
-        family: "yield_curve",
-        label: "1-month Treasury par yield",
-        series_id: "treasury_par_m1",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_m1_5: {
-        family: "yield_curve",
-        label: "1.5-month Treasury par yield",
-        series_id: "treasury_par_m1_5",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_m2: {
-        family: "yield_curve",
-        label: "2-month Treasury par yield",
-        series_id: "treasury_par_m2",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_m3: {
-        family: "yield_curve",
-        label: "3-month Treasury par yield",
-        series_id: "treasury_par_m3",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_m4: {
-        family: "yield_curve",
-        label: "4-month Treasury par yield",
-        series_id: "treasury_par_m4",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_m6: {
-        family: "yield_curve",
-        label: "6-month Treasury par yield",
-        series_id: "treasury_par_m6",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_y1: {
-        family: "yield_curve",
-        label: "1-year Treasury par yield",
-        series_id: "treasury_par_y1",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_y2: {
-        family: "yield_curve",
-        label: "2-year Treasury par yield",
-        series_id: "treasury_par_y2",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_y3: {
-        family: "yield_curve",
-        label: "3-year Treasury par yield",
-        series_id: "treasury_par_y3",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_y5: {
-        family: "yield_curve",
-        label: "5-year Treasury par yield",
-        series_id: "treasury_par_y5",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_y7: {
-        family: "yield_curve",
-        label: "7-year Treasury par yield",
-        series_id: "treasury_par_y7",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_y10: {
-        family: "yield_curve",
-        label: "10-year Treasury par yield",
-        series_id: "treasury_par_y10",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_y20: {
-        family: "yield_curve",
-        label: "20-year Treasury par yield",
-        series_id: "treasury_par_y20",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    treasury_par_y30: {
-        family: "yield_curve",
-        label: "30-year Treasury par yield",
-        series_id: "treasury_par_y30",
-        threshold_fields: {
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    unemployment_rate_nsa: {
-        family: "labor",
-        label: "Unemployment rate (U-3) (NSA)",
-        series_id: "unemployment_rate_nsa",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    unemployment_rate_sa: {
-        family: "labor",
-        label: "Unemployment rate (U-3) (SA)",
-        series_id: "unemployment_rate_sa",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    unemployment_rate_u6_nsa: {
-        family: "labor",
-        label: "Labor underutilization (U-6) (NSA)",
-        series_id: "unemployment_rate_u6_nsa",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percent",
-        },
-        unit: "percent",
-    },
-    unemployment_rate_u6_sa: {
-        family: "labor",
-        label: "Labor underutilization (U-6) (SA)",
-        series_id: "unemployment_rate_u6_sa",
-        threshold_fields: {
-            change_prior: "percentage points",
-            change_year: "percentage points",
-            value: "percent",
-        },
-        unit: "percent",
-    },
+    "consumer_spending_contribution": {
+        "series_id": "consumer_spending_contribution",
+        "label": "Consumer spending contribution to GDP growth",
+        "family": "gdp",
+        "unit": "percentage points",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percentage points"
+        }
+    },
+    "continued_claims_4_week_sa": {
+        "series_id": "continued_claims_4_week_sa",
+        "label": "Continued unemployment claims, four-week moving average (SA)",
+        "family": "labor",
+        "unit": "claims",
+        "threshold_fields": {
+            "change_prior": "claims",
+            "change_year": "claims",
+            "change_year_pct": "percent",
+            "value": "claims"
+        }
+    },
+    "continued_claims_nsa": {
+        "series_id": "continued_claims_nsa",
+        "label": "Continued unemployment claims (NSA)",
+        "family": "labor",
+        "unit": "claims",
+        "threshold_fields": {
+            "change_prior": "claims",
+            "change_year": "claims",
+            "change_year_pct": "percent",
+            "value": "claims"
+        }
+    },
+    "continued_claims_sa": {
+        "series_id": "continued_claims_sa",
+        "label": "Continued unemployment claims (SA)",
+        "family": "labor",
+        "unit": "claims",
+        "threshold_fields": {
+            "change_prior": "claims",
+            "change_year": "claims",
+            "change_year_pct": "percent",
+            "value": "claims"
+        }
+    },
+    "corporate_profits": {
+        "series_id": "corporate_profits",
+        "label": "Corporate profits with inventory valuation and capital consumption adjustments",
+        "family": "gdp",
+        "unit": "billion USD",
+        "threshold_fields": {
+            "change_prior": "billion USD",
+            "change_year": "billion USD",
+            "change_year_pct": "percent",
+            "value": "billion USD"
+        }
+    },
+    "cpi_all_nsa": {
+        "series_id": "cpi_all_nsa",
+        "label": "CPI-U: All items (NSA)",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "cpi_all_sa": {
+        "series_id": "cpi_all_sa",
+        "label": "CPI-U: All items (SA)",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "cpi_core_nsa": {
+        "series_id": "cpi_core_nsa",
+        "label": "CPI-U: All items less food and energy (NSA)",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "cpi_core_sa": {
+        "series_id": "cpi_core_sa",
+        "label": "CPI-U: All items less food and energy (SA)",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "cpi_energy_nsa": {
+        "series_id": "cpi_energy_nsa",
+        "label": "CPI-U: Energy (NSA)",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "cpi_energy_sa": {
+        "series_id": "cpi_energy_sa",
+        "label": "CPI-U: Energy (SA)",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "cpi_food_nsa": {
+        "series_id": "cpi_food_nsa",
+        "label": "CPI-U: Food (NSA)",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "cpi_food_sa": {
+        "series_id": "cpi_food_sa",
+        "label": "CPI-U: Food (SA)",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "cpi_services_less_energy_nsa": {
+        "series_id": "cpi_services_less_energy_nsa",
+        "label": "CPI-U: Services less energy services (NSA)",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "cpi_services_less_energy_sa": {
+        "series_id": "cpi_services_less_energy_sa",
+        "label": "CPI-U: Services less energy services (SA)",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "cpi_shelter_nsa": {
+        "series_id": "cpi_shelter_nsa",
+        "label": "CPI-U: Shelter (NSA)",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "cpi_shelter_sa": {
+        "series_id": "cpi_shelter_sa",
+        "label": "CPI-U: Shelter (SA)",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "government_contribution": {
+        "series_id": "government_contribution",
+        "label": "Government contribution to GDP growth",
+        "family": "gdp",
+        "unit": "percentage points",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percentage points"
+        }
+    },
+    "hires_nsa": {
+        "series_id": "hires_nsa",
+        "label": "Total nonfarm hires (NSA)",
+        "family": "labor",
+        "unit": "thousand hires",
+        "threshold_fields": {
+            "change_prior": "thousand hires",
+            "change_year": "thousand hires",
+            "change_year_pct": "percent",
+            "value": "thousand hires"
+        }
+    },
+    "hires_sa": {
+        "series_id": "hires_sa",
+        "label": "Total nonfarm hires (SA)",
+        "family": "labor",
+        "unit": "thousand hires",
+        "threshold_fields": {
+            "change_prior": "thousand hires",
+            "change_year": "thousand hires",
+            "change_year_pct": "percent",
+            "value": "thousand hires"
+        }
+    },
+    "hourly_earnings_nsa": {
+        "series_id": "hourly_earnings_nsa",
+        "label": "Average hourly earnings, all private employees (NSA)",
+        "family": "labor",
+        "unit": "USD/hour",
+        "threshold_fields": {
+            "change_prior": "USD/hour",
+            "change_year": "USD/hour",
+            "change_year_pct": "percent",
+            "value": "USD/hour"
+        }
+    },
+    "hourly_earnings_sa": {
+        "series_id": "hourly_earnings_sa",
+        "label": "Average hourly earnings, all private employees (SA)",
+        "family": "labor",
+        "unit": "USD/hour",
+        "threshold_fields": {
+            "change_prior": "USD/hour",
+            "change_year": "USD/hour",
+            "change_year_pct": "percent",
+            "value": "USD/hour"
+        }
+    },
+    "initial_claims_4_week_sa": {
+        "series_id": "initial_claims_4_week_sa",
+        "label": "Initial unemployment claims, four-week moving average (SA)",
+        "family": "labor",
+        "unit": "claims",
+        "threshold_fields": {
+            "change_prior": "claims",
+            "change_year": "claims",
+            "change_year_pct": "percent",
+            "value": "claims"
+        }
+    },
+    "initial_claims_nsa": {
+        "series_id": "initial_claims_nsa",
+        "label": "Initial unemployment claims (NSA)",
+        "family": "labor",
+        "unit": "claims",
+        "threshold_fields": {
+            "change_prior": "claims",
+            "change_year": "claims",
+            "change_year_pct": "percent",
+            "value": "claims"
+        }
+    },
+    "initial_claims_sa": {
+        "series_id": "initial_claims_sa",
+        "label": "Initial unemployment claims (SA)",
+        "family": "labor",
+        "unit": "claims",
+        "threshold_fields": {
+            "change_prior": "claims",
+            "change_year": "claims",
+            "change_year_pct": "percent",
+            "value": "claims"
+        }
+    },
+    "insured_unemployment_rate_nsa": {
+        "series_id": "insured_unemployment_rate_nsa",
+        "label": "Insured unemployment rate (NSA)",
+        "family": "labor",
+        "unit": "percent",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percent"
+        }
+    },
+    "insured_unemployment_rate_sa": {
+        "series_id": "insured_unemployment_rate_sa",
+        "label": "Insured unemployment rate (SA)",
+        "family": "labor",
+        "unit": "percent",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percent"
+        }
+    },
+    "investment_contribution": {
+        "series_id": "investment_contribution",
+        "label": "Private investment contribution to GDP growth",
+        "family": "gdp",
+        "unit": "percentage points",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percentage points"
+        }
+    },
+    "job_openings_nsa": {
+        "series_id": "job_openings_nsa",
+        "label": "Total nonfarm job openings (NSA)",
+        "family": "labor",
+        "unit": "thousand openings",
+        "threshold_fields": {
+            "change_prior": "thousand openings",
+            "change_year": "thousand openings",
+            "change_year_pct": "percent",
+            "value": "thousand openings"
+        }
+    },
+    "job_openings_sa": {
+        "series_id": "job_openings_sa",
+        "label": "Total nonfarm job openings (SA)",
+        "family": "labor",
+        "unit": "thousand openings",
+        "threshold_fields": {
+            "change_prior": "thousand openings",
+            "change_year": "thousand openings",
+            "change_year_pct": "percent",
+            "value": "thousand openings"
+        }
+    },
+    "net_exports_contribution": {
+        "series_id": "net_exports_contribution",
+        "label": "Net exports contribution to GDP growth",
+        "family": "gdp",
+        "unit": "percentage points",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percentage points"
+        }
+    },
+    "nominal_gdp": {
+        "series_id": "nominal_gdp",
+        "label": "Nominal GDP",
+        "family": "gdp",
+        "unit": "billion USD",
+        "threshold_fields": {
+            "change_prior": "billion USD",
+            "change_year": "billion USD",
+            "change_year_pct": "percent",
+            "value": "billion USD"
+        }
+    },
+    "participation_rate_nsa": {
+        "series_id": "participation_rate_nsa",
+        "label": "Labor force participation rate (NSA)",
+        "family": "labor",
+        "unit": "percent",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percent"
+        }
+    },
+    "participation_rate_sa": {
+        "series_id": "participation_rate_sa",
+        "label": "Labor force participation rate (SA)",
+        "family": "labor",
+        "unit": "percent",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percent"
+        }
+    },
+    "payrolls_nsa": {
+        "series_id": "payrolls_nsa",
+        "label": "Total nonfarm payroll employment (NSA)",
+        "family": "labor",
+        "unit": "thousand jobs",
+        "threshold_fields": {
+            "change_prior": "thousand jobs",
+            "change_year": "thousand jobs",
+            "change_year_pct": "percent",
+            "value": "thousand jobs"
+        }
+    },
+    "payrolls_sa": {
+        "series_id": "payrolls_sa",
+        "label": "Total nonfarm payroll employment (SA)",
+        "family": "labor",
+        "unit": "thousand jobs",
+        "threshold_fields": {
+            "change_prior": "thousand jobs",
+            "change_year": "thousand jobs",
+            "change_year_pct": "percent",
+            "value": "thousand jobs"
+        }
+    },
+    "pce_all_sa": {
+        "series_id": "pce_all_sa",
+        "label": "PCE price index",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "pce_core_sa": {
+        "series_id": "pce_core_sa",
+        "label": "PCE price index excluding food and energy",
+        "family": "inflation",
+        "unit": "index",
+        "threshold_fields": {
+            "change_12m_pct": "percent",
+            "change_1m_pct": "percent",
+            "value": "index"
+        }
+    },
+    "personal_income": {
+        "series_id": "personal_income",
+        "label": "Personal income",
+        "family": "gdp",
+        "unit": "billion USD",
+        "threshold_fields": {
+            "change_prior": "billion USD",
+            "change_year": "billion USD",
+            "change_year_pct": "percent",
+            "value": "billion USD"
+        }
+    },
+    "quits_nsa": {
+        "series_id": "quits_nsa",
+        "label": "Total nonfarm quits (NSA)",
+        "family": "labor",
+        "unit": "thousand quits",
+        "threshold_fields": {
+            "change_prior": "thousand quits",
+            "change_year": "thousand quits",
+            "change_year_pct": "percent",
+            "value": "thousand quits"
+        }
+    },
+    "quits_sa": {
+        "series_id": "quits_sa",
+        "label": "Total nonfarm quits (SA)",
+        "family": "labor",
+        "unit": "thousand quits",
+        "threshold_fields": {
+            "change_prior": "thousand quits",
+            "change_year": "thousand quits",
+            "change_year_pct": "percent",
+            "value": "thousand quits"
+        }
+    },
+    "real_consumer_spending": {
+        "series_id": "real_consumer_spending",
+        "label": "Real personal consumption expenditures",
+        "family": "gdp",
+        "unit": "billion chained USD",
+        "threshold_fields": {
+            "change_prior": "billion chained USD",
+            "change_year": "billion chained USD",
+            "change_year_pct": "percent",
+            "value": "billion chained USD"
+        }
+    },
+    "real_gdi_growth": {
+        "series_id": "real_gdi_growth",
+        "label": "Real GDI growth (annualized)",
+        "family": "gdp",
+        "unit": "percent",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percent"
+        }
+    },
+    "real_gdp": {
+        "series_id": "real_gdp",
+        "label": "Real GDP",
+        "family": "gdp",
+        "unit": "billion chained USD",
+        "threshold_fields": {
+            "change_prior": "billion chained USD",
+            "change_year": "billion chained USD",
+            "change_year_pct": "percent",
+            "value": "billion chained USD"
+        }
+    },
+    "real_gdp_growth": {
+        "series_id": "real_gdp_growth",
+        "label": "Real GDP growth (annualized)",
+        "family": "gdp",
+        "unit": "percent",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percent"
+        }
+    },
+    "saving_rate": {
+        "series_id": "saving_rate",
+        "label": "Personal saving rate",
+        "family": "gdp",
+        "unit": "percent",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percent"
+        }
+    },
+    "treasury_par_m1": {
+        "series_id": "treasury_par_m1",
+        "label": "1-month Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "treasury_par_m1_5": {
+        "series_id": "treasury_par_m1_5",
+        "label": "1.5-month Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "treasury_par_m2": {
+        "series_id": "treasury_par_m2",
+        "label": "2-month Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "treasury_par_m3": {
+        "series_id": "treasury_par_m3",
+        "label": "3-month Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "treasury_par_m4": {
+        "series_id": "treasury_par_m4",
+        "label": "4-month Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "treasury_par_m6": {
+        "series_id": "treasury_par_m6",
+        "label": "6-month Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "treasury_par_y1": {
+        "series_id": "treasury_par_y1",
+        "label": "1-year Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "treasury_par_y10": {
+        "series_id": "treasury_par_y10",
+        "label": "10-year Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "treasury_par_y2": {
+        "series_id": "treasury_par_y2",
+        "label": "2-year Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "treasury_par_y20": {
+        "series_id": "treasury_par_y20",
+        "label": "20-year Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "treasury_par_y3": {
+        "series_id": "treasury_par_y3",
+        "label": "3-year Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "treasury_par_y30": {
+        "series_id": "treasury_par_y30",
+        "label": "30-year Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "treasury_par_y5": {
+        "series_id": "treasury_par_y5",
+        "label": "5-year Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "treasury_par_y7": {
+        "series_id": "treasury_par_y7",
+        "label": "7-year Treasury par yield",
+        "family": "yield_curve",
+        "unit": "percent",
+        "threshold_fields": {
+            "value": "percent"
+        }
+    },
+    "unemployment_rate_nsa": {
+        "series_id": "unemployment_rate_nsa",
+        "label": "Unemployment rate (U-3) (NSA)",
+        "family": "labor",
+        "unit": "percent",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percent"
+        }
+    },
+    "unemployment_rate_sa": {
+        "series_id": "unemployment_rate_sa",
+        "label": "Unemployment rate (U-3) (SA)",
+        "family": "labor",
+        "unit": "percent",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percent"
+        }
+    },
+    "unemployment_rate_u6_nsa": {
+        "series_id": "unemployment_rate_u6_nsa",
+        "label": "Labor underutilization (U-6) (NSA)",
+        "family": "labor",
+        "unit": "percent",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percent"
+        }
+    },
+    "unemployment_rate_u6_sa": {
+        "series_id": "unemployment_rate_u6_sa",
+        "label": "Labor underutilization (U-6) (SA)",
+        "family": "labor",
+        "unit": "percent",
+        "threshold_fields": {
+            "change_prior": "percentage points",
+            "change_year": "percentage points",
+            "value": "percent"
+        }
+    }
 } as const;
 
 /** `"GET /v1/funds/{fund}"` → operationId. */
@@ -7554,64 +7554,67 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
     "PATCH /v1/alerts/{id}": "updateAlert",
     "PATCH /v1/destinations/{id}": "updateDestination",
     "PATCH /v1/me/alert-user-defaults": "updateAlertUserDefaults",
+    "POST /v1/alert-users:batch": "batchAlertUsers",
     "POST /v1/alert-users/{external_user_id}:pause": "pauseAlertUser",
     "POST /v1/alert-users/{external_user_id}:resume": "resumeAlertUser",
-    "POST /v1/alert-users:batch": "batchAlertUsers",
     "POST /v1/alerts": "createAlert",
+    "POST /v1/alerts:batch": "batchAlerts",
     "POST /v1/alerts/{id}:pause": "pauseAlert",
     "POST /v1/alerts/{id}:resume": "resumeAlert",
     "POST /v1/alerts/{id}:test": "testAlert",
-    "POST /v1/alerts:batch": "batchAlerts",
     "POST /v1/destinations": "createDestination",
     "POST /v1/destinations/{id}:rotate-secret": "rotateDestinationSecret",
     "POST /v1/destinations/{id}:test": "testDestination",
     "POST /v1/scripts": "createScript",
-    "POST /v1/scripts/{id}/versions": "createScriptVersion",
+    "POST /v1/scripts/{id}/versions": "createScriptVersion"
 };
 
 /** The plan the live stream (`ws /v1/stream`, `streamEvents`) and each of its channels need. */
 export const STREAM_TIER: OperationTier = "pro";
 
 /** The route tiers in access order: `/v1/me`'s `plan` values (the spec's enum order) that an `x-tier` names. */
-export const PLAN_ORDER = ["free", "lite", "standard", "pro", "enterprise"] as const;
+export const PLAN_ORDER = ["free","lite","standard","pro","enterprise"] as const;
 
 /** The webhook payloads of `x-webhooks` in the spec's order (`scripts/webhooks.mjs`). */
 export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
     {
-        acknowledgement: [
-            "2XX: Acknowledged; anything else is retried (410 disables)",
+        "acknowledgement": [
+            "2XX: Acknowledged; anything else is retried (410 disables)"
         ],
-        data: {
-            description: "An alert fired. `reason.summary` is one readable line; `reason.details` and `subject` depend on the alert type. A `POST /v1/alerts/{id}:test` event carries `test: true`",
-            fields: [
+        "data": {
+            "type": "object",
+            "description": "An alert fired. `reason.summary` is one readable line; `reason.details` and `subject` depend on the alert type. A `POST /v1/alerts/{id}:test` event carries `test: true`",
+            "fields": [
                 {
-                    name: "event_id",
-                    required: true,
-                    schema: {
-                        description: "Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it",
-                        type: "string",
-                    },
+                    "name": "event_id",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "description": "Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it"
+                    }
                 },
                 {
-                    name: "alert",
-                    required: true,
-                    schema: {
-                        description: "The alert, as created",
-                        fields: [
+                    "name": "alert",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "description": "The alert, as created",
+                        "fields": [
                             {
-                                name: "id",
-                                required: true,
-                                schema: {
-                                    description: "Alert id (`alt_…`)",
-                                    type: "string",
-                                },
+                                "name": "id",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Alert id (`alt_…`)"
+                                }
                             },
                             {
-                                name: "type",
-                                required: true,
-                                schema: {
-                                    description: "Alert type",
-                                    enum: [
+                                "name": "type",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Alert type",
+                                    "enum": [
                                         "filing",
                                         "filing_keyword",
                                         "news",
@@ -7629,311 +7632,311 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
                                         "price_reminder",
                                         "indicator",
                                         "script",
-                                        "macro",
-                                    ],
-                                    type: "string",
-                                },
+                                        "macro"
+                                    ]
+                                }
                             },
                             {
-                                name: "client_reference_id",
-                                required: true,
-                                schema: {
-                                    description: "Your reference, as set on the alert",
-                                    nullable: true,
-                                    type: "string",
-                                },
+                                "name": "client_reference_id",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Your reference, as set on the alert",
+                                    "nullable": true
+                                }
                             },
                             {
-                                name: "external_user_id",
-                                required: true,
-                                schema: {
-                                    description: "Your end user, as set on the alert",
-                                    nullable: true,
-                                    type: "string",
-                                },
+                                "name": "external_user_id",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Your end user, as set on the alert",
+                                    "nullable": true
+                                }
                             },
                             {
-                                name: "metadata",
-                                required: true,
-                                schema: {
-                                    additionalProperties: true,
-                                    description: "Your metadata, as set on the alert",
-                                    nullable: true,
-                                    type: "object",
-                                },
-                            },
-                        ],
-                        type: "object",
-                    },
+                                "name": "metadata",
+                                "required": true,
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Your metadata, as set on the alert",
+                                    "nullable": true,
+                                    "additionalProperties": true
+                                }
+                            }
+                        ]
+                    }
                 },
                 {
-                    name: "fired_at",
-                    required: true,
-                    schema: {
-                        description: "When the alert fired",
-                        format: "date-time",
-                        type: "string",
-                    },
+                    "name": "fired_at",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the alert fired"
+                    }
                 },
                 {
-                    name: "subject",
-                    required: false,
-                    schema: {
-                        additionalProperties: true,
-                        description: "The company the fire concerns. A national macro fire or test event omits this field.",
-                        fields: [
+                    "name": "subject",
+                    "required": false,
+                    "schema": {
+                        "type": "object",
+                        "description": "The company the fire concerns. A national macro fire or test event omits this field.",
+                        "additionalProperties": true,
+                        "fields": [
                             {
-                                name: "symbol",
-                                required: false,
-                                schema: {
-                                    description: "Ticker symbol",
-                                    nullable: true,
-                                    type: "string",
-                                },
+                                "name": "symbol",
+                                "required": false,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Ticker symbol",
+                                    "nullable": true
+                                }
                             },
                             {
-                                name: "cik",
-                                required: false,
-                                schema: {
-                                    description: "10-digit CIK",
-                                    nullable: true,
-                                    type: "string",
-                                },
-                            },
-                        ],
-                        type: "object",
-                    },
+                                "name": "cik",
+                                "required": false,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "10-digit CIK",
+                                    "nullable": true
+                                }
+                            }
+                        ]
+                    }
                 },
                 {
-                    name: "reason",
-                    required: true,
-                    schema: {
-                        fields: [
+                    "name": "reason",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "fields": [
                             {
-                                name: "summary",
-                                required: true,
-                                schema: {
-                                    description: "One line, e.g. `AAPL filed an 8-K`",
-                                    type: "string",
-                                },
+                                "name": "summary",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "One line, e.g. `AAPL filed an 8-K`"
+                                }
                             },
                             {
-                                name: "details",
-                                required: true,
-                                schema: {
-                                    additionalProperties: true,
-                                    description: "Type-specific facts of the fire. Price types: `operator`, `level`, `trigger_price`, `previous_price`, `tick_time` (+ `baseline` / `baseline_price` / `percent_moved` for price_move, `bar_volume` / `baseline_volume` / `ratio` for volume_spike, `price` / `stale` / `scheduled_at` for price_reminder) — the crossed level and the trigger price, never a price series. script / indicator: `bar_time`, `interval`, `script_version_id`, `frequency` (+ `recovered` for a bar replayed after a restart; a pre-close fire `phase: \"pre_close\"`, `offset_minutes` and `session_close`, `bar_time` = the forming bar) and the script's `kind` / `id` / `title` / `severity` / `meta`; a shared indicator threshold instead `comparator`, `threshold`, `value`, `previous_value`",
-                                    type: "object",
-                                },
-                            },
-                        ],
-                        type: "object",
-                    },
+                                "name": "details",
+                                "required": true,
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Type-specific facts of the fire. Price types: `operator`, `level`, `trigger_price`, `previous_price`, `tick_time` (+ `baseline` / `baseline_price` / `percent_moved` for price_move, `bar_volume` / `baseline_volume` / `ratio` for volume_spike, `price` / `stale` / `scheduled_at` for price_reminder) — the crossed level and the trigger price, never a price series. script / indicator: `bar_time`, `interval`, `script_version_id`, `frequency` (+ `recovered` for a bar replayed after a restart; a pre-close fire `phase: \"pre_close\"`, `offset_minutes` and `session_close`, `bar_time` = the forming bar) and the script's `kind` / `id` / `title` / `severity` / `meta`; a shared indicator threshold instead `comparator`, `threshold`, `value`, `previous_value`",
+                                    "additionalProperties": true
+                                }
+                            }
+                        ]
+                    }
                 },
                 {
-                    name: "source",
-                    required: false,
-                    schema: {
-                        description: "The upstream event that caused the fire (absent on a test event)",
-                        fields: [
+                    "name": "source",
+                    "required": false,
+                    "schema": {
+                        "type": "object",
+                        "description": "The upstream event that caused the fire (absent on a test event)",
+                        "fields": [
                             {
-                                name: "kind",
-                                required: true,
-                                schema: {
-                                    description: "Source event kind, e.g. `filing.detected`, `news.published`, `earnings_call.started`",
-                                    type: "string",
-                                },
+                                "name": "kind",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Source event kind, e.g. `filing.detected`, `news.published`, `earnings_call.started`"
+                                }
                             },
                             {
-                                name: "key",
-                                required: true,
-                                schema: {
-                                    description: "Stable key of the source event (the fire's dedupe key per alert)",
-                                    type: "string",
-                                },
-                            },
-                        ],
-                        type: "object",
-                    },
+                                "name": "key",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Stable key of the source event (the fire's dedupe key per alert)"
+                                }
+                            }
+                        ]
+                    }
                 },
                 {
-                    name: "suppressed_since_last",
-                    required: false,
-                    schema: {
-                        description: "Fires suppressed since the previous delivered fire by the per-alert cap (60 per rolling hour); absent when none",
-                        minimum: 1,
-                        type: "integer",
-                    },
+                    "name": "suppressed_since_last",
+                    "required": false,
+                    "schema": {
+                        "type": "integer",
+                        "description": "Fires suppressed since the previous delivered fire by the per-alert cap (60 per rolling hour); absent when none",
+                        "minimum": 1
+                    }
                 },
                 {
-                    name: "delivery_skipped",
-                    required: false,
-                    schema: {
-                        description: "Why the event was not delivered — it is on the pull feed and the WebSocket (you see it here only through GET /v1/alert-events): `fire_cap` = the daily fire cap of the account's Enterprise deal (`fires_per_day`) was reached; `alert_user_fire_cap` = the daily cap of the alert's end user (`max_fires_per_day`) was reached (such a fire does not count against the account's cap)",
-                        enum: [
+                    "name": "delivery_skipped",
+                    "required": false,
+                    "schema": {
+                        "type": "string",
+                        "description": "Why the event was not delivered — it is on the pull feed and the WebSocket (you see it here only through GET /v1/alert-events): `fire_cap` = the daily fire cap of the account's Enterprise deal (`fires_per_day`) was reached; `alert_user_fire_cap` = the daily cap of the alert's end user (`max_fires_per_day`) was reached (such a fire does not count against the account's cap)",
+                        "enum": [
                             "fire_cap",
-                            "alert_user_fire_cap",
-                        ],
-                        type: "string",
-                    },
+                            "alert_user_fire_cap"
+                        ]
+                    }
                 },
                 {
-                    name: "test",
-                    required: false,
-                    schema: {
-                        description: "Present (true) only on a test event",
-                        enum: [
-                            true,
-                        ],
-                        type: "boolean",
-                    },
-                },
-            ],
-            type: "object",
+                    "name": "test",
+                    "required": false,
+                    "schema": {
+                        "type": "boolean",
+                        "description": "Present (true) only on a test event",
+                        "enum": [
+                            true
+                        ]
+                    }
+                }
+            ]
         },
-        description: "An alert fired. `reason.summary` is one readable line; `reason.details` and `subject` depend on the alert type. A `POST /v1/alerts/{id}:test` event carries `test: true`",
-        headers: [
+        "description": "An alert fired. `reason.summary` is one readable line; `reason.details` and `subject` depend on the alert type. A `POST /v1/alerts/{id}:test` event carries `test: true`",
+        "headers": [
             {
-                description: "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
-                name: "webhook-id",
-                required: true,
+                "description": "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
+                "name": "webhook-id",
+                "required": true
             },
             {
-                description: "Unix seconds of this attempt; reject one older than 5 minutes",
-                name: "webhook-timestamp",
-                required: true,
+                "description": "Unix seconds of this attempt; reject one older than 5 minutes",
+                "name": "webhook-timestamp",
+                "required": true
             },
             {
-                description: "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
-                name: "webhook-signature",
-                required: true,
-            },
+                "description": "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
+                "name": "webhook-signature",
+                "required": true
+            }
         ],
-        summary: "alert.fired",
-        type: "alert.fired",
+        "summary": "alert.fired",
+        "type": "alert.fired"
     },
     {
-        acknowledgement: [
-            "2XX: Acknowledged; anything else is retried (410 disables)",
+        "acknowledgement": [
+            "2XX: Acknowledged; anything else is retried (410 disables)"
         ],
-        data: {
-            description: "Every pending event of a `batch_webhook` destination in one request (at most 500 events and 1 MB; the rest follow in the next batch). `webhook-id` is the `batch_id`; a failed batch is retried whole, so dedupe on each `data.events[].data.event_id`",
-            fields: [
+        "data": {
+            "type": "object",
+            "description": "Every pending event of a `batch_webhook` destination in one request (at most 500 events and 1 MB; the rest follow in the next batch). `webhook-id` is the `batch_id`; a failed batch is retried whole, so dedupe on each `data.events[].data.event_id`",
+            "fields": [
                 {
-                    name: "batch_id",
-                    required: true,
-                    schema: {
-                        description: "Batch id (`bat_…`) = the request's `webhook-id`",
-                        type: "string",
-                    },
+                    "name": "batch_id",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "description": "Batch id (`bat_…`) = the request's `webhook-id`"
+                    }
                 },
                 {
-                    name: "events",
-                    required: true,
-                    schema: {
-                        items: {
-                            fields: [
+                    "name": "events",
+                    "required": true,
+                    "schema": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 500,
+                        "items": {
+                            "type": "object",
+                            "fields": [
                                 {
-                                    name: "type",
-                                    required: true,
-                                    schema: {
-                                        description: "The event's type",
-                                        enum: [
+                                    "name": "type",
+                                    "required": true,
+                                    "schema": {
+                                        "type": "string",
+                                        "description": "The event's type",
+                                        "enum": [
                                             "alert.fired",
                                             "alert.status_changed",
                                             "destination.disabled",
                                             "destination.test",
                                             "account.fire_cap_reached",
-                                            "alert_user.fire_cap_reached",
-                                        ],
-                                        type: "string",
-                                    },
+                                            "alert_user.fire_cap_reached"
+                                        ]
+                                    }
                                 },
                                 {
-                                    name: "timestamp",
-                                    required: true,
-                                    schema: {
-                                        description: "When the event happened",
-                                        format: "date-time",
-                                        type: "string",
-                                    },
+                                    "name": "timestamp",
+                                    "required": true,
+                                    "schema": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "description": "When the event happened"
+                                    }
                                 },
                                 {
-                                    name: "data",
-                                    required: true,
-                                    schema: {
-                                        additionalProperties: true,
-                                        description: "The event's `data`, exactly as a single delivery would carry it (see its own x-webhooks entry)",
-                                        type: "object",
-                                    },
-                                },
-                            ],
-                            type: "object",
-                        },
-                        maxItems: 500,
-                        minItems: 1,
-                        type: "array",
-                    },
-                },
-            ],
-            type: "object",
+                                    "name": "data",
+                                    "required": true,
+                                    "schema": {
+                                        "type": "object",
+                                        "description": "The event's `data`, exactly as a single delivery would carry it (see its own x-webhooks entry)",
+                                        "additionalProperties": true
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            ]
         },
-        description: "Every pending event of a `batch_webhook` destination in one request (at most 500 events and 1 MB; the rest follow in the next batch). `webhook-id` is the `batch_id`; a failed batch is retried whole, so dedupe on each `data.events[].data.event_id`",
-        headers: [
+        "description": "Every pending event of a `batch_webhook` destination in one request (at most 500 events and 1 MB; the rest follow in the next batch). `webhook-id` is the `batch_id`; a failed batch is retried whole, so dedupe on each `data.events[].data.event_id`",
+        "headers": [
             {
-                description: "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
-                name: "webhook-id",
-                required: true,
+                "description": "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
+                "name": "webhook-id",
+                "required": true
             },
             {
-                description: "Unix seconds of this attempt; reject one older than 5 minutes",
-                name: "webhook-timestamp",
-                required: true,
+                "description": "Unix seconds of this attempt; reject one older than 5 minutes",
+                "name": "webhook-timestamp",
+                "required": true
             },
             {
-                description: "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
-                name: "webhook-signature",
-                required: true,
-            },
+                "description": "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
+                "name": "webhook-signature",
+                "required": true
+            }
         ],
-        summary: "alert.fired.batch",
-        type: "alert.fired.batch",
+        "summary": "alert.fired.batch",
+        "type": "alert.fired.batch"
     },
     {
-        acknowledgement: [
-            "2XX: Acknowledged; anything else is retried (410 disables)",
+        "acknowledgement": [
+            "2XX: Acknowledged; anything else is retried (410 disables)"
         ],
-        data: {
-            description: "An alert changed status on its own: it expired (`expires_at`), triggered and stopped (`once` / `max_fires`), became active (`activate_at` / the end of `pause_until`), or — a script / indicator alert — was disabled because its script failed 3 bars in a row (`script_error`, with `error_class` and `error`)",
-            fields: [
+        "data": {
+            "type": "object",
+            "description": "An alert changed status on its own: it expired (`expires_at`), triggered and stopped (`once` / `max_fires`), became active (`activate_at` / the end of `pause_until`), or — a script / indicator alert — was disabled because its script failed 3 bars in a row (`script_error`, with `error_class` and `error`)",
+            "fields": [
                 {
-                    name: "event_id",
-                    required: true,
-                    schema: {
-                        description: "Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it",
-                        type: "string",
-                    },
+                    "name": "event_id",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "description": "Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it"
+                    }
                 },
                 {
-                    name: "alert",
-                    required: true,
-                    schema: {
-                        description: "The alert, as created",
-                        fields: [
+                    "name": "alert",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "description": "The alert, as created",
+                        "fields": [
                             {
-                                name: "id",
-                                required: true,
-                                schema: {
-                                    description: "Alert id (`alt_…`)",
-                                    type: "string",
-                                },
+                                "name": "id",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Alert id (`alt_…`)"
+                                }
                             },
                             {
-                                name: "type",
-                                required: true,
-                                schema: {
-                                    description: "Alert type",
-                                    enum: [
+                                "name": "type",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Alert type",
+                                    "enum": [
                                         "filing",
                                         "filing_keyword",
                                         "news",
@@ -7951,482 +7954,479 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
                                         "price_reminder",
                                         "indicator",
                                         "script",
-                                        "macro",
-                                    ],
-                                    type: "string",
-                                },
+                                        "macro"
+                                    ]
+                                }
                             },
                             {
-                                name: "client_reference_id",
-                                required: true,
-                                schema: {
-                                    description: "Your reference, as set on the alert",
-                                    nullable: true,
-                                    type: "string",
-                                },
+                                "name": "client_reference_id",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Your reference, as set on the alert",
+                                    "nullable": true
+                                }
                             },
                             {
-                                name: "external_user_id",
-                                required: true,
-                                schema: {
-                                    description: "Your end user, as set on the alert",
-                                    nullable: true,
-                                    type: "string",
-                                },
+                                "name": "external_user_id",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Your end user, as set on the alert",
+                                    "nullable": true
+                                }
                             },
                             {
-                                name: "metadata",
-                                required: true,
-                                schema: {
-                                    additionalProperties: true,
-                                    description: "Your metadata, as set on the alert",
-                                    nullable: true,
-                                    type: "object",
-                                },
-                            },
-                        ],
-                        type: "object",
-                    },
+                                "name": "metadata",
+                                "required": true,
+                                "schema": {
+                                    "type": "object",
+                                    "description": "Your metadata, as set on the alert",
+                                    "nullable": true,
+                                    "additionalProperties": true
+                                }
+                            }
+                        ]
+                    }
                 },
                 {
-                    name: "status",
-                    required: true,
-                    schema: {
-                        description: "The new status",
-                        enum: [
+                    "name": "status",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "description": "The new status",
+                        "enum": [
                             "expired",
                             "triggered",
                             "active",
-                            "disabled",
-                        ],
-                        type: "string",
-                    },
+                            "disabled"
+                        ]
+                    }
                 },
                 {
-                    name: "previous_status",
-                    required: true,
-                    schema: {
-                        description: "The status before the change",
-                        type: "string",
-                    },
+                    "name": "previous_status",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "description": "The status before the change"
+                    }
                 },
                 {
-                    name: "reason",
-                    required: true,
-                    schema: {
-                        description: "What caused the change",
-                        enum: [
+                    "name": "reason",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "description": "What caused the change",
+                        "enum": [
                             "expires_at",
                             "once",
                             "max_fires",
                             "activate_at",
                             "pause_until",
-                            "script_error",
-                        ],
-                        type: "string",
-                    },
+                            "script_error"
+                        ]
+                    }
                 },
                 {
-                    name: "error_class",
-                    required: false,
-                    schema: {
-                        description: "`script_error` only: how the script failed (`steps` / `time` = its step or time budget per bar, `heap` / `worker` = out of memory, `load` = it could not start, `exception` = it threw)",
-                        enum: [
+                    "name": "error_class",
+                    "required": false,
+                    "schema": {
+                        "type": "string",
+                        "description": "`script_error` only: how the script failed (`steps` / `time` = its step or time budget per bar, `heap` / `worker` = out of memory, `load` = it could not start, `exception` = it threw)",
+                        "enum": [
                             "steps",
                             "time",
                             "heap",
                             "worker",
                             "load",
-                            "exception",
-                        ],
-                        type: "string",
-                    },
+                            "exception"
+                        ]
+                    }
                 },
                 {
-                    name: "error",
-                    required: false,
-                    schema: {
-                        description: "`script_error` only: the last failure's message",
-                        type: "string",
-                    },
+                    "name": "error",
+                    "required": false,
+                    "schema": {
+                        "type": "string",
+                        "description": "`script_error` only: the last failure's message"
+                    }
                 },
                 {
-                    name: "changed_at",
-                    required: true,
-                    schema: {
-                        description: "When the status changed",
-                        format: "date-time",
-                        type: "string",
-                    },
-                },
-            ],
-            type: "object",
+                    "name": "changed_at",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the status changed"
+                    }
+                }
+            ]
         },
-        description: "An alert changed status on its own: it expired (`expires_at`), triggered and stopped (`once` / `max_fires`), became active (`activate_at` / the end of `pause_until`), or — a script / indicator alert — was disabled because its script failed 3 bars in a row (`script_error`, with `error_class` and `error`)",
-        headers: [
+        "description": "An alert changed status on its own: it expired (`expires_at`), triggered and stopped (`once` / `max_fires`), became active (`activate_at` / the end of `pause_until`), or — a script / indicator alert — was disabled because its script failed 3 bars in a row (`script_error`, with `error_class` and `error`)",
+        "headers": [
             {
-                description: "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
-                name: "webhook-id",
-                required: true,
+                "description": "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
+                "name": "webhook-id",
+                "required": true
             },
             {
-                description: "Unix seconds of this attempt; reject one older than 5 minutes",
-                name: "webhook-timestamp",
-                required: true,
+                "description": "Unix seconds of this attempt; reject one older than 5 minutes",
+                "name": "webhook-timestamp",
+                "required": true
             },
             {
-                description: "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
-                name: "webhook-signature",
-                required: true,
-            },
+                "description": "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
+                "name": "webhook-signature",
+                "required": true
+            }
         ],
-        summary: "alert.status_changed",
-        type: "alert.status_changed",
+        "summary": "alert.status_changed",
+        "type": "alert.status_changed"
     },
     {
-        acknowledgement: [
-            "2XX: Acknowledged; anything else is retried (410 disables)",
+        "acknowledgement": [
+            "2XX: Acknowledged; anything else is retried (410 disables)"
         ],
-        data: {
-            description: "A destination was disabled: it answered 410 (`gone`) or only failures for 72 h with at least 10 failed attempts in a row (`failing`). Its open deliveries are dead. Recorded on the pull feed (GET /v1/alert-events) and mailed to the account; never sent to a webhook (the destination is the one that failed)",
-            fields: [
+        "data": {
+            "type": "object",
+            "description": "A destination was disabled: it answered 410 (`gone`) or only failures for 72 h with at least 10 failed attempts in a row (`failing`). Its open deliveries are dead. Recorded on the pull feed (GET /v1/alert-events) and mailed to the account; never sent to a webhook (the destination is the one that failed)",
+            "fields": [
                 {
-                    name: "event_id",
-                    required: true,
-                    schema: {
-                        description: "Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it",
-                        type: "string",
-                    },
+                    "name": "event_id",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "description": "Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it"
+                    }
                 },
                 {
-                    name: "destination",
-                    required: true,
-                    schema: {
-                        fields: [
+                    "name": "destination",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "fields": [
                             {
-                                name: "id",
-                                required: true,
-                                schema: {
-                                    description: "Destination id (`dst_…`)",
-                                    type: "string",
-                                },
+                                "name": "id",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Destination id (`dst_…`)"
+                                }
                             },
                             {
-                                name: "url",
-                                required: true,
-                                schema: {
-                                    description: "The destination's URL",
-                                    type: "string",
-                                },
-                            },
-                        ],
-                        type: "object",
-                    },
+                                "name": "url",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "The destination's URL"
+                                }
+                            }
+                        ]
+                    }
                 },
                 {
-                    name: "reason",
-                    required: true,
-                    schema: {
-                        description: "Why",
-                        enum: [
+                    "name": "reason",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "description": "Why",
+                        "enum": [
                             "gone",
-                            "failing",
-                        ],
-                        type: "string",
-                    },
+                            "failing"
+                        ]
+                    }
                 },
                 {
-                    name: "disabled_at",
-                    required: true,
-                    schema: {
-                        description: "When it was disabled",
-                        format: "date-time",
-                        type: "string",
-                    },
-                },
-            ],
-            type: "object",
+                    "name": "disabled_at",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When it was disabled"
+                    }
+                }
+            ]
         },
-        description: "A destination was disabled: it answered 410 (`gone`) or only failures for 72 h with at least 10 failed attempts in a row (`failing`). Its open deliveries are dead. Recorded on the pull feed (GET /v1/alert-events) and mailed to the account; never sent to a webhook (the destination is the one that failed)",
-        headers: [
+        "description": "A destination was disabled: it answered 410 (`gone`) or only failures for 72 h with at least 10 failed attempts in a row (`failing`). Its open deliveries are dead. Recorded on the pull feed (GET /v1/alert-events) and mailed to the account; never sent to a webhook (the destination is the one that failed)",
+        "headers": [
             {
-                description: "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
-                name: "webhook-id",
-                required: true,
+                "description": "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
+                "name": "webhook-id",
+                "required": true
             },
             {
-                description: "Unix seconds of this attempt; reject one older than 5 minutes",
-                name: "webhook-timestamp",
-                required: true,
+                "description": "Unix seconds of this attempt; reject one older than 5 minutes",
+                "name": "webhook-timestamp",
+                "required": true
             },
             {
-                description: "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
-                name: "webhook-signature",
-                required: true,
-            },
+                "description": "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
+                "name": "webhook-signature",
+                "required": true
+            }
         ],
-        summary: "destination.disabled",
-        type: "destination.disabled",
+        "summary": "destination.disabled",
+        "type": "destination.disabled"
     },
     {
-        acknowledgement: [
-            "2XX: Acknowledged; anything else is retried (410 disables)",
+        "acknowledgement": [
+            "2XX: Acknowledged; anything else is retried (410 disables)"
         ],
-        data: {
-            description: "`POST /v1/destinations/{id}:test`: one event to that destination only",
-            fields: [
+        "data": {
+            "type": "object",
+            "description": "`POST /v1/destinations/{id}:test`: one event to that destination only",
+            "fields": [
                 {
-                    name: "event_id",
-                    required: true,
-                    schema: {
-                        description: "Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it",
-                        type: "string",
-                    },
+                    "name": "event_id",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "description": "Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it"
+                    }
                 },
                 {
-                    name: "destination",
-                    required: true,
-                    schema: {
-                        fields: [
+                    "name": "destination",
+                    "required": true,
+                    "schema": {
+                        "type": "object",
+                        "fields": [
                             {
-                                name: "id",
-                                required: true,
-                                schema: {
-                                    description: "Destination id (`dst_…`)",
-                                    type: "string",
-                                },
+                                "name": "id",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "Destination id (`dst_…`)"
+                                }
                             },
                             {
-                                name: "url",
-                                required: true,
-                                schema: {
-                                    description: "The destination's URL",
-                                    type: "string",
-                                },
-                            },
-                        ],
-                        type: "object",
-                    },
+                                "name": "url",
+                                "required": true,
+                                "schema": {
+                                    "type": "string",
+                                    "description": "The destination's URL"
+                                }
+                            }
+                        ]
+                    }
                 },
                 {
-                    name: "test",
-                    required: true,
-                    schema: {
-                        description: "Present (true) only on a test event",
-                        enum: [
-                            true,
-                        ],
-                        type: "boolean",
-                    },
+                    "name": "test",
+                    "required": true,
+                    "schema": {
+                        "type": "boolean",
+                        "description": "Present (true) only on a test event",
+                        "enum": [
+                            true
+                        ]
+                    }
                 },
                 {
-                    name: "sent_at",
-                    required: true,
-                    schema: {
-                        description: "When the test was requested",
-                        format: "date-time",
-                        type: "string",
-                    },
-                },
-            ],
-            type: "object",
+                    "name": "sent_at",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "format": "date-time",
+                        "description": "When the test was requested"
+                    }
+                }
+            ]
         },
-        description: "`POST /v1/destinations/{id}:test`: one event to that destination only",
-        headers: [
+        "description": "`POST /v1/destinations/{id}:test`: one event to that destination only",
+        "headers": [
             {
-                description: "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
-                name: "webhook-id",
-                required: true,
+                "description": "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
+                "name": "webhook-id",
+                "required": true
             },
             {
-                description: "Unix seconds of this attempt; reject one older than 5 minutes",
-                name: "webhook-timestamp",
-                required: true,
+                "description": "Unix seconds of this attempt; reject one older than 5 minutes",
+                "name": "webhook-timestamp",
+                "required": true
             },
             {
-                description: "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
-                name: "webhook-signature",
-                required: true,
-            },
+                "description": "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
+                "name": "webhook-signature",
+                "required": true
+            }
         ],
-        summary: "destination.test",
-        type: "destination.test",
+        "summary": "destination.test",
+        "type": "destination.test"
     },
     {
-        acknowledgement: [
-            "2XX: Acknowledged; anything else is retried (410 disables)",
+        "acknowledgement": [
+            "2XX: Acknowledged; anything else is retried (410 disables)"
         ],
-        data: {
-            description: "The account reached the daily fire cap of its Enterprise deal (`fires_per_day`; no plan has a daily cap), once per UTC day, to every active destination. Further fires of the day stay on the pull feed with `delivery_skipped: fire_cap`; deliveries resume at 00:00 UTC. An end user's own cap has its own event, `alert_user.fire_cap_reached`",
-            fields: [
+        "data": {
+            "type": "object",
+            "description": "The account reached the daily fire cap of its Enterprise deal (`fires_per_day`; no plan has a daily cap), once per UTC day, to every active destination. Further fires of the day stay on the pull feed with `delivery_skipped: fire_cap`; deliveries resume at 00:00 UTC. An end user's own cap has its own event, `alert_user.fire_cap_reached`",
+            "fields": [
                 {
-                    name: "event_id",
-                    required: true,
-                    schema: {
-                        description: "Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it",
-                        type: "string",
-                    },
+                    "name": "event_id",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "description": "Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it"
+                    }
                 },
                 {
-                    name: "day",
-                    required: true,
-                    schema: {
-                        description: "The UTC day",
-                        format: "date",
-                        type: "string",
-                    },
+                    "name": "day",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "The UTC day"
+                    }
                 },
                 {
-                    name: "cap",
-                    required: true,
-                    schema: {
-                        description: "Fires per UTC day of the Enterprise deal (`fires_per_day`)",
-                        type: "integer",
-                    },
+                    "name": "cap",
+                    "required": true,
+                    "schema": {
+                        "type": "integer",
+                        "description": "Fires per UTC day of the Enterprise deal (`fires_per_day`)"
+                    }
                 },
                 {
-                    name: "tier",
-                    required: true,
-                    schema: {
-                        description: "The account's tier — `enterprise`: only an Enterprise deal sets a daily fire cap",
-                        enum: [
+                    "name": "tier",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "description": "The account's tier — `enterprise`: only an Enterprise deal sets a daily fire cap",
+                        "enum": [
                             "free",
                             "lite",
                             "standard",
                             "pro",
-                            "enterprise",
-                        ],
-                        type: "string",
-                    },
-                },
-            ],
-            type: "object",
+                            "enterprise"
+                        ]
+                    }
+                }
+            ]
         },
-        description: "The account reached the daily fire cap of its Enterprise deal (`fires_per_day`; no plan has a daily cap), once per UTC day, to every active destination. Further fires of the day stay on the pull feed with `delivery_skipped: fire_cap`; deliveries resume at 00:00 UTC. An end user's own cap has its own event, `alert_user.fire_cap_reached`",
-        headers: [
+        "description": "The account reached the daily fire cap of its Enterprise deal (`fires_per_day`; no plan has a daily cap), once per UTC day, to every active destination. Further fires of the day stay on the pull feed with `delivery_skipped: fire_cap`; deliveries resume at 00:00 UTC. An end user's own cap has its own event, `alert_user.fire_cap_reached`",
+        "headers": [
             {
-                description: "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
-                name: "webhook-id",
-                required: true,
+                "description": "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
+                "name": "webhook-id",
+                "required": true
             },
             {
-                description: "Unix seconds of this attempt; reject one older than 5 minutes",
-                name: "webhook-timestamp",
-                required: true,
+                "description": "Unix seconds of this attempt; reject one older than 5 minutes",
+                "name": "webhook-timestamp",
+                "required": true
             },
             {
-                description: "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
-                name: "webhook-signature",
-                required: true,
-            },
+                "description": "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
+                "name": "webhook-signature",
+                "required": true
+            }
         ],
-        summary: "account.fire_cap_reached",
-        type: "account.fire_cap_reached",
+        "summary": "account.fire_cap_reached",
+        "type": "account.fire_cap_reached"
     },
     {
-        acknowledgement: [
-            "2XX: Acknowledged; anything else is retried (410 disables)",
+        "acknowledgement": [
+            "2XX: Acknowledged; anything else is retried (410 disables)"
         ],
-        data: {
-            description: "An end user reached its daily fire cap (`max_fires_per_day` of the user, else the account default; once per user and UTC day, to every active destination of the account). Its further fires of the day stay on the pull feed with `delivery_skipped: alert_user_fire_cap` and do not count against the account's cap; deliveries resume at 00:00 UTC",
-            fields: [
+        "data": {
+            "type": "object",
+            "description": "An end user reached its daily fire cap (`max_fires_per_day` of the user, else the account default; once per user and UTC day, to every active destination of the account). Its further fires of the day stay on the pull feed with `delivery_skipped: alert_user_fire_cap` and do not count against the account's cap; deliveries resume at 00:00 UTC",
+            "fields": [
                 {
-                    name: "event_id",
-                    required: true,
-                    schema: {
-                        description: "Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it",
-                        type: "string",
-                    },
+                    "name": "event_id",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "description": "Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it"
+                    }
                 },
                 {
-                    name: "external_user_id",
-                    required: true,
-                    schema: {
-                        description: "The end user (your id)",
-                        type: "string",
-                    },
+                    "name": "external_user_id",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "description": "The end user (your id)"
+                    }
                 },
                 {
-                    name: "day",
-                    required: true,
-                    schema: {
-                        description: "The UTC day",
-                        format: "date",
-                        type: "string",
-                    },
+                    "name": "day",
+                    "required": true,
+                    "schema": {
+                        "type": "string",
+                        "format": "date",
+                        "description": "The UTC day"
+                    }
                 },
                 {
-                    name: "cap",
-                    required: true,
-                    schema: {
-                        description: "The user's effective fires per UTC day",
-                        type: "integer",
-                    },
-                },
-            ],
-            type: "object",
+                    "name": "cap",
+                    "required": true,
+                    "schema": {
+                        "type": "integer",
+                        "description": "The user's effective fires per UTC day"
+                    }
+                }
+            ]
         },
-        description: "An end user reached its daily fire cap (`max_fires_per_day` of the user, else the account default; once per user and UTC day, to every active destination of the account). Its further fires of the day stay on the pull feed with `delivery_skipped: alert_user_fire_cap` and do not count against the account's cap; deliveries resume at 00:00 UTC",
-        headers: [
+        "description": "An end user reached its daily fire cap (`max_fires_per_day` of the user, else the account default; once per user and UTC day, to every active destination of the account). Its further fires of the day stay on the pull feed with `delivery_skipped: alert_user_fire_cap` and do not count against the account's cap; deliveries resume at 00:00 UTC",
+        "headers": [
             {
-                description: "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
-                name: "webhook-id",
-                required: true,
+                "description": "Event id (`evt_…`; a batch: `bat_…`), the same on every retry: dedupe on it",
+                "name": "webhook-id",
+                "required": true
             },
             {
-                description: "Unix seconds of this attempt; reject one older than 5 minutes",
-                name: "webhook-timestamp",
-                required: true,
+                "description": "Unix seconds of this attempt; reject one older than 5 minutes",
+                "name": "webhook-timestamp",
+                "required": true
             },
             {
-                description: "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
-                name: "webhook-signature",
-                required: true,
-            },
+                "description": "Space-separated `v1,<base64 HMAC-SHA256 of id.timestamp.body>`, one per valid secret (two during a rotation)",
+                "name": "webhook-signature",
+                "required": true
+            }
         ],
-        summary: "alert_user.fire_cap_reached",
-        type: "alert_user.fire_cap_reached",
-    },
+        "summary": "alert_user.fire_cap_reached",
+        "type": "alert_user.fire_cap_reached"
+    }
 ];
 
 /** The envelope every webhook body shares (`AlertWebhookEnvelope`). */
 export const WEBHOOK_ENVELOPE: WebhookSchema = {
-    fields: [
+    "type": "object",
+    "fields": [
         {
-            name: "type",
-            required: true,
-            schema: {
-                description: "Event type",
-                enum: [
+            "name": "type",
+            "required": true,
+            "schema": {
+                "type": "string",
+                "description": "Event type",
+                "enum": [
                     "alert.fired",
                     "alert.fired.batch",
                     "alert.status_changed",
                     "destination.disabled",
                     "destination.test",
                     "account.fire_cap_reached",
-                    "alert_user.fire_cap_reached",
-                ],
-                type: "string",
-            },
+                    "alert_user.fire_cap_reached"
+                ]
+            }
         },
         {
-            name: "timestamp",
-            required: true,
-            schema: {
-                description: "When the event happened (a batch: when it was sent). Deliveries are NOT ordered: order by this",
-                format: "date-time",
-                type: "string",
-            },
+            "name": "timestamp",
+            "required": true,
+            "schema": {
+                "type": "string",
+                "format": "date-time",
+                "description": "When the event happened (a batch: when it was sent). Deliveries are NOT ordered: order by this"
+            }
         },
         {
-            name: "data",
-            required: true,
-            schema: {
-                additionalProperties: true,
-                description: "Type-specific, see each x-webhooks entry",
-                type: "object",
-            },
-        },
-    ],
-    type: "object",
+            "name": "data",
+            "required": true,
+            "schema": {
+                "type": "object",
+                "description": "Type-specific, see each x-webhooks entry",
+                "additionalProperties": true
+            }
+        }
+    ]
 };
