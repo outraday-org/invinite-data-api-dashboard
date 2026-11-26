@@ -12,6 +12,7 @@ import type {
     V2EventTypeCatalogEntry,
     V2ExchangeCatalogEntry,
     V2FormCatalogEntry,
+    V2KpiCatalogEntry,
     V2MappingRule,
     V2MetricCatalogEntry,
     V2SectionCatalogEntry,
@@ -35,12 +36,14 @@ import {
     useEventTypeCatalogInfinite,
     useExchangeCatalogInfinite,
     useFormCatalogInfinite,
+    useKpiCatalogInfinite,
     useMappingRulesInfinite,
     useMetricCatalogInfinite,
     useSectionCatalogInfinite,
     useSectorCatalogInfinite,
 } from "@/lib/api/queries";
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
+import { EXTRACTION_PERIOD_KIND_LABELS, kpiUnitLabel } from "@/lib/earnings/extraction";
 import { formatNumber } from "@/lib/format";
 import { ROW_ACTION_REVEAL_CLASS, titleHead, WRAPPING_TABS_LIST_CLASS } from "@/lib/layout";
 import {
@@ -60,7 +63,7 @@ const STATEMENTS = ["income-statement", "balance-sheet", "cash-flow"] as const s
 /**
  * `?tab=` (absent = metrics), `?q=` (the text filter over the loaded rows), `?statement=` (metrics, mapping rules),
  * `?form=` (sections), `?metric=` (mapping rules: one metric's rules) — those three are API parameters — and `?sector=`
- * (sectors: one sector's industries, filtered in the page).
+ * (sectors: one sector's industries; KPIs: one KPI catalog sector — both filtered in the page).
  */
 const catalogSearchSchema = z.object({
     form: z.string().trim().regex(/^[A-Z0-9][A-Z0-9 /-]{0,19}$/i).optional().catch(undefined),
@@ -248,6 +251,18 @@ const SECTOR_COLUMNS: Array<ColumnDef<SectorIndustryRow>> = [
     { cell: ({ row }) => countCell(row.original.company_count), header: () => <div className="text-right">Companies</div>, id: "company_count" },
 ];
 
+// The KPIs of the sector catalogs (Data API 12.1): the values `kpi=` of `/v1/kpi-series` accepts, per sector.
+const KPI_COLUMNS: Array<ColumnDef<V2KpiCatalogEntry>> = [
+    { cell: ({ row }) => <Badge variant="secondary">{row.original.sector}</Badge>, header: "Sector", id: "sector" },
+    { cell: ({ row }) => named(row.original.label, row.original.kpi_key), header: "KPI", id: "label" },
+    { cell: ({ row }) => kpiUnitLabel(row.original.unit), header: "Unit", id: "unit" },
+    {
+        cell: ({ row }) => row.original.period_kinds.map(kind => EXTRACTION_PERIOD_KIND_LABELS[kind]).join(", ") || "—",
+        header: "Periods",
+        id: "period_kinds",
+    },
+];
+
 /** The state of one tab's list, as every catalog hook answers it. */
 export type CatalogList<TRow> = {
     error: unknown;
@@ -272,6 +287,7 @@ export const CATALOG_SPECS = {
     "event-types": { columns: EVENT_TYPE_COLUMNS, idOf: row => row.event_type, noun: "event types", operationId: "listEventTypeCatalog", textsOf: row => [row.label, row.description] } satisfies TableSpec<V2EventTypeCatalogEntry>,
     "exchanges": { columns: EXCHANGE_COLUMNS, idOf: row => row.mic, noun: "exchanges", operationId: "listExchangeCatalog", textsOf: row => [row.name] } satisfies TableSpec<V2ExchangeCatalogEntry>,
     "forms": { columns: FORM_COLUMNS, idOf: row => row.form, noun: "forms", operationId: "listFormCatalog", textsOf: row => [row.description, row.family] } satisfies TableSpec<V2FormCatalogEntry>,
+    "kpis": { columns: KPI_COLUMNS, idOf: row => row.kpi_key, noun: "KPIs", operationId: "listKpiCatalog", textsOf: row => [row.label, row.sector, row.unit] } satisfies TableSpec<V2KpiCatalogEntry>,
     "mapping-rules": {
         columns: MAPPING_RULE_COLUMNS,
         idOf: row => row.metric_id,
@@ -375,6 +391,13 @@ function CatalogTabBody({ search }: { search: CatalogSearch }) {
         return { ...sectorList, rows: search.sector ? rows.filter(row => row.sector === search.sector) : rows };
     }, [sectorList, search.sector]);
 
+    const kpiList = useCatalogList(useKpiCatalogInfinite({ enabled: tab === "kpis" }));
+
+    const kpis = React.useMemo(
+        () => ({ ...kpiList, rows: search.sector ? kpiList.rows.filter(row => row.sector === search.sector) : kpiList.rows }),
+        [kpiList, search.sector],
+    );
+
     const scope = [search.statement, search.form, search.metric, search.sector].filter(Boolean).join("-") || "all";
 
     switch (tab) {
@@ -382,6 +405,7 @@ function CatalogTabBody({ search }: { search: CatalogSearch }) {
         case "event-types": return <CatalogTable list={eventTypes} query={search.q} scope={scope} spec={CATALOG_SPECS["event-types"]} />;
         case "exchanges": return <CatalogTable list={exchanges} query={search.q} scope={scope} spec={CATALOG_SPECS.exchanges} />;
         case "forms": return <CatalogTable list={forms} query={search.q} scope={scope} spec={CATALOG_SPECS.forms} />;
+        case "kpis": return <CatalogTable list={kpis} query={search.q} scope={scope} spec={CATALOG_SPECS.kpis} />;
         case "macro": return <MacroCatalog filter={search.q} />;
         case "mapping-rules": return <CatalogTable list={rules} query={search.q} scope={scope} spec={CATALOG_SPECS["mapping-rules"]} />;
         case "metrics": return <CatalogTable list={metrics} query={search.q} scope={scope} spec={CATALOG_SPECS.metrics} />;
@@ -404,6 +428,21 @@ function SectorPicker({ id, onChange, value }: { id: string; onChange: (sector: 
     return <FilterSelect aria-label="Sector" className="w-full" id={id} onValueChange={sector => onChange(sector === ALL ? undefined : sector)} options={options} value={value ?? ALL} />;
 }
 
+/** The KPIs tab's sector picker: the sectors the KPI catalog itself names (its own keys: `airlines`, `banks` …). */
+function KpiSectorPicker({ id, onChange, value }: { id: string; onChange: (sector: string | undefined) => void; value: string | undefined }) {
+    const { rows } = useCatalogList(useKpiCatalogInfinite({ enabled: true }));
+
+    const sectors = [...new Set(rows.map(row => row.sector))];
+
+    const options = [
+        { label: "Every sector", value: ALL },
+        ...sectors.map(sector => ({ label: sector, value: sector })),
+        ...(value && !sectors.includes(value) ? [{ label: value, value }] : []),
+    ];
+
+    return <FilterSelect aria-label="Sector" className="w-full" id={id} onValueChange={sector => onChange(sector === ALL ? undefined : sector)} options={options} value={value ?? ALL} />;
+}
+
 /** A removable filter chip ("Metric: is_total_revenue ×"). */
 function FilterChip({ label, onClear }: { label: string; onClear: () => void }) {
     return (
@@ -418,7 +457,7 @@ function FilterChip({ label, onClear }: { label: string; onClear: () => void }) 
  * The reference catalogs of the Data API (`/v1/catalog/*`, free, 1 credit a page): standardized metrics (the target of
  * every financial metric label's catalog link, `?q=<metric_id>`), filing sections per form, forms, event types,
  * investor-document kinds, the metrics' mapping rules, the exchanges and the sectors with their industries (the
- * values `exchange=` / `sector=` accept). The open tab loads all its pages (≤ 5) and the text filter
+ * values `exchange=` / `sector=` accept) and the KPIs of each sector catalog (`kpi=` of `/v1/kpi-series`). The open tab loads all its pages (≤ 5) and the text filter
  * searches them; statement / form / metric are sent to the API.
  */
 function CatalogPage() {
@@ -433,7 +472,7 @@ function CatalogPage() {
     return (
         <PageContainer>
             <PageHeader
-                description="The reference lists behind the Data API: what each standardized metric means and how it is mapped from filed concepts, the sections of each SEC form, the forms, event types, investor-document kinds, exchanges and sectors."
+                description="The reference lists behind the Data API: what each standardized metric means and how it is mapped from filed concepts, the sections of each SEC form, the forms, event types, investor-document kinds, exchanges, sectors and the KPIs each sector's series follow."
                 title="Catalog"
             />
             <Tabs
@@ -465,6 +504,11 @@ function CatalogPage() {
                 {tab === "sectors" && (
                     <FilterField label="Sector">
                         {id => <SectorPicker id={id} onChange={sector => onChange({ sector })} value={search.sector} />}
+                    </FilterField>
+                )}
+                {tab === "kpis" && (
+                    <FilterField label="Sector">
+                        {id => <KpiSectorPicker id={id} onChange={sector => onChange({ sector })} value={search.sector} />}
                     </FilterField>
                 )}
                 {tab === "mapping-rules" && search.metric && (

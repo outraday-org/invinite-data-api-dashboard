@@ -18,12 +18,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useV2GuidanceInfinite } from "@/lib/api/queries";
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
-import { BASIS_LABELS, formatGuidanceRange, formatGuidanceValue, metricLabel, PERIOD_KIND_LABELS } from "@/lib/earnings/labels";
+import { BASIS_LABELS, formatGuidanceValue, metricLabel, PERIOD_KIND_LABELS } from "@/lib/earnings/labels";
 import { formatDay } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 import { EventLink } from "../event-link";
 import { Notice } from "../media-state";
-import { DirectionChip } from "./guidance-table";
+import { DirectionChip, GuidanceValue, isQualitativeGuidance } from "./guidance-table";
 
 export type GuidanceHistoryTarget = {
     basis: V2GuidanceBasis;
@@ -138,7 +139,7 @@ function HistoryBody({ company, target }: { company: string; target: GuidanceHis
                                     : callDay(entry.conference_date)}
                             </TableCell>
                             <TableCell>{entry.period_label}</TableCell>
-                            <TableCell className="tabular-nums">{formatGuidanceRange(entry)}</TableCell>
+                            <TableCell className={cn(isQualitativeGuidance(entry) && "whitespace-normal")}><GuidanceValue item={entry} /></TableCell>
                             <TableCell><DirectionChip direction={entry.direction} /></TableCell>
                             <TableCell className="tabular-nums">{formatDelta(entry.change_vs_prior?.low_delta ?? null, entry.unit, entry.currency)}</TableCell>
                             <TableCell className="tabular-nums">{formatDelta(entry.change_vs_prior?.midpoint_delta ?? null, entry.unit, entry.currency)}</TableCell>

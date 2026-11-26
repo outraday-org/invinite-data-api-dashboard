@@ -126,6 +126,8 @@ import type {
     V2IposResponse,
     V2IposSort,
     V2IpoStage,
+    V2KpiCatalogResponse,
+    V2KpiSeriesResponse,
     V2KpisResponse,
     V2Licensing,
     V2LiveAudioResponse,
@@ -140,6 +142,7 @@ import type {
     V2NewsSearchResponse,
     V2NewsSort,
     V2NewsText,
+    V2NonGaapResponse,
     V2OfferingDetail,
     V2OfferingsResponse,
     V2ParticipantsResponse,
@@ -201,6 +204,7 @@ import {
     getInstrument,
     getInstruments,
     getIpo,
+    getKpiCatalog,
     getMappingRules,
     getMe,
     getMetricCatalog,
@@ -246,12 +250,14 @@ import {
     getV2InvestorDocumentSearch,
     getV2Ipos,
     getV2Kpis,
+    getV2KpiSeries,
     getV2LiveAudio,
     getV2MarketHolidays,
     getV2News,
     getV2NewsItem,
     getV2NewsSearch,
     getV2NewsText,
+    getV2NonGaap,
     getV2Offerings,
     getV2Participants,
     getV2People,
@@ -984,6 +990,34 @@ export function useV2KpisInfinite(input: { eventId: string; limit: number }) {
             getV2Kpis({ data: { apiKey, cursor: cursor ?? undefined, event: input.eventId, limit: input.limit } }),
         queryKey: ["v2", "kpis", input.eventId, input.limit],
         quietStatuses: [404],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/**
+ * The adjusted (non-GAAP) figures of one call's results release (`/v1/non-gaap?event=`, Data API 12.1, PRO), 200 a
+ * page. Status-aware: the tab renders the plan gate / error (no toast).
+ */
+export function useV2NonGaapInfinite(input: { eventId: string }) {
+    return useEarningsInfinite<V2NonGaapResponse>({
+        enabled: input.eventId.length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2NonGaap({ data: { apiKey, cursor: cursor ?? undefined, event: input.eventId, limit: 200 } }),
+        queryKey: ["v2", "non-gaap", input.eventId],
+        staleTime: EARNINGS_EVENT_STALE_MS,
+    });
+}
+
+/**
+ * A company's KPI series (`/v1/kpi-series?company=`, Data API 12.1, PRO), oldest period first, 200 a page; "" keeps it
+ * idle. Status-aware: the tab renders the plan gate / error (no toast).
+ */
+export function useV2KpiSeriesInfinite(input: { company: string }) {
+    return useEarningsInfinite<V2KpiSeriesResponse>({
+        enabled: input.company.trim().length > 0,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2KpiSeries({ data: { apiKey, company: input.company, cursor: cursor ?? undefined, limit: 200, sort: "period_end" } }),
+        queryKey: ["v2", "kpi-series", input.company],
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }
@@ -2303,6 +2337,17 @@ export function useSectorCatalogInfinite(input: { enabled: boolean }) {
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getSectorCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT } }),
         queryKey: ["v2", "catalog", "sectors"],
+        staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+/** The KPIs of every sector catalog (Data API 12.1): the `/catalog` KPIs tab (its sector picker filters in the page). */
+export function useKpiCatalogInfinite(input: { enabled: boolean }) {
+    return useEarningsInfinite<V2KpiCatalogResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getKpiCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT } }),
+        queryKey: ["v2", "catalog", "kpis"],
         staleTime: REFERENCE_STALE_MS,
     });
 }

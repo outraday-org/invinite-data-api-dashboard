@@ -342,11 +342,11 @@ export type ApiFamily = { description: string; id: string; label: string; link: 
  */
 export const API_FAMILIES: ReadonlyArray<ApiFamily> = [
     {
-        description: "Transcripts, audio, slides, Q&A, guidance, KPIs, speakers and investor documents, + live stream.",
+        description: "Transcripts, audio, slides, Q&A, guidance, KPIs and KPI series, non-GAAP figures, speakers and investor documents, + live stream.",
         id: "earnings",
         label: "Earnings calls",
         link: { to: "/live-calls" },
-        prefixes: ["/v1/events", "/v1/guidance", "/v1/kpis", "/v1/participants", "/v1/people", "/v1/search/transcripts", "/v1/investor-documents", "/v1/search/investor-documents"],
+        prefixes: ["/v1/events", "/v1/guidance", "/v1/kpis", "/v1/kpi-series", "/v1/non-gaap", "/v1/participants", "/v1/people", "/v1/search/transcripts", "/v1/investor-documents", "/v1/search/investor-documents"],
     },
     {
         description: "Every SEC filing and filer, document text, full-text search, Form D offerings, + live stream.",

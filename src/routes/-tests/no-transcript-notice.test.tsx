@@ -32,6 +32,10 @@ vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/price-attribution-tab"
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/prosody-tab", () => ({ ProsodyTab: tabStub("prosody") }));
 
+vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/non-gaap-tab", () => ({ NonGaapTab: tabStub("non-gaap") }));
+
+vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/kpi-series-tab", () => ({ KpiSeriesTab: tabStub("kpi-series") }));
+
 // The Q&A stub asks like the real tab: a query whose answer carries the request the server recorded (O6 inspector).
 vi.mock("@/routes/$ticker/earnings-calls/-components/tabs/qa-tab", async () => {
     const { useQuery } = await import("@tanstack/react-query");
@@ -83,7 +87,7 @@ function eventOf(overrides: Partial<V2Event>): V2Event {
     } as V2Event;
 }
 
-function renderTab(event: V2Event, tab: "price-moves" | "transcript" | (typeof DERIVED_TABS)[number]) {
+function renderTab(event: V2Event, tab: "kpi-series" | "non-gaap" | "price-moves" | "transcript" | (typeof DERIVED_TABS)[number]) {
     const client = new QueryClient({ defaultOptions: { queries: { structuralSharing: shareWithRequests } } });
 
     return render(
@@ -146,6 +150,22 @@ describe("CallTabs without a transcript", () => {
         renderTab(eventOf({}), "price-moves");
 
         expect(screen.getByTestId("tab-price-moves")).toBeInTheDocument();
+    });
+
+    it.each(["non-gaap", "kpi-series"] as const)("mounts %s without a transcript (Data API 12.1: release / series data, own empty state)", (tab) => {
+        renderTab(eventOf({}), tab);
+
+        expect(screen.getByTestId(`tab-${tab}`)).toBeInTheDocument();
+    });
+
+    it("hides Non-GAAP and KPI series on a non-earnings event, even with a transcript", () => {
+        renderTab(eventOf({ event_type: "conference", has_transcript: true }), "qa");
+
+        expect(screen.queryByRole("tab", { name: "Non-GAAP" })).toBeNull();
+
+        expect(screen.queryByRole("tab", { name: "KPI series" })).toBeNull();
+
+        expect(screen.getByRole("tab", { name: "Q&A" })).toBeInTheDocument();
     });
 
     it("mounts a derived tab of a transcribed call", () => {

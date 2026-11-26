@@ -85,6 +85,8 @@ import type {
     V2IpoDetail,
     V2IposResponse,
     V2IposSort,
+    V2KpiCatalogResponse,
+    V2KpiSeriesResponse,
     V2KpisResponse,
     V2Licensing,
     V2LiveAudioResponse,
@@ -97,6 +99,7 @@ import type {
     V2NewsListResponse,
     V2NewsSearchResponse,
     V2NewsText,
+    V2NonGaapResponse,
     V2OfferingDetail,
     V2OfferingsResponse,
     V2ParticipantsResponse,
@@ -943,6 +946,58 @@ export const getV2Kpis = createServerFn({ method: "POST" })
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/kpis", {
             params: { query: v2Query({ company, cursor, event, limit, metric, sort }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/**
+ * `GET /v1/non-gaap` (Data API 12.1, PRO): the adjusted figures of the results releases of one call (`event`) or of
+ * companies (`company`), each with its GAAP start, adjustment lines and whether they add up (`reconciled`).
+ */
+export const getV2NonGaap = createServerFn({ method: "POST" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        company: z.string().trim().min(1).optional(),
+        cursor: cursorSchema,
+        event: eventIdSchema.optional(),
+        limit: pageLimitSchema,
+        metric: z.array(z.string().trim().min(1).max(200)).optional(),
+        sort: z.enum(["period_end", "-period_end"]).optional(),
+    }))
+    .handler(async ({ data }): Promise<V2NonGaapResponse> => {
+        const { apiKey, company, cursor, event, limit, metric, sort } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/non-gaap", {
+            params: { query: v2Query({ company, cursor, event, limit, metric: v2Expand(metric), sort }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/**
+ * `GET /v1/kpi-series` (Data API 12.1, PRO): a company's catalog KPIs as series (`kpi` = catalog keys; `segment`
+ * `consolidated` = company-wide only).
+ */
+export const getV2KpiSeries = createServerFn({ method: "POST" })
+    .inputValidator(z.object({
+        apiKey: apiKeySchema,
+        company: z.string().trim().min(1),
+        cursor: cursorSchema,
+        kpi: z.array(z.string().trim().regex(/^[a-z0-9_]{1,120}$/)).optional(),
+        limit: pageLimitSchema,
+        segment: z.string().trim().min(1).max(200).optional(),
+        sort: z.enum(["period_end", "-period_end"]).optional(),
+    }))
+    .handler(async ({ data }): Promise<V2KpiSeriesResponse> => {
+        const { apiKey, company, cursor, kpi, limit, segment, sort } = data;
+
+        const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/kpi-series", {
+            params: { query: v2Query({ company, cursor, kpi: v2Expand(kpi), limit, segment, sort }) },
         });
 
         if (error) throwApiError(error, response);
@@ -2098,6 +2153,19 @@ export const getSectorCatalog = createServerFn({ method: "POST" })
     .handler(async ({ data }): Promise<V2SectorCatalogResponse> => {
         const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/sectors", {
             params: { query: v2Query({ cursor: data.cursor, limit: data.limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res;
+    });
+
+/** The KPIs of each sector catalog (`GET /v1/catalog/kpis`, `sector` comma list; Data API 12.1). */
+export const getKpiCatalog = createServerFn({ method: "POST" })
+    .inputValidator(catalogPageSchema.extend({ sector: z.array(z.string().trim().regex(/^[a-z0-9_-]{1,60}$/)).optional() }))
+    .handler(async ({ data }): Promise<V2KpiCatalogResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/kpis", {
+            params: { query: v2Query({ cursor: data.cursor, limit: data.limit, sector: v2Expand(data.sector) }) },
         });
 
         if (error) throwApiError(error, response);
