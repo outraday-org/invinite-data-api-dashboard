@@ -113,6 +113,30 @@ export const OPERATIONS = {
         summary: "Create an alert",
         tier: "lite",
     },
+    createBulkExport: {
+        cli: {
+            action: "export",
+            group: "bulk",
+            positional: null,
+        },
+        credits: 0,
+        docsUrl: "https://data.invinite.com/docs/post--_v1_bulk_exports",
+        method: "POST",
+        path: "/v1/bulk/exports",
+        sdk: {
+            body: {
+                model: "CreateBulkExportRequest",
+                py: "create_bulk_export_request",
+                ts: "createBulkExportRequest",
+            },
+            className: "BulkDataApi",
+            params: {},
+            py: "create_bulk_export",
+            ts: "createBulkExport",
+        },
+        summary: "Create a company export",
+        tier: "enterprise",
+    },
     createDestination: {
         cli: {
             action: "create",
@@ -751,6 +775,84 @@ export const OPERATIONS = {
         },
         summary: "Get an event's recording",
         tier: "pro",
+    },
+    getBulkExport: {
+        cli: {
+            action: "export-status",
+            group: "bulk",
+            positional: "export_id",
+        },
+        credits: 0,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_bulk_exports_{export_id}",
+        method: "GET",
+        path: "/v1/bulk/exports/{export_id}",
+        sdk: {
+            body: null,
+            className: "BulkDataApi",
+            params: {
+                export_id: {
+                    kind: "string",
+                    py: "export_id",
+                    ts: "exportId",
+                },
+            },
+            py: "get_bulk_export",
+            ts: "getBulkExport",
+        },
+        summary: "Get a company export",
+        tier: "enterprise",
+    },
+    getBulkExportDownload: {
+        cli: {
+            action: "export-download",
+            group: "bulk",
+            positional: "export_id",
+        },
+        credits: 0,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_bulk_exports_{export_id}_download",
+        method: "GET",
+        path: "/v1/bulk/exports/{export_id}/download",
+        sdk: {
+            body: null,
+            className: "BulkDataApi",
+            params: {
+                export_id: {
+                    kind: "string",
+                    py: "export_id",
+                    ts: "exportId",
+                },
+            },
+            py: "get_bulk_export_download",
+            ts: "getBulkExportDownload",
+        },
+        summary: "Get a company export download URL",
+        tier: "enterprise",
+    },
+    getBulkFileDownload: {
+        cli: {
+            action: "download",
+            group: "bulk",
+            positional: "file_id",
+        },
+        credits: 0,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_bulk_files_{file_id}_download",
+        method: "GET",
+        path: "/v1/bulk/files/{file_id}/download",
+        sdk: {
+            body: null,
+            className: "BulkDataApi",
+            params: {
+                file_id: {
+                    kind: "string",
+                    py: "file_id",
+                    ts: "fileId",
+                },
+            },
+            py: "get_bulk_file_download",
+            ts: "getBulkFileDownload",
+        },
+        summary: "Get a bulk file download URL",
+        tier: "enterprise",
     },
     getCompany: {
         cli: {
@@ -2619,6 +2721,108 @@ export const OPERATIONS = {
         },
         summary: "List beneficial ownership filings (13D / 13G)",
         tier: "standard",
+    },
+    listBulkExports: {
+        cli: {
+            action: "exports",
+            group: "bulk",
+            positional: null,
+        },
+        credits: 0,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_bulk_exports",
+        method: "GET",
+        path: "/v1/bulk/exports",
+        sdk: {
+            body: null,
+            className: "BulkDataApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+            },
+            py: "list_bulk_exports",
+            ts: "listBulkExports",
+        },
+        summary: "List company exports",
+        tier: "enterprise",
+    },
+    listBulkFiles: {
+        cli: {
+            action: "files",
+            group: "bulk",
+            positional: null,
+        },
+        credits: 0,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_bulk_files",
+        method: "GET",
+        path: "/v1/bulk/files",
+        sdk: {
+            body: null,
+            className: "BulkDataApi",
+            params: {
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "dataset": {
+                    kind: "string",
+                    py: "dataset",
+                    ts: "dataset",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "format": {
+                    kind: "string",
+                    py: "format",
+                    ts: "format",
+                },
+                "include_superseded": {
+                    kind: "boolean",
+                    py: "include_superseded",
+                    ts: "includeSuperseded",
+                },
+                "kind": {
+                    kind: "string",
+                    py: "kind",
+                    ts: "kind",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "released_at.gte": {
+                    kind: "date",
+                    py: "released_at_gte",
+                    ts: "releasedAtGte",
+                },
+                "released_at.lte": {
+                    kind: "date",
+                    py: "released_at_lte",
+                    ts: "releasedAtLte",
+                },
+            },
+            py: "list_bulk_files",
+            ts: "listBulkFiles",
+        },
+        summary: "List SEC bulk files",
+        tier: "enterprise",
     },
     listCagr: {
         cli: {
@@ -7442,6 +7646,11 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
     "GET /v1/alerts/{id}/events": "listAlertEventsForAlert",
     "GET /v1/announcements": "listAnnouncements",
     "GET /v1/beneficial-ownership": "listBeneficialOwnershipFilings",
+    "GET /v1/bulk/exports": "listBulkExports",
+    "GET /v1/bulk/exports/{export_id}": "getBulkExport",
+    "GET /v1/bulk/exports/{export_id}/download": "getBulkExportDownload",
+    "GET /v1/bulk/files": "listBulkFiles",
+    "GET /v1/bulk/files/{file_id}/download": "getBulkFileDownload",
     "GET /v1/catalog/document-kinds": "listDocumentKindCatalog",
     "GET /v1/catalog/event-types": "listEventTypeCatalog",
     "GET /v1/catalog/exchanges": "listExchangeCatalog",
@@ -7562,6 +7771,7 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
     "POST /v1/alerts/{id}:resume": "resumeAlert",
     "POST /v1/alerts/{id}:test": "testAlert",
     "POST /v1/alerts:batch": "batchAlerts",
+    "POST /v1/bulk/exports": "createBulkExport",
     "POST /v1/destinations": "createDestination",
     "POST /v1/destinations/{id}:rotate-secret": "rotateDestinationSecret",
     "POST /v1/destinations/{id}:test": "testDestination",

@@ -9,8 +9,10 @@ import type { ValueLookup } from "@/lib/financials/value-ref";
 
 import { withoutReplayCaptures } from "@/lib/earnings/capture-mode";
 import { isSymbolParam } from "@/lib/instruments";
+import { isOpenExport } from "@/lib/sec/bulk";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
+import type { BulkFilesQuery } from "./bulk-requests";
 import type {
     Alert,
     AlertEvent,
@@ -24,6 +26,9 @@ import type {
     AlertUserDefaults,
     AlertUsersListResponse,
     AlertUserStatus,
+    BulkExport,
+    BulkExportsResponse,
+    BulkFilesResponse,
     CompanyFiscalPeriod,
     Destination,
     DestinationDeliveriesResponse,
@@ -291,6 +296,7 @@ import {
     listAlerts,
     listAlertTemplates,
 } from "./server-functions-alerts";
+import { getBulkExport, getBulkExports, getBulkFiles } from "./server-functions-bulk";
 import { getDestination, listDestinationDeliveries, listDestinations } from "./server-functions-destinations";
 import { getScript, listScripts, listScriptVersions } from "./server-functions-scripts";
 
@@ -2231,14 +2237,76 @@ export function useV2FactPlacesInfinite(versionId: string) {
     });
 }
 
-/** The SEC data set releases the filings routes serve (one short list). */
-export function useV2DatasetsInfinite() {
+/** The SEC data set releases the filings routes serve (one short list); idle while `enabled` is false (the plan gate). */
+export function useV2DatasetsInfinite(enabled = true) {
     return useEarningsInfinite<V2DatasetsResponse>({
-        enabled: true,
+        enabled,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2Datasets({ data: { apiKey, cursor: cursor ?? undefined, limit: 100 } }),
         queryKey: ["v2", "datasets"],
         staleTime: SEC_STALE_MS,
+    });
+}
+
+// SEC bulk data (Data API 12.2, backend tasks/sec-bulk-downloads task 8; Enterprise, 0 credits). Status-aware (no
+// toast: the views render `SecReadinessNotice`); idle while `enabled` is false (the plan gate: a key without the
+// Enterprise plan sends nothing). The two downloads and the create are writes (`mutations.ts`), never queries.
+
+/** The query key prefixes of the bulk reads (a created export invalidates `exports` and `export`). */
+export const BULK_QUERY_KEYS = {
+    /** One export (`["v2", "bulk", "export", id]`). */
+    export: ["v2", "bulk", "export"],
+    /** The account's exports. */
+    exports: ["v2", "bulk", "exports"],
+    /** The files list, by its filters. */
+    files: ["v2", "bulk", "files"],
+} as const;
+
+/** Rows per page of the bulk lists (0 credits a page). */
+export const BULK_PAGE = 100;
+
+/** How often a shown export that is still queued / running is asked again. */
+export const BULK_EXPORT_POLL_MS = 5 * 1000;
+
+const BULK_STALE_MS = 60 * 1000;
+
+/** 5 s while a loaded export is `queued` / `running`, else no refetch (the list settles by itself). */
+export function refetchWhileExportsOpen(query: { state: { data?: InfiniteData<BulkExportsResponse, null | string> } }) {
+    return query.state.data?.pages.some(page => page.data.some(isOpenExport)) ? BULK_EXPORT_POLL_MS : false;
+}
+
+/** The bulk files by cursor, filtered on the server; a changed filter starts at page 1 (the cursor is never in the key). */
+export function useBulkFilesInfinite(filters: Omit<BulkFilesQuery, "cursor" | "limit">, enabled: boolean) {
+    return useEarningsInfinite<BulkFilesResponse>({
+        enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getBulkFiles({ data: { ...filters, apiKey, cursor: cursor ?? undefined, limit: BULK_PAGE } }),
+        queryKey: [...BULK_QUERY_KEYS.files, filters.dataset ?? "", filters.kind ?? "", filters.format ?? "", filters.releasedFrom ?? "", filters.releasedTo ?? "", filters.includeSuperseded ? "superseded" : ""],
+        staleTime: BULK_STALE_MS,
+    });
+}
+
+/** The account's company exports, newest first; asked again every 5 s while a loaded one is queued / running. */
+export function useBulkExportsInfinite(enabled: boolean) {
+    return useEarningsInfinite<BulkExportsResponse>({
+        enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getBulkExports({ data: { apiKey, cursor: cursor ?? undefined, limit: BULK_PAGE } }),
+        queryKey: [...BULK_QUERY_KEYS.exports],
+        refetchInterval: refetchWhileExportsOpen,
+        staleTime: BULK_STALE_MS,
+    });
+}
+
+/** One export (the `?export=` detail); asked again every 5 s while it is queued / running; "" = idle. */
+export function useBulkExport(exportId: string, enabled: boolean) {
+    return useEarningsQuery<BulkExport>({
+        enabled: enabled && exportId !== "",
+        errorMessage: null,
+        load: apiKey => getBulkExport({ data: { apiKey, exportId } }),
+        queryKey: [...BULK_QUERY_KEYS.export, exportId],
+        refetchInterval: query => (query.state.data && isOpenExport(query.state.data) ? BULK_EXPORT_POLL_MS : false),
+        staleTime: BULK_STALE_MS,
     });
 }
 

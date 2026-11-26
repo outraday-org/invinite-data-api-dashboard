@@ -102,7 +102,7 @@ const NEWS_FEED_NAV: NavPage = { description: "Your watchlist's news in one list
 
 const FILINGS_NAV: NavPage = { description: "New SEC filings as they arrive, and full-text search across every filer.", icon: ScrollTextIcon, keywords: ["filings", "sec", "edgar", "8-k", "10-k", "live", "search"], label: "Filings", to: "/filings" };
 
-const DATASETS_NAV: NavPage = { description: "The SEC bulk data sets the API serves, with their newest release.", icon: DatabaseIcon, keywords: ["sec", "datasets", "data sets", "bulk", "releases", "13f", "n-port"], label: "SEC data sets", to: "/sec/datasets" };
+const DATASETS_NAV: NavPage = { description: "SEC bulk files to download, company exports and the data set releases (Enterprise).", icon: DatabaseIcon, keywords: ["sec", "datasets", "data sets", "bulk", "releases", "13f", "n-port", "download", "parquet", "export"], label: "SEC bulk data", to: "/sec/datasets" };
 
 const TRANSCRIPT_SEARCH_NAV: NavPage = { description: "What was said on every company's earnings calls: passages from transcripts, Q&A and slides.", icon: SearchIcon, keywords: ["search", "transcripts", "transcript", "passages", "quotes", "calls", "full-text"], label: "Transcript search", to: "/search" };
 
@@ -349,11 +349,11 @@ export const API_FAMILIES: ReadonlyArray<ApiFamily> = [
         prefixes: ["/v1/events", "/v1/guidance", "/v1/kpis", "/v1/kpi-series", "/v1/non-gaap", "/v1/participants", "/v1/people", "/v1/search/transcripts", "/v1/investor-documents", "/v1/search/investor-documents"],
     },
     {
-        description: "Every SEC filing and filer, document text, full-text search, Form D offerings, + live stream.",
+        description: "Every SEC filing and filer, document text, full-text search, Form D offerings, SEC bulk files, + live stream.",
         id: "filings",
         label: "Filings",
         link: { to: "/filings" },
-        prefixes: ["/v1/filings", "/v1/filers", "/v1/document-versions", "/v1/search/filings", "/v1/datasets", "/v1/offerings"],
+        prefixes: ["/v1/filings", "/v1/filers", "/v1/document-versions", "/v1/search/filings", "/v1/datasets", "/v1/bulk", "/v1/offerings"],
     },
     {
         description: "Standardized and as-reported statements, ratios, growth, segments, facts with their source (e.g. AAPL).",

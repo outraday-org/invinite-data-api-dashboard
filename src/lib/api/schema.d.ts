@@ -492,6 +492,142 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/bulk/exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List company exports
+         * @description List the company exports of the calling account, newest first.
+         *
+         *     Each row is one export with its request, its `status` and, once `ready`, its file facts and `coverage`. Another account's exports are never listed; an expired export stays listed with `status` `expired` while its record is kept.
+         *
+         *     Returns `503` while bulk data is switched off.
+         */
+        get: operations["listBulkExports"];
+        put?: never;
+        /**
+         * Create a company export
+         * @description Create a company export of one parsed SEC data set over an exact date range.
+         *
+         *     Send `dataset`, `company` (tickers or issuer CIKs) and / or `filer` (CIKs), and `from` / `to`; `date_field` picks the date the range applies to. Each list takes up to 50 entries, at least one in all, over at most 3,660 days. A fund ticker in `company` is refused: send the fund's registrant CIK as `filer`.
+         *
+         *     The export runs in the background: poll it by `export_id` until `status` is `ready`, then download it; its file is kept for 7 days. An `nport` export covers listed funds with every holding and unlisted funds as holders only (`coverage.scope`), while the `nport` bulk files hold every fund.
+         *
+         *     Retry with the same `Idempotency-Key` to replay the first answer with `200`. Each new export counts against the account's daily export limit, and only a few exports may run at a time; over either the request is refused (`429`). Returns `503` while bulk data is switched off.
+         */
+        post: operations["createBulkExport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/bulk/exports/{export_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a company export
+         * @description Get one company export of the calling account by its id.
+         *
+         *     Poll it until `status` is `ready` (then download it) or `failed` (`error_code` says why). `coverage` states the days actually covered, the SEC releases read and, in `reason`, why the range was cut; an earlier part of the range is then only in the raw bulk files.
+         *
+         *     An expired export keeps its record with `status` `expired`; its file was deleted. Returns `404` for an unknown id or another account's export, and `503` while bulk data is switched off.
+         */
+        get: operations["getBulkExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/bulk/exports/{export_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a company export download URL
+         * @description Get a short-lived download URL for a ready company export.
+         *
+         *     The answer names the `url`, its `expires_at` and the file's `filename`, `bytes`, `sha256` and `content_type`. The URL is valid for 15 minutes at most, never past the export's own expiry, and grants access to this one file only: do not store or share it.
+         *
+         *     Returns `409` while the export is not `ready`, and `404` once it expired (its file was deleted) or for an unknown id or another account's export.
+         *
+         *     Each call counts against the account's daily download limit; over it the request is refused until the next UTC day. Returns `503` while bulk data is switched off.
+         */
+        get: operations["getBulkExportDownload"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/bulk/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List SEC bulk files
+         * @description List the downloadable SEC bulk files, newest release day first.
+         *
+         *     Narrow the list by `dataset`, `kind`, `format` and the SEC release day (`released_at.gte`, `released_at.lte`). A corrected or reloaded release gets a new file; set `include_superseded=true` to list the older ones too, which stay downloadable.
+         *
+         *     Raw files are the SEC's own release files as archived, for all eight data sets (`icsc` is a bare CSV, the others are zips). Parsed files flatten one release of `f13`, `f345`, `formd` or `nport` into one row per record with issuer identifiers added, as `csv_gz` and `parquet`.
+         *
+         *     Parsed `f13`, `f345` and `formd` files exist for releases built since launch; older periods are raw files only. Parsed `nport` files exist for every archived quarter and hold every fund. Returns `503` while bulk data is switched off.
+         */
+        get: operations["listBulkFiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/bulk/files/{file_id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a bulk file download URL
+         * @description Get a short-lived download URL for one SEC bulk file.
+         *
+         *     The answer names the `url`, its `expires_at` and the file's `filename`, `bytes`, `sha256` and `content_type`; check the SHA-256 after the download. A superseded file stays downloadable by its id.
+         *
+         *     The URL is valid for 15 minutes and grants access to this one file only: do not store or share it, request a new one when it expired. Returns `404` for an unknown `file_id` and `503` when the stored file cannot be served.
+         *
+         *     Each call counts against the account's daily download limit; over it the request is refused until the next UTC day. Returns `503` while bulk data is switched off.
+         */
+        get: operations["getBulkFileDownload"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/catalog/document-kinds": {
         parameters: {
             query?: never;
@@ -591,7 +727,7 @@ export interface paths {
          * List KPIs by sector
          * @description List the operating KPIs each sector catalog names, with their unit and the period kinds they are reported for.
          *
-         *     Use a `kpi_key` as the `kpi` filter of GET /v1/kpi-series. A company follows the catalog of its sector; `general` holds the KPIs every company can report.
+         *     Use a `kpi_key` as the `kpi` filter of GET /v1/kpi-series. A company follows the catalog of its sector; `general` is the catalog of companies outside the named sectors, not a set every company reports.
          */
         get: operations["listKpiCatalog"];
         put?: never;
@@ -5959,6 +6095,276 @@ export interface components {
             forms: Array<string>;
         };
         /**
+         * BulkFile
+         * @description One downloadable SEC bulk file: a raw SEC release file as archived (`kind` `raw`) or a parsed period file (`kind` `parsed`)
+         */
+        BulkFile: {
+            /**
+             * @description The file's id (download it with `GET /v1/bulk/files/{file_id}/download`)
+             * @example bf_01JDXQ8M6V3S2T4N5P7R9K0W1Y
+             */
+            file_id: string;
+            /**
+             * @description SEC data set: `f13` 13F holdings, `f345` Forms 3/4/5, `formd` Form D, `fsn` financial statements, `icsc` investment company series and classes, `ncen` Form N-CEN, `nport` Form N-PORT, `rr` risk/return summaries
+             * @example f13
+             * @enum {string}
+             */
+            dataset: "f13" | "f345" | "formd" | "fsn" | "icsc" | "ncen" | "nport" | "rr";
+            /**
+             * @description `raw` = the SEC's own release file as archived; `parsed` = one row per record with issuer identifiers added
+             * @example parsed
+             * @enum {string}
+             */
+            kind: "parsed" | "raw";
+            /**
+             * @description File format: `zip` / `csv` (raw; `icsc` is a bare CSV), `csv_gz` / `parquet` (parsed)
+             * @example csv_gz
+             * @enum {string}
+             */
+            format: "csv" | "csv_gz" | "parquet" | "zip";
+            /**
+             * @description The SEC release period the file belongs to
+             * @example 2026q3
+             */
+            period_key: string;
+            /**
+             * Format: date
+             * @description First day the release covers
+             * @example 2026-07-01
+             */
+            coverage_start: null | string;
+            /**
+             * Format: date
+             * @description Last day the release covers
+             * @example 2026-09-30
+             */
+            coverage_end: null | string;
+            /**
+             * Format: date
+             * @description Day the SEC published the release
+             * @example 2026-10-15
+             */
+            released_at: string;
+            /**
+             * @description File name the download is saved under
+             * @example sec-f13-2026q3.csv.gz
+             */
+            filename: string;
+            /**
+             * @description Media type of the file
+             * @example application/gzip
+             */
+            content_type: string;
+            /**
+             * @description File size in bytes
+             * @example 48213377
+             */
+            bytes: number;
+            /**
+             * @description SHA-256 of the file (hex); check it after the download
+             * @example 9f2c4e8a1b7d3f6e0a5c9b2d8e4f7a1c3b6d9e2f5a8c1b4d7e0f3a6c9b2e5d8f
+             */
+            sha256: string;
+            /**
+             * @description Rows in a parsed file; null for a raw file
+             * @example 3184212
+             */
+            row_count: null | number;
+            /**
+             * @description Column schema version of a parsed file; null for a raw file
+             * @example f13.v1
+             */
+            schema_version: null | string;
+            /** @description The newer file of the same release, kind and format; null while this file is current (a superseded file stays downloadable) */
+            superseded_by: null | string;
+        };
+        /**
+         * BulkDownload
+         * @description A short-lived download URL of one file
+         */
+        BulkDownload: {
+            /**
+             * Format: uri
+             * @description Download URL, valid until `expires_at`; it grants access to this one file: do not store, log or share it
+             * @example https://storage.example.com/bulk/sec-f13-2026q3.csv.gz?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=…
+             */
+            url: string;
+            /**
+             * Format: date-time
+             * @description When the URL stops working (15 minutes after the request, never after an export's own expiry)
+             * @example 2026-11-26T16:15:00Z
+             */
+            expires_at: string;
+            /**
+             * @description File name the download is saved under
+             * @example sec-f13-2026q3.csv.gz
+             */
+            filename: string;
+            /**
+             * @description File size in bytes
+             * @example 48213377
+             */
+            bytes: number;
+            /**
+             * @description SHA-256 of the file (hex); check it after the download
+             * @example 9f2c4e8a1b7d3f6e0a5c9b2d8e4f7a1c3b6d9e2f5a8c1b4d7e0f3a6c9b2e5d8f
+             */
+            sha256: string;
+            /**
+             * @description Media type of the file
+             * @example application/gzip
+             */
+            content_type: string;
+        };
+        /**
+         * BulkExport
+         * @description One company export of the account: `queued` → `running` → `ready` or `failed`; `expired` once its file was deleted
+         */
+        BulkExport: {
+            /**
+             * @description The export's id
+             * @example bx_01JDXR2A4B6C8D0E2F4G6H8J0K
+             */
+            export_id: string;
+            /**
+             * @description `queued`, `running`, `ready` (download it), `failed` (`error_code`), `expired` (its file was deleted)
+             * @example ready
+             * @enum {string}
+             */
+            status: "expired" | "failed" | "queued" | "ready" | "running";
+            /**
+             * @description Parsed data set
+             * @example f13
+             * @enum {string}
+             */
+            dataset: "f13" | "f345" | "formd" | "nport";
+            /**
+             * @description File format
+             * @example csv_gz
+             * @enum {string}
+             */
+            format: "csv_gz" | "parquet";
+            /**
+             * @description The issuers filtered on, as 10-digit CIKs (tickers resolved at submission)
+             * @example [
+             *       "0000320193"
+             *     ]
+             */
+            company_ciks: Array<string>;
+            /**
+             * @description The filers filtered on, as 10-digit CIKs
+             * @example []
+             */
+            filer_ciks: Array<string>;
+            /**
+             * @description The date the range applies to
+             * @example filed_date
+             * @enum {string}
+             */
+            date_field: "filed_date" | "first_sale_date" | "period_of_report" | "report_date" | "transaction_date";
+            /**
+             * Format: date
+             * @description First day of the requested range
+             * @example 2026-01-01
+             */
+            from: string;
+            /**
+             * Format: date
+             * @description Last day of the requested range
+             * @example 2026-06-30
+             */
+            to: string;
+            /**
+             * Format: date-time
+             * @description When the export was submitted
+             * @example 2026-11-26T15:58:02Z
+             */
+            created_at: string;
+            /**
+             * Format: date-time
+             * @description When the export started running
+             * @example 2026-11-26T15:58:10Z
+             */
+            started_at: null | string;
+            /**
+             * Format: date-time
+             * @description When the export finished (ready or failed)
+             * @example 2026-11-26T16:01:44Z
+             */
+            finished_at: null | string;
+            /**
+             * Format: date-time
+             * @description When the export's file is deleted (7 days after it finished)
+             * @example 2026-12-03T16:01:44Z
+             */
+            expires_at: null | string;
+            /**
+             * @description File name of a ready export
+             * @example sec-f13-export-2026-01-01-2026-06-30.csv.gz
+             */
+            filename: null | string;
+            /**
+             * @description File size in bytes of a ready export
+             * @example 1830417
+             */
+            bytes: null | number;
+            /**
+             * @description SHA-256 of a ready export's file (hex)
+             * @example 4b7e1d9c2a5f8e3b6d0c4a7f1e9b2d5c8a3f6e1b4d7c0a9e2f5b8d1c4a7e3f6b
+             */
+            sha256: null | string;
+            /**
+             * @description Rows in a ready export
+             * @example 20517
+             */
+            row_count: null | number;
+            /**
+             * @description Column schema version (the data set's parsed bulk files use the same one)
+             * @example f13.v1
+             */
+            schema_version: null | string;
+            /** @description Why a failed export failed (`scratch_full`, `internal`) */
+            error_code: null | string;
+            /** @description What a ready export covers; null before it is ready */
+            coverage: components["schemas"]["BulkExportCoverage"] | null;
+        };
+        /**
+         * BulkExportCoverage
+         * @description What a ready export covers
+         */
+        BulkExportCoverage: {
+            /**
+             * Format: date
+             * @description First day actually covered
+             * @example 2026-01-01
+             */
+            from: null | string;
+            /**
+             * Format: date
+             * @description Last day actually covered
+             * @example 2026-06-30
+             */
+            through: null | string;
+            /**
+             * @description The SEC release periods read
+             * @example [
+             *       "2026q1",
+             *       "2026q2"
+             *     ]
+             */
+            releases: Array<string>;
+            /**
+             * @description Why the range was cut: `before_postgres_window` (the earlier data is only in the raw bulk files), `capped_window` (a period date range read releases filed up to one year after `to`); null when complete
+             * @example before_postgres_window
+             */
+            reason: null | string;
+            /**
+             * @description nport only: `listed_funds_full_unlisted_funds_holders_only` (listed funds with every holding, unlisted funds as holders only; the nport bulk files hold every fund); null for the other data sets
+             * @example listed_funds_full_unlisted_funds_holders_only
+             */
+            scope: null | string;
+        };
+        /**
          * DocumentVersion
          * @description One immutable document version
          */
@@ -8588,7 +8994,7 @@ export interface components {
              */
             metric: string;
             /**
-             * @description Normalized key; `other:<label>` for a measure outside the named keys
+             * @description Normalized key; `other:<slug of the printed label>` for a measure outside the named keys
              * @example eps_adjusted_diluted
              */
             metric_key: string;
@@ -12495,6 +12901,111 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    createBulkExport: {
+        parameters: {
+            query?: never;
+            header?: {
+                /**
+                 * @description Replays the first answer for 24 h (a replay answers 200); 409 while in flight (R13)
+                 * @example 6f1c0f3e-7b7a-4a8e-9d63-3c1b2f0e9a11
+                 */
+                "Idempotency-Key"?: string;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        /** @description A company export: one parsed data set filtered by companies and / or filers over a date range (at least one company or filer, at most 3,660 days, `from` not after `to`) */
+        requestBody: {
+            content: {
+                /**
+                 * @example {
+                 *       "dataset": "f13",
+                 *       "format": "csv_gz",
+                 *       "company": [
+                 *         "AAPL"
+                 *       ],
+                 *       "date_field": "period_of_report",
+                 *       "from": "2026-01-01",
+                 *       "to": "2026-06-30"
+                 *     }
+                 */
+                "application/json": {
+                    /**
+                     * @description Parsed data set: `f13` 13F holdings, `f345` Forms 3/4/5, `formd` Form D, `nport` Form N-PORT
+                     * @enum {string}
+                     */
+                    dataset: "f13" | "f345" | "formd" | "nport";
+                    /**
+                     * @description File format
+                     * @default csv_gz
+                     * @enum {string}
+                     */
+                    format?: "csv_gz" | "parquet";
+                    /** @description Issuers (0–50): tickers or CIKs. f13 / nport: holdings of these issuers; f345: their insiders' filings; formd: their offerings */
+                    company?: Array<string>;
+                    /** @description Filers (0–50), CIKs only. f13: the 13F manager; f345: any reporting owner; nport: the fund registrant; not available for formd */
+                    filer?: Array<string>;
+                    /**
+                     * @description The date `from` / `to` apply to (default `filed_date`): f13 `filed_date` / `period_of_report`, f345 `filed_date` / `transaction_date`, formd `filed_date` / `first_sale_date`, nport `filed_date` / `report_date`
+                     * @enum {string}
+                     */
+                    date_field?: "filed_date" | "first_sale_date" | "period_of_report" | "report_date" | "transaction_date";
+                    /** @description First day of the range, inclusive (YYYY-MM-DD) */
+                    from: string;
+                    /** @description Last day of the range, inclusive (YYYY-MM-DD) */
+                    to: string;
+                };
+            };
+        };
+        responses: {
+            /** @description The export an earlier identical request with the same Idempotency-Key created (nothing new submitted) */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkExport"];
+                };
+            };
+            /** @description The export, queued */
+            202: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["BulkExport"];
+                };
+            };
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     createDestination: {
         parameters: {
             query?: never;
@@ -14670,6 +15181,202 @@ export interface operations {
                      *     }
                      */
                     "application/json": components["schemas"]["Audio"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getBulkExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The export's `export_id`
+                 * @example bx_01JDXR2A4B6C8D0E2F4G6H8J0K
+                 */
+                export_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The resource */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "export_id": "bx_01M8CXZQFG001Y97MXNRP25VK9",
+                     *       "status": "ready",
+                     *       "dataset": "f13",
+                     *       "format": "parquet",
+                     *       "company_ciks": [
+                     *         "0000320193"
+                     *       ],
+                     *       "filer_ciks": [],
+                     *       "date_field": "period_of_report",
+                     *       "from": "2025-01-01",
+                     *       "to": "2025-06-30",
+                     *       "created_at": "2026-11-26T22:00:31.479Z",
+                     *       "started_at": "2026-11-26T22:20:12.931Z",
+                     *       "finished_at": "2026-11-26T22:21:13.828Z",
+                     *       "expires_at": "2026-12-03T22:21:13.828Z",
+                     *       "filename": "sec-f13-export-2025-01-01-2025-06-30.parquet",
+                     *       "bytes": 748632,
+                     *       "sha256": "d8607e376d80217e7a9ec3085d25b92f0658d1088b8b4126dfb685dbeceab3d5",
+                     *       "row_count": 19139,
+                     *       "schema_version": "1",
+                     *       "error_code": null,
+                     *       "coverage": {
+                     *         "from": "2025-01-01",
+                     *         "through": "2025-06-30",
+                     *         "releases": [
+                     *           "01dec2024-28feb2025"
+                     *         ],
+                     *         "reason": null,
+                     *         "scope": null
+                     *       }
+                     *     }
+                     */
+                    "application/json": components["schemas"]["BulkExport"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getBulkExportDownload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The export's `export_id`
+                 * @example bx_01JDXR2A4B6C8D0E2F4G6H8J0K
+                 */
+                export_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The download URL */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "url": "https://ACCOUNT.r2.cloudflarestorage.com/BUCKET/KEY?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=REDACTED",
+                     *       "expires_at": "2026-11-26T22:38:34.411Z",
+                     *       "filename": "sec-f13-export-2025-01-01-2025-06-30.parquet",
+                     *       "bytes": 748632,
+                     *       "sha256": "d8607e376d80217e7a9ec3085d25b92f0658d1088b8b4126dfb685dbeceab3d5",
+                     *       "content_type": "application/vnd.apache.parquet"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["BulkDownload"];
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            409: components["responses"]["Conflict"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    getBulkFileDownload: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description The bulk file's `file_id`
+                 * @example bf_01JDXQ8M6V3S2T4N5P7R9K0W1Y
+                 */
+                file_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The download URL */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "url": "https://ACCOUNT.r2.cloudflarestorage.com/BUCKET/KEY?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=REDACTED",
+                     *       "expires_at": "2026-11-26T22:38:33.537Z",
+                     *       "filename": "sec-f13-01jun2026-31aug2026-parsed-v1.csv.gz",
+                     *       "bytes": 117411336,
+                     *       "sha256": "5416eaf8709d67e755dbfe09dc07153b1ab9ddbab24203ddd72c44acd95607ee",
+                     *       "content_type": "application/gzip"
+                     *     }
+                     */
+                    "application/json": components["schemas"]["BulkDownload"];
                 };
             };
             304: components["responses"]["NotModified"];
@@ -20128,6 +20835,253 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listBulkExports: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "export_id": "bx_01M8CXZQFG001Y97MXNRP25VK9",
+                     *           "status": "ready",
+                     *           "dataset": "f13",
+                     *           "format": "parquet",
+                     *           "company_ciks": [
+                     *             "0000320193"
+                     *           ],
+                     *           "filer_ciks": [],
+                     *           "date_field": "period_of_report",
+                     *           "from": "2025-01-01",
+                     *           "to": "2025-06-30",
+                     *           "created_at": "2026-11-26T22:00:31.479Z",
+                     *           "started_at": "2026-11-26T22:20:12.931Z",
+                     *           "finished_at": "2026-11-26T22:21:13.828Z",
+                     *           "expires_at": "2026-12-03T22:21:13.828Z",
+                     *           "filename": "sec-f13-export-2025-01-01-2025-06-30.parquet",
+                     *           "bytes": 748632,
+                     *           "sha256": "d8607e376d80217e7a9ec3085d25b92f0658d1088b8b4126dfb685dbeceab3d5",
+                     *           "row_count": 19139,
+                     *           "schema_version": "1",
+                     *           "error_code": null,
+                     *           "coverage": {
+                     *             "from": "2025-01-01",
+                     *             "through": "2025-06-30",
+                     *             "releases": [
+                     *               "01dec2024-28feb2025"
+                     *             ],
+                     *             "reason": null,
+                     *             "scope": null
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["BulkExport"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listBulkFiles: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+                /**
+                 * @description Only files of this SEC data set
+                 * @example f13
+                 */
+                "dataset"?: "f13" | "f345" | "formd" | "fsn" | "icsc" | "ncen" | "nport" | "rr";
+                /**
+                 * @description Only raw SEC release files or parsed period files
+                 * @example parsed
+                 */
+                "kind"?: "parsed" | "raw";
+                /**
+                 * @description Only files of this format
+                 * @example csv_gz
+                 */
+                "format"?: "csv" | "csv_gz" | "parquet" | "zip";
+                /**
+                 * @description `released_at` on or after this day
+                 * @example 2026-01-01
+                 */
+                "released_at.gte"?: string;
+                /**
+                 * @description `released_at` on or before this day
+                 * @example 2026-11-26
+                 */
+                "released_at.lte"?: string;
+                /**
+                 * @description true = also list the files a newer file of the same release replaced
+                 * @example false
+                 */
+                "include_superseded"?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "file_id": "bf_01M8CTRB9NHDPCD2YVF86K1NB6",
+                     *           "dataset": "f13",
+                     *           "kind": "parsed",
+                     *           "format": "csv_gz",
+                     *           "period_key": "01jun2026-31aug2026",
+                     *           "coverage_start": "2026-06-01",
+                     *           "coverage_end": "2026-08-31",
+                     *           "released_at": "2026-09-14",
+                     *           "filename": "sec-f13-01jun2026-31aug2026-parsed-v1.csv.gz",
+                     *           "content_type": "application/gzip",
+                     *           "bytes": 117411336,
+                     *           "sha256": "5416eaf8709d67e755dbfe09dc07153b1ab9ddbab24203ddd72c44acd95607ee",
+                     *           "row_count": 3830274,
+                     *           "schema_version": "1",
+                     *           "superseded_by": null
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["BulkFile"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listCagr: {
         parameters: {
             query: {
@@ -25177,7 +26131,7 @@ export interface operations {
                  */
                 "kpi"?: string;
                 /**
-                 * @description Period kinds, comma list: `quarter`, `half`, `nine_months`, `year` (a flow over that period) or `instant` (a value at the period end)
+                 * @description Period kinds, comma list: `quarter`, `half`, `nine_months`, `year` (a flow over that period) or `instant` (a value at the period end). Any other value is a 400
                  * @example quarter
                  */
                 "period_kind"?: string;
@@ -26405,12 +27359,12 @@ export interface operations {
                  */
                 "event"?: string;
                 /**
-                 * @description Metric keys, comma list: `eps_adjusted_diluted`, `ebitda_adjusted`, `free_cash_flow`, `ffo_per_share`, … A measure outside the named keys is `other:<label>`
+                 * @description Metric keys, comma list: `eps_adjusted_diluted`, `ebitda_adjusted`, `free_cash_flow`, `ffo_per_share`, … A measure outside the named keys is `other:<slug of the printed label>`
                  * @example eps_adjusted_diluted
                  */
                 "metric"?: string;
                 /**
-                 * @description Period kinds, comma list: `quarter`, `half`, `nine_months`, `year` (a flow over that period) or `instant` (a value at the period end)
+                 * @description Period kinds, comma list: `quarter`, `half`, `nine_months`, `year` (a flow over that period) or `instant` (a value at the period end). Any other value is a 400
                  * @example quarter
                  */
                 "period_kind"?: string;
@@ -29200,7 +30154,7 @@ export interface operations {
                              * @description Product family
                              * @enum {string}
                              */
-                            family: "alerts" | "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "ownership_forms" | "sec_filings";
+                            family: "alerts" | "bulk_data" | "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "ownership_forms" | "sec_filings";
                             /**
                              * @description Over the last 24 hours; too little traffic to judge reads as operational
                              * @enum {string}
@@ -29219,7 +30173,7 @@ export interface operations {
                              * @description Docs group of the v2 API
                              * @enum {string}
                              */
-                            group: "alert_events" | "alert_users" | "alerts" | "calendar" | "call_analytics" | "catalog" | "companies" | "corporate_actions" | "destinations" | "events" | "filings" | "financials" | "funds" | "guidance" | "holdings" | "insider_trades" | "instruments" | "investor_documents" | "macro" | "metrics" | "news" | "offerings" | "ownership" | "scripts" | "transcripts";
+                            group: "alert_events" | "alert_users" | "alerts" | "bulk_data" | "calendar" | "call_analytics" | "catalog" | "companies" | "corporate_actions" | "destinations" | "events" | "filings" | "financials" | "funds" | "guidance" | "holdings" | "insider_trades" | "instruments" | "investor_documents" | "macro" | "metrics" | "news" | "offerings" | "ownership" | "scripts" | "transcripts";
                             /** @description Docs group title (e.g. Insider trades) */
                             name: string;
                             /**
@@ -29440,7 +30394,7 @@ export interface operations {
                              * @description Product family
                              * @enum {string}
                              */
-                            family: "account" | "alerts" | "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "ownership_forms" | "sec_filings" | "websocket";
+                            family: "account" | "alerts" | "bulk_data" | "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "ownership_forms" | "sec_filings" | "websocket";
                             routes: Array<{
                                 /** @description Fastify route pattern; `#` = WebSocket channel */
                                 route: string;

@@ -379,6 +379,24 @@ export type V2SecDataset = V2DatasetsResponse["data"][number];
 /** `meta.index.matches` of a search without a company filter (null when the search names one). */
 export type V2FilingSearchMatches = NonNullable<SecSearchCoverage["matches"]>;
 
+// SEC bulk data (Data API 12.2, backend tasks/sec-bulk-downloads task 8; tag "Bulk data", Enterprise, 0 credits): the
+// downloadable files (raw SEC release files and parsed period files), the account's company exports, and the
+// short-lived download URL of one file (`BulkDownload.url`: never kept in the browser beyond the click).
+export type BulkFilesResponse = ApiResponse<"/v1/bulk/files", "get">;
+export type BulkFile = BulkFilesResponse["data"][number];
+export type BulkFileDataset = BulkFile["dataset"];
+export type BulkFileKind = BulkFile["kind"];
+export type BulkFileFormat = BulkFile["format"];
+export type BulkExportsResponse = ApiResponse<"/v1/bulk/exports", "get">;
+export type BulkExport = ApiResponse<"/v1/bulk/exports/{export_id}", "get">;
+export type BulkExportStatus = BulkExport["status"];
+export type BulkExportDataset = BulkExport["dataset"];
+export type BulkExportFormat = BulkExport["format"];
+export type BulkExportDateField = BulkExport["date_field"];
+export type BulkExportCoverage = NonNullable<BulkExport["coverage"]>;
+export type BulkDownload = ApiResponse<"/v1/bulk/files/{file_id}/download", "get">;
+export type CreateBulkExportRequest = NonNullable<paths["/v1/bulk/exports"]["post"]["requestBody"]>["content"]["application/json"];
+
 // Reference (backend tasks/data-api-dashboard O7 group 7): the catalogs, the companies list and the API's status.
 export type V2MetricCatalogResponse = ApiResponse<"/v1/catalog/metrics", "get">;
 export type V2MetricCatalogEntry = V2MetricCatalogResponse["data"][number];

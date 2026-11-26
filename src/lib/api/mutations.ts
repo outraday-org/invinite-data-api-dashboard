@@ -8,17 +8,22 @@ import { useApiKeyStore } from "@/lib/stores/api-key-store";
 import { ApiRequestError, rethrowApiError } from "./errors";
 import { batchAlertUsers, deleteAlertUser, pauseAlertUser, resumeAlertUser, updateAlertUser, updateAlertUserDefaults } from "./server-functions-alert-users";
 import { batchAlerts, createAlert, deleteAlert, pauseAlert, resumeAlert, testAlert, updateAlert } from "./server-functions-alerts";
+import { createBulkExport, getBulkExportDownload, getBulkFileDownload } from "./server-functions-bulk";
 import { createDestination, deleteDestination, rotateDestinationSecret, testDestination, updateDestination } from "./server-functions-destinations";
 import { createScript, createScriptVersion, deleteScript } from "./server-functions-scripts";
 
 /**
  * The write layer (backend tasks/data-api-dashboard 2-alerts task 2): one entry per write operation (A3 appends the
- * destination writes, A4 the alert-user / script writes), each a `POST` server function.
+ * destination writes, A4 the alert-user / script writes), each a `POST` server function. The two bulk downloads
+ * (`getBulkFileDownload`, `getBulkExportDownload`, sec-bulk-downloads task 8) are reads in the API, but each one counts
+ * against the account's daily download cap and answers a short-lived signed URL: they run like writes — only on a click,
+ * never cached (`gcTime: 0`, reset once the click used the URL), their answer redacted in the request panel.
  */
 const WRITES = {
     batchAlerts,
     batchAlertUsers,
     createAlert,
+    createBulkExport,
     createDestination,
     createScript,
     createScriptVersion,
@@ -26,6 +31,8 @@ const WRITES = {
     deleteAlertUser,
     deleteDestination,
     deleteScript,
+    getBulkExportDownload,
+    getBulkFileDownload,
     pauseAlert,
     pauseAlertUser,
     resumeAlert,
@@ -58,14 +65,17 @@ export const writeMutationKey = (operationId: WriteOperationId) => ["write", ope
  * Runs one write through its server function. No optimistic update: on success the listed query keys are refetched
  * (the page shows the server's answer); on error the caller gets the revived `ApiRequestError` (status, code, `param`,
  * `errors[]`, request id) and decides — this hook never toasts, so nothing is said twice. Never retried. Buttons
- * disable themselves while `isPending` (only `createAlert` / A3's `createDestination` take an `Idempotency-Key`).
+ * disable themselves while `isPending` (only `createAlert` / A3's `createDestination` / `createBulkExport` take an
+ * `Idempotency-Key`). `gcTime` = how long a settled write stays in the cache once no component holds it (default 5
+ * minutes, the request panel's "Writes"); `0` drops it at once (the bulk downloads' signed URL).
  */
-export function useApiMutation<TOperation extends WriteOperationId>(operationId: TOperation, { invalidates }: { invalidates: Invalidates<TOperation> }) {
+export function useApiMutation<TOperation extends WriteOperationId>(operationId: TOperation, { gcTime, invalidates }: { gcTime?: number; invalidates: Invalidates<TOperation> }) {
     const queryClient = useQueryClient();
 
     const apiKey = useApiKeyStore(s => s.apiKey);
 
     return useMutation<WriteResult<TOperation>, Error, WriteInput<TOperation>>({
+        ...(gcTime === undefined ? {} : { gcTime }),
         mutationFn: (input) => {
             // One table of server functions with different inputs: the entry of `operationId` takes `WriteInput<TOperation>`.
             const run = WRITES[operationId] as unknown as (options: { data: unknown }) => Promise<WriteResult<TOperation>>;

@@ -120,6 +120,10 @@
       "name": "FilingsApi",
       "pythonModule": "filings_api"
     },
+    "Bulk data": {
+      "name": "BulkDataApi",
+      "pythonModule": "bulk_data_api"
+    },
     "Holders": {
       "name": "HoldersApi",
       "pythonModule": "holders_api"
@@ -286,6 +290,10 @@
       "tsName": "cursor",
       "pyName": "cursor"
     },
+    "dataset": {
+      "tsName": "dataset",
+      "pyName": "dataset"
+    },
     "date.gt": {
       "tsName": "dateGt",
       "pyName": "date_gt"
@@ -378,6 +386,10 @@
       "tsName": "expand",
       "pyName": "expand"
     },
+    "export_id": {
+      "tsName": "exportId",
+      "pyName": "export_id"
+    },
     "external_user_id": {
       "tsName": "externalUserId",
       "pyName": "external_user_id"
@@ -401,6 +413,10 @@
     "fields": {
       "tsName": "fields",
       "pyName": "fields"
+    },
+    "file_id": {
+      "tsName": "fileId",
+      "pyName": "file_id"
     },
     "filed_at.gt": {
       "tsName": "filedAtGt",
@@ -458,6 +474,10 @@
       "tsName": "form",
       "pyName": "form"
     },
+    "format": {
+      "tsName": "format",
+      "pyName": "format"
+    },
     "from": {
       "tsName": "from",
       "pyName": "var_from"
@@ -481,6 +501,10 @@
     "include_operators": {
       "tsName": "includeOperators",
       "pyName": "include_operators"
+    },
+    "include_superseded": {
+      "tsName": "includeSuperseded",
+      "pyName": "include_superseded"
     },
     "industry": {
       "tsName": "industry",
@@ -705,6 +729,14 @@
     "reference_date.lte": {
       "tsName": "referenceDateLte",
       "pyName": "reference_date_lte"
+    },
+    "released_at.gte": {
+      "tsName": "releasedAtGte",
+      "pyName": "released_at_gte"
+    },
+    "released_at.lte": {
+      "tsName": "releasedAtLte",
+      "pyName": "released_at_lte"
     },
     "reported_only": {
       "tsName": "reportedOnly",
@@ -1955,6 +1987,91 @@
       "tsMethod": "listFactPlaces",
       "pyMethod": "list_fact_places"
     },
+    "listBulkFiles": {
+      "label": "GET /v1/bulk/files",
+      "operationId": "listBulkFiles",
+      "tag": "Bulk data",
+      "params": [
+        "fields",
+        "limit",
+        "cursor",
+        "dataset",
+        "kind",
+        "format",
+        "released_at.gte",
+        "released_at.lte",
+        "include_superseded"
+      ],
+      "hasBody": false,
+      "className": "BulkDataApi",
+      "tsMethod": "listBulkFiles",
+      "pyMethod": "list_bulk_files"
+    },
+    "getBulkFileDownload": {
+      "label": "GET /v1/bulk/files/{file_id}/download",
+      "operationId": "getBulkFileDownload",
+      "tag": "Bulk data",
+      "params": [
+        "file_id"
+      ],
+      "hasBody": false,
+      "className": "BulkDataApi",
+      "tsMethod": "getBulkFileDownload",
+      "pyMethod": "get_bulk_file_download"
+    },
+    "createBulkExport": {
+      "label": "POST /v1/bulk/exports",
+      "operationId": "createBulkExport",
+      "tag": "Bulk data",
+      "params": [],
+      "hasBody": true,
+      "className": "BulkDataApi",
+      "tsMethod": "createBulkExport",
+      "pyMethod": "create_bulk_export",
+      "body": {
+        "tsName": "createBulkExportRequest",
+        "pyName": "create_bulk_export_request",
+        "model": "CreateBulkExportRequest"
+      }
+    },
+    "listBulkExports": {
+      "label": "GET /v1/bulk/exports",
+      "operationId": "listBulkExports",
+      "tag": "Bulk data",
+      "params": [
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "BulkDataApi",
+      "tsMethod": "listBulkExports",
+      "pyMethod": "list_bulk_exports"
+    },
+    "getBulkExport": {
+      "label": "GET /v1/bulk/exports/{export_id}",
+      "operationId": "getBulkExport",
+      "tag": "Bulk data",
+      "params": [
+        "export_id"
+      ],
+      "hasBody": false,
+      "className": "BulkDataApi",
+      "tsMethod": "getBulkExport",
+      "pyMethod": "get_bulk_export"
+    },
+    "getBulkExportDownload": {
+      "label": "GET /v1/bulk/exports/{export_id}/download",
+      "operationId": "getBulkExportDownload",
+      "tag": "Bulk data",
+      "params": [
+        "export_id"
+      ],
+      "hasBody": false,
+      "className": "BulkDataApi",
+      "tsMethod": "getBulkExportDownload",
+      "pyMethod": "get_bulk_export_download"
+    },
     "listHolders": {
       "label": "GET /v1/holders",
       "operationId": "listHolders",
@@ -3196,6 +3313,10 @@
       "BatchAlertsRequest",
       "BeneficialOwnershipFiling",
       "BeneficialOwnershipHolder",
+      "BulkDownload",
+      "BulkExport",
+      "BulkExportCoverage",
+      "BulkFile",
       "CagrPeriod",
       "Company",
       "CompanyCoverage",
@@ -3203,6 +3324,7 @@
       "CompanyListItem",
       "CompanyRef",
       "CreateAlertRequest",
+      "CreateBulkExportRequest",
       "CreateDestinationRequest",
       "CreateScriptRequest",
       "CreateScriptVersionRequest",
@@ -3341,6 +3463,9 @@
       "ListAnnouncements200Response",
       "ListBeneficialOwnershipFilings200Response",
       "ListBeneficialOwnershipFilings200ResponseMeta",
+      "ListBulkExports200Response",
+      "ListBulkFiles200Response",
+      "ListBulkFiles200ResponseMeta",
       "ListCagr200Response",
       "ListCompanies200Response",
       "ListDatasets200Response",
@@ -3376,7 +3501,6 @@
       "ListGrowth200Response",
       "ListGuidance200Response",
       "ListHolderChanges200Response",
-      "ListHolderChanges200ResponseMeta",
       "ListHolders200Response",
       "ListHolders200ResponseMeta",
       "ListHolders200ResponseMetaSectionsInner",
@@ -3593,6 +3717,10 @@
       "BatchAlertsRequest",
       "BeneficialOwnershipFiling",
       "BeneficialOwnershipHolder",
+      "BulkDownload",
+      "BulkExport",
+      "BulkExportCoverage",
+      "BulkFile",
       "CagrPeriod",
       "Company",
       "CompanyCoverage",
@@ -3600,6 +3728,7 @@
       "CompanyListItem",
       "CompanyRef",
       "CreateAlertRequest",
+      "CreateBulkExportRequest",
       "CreateDestinationRequest",
       "CreateScriptRequest",
       "CreateScriptVersionRequest",
@@ -3738,6 +3867,9 @@
       "ListAnnouncements200Response",
       "ListBeneficialOwnershipFilings200Response",
       "ListBeneficialOwnershipFilings200ResponseMeta",
+      "ListBulkExports200Response",
+      "ListBulkFiles200Response",
+      "ListBulkFiles200ResponseMeta",
       "ListCagr200Response",
       "ListCompanies200Response",
       "ListDatasets200Response",
@@ -3773,7 +3905,6 @@
       "ListGrowth200Response",
       "ListGuidance200Response",
       "ListHolderChanges200Response",
-      "ListHolderChanges200ResponseMeta",
       "ListHolders200Response",
       "ListHolders200ResponseMeta",
       "ListHolders200ResponseMetaSectionsInner",
@@ -3938,9 +4069,9 @@
   "provenance": {
     "repository": "https://github.com/outraday-org/invinite-data-api",
     "version": "1.0.0",
-    "specSha256": "55a3697a8cb8096c8e784e80e3dca30bfb181f924f9b56269b3fab88fa7c72ad",
+    "specSha256": "ed91cd905ac88c8f89ab1bd96a9b28f21a7801708ea4f0c7914b1ced3b527de8",
     "sourceHashes": {
-      "openapi.json": "55a3697a8cb8096c8e784e80e3dca30bfb181f924f9b56269b3fab88fa7c72ad",
+      "openapi.json": "ed91cd905ac88c8f89ab1bd96a9b28f21a7801708ea4f0c7914b1ced3b527de8",
       "openapitools.json": "0350a3db0a0a0adf49a7c7cdefe7eff466964480780e911b197763d202db1390",
       "package.json": "5d390b47e5d8b7947e6855707fe67811024aa784dd5fac9f170554a7746d4318",
       "scripts/check-data-sdk-names.ts": "fe5f33fd4600c25639d85f4237c84213e5611b42505bc3b224f7e1b0ce6e89f9",
@@ -3948,8 +4079,8 @@
       "scripts/reference-artifacts.ts": "0ef8e67cb5454a3f50f43de77b0be1aebb7897164ddf3f5288b58dc7d0f47255",
       "sdks/data/config/python.json": "8f90ab7c0fd25e125c0c6618ae6e09119ef0b5045818c098fd8b259d1888dd5f",
       "sdks/data/config/typescript.json": "69139143672ed147b18c217784cbed3bf609ebeb6b5fbd00617e09344b99c4f2",
-      "sdks/data/readme/python.md": "2cde207c6d34a0b3c33c19156d101a85afb45a33f466fc26a7934556ab7cd2d4",
-      "sdks/data/readme/typescript.md": "034ade28f227363020279eb7e20e3537e9ded810f09f15d7c0554aaf082e72f1",
+      "sdks/data/readme/python.md": "2bd08867fec6e7447c789c93dc6510814ec123f8a521014cf6553534bb788655",
+      "sdks/data/readme/typescript.md": "0626313fe89224edfc43b50410042084d783600cae5cfea118ef3cef05d031c2",
       "sdks/data/sdk-naming.ts": "2738bc0f84f4c91aea3122b2ce4ea64d9bbe69f12790b6781b691f28e1c6df78",
       "sdks/data/templates/python/errors.mustache": "d5ec344532b707b5d4d7984af7cf80c0c16f04506b4e5771a1c31ab28d2ed576",
       "sdks/data/templates/python/model_generic.mustache": "40085979b609eb8215471b0b25aa2b69998e0f9861733f1c6f25747519093df0",
@@ -3964,7 +4095,7 @@
       "sdks/data/templates/typescript/pagination.mustache": "190dc450794bc089117af5b5c2f7b2ff707dc2bf6175e49465c393cdba89b395",
       "sdks/data/templates/typescript/webhooks.mustache": "757001711eafe57e914c05cd6b2d86b5555c4d32d80bf3b1a94e4f570df0c20a"
     },
-    "revision": "7509d1de1cfbf2a2e9a5a9ef9d9a0adbd20737f6",
-    "fingerprint": "bcb597bc14a8d412835ee087638badc5cc57c3d3badb3a9f2478a234fa0e9796"
+    "revision": "6b73f048d71e607ca5e4b8d967162f3753517f16",
+    "fingerprint": "79e39781259c39bb69d7ac94294586cbdd5624c4bb1edef30fdb381c69d40ac6"
   }
 }
