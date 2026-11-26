@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBulkFilesInfinite, useKeyState, useV2DatasetsInfinite } from "@/lib/api/queries";
 import { DASH, formatDay } from "@/lib/format";
 import { titleHead, WRAPPING_TABS_LIST_CLASS } from "@/lib/layout";
-import { BULK_FILE_DATASETS, BULK_KINDS, BULK_TAB_LABELS, BULK_TABS, bulkFilesQuery, bulkPlanGate, formatsOf } from "@/lib/sec/bulk";
+import { BULK_FILE_DATASETS, BULK_FILE_FORMATS, BULK_KINDS, BULK_TAB_LABELS, BULK_TABS, bulkFilesQuery, bulkPlanGate } from "@/lib/sec/bulk";
 import { DATASET_LABELS } from "@/lib/sec/datasets";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { IN_PLACE, optionalDay, optionalEnum, optionalFlag } from "@/lib/url-state";
@@ -32,7 +32,7 @@ import { BulkPlanNotice } from "./-components/bulk-plan-notice";
 export const secBulkSearchSchema = z.object({
     dataset: optionalEnum(BULK_FILE_DATASETS),
     export: z.string().regex(/^bx_[0-9A-HJKMNP-TV-Z]{26}$/).optional().catch(undefined),
-    format: optionalEnum(formatsOf(undefined) as readonly ["zip", "csv", "csv_gz", "parquet"]),
+    format: optionalEnum(BULK_FILE_FORMATS),
     from: optionalDay(),
     kind: optionalEnum(BULK_KINDS),
     superseded: optionalFlag(),

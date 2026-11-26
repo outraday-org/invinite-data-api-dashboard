@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
-import type { BulkDownload, BulkExport, BulkExportsResponse, BulkFilesResponse, CreateBulkExportRequest } from "./types";
+import type { BulkDownload, BulkExport, BulkExportsResponse, BulkFilesResponse } from "./types";
 
 import {
     createBulkExportRequest,
@@ -70,7 +70,7 @@ export const getBulkExport = createServerFn({ method: "POST" })
 export const createBulkExport = createServerFn({ method: "POST" })
     .inputValidator(z.object({ apiKey: apiKeySchema, body: createBodySchema, idempotencyKey: z.string().min(1).max(255).optional() }))
     .handler(({ data }): Promise<BulkExport> => createBulkExportRequest(createApiClient(data.apiKey), {
-        body: data.body as CreateBulkExportRequest,
+        body: data.body,
         idempotencyKey: data.idempotencyKey,
     }));
 
