@@ -96,7 +96,6 @@ describe("overview key facts and identifiers (O7 group 4)", () => {
         inst_own_pct: 63.65,
         inst_own_shares: 9_250_375_827,
         investor_relations_url: "https://investor.apple.com",
-        is_delisted: false,
         list_date: "1980-12-12",
         market_cap: 5_070_000_000_000,
         sector: "Technology",
@@ -125,7 +124,7 @@ describe("overview key facts and identifiers (O7 group 4)", () => {
 
         expect(facts).not.toHaveTextContent("Fama-French");
 
-        // Listed: no status cell.
+        // No status cell (Data API 12.0 removed `Company.is_delisted`: a delisted stock has no company profile).
         expect(within(facts).queryByText("Status")).toBeNull();
 
         // 11 cells on 4 columns: no orphan; no cell is a "—".
@@ -134,16 +133,14 @@ describe("overview key facts and identifiers (O7 group 4)", () => {
         expect(facts).not.toHaveTextContent("—");
     });
 
-    it("a null value is left out of the grid; a delisted company says so", () => {
-        render(<KeyFactsView company={{ ...AAPL, employees: null, inst_own_pct: null, inst_own_shares: null, is_delisted: true, sector: null }} />);
+    it("a null value is left out of the grid", () => {
+        render(<KeyFactsView company={{ ...AAPL, employees: null, inst_own_pct: null, inst_own_shares: null, sector: null }} />);
 
         const facts = screen.getByTestId("company-key-facts");
 
         expect(within(facts).queryByText("Institutional")).toBeNull();
 
         expect(within(facts).queryByText("Employees")).toBeNull();
-
-        expect(within(facts).getByText("Status").nextSibling).toHaveTextContent("Delisted");
 
         expect(percentText(null)).toBeNull();
 

@@ -115,7 +115,6 @@ export type CompanyFactFields = Pick<
     | "inst_own_pct"
     | "inst_own_shares"
     | "investor_relations_url"
-    | "is_delisted"
     | "list_date"
     | "market_cap"
     | "sector"
@@ -163,7 +162,6 @@ export function KeyFactsView({ company }: { company: Omit<CompanyFactFields, "ci
         company.shares_outstanding != null && <Stat key="shares" label="Shares outstanding" value={formatShares(company.shares_outstanding)} />,
         company.exchange && <Stat key="exchange" label="Exchange" value={company.exchange} />,
         company.list_date && <Stat key="listed" label="Listed since" value={formatDay(company.list_date)} />,
-        company.is_delisted && <Stat key="status" label="Status" value="Delisted" />,
         company.sector && <Stat key="sector" label="Sector" value={company.sector} />,
         company.industry && <Stat key="industry" label="Industry" value={company.industry} />,
         company.employees != null && <Stat key="employees" label="Employees" value={formatNumber(company.employees)} />,

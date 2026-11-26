@@ -322,6 +322,8 @@ export type V2Usage = ApiResponse<"/v1/me/usage", "get">;
 /** One offering (`GET /v1/ipos/{ipo_id}`): the list's row, asked again for the detail dialog. */
 export type V2IpoDetail = ApiResponse<"/v1/ipos/{ipo_id}", "get">;
 export type V2InstrumentsSort = NonNullable<ApiQuery<"/v1/instruments">["sort"]>;
+/** `is_active` of `/v1/instruments` and `/v1/funds` (Data API 12.0): `true` (the API default) = listed today, `false` = delisted, `all` = both. */
+export type V2ActiveFilter = NonNullable<ApiQuery<"/v1/instruments">["is_active"]>;
 export type V2FundsSort = NonNullable<ApiQuery<"/v1/funds">["sort"]>;
 export type V2FilerPhase = NonNullable<ApiQuery<"/v1/filers">["phase"]>;
 export type V2FilersSort = NonNullable<ApiQuery<"/v1/filers">["sort"]>;

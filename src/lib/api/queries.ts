@@ -35,6 +35,7 @@ import type {
     SearchMode,
     SecSearchMode,
     StatementType,
+    V2ActiveFilter,
     V2AnnouncementsResponse,
     V2AnnouncementsSort,
     V2ApiStatus,
@@ -645,17 +646,22 @@ export function useV2Company(company: string, { expand = [] }: { expand?: Readon
     });
 }
 
-/** Instrument search (`GET /v1/instruments?q=`, one page of 10): idle for an empty query; a failure toasts. */
-export function useInstrumentSearch(query: string, type?: ReadonlyArray<V2InstrumentType>) {
+/**
+ * Instrument search (`GET /v1/instruments?q=`, one page of 10): idle for an empty query; a failure toasts. `isActive`
+ * unset = the API default, listed today (the company picker); the top-bar search sends `all` to find old tickers too.
+ */
+export function useInstrumentSearch(query: string, type?: ReadonlyArray<V2InstrumentType>, options: { isActive?: V2ActiveFilter } = {}) {
     const q = query.trim();
+
+    const { isActive } = options;
 
     return useEarningsQuery<V2InstrumentsResponse>({
         enabled: q.length > 0,
         errorMessage: "Failed to search instruments",
-        load: apiKey => getInstruments({ data: { apiKey, query: q, type: type ? [...type] : undefined } }),
+        load: apiKey => getInstruments({ data: { apiKey, isActive, query: q, type: type ? [...type] : undefined } }),
         // The previous hits stay while the next query loads (the search list does not flash empty).
         placeholderData: keepPreviousData,
-        queryKey: ["v2", "instruments", "search", q, key(type)],
+        queryKey: ["v2", "instruments", "search", q, key(type), isActive ?? ""],
         staleTime: 5 * 60 * 1000,
     });
 }
@@ -678,9 +684,9 @@ export function useInstrument(symbol: string) {
     });
 }
 
-export type FundsInput = { exchange?: string; limit?: number; q?: string; sort?: V2FundsSort; structure?: Array<V2FundStructure>; type?: Array<V2FundType> };
+export type FundsInput = { exchange?: string; isActive?: V2ActiveFilter; limit?: number; q?: string; sort?: V2FundsSort; structure?: Array<V2FundStructure>; type?: Array<V2FundType> };
 
-/** The listed funds by cursor (`GET /v1/funds`, filters `type` / `structure` / `q`). */
+/** The funds by cursor (`GET /v1/funds`, filters `type` / `structure` / `q` / `is_active`; unset = listed today). */
 export function useFunds(input: FundsInput) {
     const q = input.q?.trim() || undefined;
 
@@ -688,9 +694,9 @@ export function useFunds(input: FundsInput) {
         enabled: true,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getFunds({
-            data: { apiKey, cursor: cursor ?? undefined, exchange: input.exchange, limit: input.limit, q, sort: input.sort, structure: input.structure, type: input.type },
+            data: { apiKey, cursor: cursor ?? undefined, exchange: input.exchange, isActive: input.isActive, limit: input.limit, q, sort: input.sort, structure: input.structure, type: input.type },
         }),
-        queryKey: ["v2", "funds", q ?? "", key(input.type), key(input.structure), input.limit ?? "", input.exchange ?? "", input.sort ?? ""],
+        queryKey: ["v2", "funds", q ?? "", key(input.type), key(input.structure), input.limit ?? "", input.exchange ?? "", input.sort ?? "", input.isActive ?? ""],
         staleTime: V2_STALE_MS,
     });
 }
@@ -1897,7 +1903,8 @@ export function useIpo(ipoId: string) {
 
 export type InstrumentsListInput = {
     exchange?: string;
-    isActive?: boolean;
+    /** Unset = the API default (listed today). */
+    isActive?: V2ActiveFilter;
     limit?: number;
     q?: string;
     sort?: V2InstrumentsSort;
@@ -1915,7 +1922,7 @@ export function useInstrumentsInfinite(input: InstrumentsListInput) {
         fetchPage: (cursor, apiKey) => getInstruments({
             data: { ...input, apiKey, cursor: cursor ?? undefined, limit: input.limit ?? 50, query: q },
         }),
-        queryKey: ["v2", "instruments", "list", q ?? "", key(input.type), key(input.structure), input.exchange ?? "", String(input.isActive ?? ""), input.sort ?? "", input.limit ?? ""],
+        queryKey: ["v2", "instruments", "list", q ?? "", key(input.type), key(input.structure), input.exchange ?? "", input.isActive ?? "", input.sort ?? "", input.limit ?? ""],
         staleTime: V2_STALE_MS,
     });
 }

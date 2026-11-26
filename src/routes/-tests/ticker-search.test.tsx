@@ -88,7 +88,8 @@ describe("top-bar search: groups, pills, keyboard, recents", () => {
 
         type("vanguard");
 
-        expect(useInstrumentSearch).toHaveBeenLastCalledWith("vanguard", undefined);
+        // Listed and delisted symbols (Data API 12.0 lists only listed ones by default): an old ticker is still found.
+        expect(useInstrumentSearch).toHaveBeenLastCalledWith("vanguard", undefined, { isActive: "all" });
 
         expect(within(option("GLD")).getAllByTestId("search-badge").map(badge => badge.textContent)).toEqual(["ETF", "Trust"]);
 
@@ -110,7 +111,7 @@ describe("top-bar search: groups, pills, keyboard, recents", () => {
 
         type("gold");
 
-        expect(useInstrumentSearch).toHaveBeenLastCalledWith("gold", ["etf"]);
+        expect(useInstrumentSearch).toHaveBeenLastCalledWith("gold", ["etf"], { isActive: "all" });
 
         expect(useV2Filers).toHaveBeenCalledWith(expect.objectContaining({ phase: "manager", q: "" }));
 
@@ -136,7 +137,7 @@ describe("top-bar search: groups, pills, keyboard, recents", () => {
 
         type("vanguard");
 
-        expect(useInstrumentSearch).toHaveBeenLastCalledWith("", undefined);
+        expect(useInstrumentSearch).toHaveBeenLastCalledWith("", undefined, { isActive: "all" });
 
         expect(optionLabels()).toEqual(["VANGUARD GROUP INC", "VANGUARD INDEX FUNDS"]);
     });
@@ -154,7 +155,7 @@ describe("top-bar search: groups, pills, keyboard, recents", () => {
 
         fireEvent.click(screen.getByRole("tab", { name: "People" }));
 
-        expect(useInstrumentSearch).toHaveBeenLastCalledWith("", undefined);
+        expect(useInstrumentSearch).toHaveBeenLastCalledWith("", undefined, { isActive: "all" });
 
         expect(useV2Filers).toHaveBeenLastCalledWith(expect.objectContaining({ q: "" }));
 

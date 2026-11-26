@@ -38,6 +38,9 @@ export const PEOPLE_MIN_CHARS = 3;
 /** Rows of the People group. */
 const PEOPLE_LIMIT = 5;
 
+/** The instrument search asks listed and delisted symbols (`is_active=all`). */
+export const SEARCH_ACTIVE = { isActive: "all" } as const;
+
 /** The typing pause before a request. */
 const DEBOUNCE_MS = 300;
 
@@ -189,8 +192,9 @@ export function TickerSearch() {
 
     const types: ReadonlyArray<V2InstrumentType> | undefined = pill === "all" || pill === "institutions" || pill === "people" ? undefined : [pill];
 
-    // A pill sends only its own request; nothing before the key answered `/v1/me`.
-    const instruments = useInstrumentSearch(keyReady && instrumentPill ? debounced : "", types);
+    // A pill sends only its own request; nothing before the key answered `/v1/me`. `is_active=all`: an old ticker is
+    // still found (Data API 12.0 lists only symbols listed today by default); its hit shows the "Delisted" badge.
+    const instruments = useInstrumentSearch(keyReady && instrumentPill ? debounced : "", types, SEARCH_ACTIVE);
 
     // Institutions first (`phase=manager`), the other filers below: two billed requests per typing pause.
     const filerQuery = keyReady && filerPill ? debounced : "";

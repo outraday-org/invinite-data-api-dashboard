@@ -136,7 +136,16 @@ const ROLE_OPTIONS: Array<{ label: string; value: typeof ALL_ROLES | V2PersonRol
 const SORT_OPTIONS: Array<{ label: string; value: V2PeopleSort }> = PEOPLE_SORTS.map(sort => ({ label: PEOPLE_SORT_LABELS[sort], value: sort }));
 
 /**
- * People who speak on calls (`GET /v1/people`, 1 credit a page, by cursor): executives, analysts, operators. Name,
+ * The request of a search state: the API's default leaves call operators out; `role=operator` (Role → Operators) lists
+ * them. Nothing else is sent for them (no `include_operators`).
+ */
+export function peopleRequest(search: PeopleSearch) {
+    return { company: search.company, event: search.event, limit: 50, q: search.q, role: search.role, sort: search.sort };
+}
+
+/**
+ * People who speak on calls (`GET /v1/people`, 1 credit a page, by cursor): executives and analysts; call operators only
+ * under Role → Operators (Data API 12.0 leaves them out unless `role=operator`). Name,
  * company, role and sort are filters (all in the URL); `?event=` (from a call's Participants tab) scopes the list to one
  * call. A row opens the person's page.
  */
@@ -147,12 +156,12 @@ function PeoplePage() {
 
     const onChange = (patch: Partial<PeopleSearch>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
 
-    const list = useV2PeopleInfinite({ company: search.company, event: search.event, limit: 50, q: search.q, role: search.role, sort: search.sort });
+    const list = useV2PeopleInfinite(peopleRequest(search));
 
     return (
         <PageContainer>
             <PageHeader
-                description="Executives, analysts and operators who speak on earnings calls, recognised across calls. Each opens the person's page with every call they spoke on."
+                description="Executives and analysts who speak on earnings calls, recognised across calls. Call operators are listed only under Role → Operators. Each opens the person's page with every call they spoke on."
                 title="People"
             />
             <FilterBar

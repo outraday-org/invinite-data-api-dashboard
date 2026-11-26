@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import type {
     CompanyFiscalPeriod,
+    V2ActiveFilter,
     V2AnnouncementsResponse,
     V2ApiStatus,
     V2AsReportedDetailedResponse,
@@ -165,6 +166,9 @@ const fundStructureSchema = z.enum(["registered_fund", "exchange_traded_trust"] 
 /** A bare US ticker (`BRK.B`, `BF-B`); `TICKER.<MIC>` is refused by the API. */
 const symbolSchema = z.string().trim().min(1).max(SYMBOL_MAX_LENGTH);
 
+/** `is_active` of the two symbol lists (Data API 12.0); unset = the API default, listed today. */
+const activeFilterSchema = z.enum(["true", "false", "all"] as const satisfies ReadonlyArray<V2ActiveFilter>);
+
 /** A fund's ticker or fund key (`S000024908`, `cik:884394`). */
 const fundSchema = z.string().trim().min(1).max(20);
 
@@ -174,7 +178,7 @@ export const getInstruments = createServerFn({ method: "POST" })
         apiKey: apiKeySchema,
         cursor: cursorSchema,
         exchange: z.string().trim().min(1).max(10).optional(),
-        isActive: z.boolean().optional(),
+        isActive: activeFilterSchema.optional(),
         limit: pageLimitSchema,
         query: z.string().optional(),
         sort: z.enum(["symbol", "-symbol", "name", "-name"] as const satisfies ReadonlyArray<V2InstrumentsSort>).optional(),
@@ -223,6 +227,7 @@ export const getFunds = createServerFn({ method: "POST" })
         apiKey: apiKeySchema,
         cursor: cursorSchema,
         exchange: z.string().trim().min(1).max(10).optional(),
+        isActive: activeFilterSchema.optional(),
         limit: pageLimitSchema,
         q: z.string().trim().min(1).optional(),
         sort: z.enum(["symbol", "-symbol", "name", "-name"] as const satisfies ReadonlyArray<V2FundsSort>).optional(),
@@ -230,10 +235,10 @@ export const getFunds = createServerFn({ method: "POST" })
         type: z.array(fundTypeSchema).optional(),
     }))
     .handler(async ({ data }): Promise<V2FundsResponse> => {
-        const { apiKey, cursor, exchange, limit, q, sort, structure, type } = data;
+        const { apiKey, cursor, exchange, isActive, limit, q, sort, structure, type } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/funds", {
-            params: { query: v2Query({ cursor, exchange, limit, q, sort, structure: v2Expand(structure), type: v2Expand(type) }) },
+            params: { query: v2Query({ cursor, exchange, is_active: isActive, limit, q, sort, structure: v2Expand(structure), type: v2Expand(type) }) },
         });
 
         if (error) throwApiError(error, response);
