@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as StatusRouteImport } from './routes/status'
 import { Route as SearchRouteImport } from './routes/search'
+import { Route as OwnershipFilingsRouteImport } from './routes/ownership-filings'
 import { Route as NewsFeedRouteImport } from './routes/news-feed'
 import { Route as MarketHolidaysRouteImport } from './routes/market-holidays'
 import { Route as LiveCallsRouteImport } from './routes/live-calls'
@@ -78,6 +79,11 @@ const StatusRoute = StatusRouteImport.update({
 const SearchRoute = SearchRouteImport.update({
   id: '/search',
   path: '/search',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OwnershipFilingsRoute = OwnershipFilingsRouteImport.update({
+  id: '/ownership-filings',
+  path: '/ownership-filings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const NewsFeedRoute = NewsFeedRouteImport.update({
@@ -398,6 +404,7 @@ export interface FileRoutesByFullPath {
   '/live-calls': typeof LiveCallsRoute
   '/market-holidays': typeof MarketHolidaysRoute
   '/news-feed': typeof NewsFeedRoute
+  '/ownership-filings': typeof OwnershipFilingsRoute
   '/search': typeof SearchRoute
   '/status': typeof StatusRoute
   '/alerts/$id': typeof AlertsIdRoute
@@ -458,6 +465,7 @@ export interface FileRoutesByTo {
   '/live-calls': typeof LiveCallsRoute
   '/market-holidays': typeof MarketHolidaysRoute
   '/news-feed': typeof NewsFeedRoute
+  '/ownership-filings': typeof OwnershipFilingsRoute
   '/search': typeof SearchRoute
   '/status': typeof StatusRoute
   '/alerts/$id': typeof AlertsIdRoute
@@ -521,6 +529,7 @@ export interface FileRoutesById {
   '/live-calls': typeof LiveCallsRoute
   '/market-holidays': typeof MarketHolidaysRoute
   '/news-feed': typeof NewsFeedRoute
+  '/ownership-filings': typeof OwnershipFilingsRoute
   '/search': typeof SearchRoute
   '/status': typeof StatusRoute
   '/alerts/$id': typeof AlertsIdRoute
@@ -585,6 +594,7 @@ export interface FileRouteTypes {
     | '/live-calls'
     | '/market-holidays'
     | '/news-feed'
+    | '/ownership-filings'
     | '/search'
     | '/status'
     | '/alerts/$id'
@@ -645,6 +655,7 @@ export interface FileRouteTypes {
     | '/live-calls'
     | '/market-holidays'
     | '/news-feed'
+    | '/ownership-filings'
     | '/search'
     | '/status'
     | '/alerts/$id'
@@ -707,6 +718,7 @@ export interface FileRouteTypes {
     | '/live-calls'
     | '/market-holidays'
     | '/news-feed'
+    | '/ownership-filings'
     | '/search'
     | '/status'
     | '/alerts/$id'
@@ -770,6 +782,7 @@ export interface RootRouteChildren {
   LiveCallsRoute: typeof LiveCallsRoute
   MarketHolidaysRoute: typeof MarketHolidaysRoute
   NewsFeedRoute: typeof NewsFeedRoute
+  OwnershipFilingsRoute: typeof OwnershipFilingsRoute
   SearchRoute: typeof SearchRoute
   StatusRoute: typeof StatusRoute
   FilingsAccessionRoute: typeof FilingsAccessionRoute
@@ -800,6 +813,13 @@ declare module '@tanstack/react-router' {
       path: '/search'
       fullPath: '/search'
       preLoaderRoute: typeof SearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ownership-filings': {
+      id: '/ownership-filings'
+      path: '/ownership-filings'
+      fullPath: '/ownership-filings'
+      preLoaderRoute: typeof OwnershipFilingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/news-feed': {
@@ -1311,6 +1331,7 @@ const rootRouteChildren: RootRouteChildren = {
   LiveCallsRoute: LiveCallsRoute,
   MarketHolidaysRoute: MarketHolidaysRoute,
   NewsFeedRoute: NewsFeedRoute,
+  OwnershipFilingsRoute: OwnershipFilingsRoute,
   SearchRoute: SearchRoute,
   StatusRoute: StatusRoute,
   FilingsAccessionRoute: FilingsAccessionRoute,

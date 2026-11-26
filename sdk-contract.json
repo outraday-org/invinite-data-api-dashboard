@@ -128,6 +128,10 @@
       "name": "InsiderTradesApi",
       "pythonModule": "insider_trades_api"
     },
+    "Ownership": {
+      "name": "OwnershipApi",
+      "pythonModule": "ownership_api"
+    },
     "Offerings": {
       "name": "OfferingsApi",
       "pythonModule": "offerings_api"
@@ -273,6 +277,10 @@
     "conference_date.lte": {
       "tsName": "conferenceDateLte",
       "pyName": "conference_date_lte"
+    },
+    "current": {
+      "tsName": "current",
+      "pyName": "current"
     },
     "cursor": {
       "tsName": "cursor",
@@ -2032,6 +2040,50 @@
       "tsMethod": "listInsiderHoldings",
       "pyMethod": "list_insider_holdings"
     },
+    "listBeneficialOwnershipFilings": {
+      "label": "GET /v1/beneficial-ownership",
+      "operationId": "listBeneficialOwnershipFilings",
+      "tag": "Ownership",
+      "params": [
+        "company",
+        "filer",
+        "type",
+        "current",
+        "filed_at.gte",
+        "filed_at.gt",
+        "filed_at.lte",
+        "filed_at.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "OwnershipApi",
+      "tsMethod": "listBeneficialOwnershipFilings",
+      "pyMethod": "list_beneficial_ownership_filings"
+    },
+    "listInsiderSaleNotices": {
+      "label": "GET /v1/insider-sale-notices",
+      "operationId": "listInsiderSaleNotices",
+      "tag": "Ownership",
+      "params": [
+        "company",
+        "owner",
+        "filed_at.gte",
+        "filed_at.gt",
+        "filed_at.lte",
+        "filed_at.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "OwnershipApi",
+      "tsMethod": "listInsiderSaleNotices",
+      "pyMethod": "list_insider_sale_notices"
+    },
     "listIpos": {
       "label": "GET /v1/ipos",
       "operationId": "listIpos",
@@ -3046,6 +3098,8 @@
       "Audio",
       "BatchAlertUsersRequest",
       "BatchAlertsRequest",
+      "BeneficialOwnershipFiling",
+      "BeneficialOwnershipHolder",
       "CagrPeriod",
       "Company",
       "CompanyCoverage",
@@ -3159,6 +3213,11 @@
       "IndicatorResolvedThreshold",
       "IndicatorTemplateRef",
       "InsiderHolding",
+      "InsiderSaleNotice",
+      "InsiderSaleNoticeAcquisition",
+      "InsiderSaleNoticeFiler",
+      "InsiderSaleNoticeSale",
+      "InsiderSaleNoticeSecurity",
       "InsiderTrade",
       "InsiderTradeFootnote",
       "Instrument",
@@ -3181,6 +3240,8 @@
       "ListAlerts200Response",
       "ListAlerts200ResponseMeta",
       "ListAnnouncements200Response",
+      "ListBeneficialOwnershipFilings200Response",
+      "ListBeneficialOwnershipFilings200ResponseMeta",
       "ListCagr200Response",
       "ListCompanies200Response",
       "ListDatasets200Response",
@@ -3221,6 +3282,7 @@
       "ListHolders200ResponseMeta",
       "ListHolders200ResponseMetaSectionsInner",
       "ListInsiderHoldings200Response",
+      "ListInsiderSaleNotices200Response",
       "ListInsiderTrades200Response",
       "ListInstruments200Response",
       "ListInstruments200ResponseMeta",
@@ -3423,6 +3485,8 @@
       "Audio",
       "BatchAlertUsersRequest",
       "BatchAlertsRequest",
+      "BeneficialOwnershipFiling",
+      "BeneficialOwnershipHolder",
       "CagrPeriod",
       "Company",
       "CompanyCoverage",
@@ -3536,6 +3600,11 @@
       "IndicatorResolvedThreshold",
       "IndicatorTemplateRef",
       "InsiderHolding",
+      "InsiderSaleNotice",
+      "InsiderSaleNoticeAcquisition",
+      "InsiderSaleNoticeFiler",
+      "InsiderSaleNoticeSale",
+      "InsiderSaleNoticeSecurity",
       "InsiderTrade",
       "InsiderTradeFootnote",
       "Instrument",
@@ -3558,6 +3627,8 @@
       "ListAlerts200Response",
       "ListAlerts200ResponseMeta",
       "ListAnnouncements200Response",
+      "ListBeneficialOwnershipFilings200Response",
+      "ListBeneficialOwnershipFilings200ResponseMeta",
       "ListCagr200Response",
       "ListCompanies200Response",
       "ListDatasets200Response",
@@ -3598,6 +3669,7 @@
       "ListHolders200ResponseMeta",
       "ListHolders200ResponseMetaSectionsInner",
       "ListInsiderHoldings200Response",
+      "ListInsiderSaleNotices200Response",
       "ListInsiderTrades200Response",
       "ListInstruments200Response",
       "ListInstruments200ResponseMeta",
@@ -3750,18 +3822,18 @@
   "provenance": {
     "repository": "https://github.com/outraday-org/invinite-data-api",
     "version": "1.0.0",
-    "specSha256": "b60f0f4aae0421d7ed26d3f836fb403ae65d08f6179237c0fa1155c18a51f01c",
+    "specSha256": "f11741b65086e9785078fd2086502ce3820d9af0c9cf24a351e41c1dd32bc82e",
     "sourceHashes": {
-      "openapi.json": "b60f0f4aae0421d7ed26d3f836fb403ae65d08f6179237c0fa1155c18a51f01c",
+      "openapi.json": "f11741b65086e9785078fd2086502ce3820d9af0c9cf24a351e41c1dd32bc82e",
       "openapitools.json": "0350a3db0a0a0adf49a7c7cdefe7eff466964480780e911b197763d202db1390",
-      "package.json": "0d50038e236051fa9b6ac3dcdaf2d3357207a9826f1284ce217b46e32fcb9240",
+      "package.json": "04a92c45ef6d8619abcb43ecd9af5ead3bdb7dbf50cdd5600a8b6eb0704b769e",
       "scripts/check-data-sdk-names.ts": "fe5f33fd4600c25639d85f4237c84213e5611b42505bc3b224f7e1b0ce6e89f9",
       "scripts/prepare-data-sdk-spec.mjs": "1d8a1cbfe170e1eb0a8cd0168b957a4c8844321309a3b9e1fda4ce2ca4594bd1",
       "scripts/reference-artifacts.ts": "0ef8e67cb5454a3f50f43de77b0be1aebb7897164ddf3f5288b58dc7d0f47255",
       "sdks/data/config/python.json": "8f90ab7c0fd25e125c0c6618ae6e09119ef0b5045818c098fd8b259d1888dd5f",
       "sdks/data/config/typescript.json": "69139143672ed147b18c217784cbed3bf609ebeb6b5fbd00617e09344b99c4f2",
-      "sdks/data/readme/python.md": "04a0ed261c4091a14fcd03d01c22d7f42fa5a7ea449b26601b6c0df521815883",
-      "sdks/data/readme/typescript.md": "4fc8fe2d31656c6b623284cb64e35cca4e703381720d77b08df6f84fdadaf078",
+      "sdks/data/readme/python.md": "6c5ab82b7c5bbe539125e8af0279b4fbc6912a2db37cef8a96456d007feb4c8f",
+      "sdks/data/readme/typescript.md": "ef8ce50b5403ae0f26d4fdbd784cd67165e71001e47a8abe40b742d9dd388f7a",
       "sdks/data/sdk-naming.ts": "2738bc0f84f4c91aea3122b2ce4ea64d9bbe69f12790b6781b691f28e1c6df78",
       "sdks/data/templates/python/errors.mustache": "d5ec344532b707b5d4d7984af7cf80c0c16f04506b4e5771a1c31ab28d2ed576",
       "sdks/data/templates/python/model_generic.mustache": "40085979b609eb8215471b0b25aa2b69998e0f9861733f1c6f25747519093df0",
@@ -3776,7 +3848,7 @@
       "sdks/data/templates/typescript/pagination.mustache": "190dc450794bc089117af5b5c2f7b2ff707dc2bf6175e49465c393cdba89b395",
       "sdks/data/templates/typescript/webhooks.mustache": "757001711eafe57e914c05cd6b2d86b5555c4d32d80bf3b1a94e4f570df0c20a"
     },
-    "revision": "56c58ef5b91745626ed0a26fa64fab6ce097bea3",
-    "fingerprint": "5c75735ed2d009def8d86497384903e27f8a9f75281bd62e7d08a7db62113463"
+    "revision": "e6a5ef58d6e9403b65dafb68cf18f1250c914371",
+    "fingerprint": "49c844f6ddc1b8c2609b16d8bf154febeb0abfdf33f412f1ec5bde5e675cf0f5"
   }
 }

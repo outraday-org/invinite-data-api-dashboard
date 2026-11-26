@@ -466,6 +466,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/beneficial-ownership": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List beneficial ownership filings (13D / 13G)
+         * @description List the Schedule 13D and 13G filings of holders above 5 % of a class of a listed company.
+         *
+         *     Schedule 13D is the activist form: the holder may seek to influence the company. Schedule 13G is the passive form. A 13G is a cover filing of one holder above 5 % of one class, not a portfolio position; for a manager's positions use GET /v1/holders (13F). Each row is one filing with every reporting person of its cover pages.
+         *
+         *     Use `company` for the filings on a company or `filer` for one reporting person's filings across companies; one of the two is required. `current=true` (the default) lists only the latest filing per company, primary reporting person and class; `current=false` lists the whole amendment chain, linked by `supersedes_accession`. Rows run from the newest filing to the oldest.
+         *
+         *     Coverage: structured filings since 2024-12-18 (the first day of mandatory XML), for listed subject companies only; older filings are not served.
+         */
+        get: operations["listBeneficialOwnershipFilings"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/catalog/document-kinds": {
         parameters: {
             query?: never;
@@ -1948,6 +1974,32 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/insider-sale-notices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List insider sale notices (Form 144)
+         * @description List the Form 144 notices of a proposed sale of restricted or control securities of a listed company.
+         *
+         *     A notice is a proposed sale, not an executed one: the seller may sell less or nothing. Executed trades are reported on Form 4 (GET /v1/insider-trades). Each row is one notice with the securities to be sold, how they were acquired and the seller's sales of the past three months.
+         *
+         *     An amendment (144/A) names the notice it replaces in `replaces_accession`, and the replaced notice names its newest replacement in `replaced_by`.
+         *
+         *     Use `company` for an issuer's notices or `owner` for one seller's notices across issuers (one of the two is required). Rows run from the newest filing to the oldest. Coverage: electronic notices since 2023-04-13, for listed issuers only.
+         */
+        get: operations["listInsiderSaleNotices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/insider-trades": {
         parameters: {
             query?: never;
@@ -3265,7 +3317,7 @@ export interface components {
                 registrant_cik: null | string;
             };
             /** @description The data families served for this instrument: its type's table (the same table every `company=` / `symbol=` refusal names), without `dividends` when no dividend row is stored for the symbol (an ETF or closed-end fund outside the dividend coverage scope, a stock that never paid); actual depth: `expand=coverage` on the company or fund */
-            datasets: Array<"alerts" | "dividends" | "events" | "filings" | "financials" | "fiscal_periods" | "fund_holdings" | "fund_weights" | "guidance" | "holders" | "insider_holdings" | "insider_trades" | "investor_documents" | "ipos" | "metrics" | "news" | "offerings" | "people" | "profile" | "segments" | "splits" | "transcripts">;
+            datasets: Array<"alerts" | "beneficial_ownership" | "dividends" | "events" | "filings" | "financials" | "fiscal_periods" | "fund_holdings" | "fund_weights" | "guidance" | "holders" | "insider_holdings" | "insider_sale_notices" | "insider_trades" | "investor_documents" | "ipos" | "metrics" | "news" | "offerings" | "people" | "profile" | "segments" | "splits" | "transcripts">;
         };
         /**
          * MetaCoverage
@@ -6345,6 +6397,403 @@ export interface components {
              * @enum {string}
              */
             source: "edgar" | "f345" | "sec_api";
+        };
+        /**
+         * BeneficialOwnershipFiling
+         * @description One Schedule 13D (activist) or 13G (passive) filing on a class of a listed company, with every reporting person of its cover pages
+         */
+        BeneficialOwnershipFiling: {
+            /**
+             * @description Accession of the filing
+             * @example 0000102909-25-000123
+             */
+            accession_number: string;
+            company: components["schemas"]["CompanyRef"];
+            /**
+             * @description Subject company name as filed
+             * @example Apple Inc.
+             */
+            company_name: null | string;
+            /**
+             * @description Form as filed (SCHEDULE 13D, SCHEDULE 13D/A, SCHEDULE 13G, SCHEDULE 13G/A)
+             * @example SCHEDULE 13G/A
+             */
+            form: string;
+            /**
+             * @description 13D = activist (the holder may seek to influence the company); 13G = passive
+             * @example 13G
+             * @enum {string}
+             */
+            schedule: "13D" | "13G";
+            /**
+             * @description true for an amendment (13D/A, 13G/A)
+             * @example true
+             */
+            is_amendment: boolean;
+            /**
+             * @description Amendment number as filed; null on an original filing or when not stated
+             * @example 12
+             */
+            amendment_no: null | number;
+            /**
+             * Format: date
+             * @description Date of the event that requires the filing (crossing 5 %, a change)
+             * @example 2025-09-30
+             */
+            event_date: null | string;
+            /**
+             * Format: date
+             * @description Filing date
+             * @example 2025-11-12
+             */
+            filed_at: string;
+            /**
+             * Format: date-time
+             * @description When EDGAR accepted the filing
+             * @example 2025-11-12T15:02:11Z
+             */
+            accepted_at: null | string;
+            /**
+             * @description Class of securities as filed
+             * @example Common Stock
+             */
+            class_title: null | string;
+            /**
+             * @description CUSIP of the class as filed
+             * @example 037833100
+             */
+            cusip: null | string;
+            /**
+             * @description The previous filing of the same company, primary reporting person and class (the amendment chain); null for the first filing of the chain
+             * @example 0000102909-24-000877
+             */
+            supersedes_accession: null | string;
+            /**
+             * @description true when no later filing of the same company, primary reporting person and class exists (the latest state of the chain)
+             * @example true
+             */
+            is_current: boolean;
+            /** @description The reporting persons of the cover pages, in filing order */
+            holders: Array<components["schemas"]["BeneficialOwnershipHolder"]>;
+            /**
+             * @description Purpose of the transaction (Schedule 13D item 4) as filed; null on a 13G
+             * @example The Reporting Persons acquired the Shares for investment purposes.
+             */
+            purpose: null | string;
+            /**
+             * @description parsed = the structured XML was read; no_structured_document = the filing has no XML form (its values are null); failed = the XML could not be read (its values are null)
+             * @example parsed
+             * @enum {string}
+             */
+            parse_state: "failed" | "no_structured_document" | "parsed";
+            /**
+             * @description The filing's EDGAR index page
+             * @example https://www.sec.gov/Archives/edgar/data/320193/000010290925000123/0000102909-25-000123-index.htm
+             */
+            filing_url: string;
+            /** @description Permanent public URL of the original document; null while it is not public */
+            source_url: null | string;
+        };
+        /**
+         * BeneficialOwnershipHolder
+         * @description One reporting person on the cover pages of a Schedule 13D / 13G filing
+         */
+        BeneficialOwnershipHolder: {
+            /**
+             * @description CIK of the reporting person (10 digits); null when the person has no EDGAR CIK
+             * @example 0000102909
+             */
+            filer_cik: null | string;
+            /**
+             * @description Reporting person as filed
+             * @example VANGUARD GROUP INC
+             */
+            name: string;
+            /**
+             * @description Type of reporting person as filed (IA investment adviser, IN individual, CO corporation, PN partnership, …; several codes comma-separated)
+             * @example IA
+             */
+            type_of_person: null | string;
+            /**
+             * @description Citizenship or place of organization as filed
+             * @example PA
+             */
+            citizenship: null | string;
+            /**
+             * @description Shares over which the person has sole voting power
+             * @example 0
+             */
+            sole_voting_power: null | number;
+            /**
+             * @description Shares over which the person shares voting power
+             * @example 1520417
+             */
+            shared_voting_power: null | number;
+            /**
+             * @description Shares the person alone may dispose of
+             * @example 147298433
+             */
+            sole_dispositive_power: null | number;
+            /**
+             * @description Shares the person may dispose of together with others
+             * @example 6153521
+             */
+            shared_dispositive_power: null | number;
+            /**
+             * @description Shares beneficially owned in total
+             * @example 153451954
+             */
+            aggregate_amount: null | number;
+            /**
+             * @description Percent of the class as filed (7.5 = 7.5 %)
+             * @example 9.92
+             */
+            percent_of_class: null | number;
+            /**
+             * @description Source of funds codes of a Schedule 13D as filed (WC working capital, OO other, PF personal funds, BK bank, AF affiliate, …); null on a 13G
+             * @example WC
+             */
+            source_of_funds: null | string;
+            /**
+             * @description true when the person reports as a member of a group; null when the filing does not say
+             * @example false
+             */
+            is_group_member: boolean | null;
+        };
+        /**
+         * InsiderSaleNotice
+         * @description One Form 144 notice of a proposed sale of restricted or control securities (a proposed sale, not an executed one)
+         */
+        InsiderSaleNotice: {
+            /**
+             * @description Accession of the notice
+             * @example 0001959173-25-006421
+             */
+            accession_number: string;
+            company: components["schemas"]["CompanyRef"];
+            /**
+             * @description Issuer name as filed
+             * @example Apple Inc.
+             */
+            company_name: null | string;
+            filer: components["schemas"]["InsiderSaleNoticeFiler"];
+            /**
+             * @description The seller's relationships to the issuer as filed (Officer, Director, 10% Securityholder, …)
+             * @example [
+             *       "Officer",
+             *       "Director"
+             *     ]
+             */
+            relationships: Array<string>;
+            /**
+             * @description Form as filed
+             * @example 144
+             * @enum {string}
+             */
+            form: "144" | "144/A";
+            /**
+             * @description true for an amendment (144/A)
+             * @example false
+             */
+            is_amendment: boolean;
+            /**
+             * Format: date
+             * @description Date of the notice
+             * @example 2025-10-02
+             */
+            notice_date: null | string;
+            /**
+             * Format: date
+             * @description Filing date
+             * @example 2025-10-02
+             */
+            filed_at: string;
+            /**
+             * Format: date-time
+             * @description When EDGAR accepted the notice
+             * @example 2025-10-02T16:31:08Z
+             */
+            accepted_at: null | string;
+            /** @description On an amendment: the notice it replaces; null when none is named or the reference is ambiguous */
+            replaces_accession: null | string;
+            /** @description The newest amendment that replaces this notice; null when none does */
+            replaced_by: null | string;
+            /**
+             * @description Adoption dates of the Rule 10b5-1 trading plans the sale falls under (empty when none is stated)
+             * @example [
+             *       "2025-05-15"
+             *     ]
+             */
+            plan_adoption_dates: Array<string>;
+            /**
+             * @description true when the seller states no sales in the past three months; null when not stated
+             * @example false
+             */
+            nothing_sold_past_3_months: boolean | null;
+            /** @description Remarks as filed */
+            remarks: null | string;
+            /** @description The securities to be sold */
+            securities: Array<components["schemas"]["InsiderSaleNoticeSecurity"]>;
+            /** @description How the seller acquired the securities to be sold */
+            acquisitions: Array<components["schemas"]["InsiderSaleNoticeAcquisition"]>;
+            /** @description The seller's sales of the issuer's securities in the past three months */
+            sales_past_3_months: Array<components["schemas"]["InsiderSaleNoticeSale"]>;
+            /**
+             * @description parsed = the structured XML was read; no_structured_document = the filing has no XML form (its values are null); failed = the XML could not be read (its values are null)
+             * @example parsed
+             * @enum {string}
+             */
+            parse_state: "failed" | "no_structured_document" | "parsed";
+            /**
+             * @description The notice's EDGAR index page
+             * @example https://www.sec.gov/Archives/edgar/data/320193/000195917325006421/0001959173-25-006421-index.htm
+             */
+            filing_url: string;
+            /** @description Permanent public URL of the original document; null while it is not public */
+            source_url: null | string;
+        };
+        /**
+         * InsiderSaleNoticeFiler
+         * @description The person for whose account the securities are to be sold
+         */
+        InsiderSaleNoticeFiler: {
+            /**
+             * @description CIK of the seller (10 digits); null when the notice names none
+             * @example 0001214156
+             */
+            cik: null | string;
+            /**
+             * @description Seller as filed
+             * @example COOK TIMOTHY D
+             */
+            name: null | string;
+        };
+        /**
+         * InsiderSaleNoticeSecurity
+         * @description One block of securities to be sold under a Form 144 notice
+         */
+        InsiderSaleNoticeSecurity: {
+            /**
+             * @description Class of securities as filed
+             * @example Common
+             */
+            class_title: null | string;
+            /**
+             * @description Broker or market maker through which the securities are to be sold
+             * @example Morgan Stanley Smith Barney LLC
+             */
+            broker: null | string;
+            /**
+             * @description Shares (or units) to be sold
+             * @example 129963
+             */
+            shares_to_sell: null | number;
+            /**
+             * @description Aggregate market value in USD as filed
+             * @example 33289983.21
+             */
+            market_value: null | number;
+            /**
+             * @description Shares (or units) of the class outstanding as filed
+             * @example 14776353000
+             */
+            shares_outstanding: null | number;
+            /**
+             * Format: date
+             * @description Approximate date of the sale
+             * @example 2025-10-02
+             */
+            approximate_sale_date: null | string;
+            /**
+             * @description Securities exchange as filed
+             * @example NASDAQ
+             */
+            exchange: null | string;
+        };
+        /**
+         * InsiderSaleNoticeAcquisition
+         * @description How the seller acquired the securities to be sold (table 1 of a Form 144 notice)
+         */
+        InsiderSaleNoticeAcquisition: {
+            /**
+             * @description Class of securities as filed
+             * @example Common
+             */
+            class_title: null | string;
+            /**
+             * Format: date
+             * @description Date the securities were acquired
+             * @example 2025-10-01
+             */
+            acquired_date: null | string;
+            /**
+             * @description Nature of the acquisition as filed
+             * @example Restricted Stock Vesting
+             */
+            nature_of_acquisition: null | string;
+            /**
+             * @description From whom the securities were acquired
+             * @example Issuer
+             */
+            acquired_from: null | string;
+            /**
+             * @description true when the securities were received as a gift
+             * @example false
+             */
+            is_gift: boolean | null;
+            /**
+             * Format: date
+             * @description Date the donor acquired a gifted security
+             */
+            donor_acquired_date: null | string;
+            /**
+             * @description Shares (or units) acquired
+             * @example 129963
+             */
+            amount_acquired: null | number;
+            /**
+             * Format: date
+             * @description Date of payment
+             * @example 2025-10-01
+             */
+            payment_date: null | string;
+            /**
+             * @description Nature of payment as filed
+             * @example Services rendered
+             */
+            nature_of_payment: null | string;
+        };
+        /**
+         * InsiderSaleNoticeSale
+         * @description A sale of the issuer's securities by the seller in the past three months (table 2 of a Form 144 notice)
+         */
+        InsiderSaleNoticeSale: {
+            /**
+             * @description Seller as filed
+             * @example Timothy D. Cook
+             */
+            seller_name: null | string;
+            /**
+             * @description Class of securities as filed
+             * @example Common
+             */
+            class_title: null | string;
+            /**
+             * Format: date
+             * @description Date of the sale
+             * @example 2025-08-08
+             */
+            sale_date: null | string;
+            /**
+             * @description Shares (or units) sold
+             * @example 108136
+             */
+            amount_sold: null | number;
+            /**
+             * @description Gross proceeds in USD
+             * @example 24183848.42
+             */
+            gross_proceeds: null | number;
         };
         /**
          * Ipo
@@ -12358,7 +12807,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -12739,7 +13188,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -13617,7 +14066,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -16989,7 +17438,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -17236,7 +17685,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -18047,7 +18496,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -19108,7 +19557,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -19224,11 +19673,192 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listBeneficialOwnershipFilings: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                "company"?: string;
+                /**
+                 * @description Reporting-person CIK (all digits, any padding): that person's filings across companies; a comma list of 1–50 reads several persons. One of `company` / `filer` is required; both = the persons' filings on those companies
+                 * @example 0000102909
+                 */
+                "filer"?: string;
+                /**
+                 * @description activist = Schedule 13D only; passive = Schedule 13G only; omitted = both
+                 * @example activist
+                 */
+                "type"?: "activist" | "passive";
+                /**
+                 * @description true = only the latest filing per company, primary reporting person and class; false = every filing of the amendment chain
+                 * @example true
+                 */
+                "current"?: boolean;
+                /**
+                 * @description `filed_at` on or after this date (the filing date)
+                 * @example 2025-01-01
+                 */
+                "filed_at.gte"?: string;
+                /**
+                 * @description `filed_at` after this date (the filing date)
+                 * @example 2025-01-01
+                 */
+                "filed_at.gt"?: string;
+                /**
+                 * @description `filed_at` on or before this date (the filing date)
+                 * @example 2025-01-01
+                 */
+                "filed_at.lte"?: string;
+                /**
+                 * @description `filed_at` before this date (the filing date)
+                 * @example 2025-01-01
+                 */
+                "filed_at.lt"?: string;
+                /**
+                 * @description Sort field: `-filed_at` (newest filing first, the only order served); the accession tiebreaker is always appended
+                 * @example -filed_at
+                 */
+                "sort"?: "-filed_at";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "accession_number": "0000950157-26-001110",
+                     *           "company": {
+                     *             "cik": "0001632127",
+                     *             "ticker": "CABO"
+                     *           },
+                     *           "company_name": "Cable One, Inc.",
+                     *           "form": "SCHEDULE 13D/A",
+                     *           "schedule": "13D",
+                     *           "is_amendment": true,
+                     *           "amendment_no": 7,
+                     *           "event_date": "2026-10-16",
+                     *           "filed_at": "2026-10-19",
+                     *           "accepted_at": "2026-10-20T01:48:39Z",
+                     *           "class_title": "Common Stock, par value $0.01 per share",
+                     *           "cusip": "12685J105",
+                     *           "supersedes_accession": "0000950157-26-001101",
+                     *           "is_current": true,
+                     *           "holders": [
+                     *             {
+                     *               "filer_cik": "0001018401",
+                     *               "name": "Donald E. Graham",
+                     *               "type_of_person": "IN",
+                     *               "citizenship": "X1",
+                     *               "sole_voting_power": 55811,
+                     *               "shared_voting_power": 227071,
+                     *               "sole_dispositive_power": 55811,
+                     *               "shared_dispositive_power": 227071,
+                     *               "aggregate_amount": 282882,
+                     *               "percent_of_class": 4.99,
+                     *               "source_of_funds": "OO",
+                     *               "is_group_member": false
+                     *             }
+                     *           ],
+                     *           "purpose": null,
+                     *           "parse_state": "parsed",
+                     *           "filing_url": "https://www.sec.gov/Archives/edgar/data/1632127/000095015726001110/0000950157-26-001110-index.htm",
+                     *           "source_url": null
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "pinned_at": "2026-11-26T06:48:11.734Z",
+                     *         "coverage_start": "2024-12-18"
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["BeneficialOwnershipFiling"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            /**
+                             * Format: date-time
+                             * @description Instant the page reads the filings at
+                             */
+                            pinned_at?: null | string;
+                            /**
+                             * Format: date
+                             * @description First filing date of the structured history (2024-12-18)
+                             */
+                            coverage_start?: null | string;
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listCagr: {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -20049,7 +20679,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -21608,7 +22238,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 company: string;
@@ -22284,7 +22914,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -22447,7 +23077,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 company?: string;
@@ -22955,7 +23585,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -23112,11 +23742,204 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listInsiderSaleNotices: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                "company"?: string;
+                /**
+                 * @description Seller CIK (all digits, any padding): that person's notices across issuers; a comma list of 1–50 reads several sellers. One of `company` / `owner` is required; both = the sellers' notices on those companies
+                 * @example 0001214156
+                 */
+                "owner"?: string;
+                /**
+                 * @description `filed_at` on or after this date (the filing date)
+                 * @example 2025-01-01
+                 */
+                "filed_at.gte"?: string;
+                /**
+                 * @description `filed_at` after this date (the filing date)
+                 * @example 2025-01-01
+                 */
+                "filed_at.gt"?: string;
+                /**
+                 * @description `filed_at` on or before this date (the filing date)
+                 * @example 2025-01-01
+                 */
+                "filed_at.lte"?: string;
+                /**
+                 * @description `filed_at` before this date (the filing date)
+                 * @example 2025-01-01
+                 */
+                "filed_at.lt"?: string;
+                /**
+                 * @description Sort field: `-filed_at` (newest filing first, the only order served); the accession tiebreaker is always appended
+                 * @example -filed_at
+                 */
+                "sort"?: "-filed_at";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "accession_number": "0000080424-26-000259",
+                     *           "company": {
+                     *             "cik": "0000080424",
+                     *             "ticker": "PG"
+                     *           },
+                     *           "company_name": "PROCTER & GAMBLE Co",
+                     *           "filer": {
+                     *             "cik": "0002110932",
+                     *             "name": "Gama Paul"
+                     *           },
+                     *           "relationships": [
+                     *             "Officer"
+                     *           ],
+                     *           "form": "144",
+                     *           "is_amendment": false,
+                     *           "notice_date": "2026-10-22",
+                     *           "filed_at": "2026-10-22",
+                     *           "accepted_at": "2026-10-22T21:04:11Z",
+                     *           "replaces_accession": null,
+                     *           "replaced_by": null,
+                     *           "plan_adoption_dates": [],
+                     *           "nothing_sold_past_3_months": false,
+                     *           "remarks": "1) Aggregate market value based on average of high and low price on October 21, 2026.",
+                     *           "securities": [
+                     *             {
+                     *               "class_title": "Common Stock",
+                     *               "broker": "Morgan Stanley Smith Barney LLC Executive Financial Services",
+                     *               "shares_to_sell": 14623,
+                     *               "market_value": 2306558.91,
+                     *               "shares_outstanding": 2324433060,
+                     *               "approximate_sale_date": "2026-10-23",
+                     *               "exchange": "NYSE"
+                     *             }
+                     *           ],
+                     *           "acquisitions": [
+                     *             {
+                     *               "class_title": "Common Stock",
+                     *               "acquired_date": "2026-10-01",
+                     *               "nature_of_acquisition": "Restricted Stock Unit Award",
+                     *               "acquired_from": "The Procter & Gamble Company",
+                     *               "is_gift": false,
+                     *               "donor_acquired_date": null,
+                     *               "amount_acquired": 12517,
+                     *               "payment_date": "2026-10-01",
+                     *               "nature_of_payment": "NA"
+                     *             }
+                     *           ],
+                     *           "sales_past_3_months": [
+                     *             {
+                     *               "seller_name": "Paul Gama",
+                     *               "class_title": "Common Stock",
+                     *               "sale_date": "2026-10-05",
+                     *               "amount_sold": 2225,
+                     *               "gross_proceeds": 323381.56
+                     *             }
+                     *           ],
+                     *           "parse_state": "parsed",
+                     *           "filing_url": "https://www.sec.gov/Archives/edgar/data/80424/000008042426000259/0000080424-26-000259-index.htm",
+                     *           "source_url": null
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "pinned_at": "2026-11-26T06:48:11.960Z",
+                     *         "coverage_start": "2023-04-13"
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["InsiderSaleNotice"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            /**
+                             * Format: date-time
+                             * @description Instant the page reads the filings at
+                             */
+                            pinned_at?: null | string;
+                            /**
+                             * Format: date
+                             * @description First filing date of the electronic history (2023-04-13)
+                             */
+                            coverage_start?: null | string;
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listInsiderTrades: {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -23440,7 +24263,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 company?: string;
@@ -23624,7 +24447,7 @@ export interface operations {
                  */
                 "listing_date.lt"?: string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -23819,7 +24642,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 company?: string;
@@ -24869,7 +25692,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -25377,7 +26200,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 company?: string;
@@ -25636,7 +26459,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -26161,7 +26984,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -26319,7 +27142,7 @@ export interface operations {
         parameters: {
             query: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. Required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Required.
                  * @example AAPL
                  */
                 "company": string;
@@ -27271,7 +28094,7 @@ export interface operations {
                  */
                 q: string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 company?: string;
@@ -27421,7 +28244,7 @@ export interface operations {
                  */
                 "q": string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -27528,7 +28351,7 @@ export interface operations {
                  */
                 "q": string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -27752,7 +28575,7 @@ export interface operations {
                              * @description Product family
                              * @enum {string}
                              */
-                            family: "alerts" | "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "sec_filings";
+                            family: "alerts" | "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "ownership_forms" | "sec_filings";
                             /**
                              * @description Over the last 24 hours; too little traffic to judge reads as operational
                              * @enum {string}
@@ -27771,7 +28594,7 @@ export interface operations {
                              * @description Docs group of the v2 API
                              * @enum {string}
                              */
-                            group: "alert_events" | "alert_users" | "alerts" | "calendar" | "call_analytics" | "catalog" | "companies" | "corporate_actions" | "destinations" | "events" | "filings" | "financials" | "funds" | "guidance" | "holdings" | "insider_trades" | "instruments" | "investor_documents" | "macro" | "metrics" | "news" | "offerings" | "scripts" | "transcripts";
+                            group: "alert_events" | "alert_users" | "alerts" | "calendar" | "call_analytics" | "catalog" | "companies" | "corporate_actions" | "destinations" | "events" | "filings" | "financials" | "funds" | "guidance" | "holdings" | "insider_trades" | "instruments" | "investor_documents" | "macro" | "metrics" | "news" | "offerings" | "ownership" | "scripts" | "transcripts";
                             /** @description Docs group title (e.g. Insider trades) */
                             name: string;
                             /**
@@ -27992,7 +28815,7 @@ export interface operations {
                              * @description Product family
                              * @enum {string}
                              */
-                            family: "account" | "alerts" | "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "sec_filings" | "websocket";
+                            family: "account" | "alerts" | "company" | "earnings_calls" | "financials" | "insider_trades" | "institutional_ownership" | "ipos" | "market" | "metadata" | "news" | "ownership_forms" | "sec_filings" | "websocket";
                             routes: Array<{
                                 /** @description Fastify route pattern; `#` = WebSocket channel */
                                 route: string;

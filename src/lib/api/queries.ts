@@ -40,6 +40,8 @@ import type {
     V2ApiStatus,
     V2AsReportedDetailedResponse,
     V2AudioResponse,
+    V2BeneficialOwnershipResponse,
+    V2BeneficialOwnershipType,
     V2CagrHorizon,
     V2CagrResponse,
     V2CompaniesResponse,
@@ -106,6 +108,7 @@ import type {
     V2HoldersResponse,
     V2InsiderHoldingsResponse,
     V2InsiderHoldingsSort,
+    V2InsiderSaleNoticesResponse,
     V2InsiderSide,
     V2InsiderTradeDetail,
     V2InsiderTradesResponse,
@@ -210,6 +213,7 @@ import {
     getV2AsReportedDetailed,
     getV2AsReportedPresentation,
     getV2Audio,
+    getV2BeneficialOwnership,
     getV2Cagr,
     getV2Company,
     getV2Datasets,
@@ -234,6 +238,7 @@ import {
     getV2Growth,
     getV2Guidance,
     getV2InsiderHoldings,
+    getV2InsiderSaleNotices,
     getV2InsiderTrades,
     getV2InvestorDocument,
     getV2InvestorDocuments,
@@ -1438,6 +1443,79 @@ export function useV2InsiderHoldingsInfinite(input: V2InsiderHoldingsInput) {
             data: { apiKey, company, cursor: cursor ?? undefined, isDerivative: input.isDerivative, limit: input.limit, owner: input.owner, sort: input.sort },
         }),
         queryKey: ["v2", "insider-holdings", input.company, input.owner ?? "", input.isDerivative ?? "", input.sort ?? "", input.limit ?? ""],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+export type V2BeneficialOwnershipInput = {
+    /** Tickers / CIKs, comma-joined (`company=`); undefined = none (then `filer` alone scopes the list). */
+    company?: string;
+    /** false = the whole amendment chain; undefined = the API's default (latest filing per company / holder / class). */
+    current?: boolean;
+    /** Reporting-person CIKs, comma-joined (`filer=`). */
+    filer?: string;
+    /** Days (`YYYY-MM-DD`), inclusive: `filed_at.gte` / `.lte`. */
+    from?: string;
+    limit?: number;
+    to?: string;
+    type?: V2BeneficialOwnershipType;
+};
+
+/** Schedule 13D / 13G filings by cursor (Data API 11.5); idle until a company or a filer is named (the API needs one). */
+export function useV2BeneficialOwnershipInfinite(input: V2BeneficialOwnershipInput) {
+    return useEarningsInfinite<V2BeneficialOwnershipResponse>({
+        enabled: Boolean(input.company || input.filer),
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2BeneficialOwnership({
+            data: {
+                apiKey,
+                company: input.company,
+                current: input.current,
+                cursor: cursor ?? undefined,
+                filedAtGte: input.from,
+                filedAtLte: input.to,
+                filer: input.filer,
+                limit: input.limit,
+                type: input.type,
+            },
+        }),
+        queryKey: [
+            "v2",
+            "beneficial-ownership",
+            input.company ?? "",
+            input.filer ?? "",
+            input.type ?? "",
+            input.current ?? "",
+            input.from ?? "",
+            input.to ?? "",
+            input.limit ?? "",
+        ],
+        refetchInterval: refetchWhileCoveragePending,
+        staleTime: SEC_STALE_MS,
+    });
+}
+
+export type V2InsiderSaleNoticesInput = {
+    /** Tickers / CIKs, comma-joined (`company=`); undefined = none (then `owner` alone scopes the list). */
+    company?: string;
+    /** Days (`YYYY-MM-DD`), inclusive: `filed_at.gte` / `.lte`. */
+    from?: string;
+    limit?: number;
+    /** Seller CIKs, comma-joined (`owner=`). */
+    owner?: string;
+    to?: string;
+};
+
+/** Form 144 notices of a proposed sale by cursor (Data API 11.5); idle until a company or a seller is named. */
+export function useV2InsiderSaleNoticesInfinite(input: V2InsiderSaleNoticesInput) {
+    return useEarningsInfinite<V2InsiderSaleNoticesResponse>({
+        enabled: Boolean(input.company || input.owner),
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getV2InsiderSaleNotices({
+            data: { apiKey, company: input.company, cursor: cursor ?? undefined, filedAtGte: input.from, filedAtLte: input.to, limit: input.limit, owner: input.owner },
+        }),
+        queryKey: ["v2", "insider-sale-notices", input.company ?? "", input.owner ?? "", input.from ?? "", input.to ?? "", input.limit ?? ""],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: SEC_STALE_MS,
     });
