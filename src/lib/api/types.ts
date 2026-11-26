@@ -187,6 +187,10 @@ export type V2TranscriptDiffResponse = ApiResponse<"/v1/events/{event_id}/transc
 export type V2TranscriptSearchResponse = ApiResponse<"/v1/search/transcripts", "get">;
 export type V2GuidanceResponse = ApiResponse<"/v1/guidance", "get">;
 export type V2KpisResponse = ApiResponse<"/v1/kpis", "get">;
+/** Data API 12.1: the adjusted figures of the results releases with their reconciliation (`GET /v1/non-gaap`, PRO). */
+export type V2NonGaapResponse = ApiResponse<"/v1/non-gaap", "get">;
+/** Data API 12.1: a company's catalog KPIs as comparable series (`GET /v1/kpi-series`, PRO). */
+export type V2KpiSeriesResponse = ApiResponse<"/v1/kpi-series", "get">;
 export type V2ParticipantsResponse = ApiResponse<"/v1/participants", "get">;
 /** `pages[]` (member route, `expand=pages`) is free JSON per page in the spec: narrowed to `JsonValue`. */
 export type V2InvestorDocumentsResponse = SecJson<ApiResponse<"/v1/investor-documents", "get">>;
@@ -221,6 +225,10 @@ export type V2GuidanceItem = V2GuidanceResponse["data"][number];
 export type V2GuidanceBasis = V2GuidanceItem["basis"];
 export type V2GuidancePeriodKind = V2GuidanceItem["period_kind"];
 export type V2KpiMention = V2KpisResponse["data"][number];
+export type V2NonGaapMetric = V2NonGaapResponse["data"][number];
+export type V2KpiSeriesPoint = V2KpiSeriesResponse["data"][number];
+/** Why a guidance item has no number (Data API 12.1; null on a numeric item). */
+export type V2GuidanceQualifier = NonNullable<V2GuidanceItem["qualifier"]>;
 export type V2Slide = V2SlidesResponse["slides"][number];
 /** A player slide on the audio's clock (`at_ms` from the start of the recording `/audio` serves). */
 export type V2SlideTimelineEntry = NonNullable<V2SlidesResponse["timeline"]>[number];
@@ -388,6 +396,9 @@ export type V2ExchangeCatalogEntry = V2ExchangeCatalogResponse["data"][number];
 /** The sectors of the operating companies with their industries (Data API 11.2): the values `sector=` accepts. */
 export type V2SectorCatalogResponse = ApiResponse<"/v1/catalog/sectors", "get">;
 export type V2SectorCatalogEntry = V2SectorCatalogResponse["data"][number];
+/** Data API 12.1: the KPIs each sector catalog names (the values `kpi=` of `/v1/kpi-series` accepts). */
+export type V2KpiCatalogResponse = ApiResponse<"/v1/catalog/kpis", "get">;
+export type V2KpiCatalogEntry = V2KpiCatalogResponse["data"][number];
 /** A standardized metric's mapping rule; `rule` is free JSON in the spec (read by guards, `src/lib/reference/catalog.ts`). */
 export type V2MappingRulesResponse = SecJson<ApiResponse<"/v1/catalog/mapping-rules", "get">>;
 export type V2MappingRule = V2MappingRulesResponse["data"][number];

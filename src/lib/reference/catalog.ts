@@ -8,7 +8,7 @@ import { isRecord } from "@/lib/guards";
  */
 
 /** The tabs of `/catalog`, one per `/v1/catalog/*` operation (`?tab=`; absent = metrics). */
-export const CATALOG_TABS = ["metrics", "sections", "forms", "event-types", "document-kinds", "mapping-rules", "exchanges", "sectors", "macro"] as const;
+export const CATALOG_TABS = ["metrics", "sections", "forms", "event-types", "document-kinds", "mapping-rules", "exchanges", "sectors", "kpis", "macro"] as const;
 
 export type CatalogTab = (typeof CATALOG_TABS)[number];
 
@@ -17,6 +17,7 @@ export const CATALOG_TAB_LABELS: Record<CatalogTab, string> = {
     "event-types": "Event types",
     "exchanges": "Exchanges",
     "forms": "Forms",
+    "kpis": "KPIs",
     "macro": "Macro series",
     "mapping-rules": "Mapping rules",
     "metrics": "Metrics",

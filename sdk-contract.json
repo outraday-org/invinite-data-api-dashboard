@@ -522,6 +522,10 @@
       "tsName": "kind",
       "pyName": "kind"
     },
+    "kpi": {
+      "tsName": "kpi",
+      "pyName": "kpi"
+    },
     "layer": {
       "tsName": "layer",
       "pyName": "layer"
@@ -614,6 +618,22 @@
       "tsName": "periodEnd",
       "pyName": "period_end"
     },
+    "period_end.gt": {
+      "tsName": "periodEndGt",
+      "pyName": "period_end_gt"
+    },
+    "period_end.gte": {
+      "tsName": "periodEndGte",
+      "pyName": "period_end_gte"
+    },
+    "period_end.lt": {
+      "tsName": "periodEndLt",
+      "pyName": "period_end_lt"
+    },
+    "period_end.lte": {
+      "tsName": "periodEndLte",
+      "pyName": "period_end_lte"
+    },
     "period_kind": {
       "tsName": "periodKind",
       "pyName": "period_kind"
@@ -666,6 +686,10 @@
       "tsName": "q",
       "pyName": "q"
     },
+    "qualitative": {
+      "tsName": "qualitative",
+      "pyName": "qualitative"
+    },
     "reference_date.gt": {
       "tsName": "referenceDateGt",
       "pyName": "reference_date_gt"
@@ -717,6 +741,10 @@
     "sector": {
       "tsName": "sector",
       "pyName": "sector"
+    },
+    "segment": {
+      "tsName": "segment",
+      "pyName": "segment"
     },
     "series": {
       "tsName": "series",
@@ -1202,6 +1230,21 @@
       "className": "CatalogApi",
       "tsMethod": "listSectorCatalog",
       "pyMethod": "list_sector_catalog"
+    },
+    "listKpiCatalog": {
+      "label": "GET /v1/catalog/kpis",
+      "operationId": "listKpiCatalog",
+      "tag": "Catalog",
+      "params": [
+        "sector",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "CatalogApi",
+      "tsMethod": "listKpiCatalog",
+      "pyMethod": "list_kpi_catalog"
     },
     "listMacroSeries": {
       "label": "GET /v1/macro/series",
@@ -2405,6 +2448,7 @@
         "period_kind",
         "basis",
         "review",
+        "qualitative",
         "sort",
         "fields",
         "limit",
@@ -2432,6 +2476,52 @@
       "className": "GuidanceApi",
       "tsMethod": "listKpis",
       "pyMethod": "list_kpis"
+    },
+    "listNonGaapMetrics": {
+      "label": "GET /v1/non-gaap",
+      "operationId": "listNonGaapMetrics",
+      "tag": "Guidance",
+      "params": [
+        "company",
+        "event",
+        "metric",
+        "period_kind",
+        "period_end.gte",
+        "period_end.gt",
+        "period_end.lte",
+        "period_end.lt",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "GuidanceApi",
+      "tsMethod": "listNonGaapMetrics",
+      "pyMethod": "list_non_gaap_metrics"
+    },
+    "listKpiSeries": {
+      "label": "GET /v1/kpi-series",
+      "operationId": "listKpiSeries",
+      "tag": "Guidance",
+      "params": [
+        "company",
+        "kpi",
+        "period_kind",
+        "period_end.gte",
+        "period_end.gt",
+        "period_end.lte",
+        "period_end.lt",
+        "segment",
+        "sort",
+        "fields",
+        "limit",
+        "cursor"
+      ],
+      "hasBody": false,
+      "className": "GuidanceApi",
+      "tsMethod": "listKpiSeries",
+      "pyMethod": "list_kpi_series"
     },
     "listInvestorDocuments": {
       "label": "GET /v1/investor-documents",
@@ -3237,9 +3327,12 @@
       "IpoRegistrationFilingsInner",
       "IpoRegistrationIpoPending",
       "IpoSources",
+      "KpiCatalogEntry",
       "KpiMention",
       "KpiMentionFilingLink",
       "KpiMentionFilingLinkFactPeriod",
+      "KpiSeriesPoint",
+      "KpiSeriesPointSource",
       "ListAlertEvents200Response",
       "ListAlertTemplates200Response",
       "ListAlertUsers200Response",
@@ -3294,6 +3387,8 @@
       "ListInstruments200ResponseMeta",
       "ListInvestorDocuments200Response",
       "ListIpos200Response",
+      "ListKpiCatalog200Response",
+      "ListKpiSeries200Response",
       "ListKpis200Response",
       "ListMacroGdp200Response",
       "ListMacroInflation200Response",
@@ -3303,6 +3398,7 @@
       "ListMarketHolidays200Response",
       "ListMetricCatalog200Response",
       "ListNews200Response",
+      "ListNonGaapMetrics200Response",
       "ListOfferings200Response",
       "ListOfferings200ResponseMeta",
       "ListParticipants200Response",
@@ -3349,6 +3445,10 @@
       "NewsText",
       "NewsTextBlocksInner",
       "NewsTextCoverage",
+      "NonGaapMetric",
+      "NonGaapMetricAdjustmentsInner",
+      "NonGaapMetricGaap",
+      "NonGaapMetricSource",
       "Offering",
       "OfferingRelatedPerson",
       "Participation",
@@ -3624,9 +3724,12 @@
       "IpoRegistrationFilingsInner",
       "IpoRegistrationIpoPending",
       "IpoSources",
+      "KpiCatalogEntry",
       "KpiMention",
       "KpiMentionFilingLink",
       "KpiMentionFilingLinkFactPeriod",
+      "KpiSeriesPoint",
+      "KpiSeriesPointSource",
       "ListAlertEvents200Response",
       "ListAlertTemplates200Response",
       "ListAlertUsers200Response",
@@ -3681,6 +3784,8 @@
       "ListInstruments200ResponseMeta",
       "ListInvestorDocuments200Response",
       "ListIpos200Response",
+      "ListKpiCatalog200Response",
+      "ListKpiSeries200Response",
       "ListKpis200Response",
       "ListMacroGdp200Response",
       "ListMacroInflation200Response",
@@ -3690,6 +3795,7 @@
       "ListMarketHolidays200Response",
       "ListMetricCatalog200Response",
       "ListNews200Response",
+      "ListNonGaapMetrics200Response",
       "ListOfferings200Response",
       "ListOfferings200ResponseMeta",
       "ListParticipants200Response",
@@ -3736,6 +3842,10 @@
       "NewsText",
       "NewsTextBlocksInner",
       "NewsTextCoverage",
+      "NonGaapMetric",
+      "NonGaapMetricAdjustmentsInner",
+      "NonGaapMetricGaap",
+      "NonGaapMetricSource",
       "Offering",
       "OfferingRelatedPerson",
       "Participation",
@@ -3828,18 +3938,18 @@
   "provenance": {
     "repository": "https://github.com/outraday-org/invinite-data-api",
     "version": "1.0.0",
-    "specSha256": "14aba1a4a69af15581d884fa982a0319f84adb5d7a4272ee25733f525f7355ed",
+    "specSha256": "55a3697a8cb8096c8e784e80e3dca30bfb181f924f9b56269b3fab88fa7c72ad",
     "sourceHashes": {
-      "openapi.json": "14aba1a4a69af15581d884fa982a0319f84adb5d7a4272ee25733f525f7355ed",
+      "openapi.json": "55a3697a8cb8096c8e784e80e3dca30bfb181f924f9b56269b3fab88fa7c72ad",
       "openapitools.json": "0350a3db0a0a0adf49a7c7cdefe7eff466964480780e911b197763d202db1390",
-      "package.json": "04a92c45ef6d8619abcb43ecd9af5ead3bdb7dbf50cdd5600a8b6eb0704b769e",
+      "package.json": "5d390b47e5d8b7947e6855707fe67811024aa784dd5fac9f170554a7746d4318",
       "scripts/check-data-sdk-names.ts": "fe5f33fd4600c25639d85f4237c84213e5611b42505bc3b224f7e1b0ce6e89f9",
       "scripts/prepare-data-sdk-spec.mjs": "1d8a1cbfe170e1eb0a8cd0168b957a4c8844321309a3b9e1fda4ce2ca4594bd1",
       "scripts/reference-artifacts.ts": "0ef8e67cb5454a3f50f43de77b0be1aebb7897164ddf3f5288b58dc7d0f47255",
       "sdks/data/config/python.json": "8f90ab7c0fd25e125c0c6618ae6e09119ef0b5045818c098fd8b259d1888dd5f",
       "sdks/data/config/typescript.json": "69139143672ed147b18c217784cbed3bf609ebeb6b5fbd00617e09344b99c4f2",
-      "sdks/data/readme/python.md": "61fc9cd30b7a6356998de3f772f34c13175e01b333766bc51e0de7a889436379",
-      "sdks/data/readme/typescript.md": "cf37eb4a85b813f93b042834af75f28ab1ebf2535cc9f3e373625439896f097e",
+      "sdks/data/readme/python.md": "2cde207c6d34a0b3c33c19156d101a85afb45a33f466fc26a7934556ab7cd2d4",
+      "sdks/data/readme/typescript.md": "034ade28f227363020279eb7e20e3537e9ded810f09f15d7c0554aaf082e72f1",
       "sdks/data/sdk-naming.ts": "2738bc0f84f4c91aea3122b2ce4ea64d9bbe69f12790b6781b691f28e1c6df78",
       "sdks/data/templates/python/errors.mustache": "d5ec344532b707b5d4d7984af7cf80c0c16f04506b4e5771a1c31ab28d2ed576",
       "sdks/data/templates/python/model_generic.mustache": "40085979b609eb8215471b0b25aa2b69998e0f9861733f1c6f25747519093df0",
@@ -3854,7 +3964,7 @@
       "sdks/data/templates/typescript/pagination.mustache": "190dc450794bc089117af5b5c2f7b2ff707dc2bf6175e49465c393cdba89b395",
       "sdks/data/templates/typescript/webhooks.mustache": "757001711eafe57e914c05cd6b2d86b5555c4d32d80bf3b1a94e4f570df0c20a"
     },
-    "revision": "0e29760f93f5fcf4c7c038c8ab6a830b166aa4d8",
-    "fingerprint": "bf4fdd6b17e4bef007f18d708ba50a5831815fe228df76b4b833373bc35f46df"
+    "revision": "7509d1de1cfbf2a2e9a5a9ef9d9a0adbd20737f6",
+    "fingerprint": "bcb597bc14a8d412835ee087638badc5cc57c3d3badb3a9f2478a234fa0e9796"
   }
 }

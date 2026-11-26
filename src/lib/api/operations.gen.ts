@@ -4035,6 +4035,11 @@ export const OPERATIONS = {
                     py: "period_kind",
                     ts: "periodKind",
                 },
+                qualitative: {
+                    kind: "boolean",
+                    py: "qualitative",
+                    ts: "qualitative",
+                },
                 review: {
                     kind: "string",
                     py: "review",
@@ -4620,6 +4625,47 @@ export const OPERATIONS = {
         summary: "List offerings",
         tier: "lite",
     },
+    listKpiCatalog: {
+        cli: {
+            action: "kpis",
+            group: "catalog",
+            positional: null,
+        },
+        credits: 1,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_catalog_kpis",
+        method: "GET",
+        path: "/v1/catalog/kpis",
+        sdk: {
+            body: null,
+            className: "CatalogApi",
+            params: {
+                cursor: {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                fields: {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                limit: {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                sector: {
+                    kind: "string",
+                    py: "sector",
+                    ts: "sector",
+                },
+            },
+            py: "list_kpi_catalog",
+            ts: "listKpiCatalog",
+        },
+        summary: "List KPIs by sector",
+        tier: "free",
+    },
     listKpis: {
         cli: {
             action: "kpis",
@@ -4674,6 +4720,87 @@ export const OPERATIONS = {
             ts: "listKpis",
         },
         summary: "List KPI mentions",
+        tier: "pro",
+    },
+    listKpiSeries: {
+        cli: {
+            action: "kpi-series",
+            group: "guidance",
+            positional: "company",
+        },
+        credits: 1,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_kpi-series",
+        method: "GET",
+        path: "/v1/kpi-series",
+        sdk: {
+            body: null,
+            className: "GuidanceApi",
+            params: {
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "kpi": {
+                    kind: "string",
+                    py: "kpi",
+                    ts: "kpi",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "period_end.gt": {
+                    kind: "date",
+                    py: "period_end_gt",
+                    ts: "periodEndGt",
+                },
+                "period_end.gte": {
+                    kind: "date",
+                    py: "period_end_gte",
+                    ts: "periodEndGte",
+                },
+                "period_end.lt": {
+                    kind: "date",
+                    py: "period_end_lt",
+                    ts: "periodEndLt",
+                },
+                "period_end.lte": {
+                    kind: "date",
+                    py: "period_end_lte",
+                    ts: "periodEndLte",
+                },
+                "period_kind": {
+                    kind: "string",
+                    py: "period_kind",
+                    ts: "periodKind",
+                },
+                "segment": {
+                    kind: "string",
+                    py: "segment",
+                    ts: "segment",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_kpi_series",
+            ts: "listKpiSeries",
+        },
+        summary: "List KPI time series",
         tier: "pro",
     },
     listMacroGdp: {
@@ -5148,6 +5275,87 @@ export const OPERATIONS = {
         },
         summary: "List news items",
         tier: "lite",
+    },
+    listNonGaapMetrics: {
+        cli: {
+            action: "non-gaap",
+            group: "guidance",
+            positional: "company",
+        },
+        credits: 1,
+        docsUrl: "https://data.invinite.com/docs/get--_v1_non-gaap",
+        method: "GET",
+        path: "/v1/non-gaap",
+        sdk: {
+            body: null,
+            className: "GuidanceApi",
+            params: {
+                "company": {
+                    kind: "string",
+                    py: "company",
+                    ts: "company",
+                },
+                "cursor": {
+                    kind: "string",
+                    py: "cursor",
+                    ts: "cursor",
+                },
+                "event": {
+                    kind: "string",
+                    py: "event",
+                    ts: "event",
+                },
+                "fields": {
+                    kind: "string",
+                    py: "fields",
+                    ts: "fields",
+                },
+                "limit": {
+                    kind: "number",
+                    py: "limit",
+                    ts: "limit",
+                },
+                "metric": {
+                    kind: "string",
+                    py: "metric",
+                    ts: "metric",
+                },
+                "period_end.gt": {
+                    kind: "date",
+                    py: "period_end_gt",
+                    ts: "periodEndGt",
+                },
+                "period_end.gte": {
+                    kind: "date",
+                    py: "period_end_gte",
+                    ts: "periodEndGte",
+                },
+                "period_end.lt": {
+                    kind: "date",
+                    py: "period_end_lt",
+                    ts: "periodEndLt",
+                },
+                "period_end.lte": {
+                    kind: "date",
+                    py: "period_end_lte",
+                    ts: "periodEndLte",
+                },
+                "period_kind": {
+                    kind: "string",
+                    py: "period_kind",
+                    ts: "periodKind",
+                },
+                "sort": {
+                    kind: "string",
+                    py: "sort",
+                    ts: "sort",
+                },
+            },
+            py: "list_non_gaap_metrics",
+            ts: "listNonGaapMetrics",
+        },
+        summary: "List reported non-GAAP figures",
+        tier: "pro",
     },
     listOfferings: {
         cli: {
@@ -7238,6 +7446,7 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
     "GET /v1/catalog/event-types": "listEventTypeCatalog",
     "GET /v1/catalog/exchanges": "listExchangeCatalog",
     "GET /v1/catalog/forms": "listFormCatalog",
+    "GET /v1/catalog/kpis": "listKpiCatalog",
     "GET /v1/catalog/mapping-rules": "listMappingRules",
     "GET /v1/catalog/metrics": "listMetricCatalog",
     "GET /v1/catalog/sections": "listSectionCatalog",
@@ -7304,6 +7513,7 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
     "GET /v1/investor-documents/{document_id}": "getInvestorDocument",
     "GET /v1/ipos": "listIpos",
     "GET /v1/ipos/{ipo_id}": "getIpo",
+    "GET /v1/kpi-series": "listKpiSeries",
     "GET /v1/kpis": "listKpis",
     "GET /v1/macro/gdp": "listMacroGdp",
     "GET /v1/macro/gdp/snapshot": "getMacroGdpSnapshot",
@@ -7324,6 +7534,7 @@ export const OPERATION_IDS_BY_ROUTE: Readonly<Record<string, OperationId>> = {
     "GET /v1/news": "listNews",
     "GET /v1/news/{id}": "getNewsItem",
     "GET /v1/news/{id}/text": "getNewsText",
+    "GET /v1/non-gaap": "listNonGaapMetrics",
     "GET /v1/offerings": "listOfferings",
     "GET /v1/offerings/{offering_id}": "getOffering",
     "GET /v1/participants": "listParticipants",

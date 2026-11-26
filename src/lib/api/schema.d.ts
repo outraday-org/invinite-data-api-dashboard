@@ -580,6 +580,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/catalog/kpis": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List KPIs by sector
+         * @description List the operating KPIs each sector catalog names, with their unit and the period kinds they are reported for.
+         *
+         *     Use a `kpi_key` as the `kpi` filter of GET /v1/kpi-series. A company follows the catalog of its sector; `general` holds the KPIs every company can report.
+         */
+        get: operations["listKpiCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/catalog/mapping-rules": {
         parameters: {
             query?: never;
@@ -1893,7 +1915,7 @@ export interface paths {
          *
          *     Select a `company` or `event`. Guidance comes from call transcripts and results releases. Where available, citations point to the source and `change_vs_prior` compares the figures with the earlier forecast.
          *
-         *     The newest calls appear first. Use `review=approved` to limit the result to reviewed and approved guidance.
+         *     The newest calls appear first. Guidance without a number keeps its statement (`statement_text`, `qualifier`); `qualitative` selects it. Use `review=approved` to limit the result to reviewed and approved guidance.
          */
         get: operations["listGuidance"];
         put?: never;
@@ -2176,6 +2198,32 @@ export interface paths {
          *     Pass the `ipo_id` from `GET /v1/ipos`. The registration and listing records appear together when both are available, so you can follow proposed terms through to the final offer price and listing date.
          */
         get: operations["getIpo"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/kpi-series": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List KPI time series
+         * @description List a company's operating KPIs as comparable time series, one value per KPI, period and segment.
+         *
+         *     Examples are an airline's load factor or a bank's net interest margin. A series exists where the catalog of the company's sector names the KPI (GET /v1/catalog/kpis).
+         *
+         *     Values come from the tables of the results release first, then from its text, then from the call (`origin`). Where the company files the same figure in a 10-Q or 10-K, `xbrl_check` says whether it matches.
+         *
+         *     Use `kpi` to follow one measure across periods; a later release that restates a period replaces its value.
+         */
+        get: operations["listKpiSeries"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2630,6 +2678,30 @@ export interface paths {
          *     A revision or summary change invalidates an earlier cursor. On `400 cursor_mismatch`, repeat the request without `cursor` to read the current summary.
          */
         get: operations["getNewsText"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/non-gaap": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List reported non-GAAP figures
+         * @description List the adjusted (non-GAAP) figures a company reported in its results releases, such as adjusted EPS, adjusted EBITDA or free cash flow.
+         *
+         *     Select a `company` or `event`. Every figure is read from a table of the results release, never from the call. Where the release reconciles the figure, the row carries the GAAP figure it starts from and each adjustment line.
+         *
+         *     `reconciled` tells you whether the GAAP figure plus the adjustments add up to the reported figure within its rounding. A figure that does not add up (`reconciled: false`) is served as printed, never corrected; `null` means there was nothing to check. `source` points to the release and the table cell.
+         */
+        get: operations["listNonGaapMetrics"];
         put?: never;
         post?: never;
         delete?: never;
@@ -3525,7 +3597,7 @@ export interface components {
         };
         /**
          * FundListItem
-         * @description One listed fund (an ETF or a closed-end fund)
+         * @description One fund with a ticker (an ETF or a closed-end fund)
          */
         FundListItem: {
             /**
@@ -3555,6 +3627,8 @@ export interface components {
              * @example S000024908
              */
             fund_key: null | string;
+            /** @description false for a delisted symbol */
+            is_active: boolean;
             /** @description Net assets (USD) from the newest public N-PORT report */
             net_assets_usd: null | number;
             /** @description Permanent logo URL */
@@ -4524,6 +4598,34 @@ export interface components {
                  */
                 company_count: number;
             }>;
+        };
+        /**
+         * KpiCatalogEntry
+         * @description One KPI of a sector catalog: the values `kpi=` accepts on GET /v1/kpi-series
+         */
+        KpiCatalogEntry: {
+            /**
+             * @description Catalog sector
+             * @example airlines
+             */
+            sector: string;
+            /**
+             * @description KPI key
+             * @example load_factor
+             */
+            kpi_key: string;
+            /**
+             * @description KPI name
+             * @example Load factor
+             */
+            label: string;
+            /**
+             * @description Unit of the values
+             * @example pct
+             */
+            unit: string;
+            /** @description Period kinds the KPI is reported for */
+            period_kinds: Array<"half" | "instant" | "nine_months" | "quarter" | "year">;
         };
         /**
          * StandardizedPeriod
@@ -8334,7 +8436,7 @@ export interface components {
             fiscal_year: null | number;
             /** @description Fiscal quarter of the call */
             fiscal_quarter: null | number;
-            /** @description Difference to the prior call's item for the same metric / period / basis; null = none */
+            /** @description Difference to the prior call's item for the same metric / period / basis; null = none, or either item has no number */
             change_vs_prior: {
                 /** @description low − prior low */
                 low_delta: null | number;
@@ -8343,6 +8445,17 @@ export interface components {
                 /** @description midpoint − prior midpoint */
                 midpoint_delta: null | number;
             } | null;
+            /** @description The statement as written or spoken, for guidance without a number; null for a numeric item */
+            statement_text?: null | string;
+            /**
+             * @description Why the item has no number: `directional` (higher / lower), `withdrawn`, `reaffirmed`, `range_unspecified`; null for a numeric item
+             * @enum {string|null}
+             */
+            qualifier?: "directional" | "range_unspecified" | "reaffirmed" | "withdrawn" | null;
+            /** @description The results release the item was read from; null for an item from the call only (cited by `sources`) */
+            source_url?: null | string;
+            /** @description SEC accession number of that release */
+            source_accession?: null | string;
         };
         /**
          * KpiMention
@@ -8447,6 +8560,168 @@ export interface components {
                     end: string;
                 };
             };
+        };
+        /**
+         * NonGaapMetric
+         * @description One adjusted (non-GAAP) figure of a results release with its reconciliation
+         */
+        NonGaapMetric: {
+            /**
+             * Format: uuid
+             * @description Figure identifier (stable across re-reads of the release)
+             */
+            id: string;
+            company: components["schemas"]["CompanyRef"];
+            /**
+             * Format: uuid
+             * @description The earnings event of the release
+             */
+            event_id: string;
+            /**
+             * Format: date-time
+             * @description When the event's call was scheduled
+             */
+            conference_date: null | string;
+            /**
+             * @description The measure as printed
+             * @example Adjusted diluted EPS
+             */
+            metric: string;
+            /**
+             * @description Normalized key; `other:<label>` for a measure outside the named keys
+             * @example eps_adjusted_diluted
+             */
+            metric_key: string;
+            /** @description The reported figure in base units (dollars, dollars per share, percent as 12.5) */
+            value: number;
+            /**
+             * @description Unit of `value`
+             * @enum {string|null}
+             */
+            unit: "count" | "pct" | "per_share" | "ratio" | "USD" | null;
+            /** @description ISO currency */
+            currency: null | string;
+            /**
+             * Format: date
+             * @description Last day of the period
+             */
+            period_end: string;
+            /**
+             * @description Kind of period, from the column's dates
+             * @enum {string}
+             */
+            period_kind: "half" | "instant" | "nine_months" | "quarter" | "year";
+            /** @description The same period one year earlier, from the same release */
+            prior_year_value: null | number;
+            /** @description The GAAP figure the reconciliation starts from; null = the release names none */
+            gaap: null | {
+                /** @description The GAAP measure as printed */
+                metric: null | string;
+                /** @description The GAAP figure, base units */
+                value: null | number;
+            };
+            /** @description The adjustment lines between the GAAP and the reported figure, in printed order */
+            adjustments: Array<{
+                /** @description The line as printed */
+                label: string;
+                /** @description Signed as printed, base units */
+                amount: number;
+            }>;
+            /** @description GAAP figure + adjustments = reported figure within its rounding; false = served as printed although it does not add up; null = nothing to check */
+            reconciled: boolean | null;
+            /** @description Reported figure − (GAAP figure + adjustments), base units; null when not computable */
+            reconciliation_gap: null | number;
+            /** @description Calibrated confidence 0..1 of the metric assignment (not a probability) */
+            confidence: number;
+            /** @description Where the figure was read */
+            source: {
+                /** @description The results release (SEC or company website) */
+                url: string;
+                /** @description SEC accession number of the release */
+                accession: null | string;
+                /** @description The release's data table, in document order (0-based; layout tables are not counted) */
+                table: number;
+                /** @description Data row of that table, below its header rows (0-based) */
+                row: number;
+                /** @description Value column of that table, the label column not counted (0-based) */
+                col: number;
+            };
+        };
+        /**
+         * KpiSeriesPoint
+         * @description One value of a company's KPI series: one KPI, period and segment
+         */
+        KpiSeriesPoint: {
+            /**
+             * Format: uuid
+             * @description Value identifier (stable across re-reads)
+             */
+            id: string;
+            company: components["schemas"]["CompanyRef"];
+            /**
+             * @description KPI key of the sector catalog
+             * @example load_factor
+             */
+            kpi_key: string;
+            /**
+             * @description KPI name of the catalog
+             * @example Load factor
+             */
+            label: string;
+            /**
+             * @description Catalog sector of the company
+             * @example airlines
+             */
+            sector: string;
+            /** @description The value in the catalog unit */
+            value: number;
+            /**
+             * @description Catalog unit: `usd`, `pct`, `count`, `cents`, `ratio` or `usd_per_unit`
+             * @example pct
+             */
+            unit: string;
+            /**
+             * Format: date
+             * @description Last day of the period
+             */
+            period_end: string;
+            /**
+             * @description Kind of period
+             * @enum {string}
+             */
+            period_kind: "half" | "instant" | "nine_months" | "quarter" | "year";
+            /** @description Segment as reported; null = company-wide */
+            segment: null | string;
+            /** @description The same period one year earlier */
+            prior_year_value: null | number;
+            /** @description Change versus the prior year: points for a `pct` KPI, percent for any other unit */
+            yoy_change: null | number;
+            /**
+             * @description Where the value comes from: a results release table, the release text or the call
+             * @enum {string}
+             */
+            origin: "release_table" | "release_text" | "transcript";
+            /**
+             * @description Versus the same figure in the company's 10-Q / 10-K: `none` = not filed in XBRL
+             * @enum {string}
+             */
+            xbrl_check: "differs" | "matched" | "none";
+            /** @description Calibrated confidence 0..1 (not a probability) */
+            confidence: number;
+            /** @description Where the value was read */
+            source: {
+                /** @description The results release; null for a value from the call */
+                url: null | string;
+                /** @description SEC accession number of the release */
+                accession: null | string;
+                /** @description The sentence of a value read from release text or the call */
+                sentence: null | string;
+            };
+            /**
+             * Format: uuid
+             * @description The earnings event whose release or call supplied the value
+             */
+            event_id: string;
         };
         /**
          * InvestorDocument
@@ -22727,6 +23002,7 @@ export interface operations {
                      *           "structure": "registered_fund",
                      *           "exchange": "XNAS",
                      *           "fund_key": "S000024908",
+                     *           "is_active": true,
                      *           "net_assets_usd": 39772685912.05,
                      *           "logo_url": null
                      *         }
@@ -23110,6 +23386,11 @@ export interface operations {
                  * @example any
                  */
                 review?: "any" | "approved";
+                /**
+                 * @description `true` = only guidance without a number (a statement), `false` = only numeric guidance; default both
+                 * @example false
+                 */
+                qualitative?: boolean;
                 /**
                  * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-conference_date`
                  * @example -conference_date
@@ -24642,6 +24923,111 @@ export interface operations {
             503: components["responses"]["ServiceUnavailable"];
         };
     };
+    listKpiCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Catalog sectors, comma list (`airlines`, `banks`, `reits`, …)
+                 * @example airlines
+                 */
+                sector?: string;
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "sector": "airlines",
+                     *           "kpi_key": "asm",
+                     *           "label": "Available seat miles",
+                     *           "unit": "count",
+                     *           "period_kinds": [
+                     *             "quarter"
+                     *           ]
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyJhdXRvbW90aXZlXHUwMDAwZmxlZXRfc2FsZXNfc2hhcmUiXSwiZiI6ImZjYjEyOGE0YzI5NTQwYzUifQ",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["KpiCatalogEntry"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
     listKpis: {
         parameters: {
             query?: {
@@ -24754,6 +25140,121 @@ export interface operations {
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["KpiMention"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listKpiSeries: {
+        parameters: {
+            query: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Required.
+                 * @example AAPL
+                 */
+                "company": string;
+                /**
+                 * @description KPI keys of the sector catalog (GET /v1/catalog/kpis), comma list
+                 * @example load_factor
+                 */
+                "kpi"?: string;
+                /**
+                 * @description Period kinds, comma list: `quarter`, `half`, `nine_months`, `year` (a flow over that period) or `instant` (a value at the period end)
+                 * @example quarter
+                 */
+                "period_kind"?: string;
+                /**
+                 * @description Period ending on or after this day
+                 * @example 2025-01-01
+                 */
+                "period_end.gte"?: string;
+                /**
+                 * @description Period ending after this day
+                 * @example 2025-01-01
+                 */
+                "period_end.gt"?: string;
+                /**
+                 * @description Period ending on or before this day
+                 * @example 2025-01-01
+                 */
+                "period_end.lte"?: string;
+                /**
+                 * @description Period ending before this day
+                 * @example 2025-01-01
+                 */
+                "period_end.lt"?: string;
+                /**
+                 * @description Segments as reported, comma list; `consolidated` selects the company-wide values. Default: every segment and the company-wide values
+                 * @example consolidated
+                 */
+                "segment"?: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`
+                 * @example -period_end
+                 */
+                "sort"?: "-period_end" | "period_end";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["KpiSeriesPoint"]>;
                         /** @description true when a next page exists */
                         has_more: boolean;
                         /** @description Opaque cursor of the next page; null on the last page */
@@ -25867,6 +26368,121 @@ export interface operations {
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["NewsItem"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listNonGaapMetrics: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @example AAPL
+                 */
+                "company"?: string;
+                /**
+                 * @description Event id
+                 * @example evt_01JC8M2X
+                 */
+                "event"?: string;
+                /**
+                 * @description Metric keys, comma list: `eps_adjusted_diluted`, `ebitda_adjusted`, `free_cash_flow`, `ffo_per_share`, … A measure outside the named keys is `other:<label>`
+                 * @example eps_adjusted_diluted
+                 */
+                "metric"?: string;
+                /**
+                 * @description Period kinds, comma list: `quarter`, `half`, `nine_months`, `year` (a flow over that period) or `instant` (a value at the period end)
+                 * @example quarter
+                 */
+                "period_kind"?: string;
+                /**
+                 * @description Period ending on or after this day
+                 * @example 2025-01-01
+                 */
+                "period_end.gte"?: string;
+                /**
+                 * @description Period ending after this day
+                 * @example 2025-01-01
+                 */
+                "period_end.gt"?: string;
+                /**
+                 * @description Period ending on or before this day
+                 * @example 2025-01-01
+                 */
+                "period_end.lte"?: string;
+                /**
+                 * @description Period ending before this day
+                 * @example 2025-01-01
+                 */
+                "period_end.lt"?: string;
+                /**
+                 * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `-period_end`
+                 * @example -period_end
+                 */
+                "sort"?: "-period_end" | "period_end";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                "fields"?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                "limit"?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                "cursor"?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["NonGaapMetric"]>;
                         /** @description true when a next page exists */
                         has_more: boolean;
                         /** @description Opaque cursor of the next page; null on the last page */

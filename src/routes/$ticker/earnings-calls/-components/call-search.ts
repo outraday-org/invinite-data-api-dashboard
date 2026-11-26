@@ -17,6 +17,8 @@ export const CALL_TAB_VALUES = [
     "press-release",
     "documents",
     "guidance",
+    "non-gaap",
+    "kpi-series",
     "qa",
     "participants",
     "metrics",

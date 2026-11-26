@@ -11,6 +11,7 @@ import { CompaniesList, companiesSort } from "@/components/reference/companies-l
 import { FiscalPeriodsView, latestFiscalYearEnd } from "@/components/reference/fiscal-periods-card";
 import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
 import { ApiRequestError } from "@/lib/api/errors";
+import { KPI_CATALOG_ROWS } from "@/lib/earnings/extraction-fixtures";
 import {
     AAPL_FISCAL_PERIODS,
     V2_API_STATUS,
@@ -155,6 +156,28 @@ describe("/catalog exchanges and sectors (Data API 11.2)", () => {
         render(<CatalogTable list={{ ...list, rows: sectorIndustryRows(V2_SECTOR_CATALOG.data) }} query="healthcare" scope="all" spec={CATALOG_SPECS.sectors} />);
 
         expect(screen.getByTestId("catalog-count")).toHaveTextContent("1 of 3 industries");
+    });
+
+    it("the KPIs tab lists sector, KPI, unit and period kinds; a kpi_key keeps that KPI alone (Data API 12.1)", () => {
+        render(<CatalogTable list={{ ...list, rows: KPI_CATALOG_ROWS }} query={undefined} scope="all" spec={CATALOG_SPECS.kpis} />);
+
+        const row = screen.getByText("Load factor").closest("tr");
+
+        expect(row).not.toBeNull();
+
+        expect(within(row as HTMLElement).getByText("airlines")).toBeInTheDocument();
+
+        expect(within(row as HTMLElement).getByText("load_factor")).toBeInTheDocument();
+
+        expect(within(row as HTMLElement).getByText("Percent")).toBeInTheDocument();
+
+        expect(within(row as HTMLElement).getByText("Quarter, Year")).toBeInTheDocument();
+
+        cleanup();
+
+        render(<CatalogTable list={{ ...list, rows: KPI_CATALOG_ROWS }} query="net_interest_margin" scope="all" spec={CATALOG_SPECS.kpis} />);
+
+        expect(screen.getByTestId("catalog-count")).toHaveTextContent("1 of 2 KPIs");
     });
 });
 

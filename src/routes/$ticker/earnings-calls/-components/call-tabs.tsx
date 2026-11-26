@@ -14,7 +14,9 @@ import { LiveTranscript } from "./live/live-transcript-view";
 import { Notice, NoTranscriptNotice } from "./media-state";
 import { DocumentsTab } from "./tabs/documents-tab";
 import { GuidanceTab } from "./tabs/guidance-tab";
+import { KpiSeriesTab } from "./tabs/kpi-series-tab";
 import { MetricsDiffTab } from "./tabs/metrics-diff-tab";
+import { NonGaapTab } from "./tabs/non-gaap-tab";
 import { ParticipantsTab } from "./tabs/participants-tab";
 import { PressReleaseTab } from "./tabs/press-release-tab";
 import { PriceAttributionTab } from "./tabs/price-attribution-tab";
@@ -50,6 +52,8 @@ export type CallTabProps = {
 type AvailabilityFlag = "has_audio" | "has_documents" | "has_press_release" | "has_slides" | "has_transcript";
 
 type CallTabDefinition = {
+    /** Only an earnings call has it (the results release's figures, the company's KPI series): hidden on any other event. */
+    earningsOnly?: boolean;
     /** `false` on the event → muted label and a "Not available" panel; the tab sends no request. */
     flag?: AvailabilityFlag;
     label: string;
@@ -58,11 +62,14 @@ type CallTabDefinition = {
 
 // The transcript-derived tabs (guidance … prosody) carry `has_transcript`: without a transcript they show
 // `NoTranscriptNotice` and send no request; a transcribed but underived call shows each tab's own empty state
-// ("No guidance extracted", "not derived yet"). Price moves keeps no flag (its own 404 state).
+// ("No guidance extracted", "not derived yet"). Price moves keeps no flag (its own 404 state). Non-GAAP and KPI series
+// (Data API 12.1) keep no flag either (their own empty states) and exist on an earnings call only.
 const CALL_TABS: Record<CallTab, CallTabDefinition> = {
     "documents": { flag: "has_documents", label: "Documents", render: props => <DocumentsTab {...props} /> },
     "guidance": { flag: "has_transcript", label: "Guidance & KPIs", render: props => <GuidanceTab {...props} /> },
+    "kpi-series": { earningsOnly: true, label: "KPI series", render: props => <KpiSeriesTab {...props} /> },
     "metrics": { flag: "has_transcript", label: "Metrics & diff", render: props => <MetricsDiffTab {...props} /> },
+    "non-gaap": { earningsOnly: true, label: "Non-GAAP", render: props => <NonGaapTab {...props} /> },
     "participants": { flag: "has_transcript", label: "Participants", render: props => <ParticipantsTab {...props} /> },
     "press-release": { flag: "has_press_release", label: "Press release", render: props => <PressReleaseTab {...props} /> },
     "price-moves": { label: "Price moves", render: props => <PriceAttributionTab {...props} /> },
@@ -108,9 +115,11 @@ export function CallTabs({
     // release, no transcript-derived tabs without a transcript); an earnings call keeps them, muted. The Transcript tab
     // always stays (muted): an event not transcribed yet opens on "No transcript yet", never on Price moves (UI walk F070).
     const hidden = (value: CallTab) => {
-        const { flag } = CALL_TABS[value];
+        const { earningsOnly, flag } = CALL_TABS[value];
 
-        return event.event_type !== "earnings_call" && value !== "transcript" && flag !== undefined && !event[flag];
+        if (event.event_type === "earnings_call") return false;
+
+        return earningsOnly === true || (value !== "transcript" && flag !== undefined && !event[flag]);
     };
 
     const visibleTabs = CALL_TAB_VALUES.filter(value => !hidden(value));

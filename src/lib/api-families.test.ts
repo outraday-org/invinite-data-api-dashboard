@@ -43,6 +43,13 @@ describe("API_FAMILIES (the landing page's coverage list)", () => {
 
         expect(apiFamilyOf("/v1/insider-sale-notices")?.id).toBe("ownership");
 
+        // `/v1/kpis` does not prefix-match `/v1/kpi-series` (its own prefix); the KPI catalog is Reference.
+        expect(apiFamilyOf("/v1/kpi-series")?.id).toBe("earnings");
+
+        expect(apiFamilyOf("/v1/non-gaap")?.id).toBe("earnings");
+
+        expect(apiFamilyOf("/v1/catalog/kpis")?.id).toBe("reference");
+
         expect(apiFamilyOf("/v1/me/alert-user-defaults")?.id).toBe("alerts");
 
         expect(apiFamilyOf("/v1/alerts:batch")?.id).toBe("alerts");

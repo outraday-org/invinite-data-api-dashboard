@@ -9,6 +9,7 @@ import { LoadMoreButton } from "@/components/ui/load-more-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useV2GuidanceInfinite } from "@/lib/api/queries";
+import { QUALIFIER_LABELS } from "@/lib/earnings/extraction";
 import {
     BASIS_LABELS,
     DIRECTION_STYLES,
@@ -49,6 +50,52 @@ export function DirectionChip({ direction }: { direction: V2GuidanceItem["direct
     const style = DIRECTION_STYLES[direction];
 
     return <Badge className={style.className} variant="outline">{style.label}</Badge>;
+}
+
+/** A guidance item without a number (Data API 12.1): a statement, with its `qualifier`, and no low / high. */
+export const isQualitativeGuidance = (item: Pick<V2GuidanceItem, "high" | "low" | "midpoint" | "statement_text">) =>
+    Boolean(item.statement_text) && item.low === null && item.high === null && item.midpoint === null;
+
+/** The item's figure: the range (+ midpoint), or for a statement without a number its text and qualifier. */
+export function GuidanceValue({ item }: { item: V2GuidanceItem }) {
+    if (isQualitativeGuidance(item)) {
+        return (
+            <div className="flex max-w-[24rem] flex-col items-start gap-1">
+                {item.qualifier && <Badge variant="outline">{QUALIFIER_LABELS[item.qualifier]}</Badge>}
+                <span className="leading-snug">{item.statement_text}</span>
+            </div>
+        );
+    }
+
+    return (
+        <div className="flex flex-col whitespace-nowrap tabular-nums">
+            <span>{formatGuidanceRange(item)}</span>
+            {item.midpoint !== null && item.low !== item.high && (
+                <span className="text-muted-foreground">
+                    mid
+                    {" "}
+                    {formatGuidanceValue(item.midpoint, item.unit, item.currency)}
+                </span>
+            )}
+        </div>
+    );
+}
+
+/** The results release the item was read from (`source_url`; null for an item from the call only). */
+function GuidanceReleaseLink({ item }: { item: V2GuidanceItem }) {
+    if (!item.source_url) return null;
+
+    return (
+        <a
+            className="text-primary text-xs underline-offset-4 hover:underline"
+            href={item.source_url}
+            rel="noopener noreferrer"
+            target="_blank"
+            title={item.source_accession ? `Results release ${item.source_accession}` : "Results release"}
+        >
+            Release
+        </a>
+    );
 }
 
 function GuidanceSources({ item }: { item: V2GuidanceItem }) {
@@ -130,17 +177,8 @@ function GuidanceRow({
                         <span className="text-muted-foreground">{PERIOD_KIND_LABELS[item.period_kind]}</span>
                     </div>
                 </TableCell>
-                <TableCell>
-                    <div className="flex flex-col whitespace-nowrap tabular-nums">
-                        <span>{formatGuidanceRange(item)}</span>
-                        {item.midpoint !== null && item.low !== item.high && (
-                            <span className="text-muted-foreground">
-                                mid
-                                {" "}
-                                {formatGuidanceValue(item.midpoint, item.unit, item.currency)}
-                            </span>
-                        )}
-                    </div>
+                <TableCell className={cn(isQualitativeGuidance(item) && "whitespace-normal")}>
+                    <GuidanceValue item={item} />
                 </TableCell>
                 <TableCell>{BASIS_LABELS[item.basis]}</TableCell>
                 <TableCell><DirectionChip direction={item.direction} /></TableCell>
@@ -155,7 +193,12 @@ function GuidanceRow({
                         {item.review_status ? REVIEW_STATUS_LABELS[item.review_status] : "—"}
                     </Badge>
                 </TableCell>
-                <TableCell className="text-muted-foreground tabular-nums">{item.sources?.length ?? 0}</TableCell>
+                <TableCell>
+                    <div className="flex flex-col items-start gap-0.5">
+                        <span className="text-muted-foreground tabular-nums">{item.sources?.length ?? 0}</span>
+                        <GuidanceReleaseLink item={item} />
+                    </div>
+                </TableCell>
             </TableRow>
             {expanded && (
                 <TableRow>
