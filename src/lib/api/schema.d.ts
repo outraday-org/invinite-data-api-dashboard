@@ -727,7 +727,7 @@ export interface paths {
          * List KPIs by sector
          * @description List the operating KPIs each sector catalog names, with their unit and the period kinds they are reported for.
          *
-         *     Use a `kpi_key` as the `kpi` filter of GET /v1/kpi-series. A company follows the catalog of its sector; `general` holds the KPIs every company can report.
+         *     Use a `kpi_key` as the `kpi` filter of GET /v1/kpi-series. A company follows the catalog of its sector; `general` is the catalog of companies outside the named sectors, not a set every company reports.
          */
         get: operations["listKpiCatalog"];
         put?: never;
@@ -8994,7 +8994,7 @@ export interface components {
              */
             metric: string;
             /**
-             * @description Normalized key; `other:<label>` for a measure outside the named keys
+             * @description Normalized key; `other:<slug of the printed label>` for a measure outside the named keys
              * @example eps_adjusted_diluted
              */
             metric_key: string;
@@ -15227,6 +15227,40 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "export_id": "bx_01M8CXZQFG001Y97MXNRP25VK9",
+                     *       "status": "ready",
+                     *       "dataset": "f13",
+                     *       "format": "parquet",
+                     *       "company_ciks": [
+                     *         "0000320193"
+                     *       ],
+                     *       "filer_ciks": [],
+                     *       "date_field": "period_of_report",
+                     *       "from": "2025-01-01",
+                     *       "to": "2025-06-30",
+                     *       "created_at": "2026-11-26T22:00:31.479Z",
+                     *       "started_at": "2026-11-26T22:20:12.931Z",
+                     *       "finished_at": "2026-11-26T22:21:13.828Z",
+                     *       "expires_at": "2026-12-03T22:21:13.828Z",
+                     *       "filename": "sec-f13-export-2025-01-01-2025-06-30.parquet",
+                     *       "bytes": 748632,
+                     *       "sha256": "d8607e376d80217e7a9ec3085d25b92f0658d1088b8b4126dfb685dbeceab3d5",
+                     *       "row_count": 19139,
+                     *       "schema_version": "1",
+                     *       "error_code": null,
+                     *       "coverage": {
+                     *         "from": "2025-01-01",
+                     *         "through": "2025-06-30",
+                     *         "releases": [
+                     *           "01dec2024-28feb2025"
+                     *         ],
+                     *         "reason": null,
+                     *         "scope": null
+                     *       }
+                     *     }
+                     */
                     "application/json": components["schemas"]["BulkExport"];
                 };
             };
@@ -15274,6 +15308,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "url": "https://ACCOUNT.r2.cloudflarestorage.com/BUCKET/KEY?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=REDACTED",
+                     *       "expires_at": "2026-11-26T22:38:34.411Z",
+                     *       "filename": "sec-f13-export-2025-01-01-2025-06-30.parquet",
+                     *       "bytes": 748632,
+                     *       "sha256": "d8607e376d80217e7a9ec3085d25b92f0658d1088b8b4126dfb685dbeceab3d5",
+                     *       "content_type": "application/vnd.apache.parquet"
+                     *     }
+                     */
                     "application/json": components["schemas"]["BulkDownload"];
                 };
             };
@@ -15322,6 +15366,16 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "url": "https://ACCOUNT.r2.cloudflarestorage.com/BUCKET/KEY?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Signature=REDACTED",
+                     *       "expires_at": "2026-11-26T22:38:33.537Z",
+                     *       "filename": "sec-f13-01jun2026-31aug2026-parsed-v1.csv.gz",
+                     *       "bytes": 117411336,
+                     *       "sha256": "5416eaf8709d67e755dbfe09dc07153b1ab9ddbab24203ddd72c44acd95607ee",
+                     *       "content_type": "application/gzip"
+                     *     }
+                     */
                     "application/json": components["schemas"]["BulkDownload"];
                 };
             };
@@ -20825,6 +20879,54 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "export_id": "bx_01M8CXZQFG001Y97MXNRP25VK9",
+                     *           "status": "ready",
+                     *           "dataset": "f13",
+                     *           "format": "parquet",
+                     *           "company_ciks": [
+                     *             "0000320193"
+                     *           ],
+                     *           "filer_ciks": [],
+                     *           "date_field": "period_of_report",
+                     *           "from": "2025-01-01",
+                     *           "to": "2025-06-30",
+                     *           "created_at": "2026-11-26T22:00:31.479Z",
+                     *           "started_at": "2026-11-26T22:20:12.931Z",
+                     *           "finished_at": "2026-11-26T22:21:13.828Z",
+                     *           "expires_at": "2026-12-03T22:21:13.828Z",
+                     *           "filename": "sec-f13-export-2025-01-01-2025-06-30.parquet",
+                     *           "bytes": 748632,
+                     *           "sha256": "d8607e376d80217e7a9ec3085d25b92f0658d1088b8b4126dfb685dbeceab3d5",
+                     *           "row_count": 19139,
+                     *           "schema_version": "1",
+                     *           "error_code": null,
+                     *           "coverage": {
+                     *             "from": "2025-01-01",
+                     *             "through": "2025-06-30",
+                     *             "releases": [
+                     *               "01dec2024-28feb2025"
+                     *             ],
+                     *             "reason": null,
+                     *             "scope": null
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         }
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["BulkExport"]>;
@@ -20923,6 +21025,39 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "file_id": "bf_01M8CTRB9NHDPCD2YVF86K1NB6",
+                     *           "dataset": "f13",
+                     *           "kind": "parsed",
+                     *           "format": "csv_gz",
+                     *           "period_key": "01jun2026-31aug2026",
+                     *           "coverage_start": "2026-06-01",
+                     *           "coverage_end": "2026-08-31",
+                     *           "released_at": "2026-09-14",
+                     *           "filename": "sec-f13-01jun2026-31aug2026-parsed-v1.csv.gz",
+                     *           "content_type": "application/gzip",
+                     *           "bytes": 117411336,
+                     *           "sha256": "5416eaf8709d67e755dbfe09dc07153b1ab9ddbab24203ddd72c44acd95607ee",
+                     *           "row_count": 3830274,
+                     *           "schema_version": "1",
+                     *           "superseded_by": null
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         }
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["BulkFile"]>;
@@ -25996,7 +26131,7 @@ export interface operations {
                  */
                 "kpi"?: string;
                 /**
-                 * @description Period kinds, comma list: `quarter`, `half`, `nine_months`, `year` (a flow over that period) or `instant` (a value at the period end)
+                 * @description Period kinds, comma list: `quarter`, `half`, `nine_months`, `year` (a flow over that period) or `instant` (a value at the period end). Any other value is a 400
                  * @example quarter
                  */
                 "period_kind"?: string;
@@ -27224,12 +27359,12 @@ export interface operations {
                  */
                 "event"?: string;
                 /**
-                 * @description Metric keys, comma list: `eps_adjusted_diluted`, `ebitda_adjusted`, `free_cash_flow`, `ffo_per_share`, … A measure outside the named keys is `other:<label>`
+                 * @description Metric keys, comma list: `eps_adjusted_diluted`, `ebitda_adjusted`, `free_cash_flow`, `ffo_per_share`, … A measure outside the named keys is `other:<slug of the printed label>`
                  * @example eps_adjusted_diluted
                  */
                 "metric"?: string;
                 /**
-                 * @description Period kinds, comma list: `quarter`, `half`, `nine_months`, `year` (a flow over that period) or `instant` (a value at the period end)
+                 * @description Period kinds, comma list: `quarter`, `half`, `nine_months`, `year` (a flow over that period) or `instant` (a value at the period end). Any other value is a 400
                  * @example quarter
                  */
                 "period_kind"?: string;
