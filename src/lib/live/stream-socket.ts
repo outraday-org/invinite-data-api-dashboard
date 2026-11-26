@@ -13,7 +13,16 @@
 /** Why a live feed stopped for good: the page turns its switch off and says this. */
 export type StreamStop = { kind: "error" | "limit" | "plan" | "unavailable"; message: string };
 
-export type StreamMode = "connecting" | "live" | "retrying";
+/**
+ * `no_key`: switched on without a key stored in this browser. The socket needs the browser's own key; the server's
+ * `INVINITE_DATA_API_KEY` (which the REST calls fall back to) never reaches the browser, so nothing is opened.
+ */
+export type StreamMode = "connecting" | "live" | "no_key" | "retrying";
+
+/** The mode a feed hook reports: `no_key` while it is on without a stored key, else its socket's. */
+export function feedMode(enabled: boolean, apiKey: null | string, mode: StreamMode): StreamMode {
+    return enabled && !apiKey ? "no_key" : mode;
+}
 
 export const MAX_RECONNECT_TRIES = 10;
 

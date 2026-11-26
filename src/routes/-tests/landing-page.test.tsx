@@ -33,10 +33,6 @@ const data: LandingData = {
     holiday: { data: { day: "2026-11-26", end_time: null, event_name: "Thanksgiving Day", start_time: null }, isLoading: false },
     ipos: { data: [V2_IPOS.data[1]], isLoading: false },
     live: { asOf: new Date("2026-11-04T13:50:00Z"), data: [CALENDAR_EVENT], isLoading: false },
-    recents: [
-        { badge: "Stock", kind: "instrument", label: "AAPL", name: "Apple Inc.", ref: "AAPL" },
-        { badge: "Institution", kind: "filer", label: "VANGUARD GROUP INC", name: "CIK 102909", ref: "102909" },
-    ],
     today,
     week: { data: [CALENDAR_EVENT, { ...CALENDAR_EVENT, event_id: "later", scheduled_at: "2026-11-06T13:30:00.000Z", symbol: "LATER" }], isLoading: false },
 };
@@ -129,14 +125,6 @@ describe("landing page (with a valid key)", () => {
         const counts = within(screen.getByTestId("api-families")).getAllByTestId("family-count").map(count => count.textContent);
 
         expect(counts).toEqual(API_FAMILIES.map(family => `${API_FAMILY_OPERATIONS[family.id].length} operations`));
-    });
-
-    it("recently opened: instruments and institutions", () => {
-        render(<LandingView {...data} />);
-
-        const recents = within(screen.getByTestId("landing-recents")).getAllByRole("link").map(link => link.getAttribute("href"));
-
-        expect(recents).toEqual(["/AAPL", "/sec/102909"]);
     });
 
     it("loading lists show skeleton rows, not text", () => {

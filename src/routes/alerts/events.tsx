@@ -51,7 +51,7 @@ const TYPE_OPTIONS: Array<{ label: string; value: AlertEventType | typeof ALL }>
     ...ALERT_EVENT_TYPES.map(type => ({ label: ALERT_EVENT_TYPE_LABELS[type], value: type })),
 ];
 
-const MODE_TEXT: Record<LiveAlertsMode, string> = { connecting: "Connecting…", live: "Live", retrying: "Reconnecting…" };
+const MODE_TEXT: Record<LiveAlertsMode, string> = { connecting: "Connecting…", live: "Live", no_key: "API key needed", retrying: "Reconnecting…" };
 
 /** The Live switch's status line (pure): mode, skipped events, notes from the stream, ignored frames. */
 export function LiveStatus({ ignored, mode, note, onReload, truncatedAt }: { ignored: number; mode: LiveAlertsMode; note: null | string; onReload: () => void; truncatedAt: null | string }) {

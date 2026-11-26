@@ -239,7 +239,7 @@ describe("SEC data sets", () => {
 });
 
 describe("live filings list (/filings)", () => {
-    it("states what it shows: nothing since the page opened, connecting, or off", () => {
+    it("states what it shows: nothing since the page opened, connecting, no stored key, or off", () => {
         const { rerender } = render(<LiveFilingsView filings={[]} mode="live" paused={false} />);
 
         expect(screen.getByText("Nothing has arrived since this page opened.")).toBeInTheDocument();
@@ -247,6 +247,10 @@ describe("live filings list (/filings)", () => {
         rerender(<LiveFilingsView filings={[]} mode="connecting" paused={false} />);
 
         expect(screen.getByText("Connecting to the live feed…")).toBeInTheDocument();
+
+        rerender(<LiveFilingsView filings={[]} mode="no_key" paused={false} />);
+
+        expect(screen.getByText(/Live feeds need an API key stored in this browser/)).toBeInTheDocument();
 
         rerender(<LiveFilingsView filings={[]} mode="live" paused />);
 

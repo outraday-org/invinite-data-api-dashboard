@@ -45,7 +45,7 @@ const COLUMNS: Array<ColumnDef<V2Event>> = [
     { cell: ({ row }) => <CalendarTimeCell event={row.original} />, header: "Time", id: "time" },
     {
         cell: ({ row }) => (
-            <EventLink className="font-medium hover:underline" event={row.original}>
+            <EventLink className="hover-fill font-medium" event={row.original}>
                 {row.original.symbol}
             </EventLink>
         ),

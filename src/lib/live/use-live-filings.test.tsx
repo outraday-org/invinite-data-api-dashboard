@@ -66,6 +66,20 @@ describe("useLiveFilings", () => {
         expect(result.current.filings).toEqual([]);
     });
 
+    it("without a stored key it opens no socket and says so (no_key), never \"connecting\" forever", () => {
+        FakeSocket.last = null;
+
+        const { rerender, result } = renderHook(props => useLiveFilings(props), { initialProps: { ...input(true), apiKey: null } });
+
+        expect(FakeSocket.last).toBeNull();
+
+        expect(result.current.mode).toBe("no_key");
+
+        rerender({ ...input(false), apiKey: null });
+
+        expect(result.current.mode).toBe("connecting");
+    });
+
     it("close 4003 (plan) stops without a reconnect", () => {
         const onStop = vi.fn();
 

@@ -10,7 +10,7 @@ import { MACRO_ALERT_SERIES } from "@/lib/api/operations.gen";
 
 import type { StreamMode, StreamStop } from "./stream-socket";
 
-import { admissionCloses, openStreamSocket } from "./stream-socket";
+import { admissionCloses, feedMode, openStreamSocket } from "./stream-socket";
 import { liveWsUrl } from "./ws-frames";
 
 const family = z.enum(MACRO_FAMILIES);
@@ -203,5 +203,5 @@ export function useLiveMacro({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, onStop
         };
     }, [apiKey, apiKeyUpdatedAt, baseUrl, enabled, onStop, queryClient]);
 
-    return { latest: enabled && received?.scope === scope && received.keyStamp === apiKeyUpdatedAt ? received.frame : null, mode };
+    return { latest: enabled && received?.scope === scope && received.keyStamp === apiKeyUpdatedAt ? received.frame : null, mode: feedMode(enabled, apiKey, mode) };
 }

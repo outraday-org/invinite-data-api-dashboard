@@ -4,9 +4,7 @@ import * as React from "react";
 
 import type { V2Event, V2Ipo, V2MarketHoliday } from "@/lib/api/types";
 import type { ApiFamily } from "@/lib/navigation";
-import type { RecentSubject } from "@/lib/stores/ticker-store";
 
-import { SecFilerLookup } from "@/components/sec/sec-filer-lookup";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { PageContainer } from "@/components/ui/page-container";
@@ -18,9 +16,7 @@ import { callCalendarDate, eventLabel, formatStartedAgo, zonedDate } from "@/lib
 import { formatDay, formatInstantShort } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
 import { API_FAMILIES, API_FAMILY_OPERATIONS } from "@/lib/navigation";
-import { recentLink } from "@/lib/recents";
 import { useRequestPanelStore } from "@/lib/stores/request-panel-store";
-import { selectRecents, useTickerStore } from "@/lib/stores/ticker-store";
 import { EventLink } from "@/routes/$ticker/earnings-calls/-components/event-link";
 import { LiveDot } from "@/routes/$ticker/earnings-calls/-components/live-dot";
 import { holidayStatus } from "@/routes/market-holidays";
@@ -41,7 +37,6 @@ export type LandingData = {
     holiday: LandingBlock<null | V2MarketHoliday>;
     ipos: LandingBlock<ReadonlyArray<V2Ipo>>;
     live: LandingBlock<ReadonlyArray<V2Event>> & { asOf: Date };
-    recents: ReadonlyArray<RecentSubject>;
     today: string;
     week: LandingBlock<ReadonlyArray<V2Event>>;
 };
@@ -283,7 +278,7 @@ function LandingIntro() {
  * and the rest of this week's earnings — the first N —, the next IPOs and market holiday), what the API covers (the
  * data families of `API_FAMILIES`), the recently opened subjects and the SEC filer lookup.
  */
-export function LandingView({ holiday, ipos, live, recents, today, week }: LandingData) {
+export function LandingView({ holiday, ipos, live, today, week }: LandingData) {
     const todays = week.data.filter(event => callCalendarDate(event, NEW_YORK) === today);
 
     const later = week.data.filter(event => callCalendarDate(event, NEW_YORK) > today);
@@ -306,7 +301,7 @@ export function LandingView({ holiday, ipos, live, recents, today, week }: Landi
                         <EventColumnBody block={week} empty="No more calls this week." events={later.slice(0, LANDING_ROWS)} time={callDayTimeShort} />
                     </TodayColumn>
                 </div>
-                <div className="flex flex-col gap-1 border-t pt-3">
+                <div className="flex flex-col gap-4 border-t pt-4">
                     <IpoLine ipos={ipos} />
                     <HolidayLine holiday={holiday} />
                 </div>
@@ -316,30 +311,15 @@ export function LandingView({ holiday, ipos, live, recents, today, week }: Landi
                 <CoverageList />
             </Section>
 
-            {recents.length > 0 && (
-                <Section title="Recently opened">
-                    <div className="flex flex-wrap gap-2" data-testid="landing-recents">
-                        {recents.map(recent => (
-                            <Link className="hover:bg-muted/50 flex min-h-9 items-center gap-2 rounded-md border px-2.5 py-1 sm:min-h-8" key={`${recent.kind}-${recent.ref}`} {...recentLink(recent)}>
-                                <span className="font-medium">{recent.label}</span>
-                                {recent.badge && <Badge variant="outline">{recent.badge}</Badge>}
-                            </Link>
-                        ))}
-                    </div>
-                </Section>
-            )}
         </>
     );
 }
 
 /**
  * The landing page (behind the key gate: without a key the onboarding card shows instead): live calls, the week's
- * earnings, next IPOs, the next holiday (4 requests, 1 credit each), what the API covers, recents and the SEC filer
- * lookup.
+ * earnings, next IPOs, the next holiday (4 requests, 1 credit each), and what the API covers.
  */
 function IndexPage() {
-    const recents = useTickerStore(selectRecents);
-
     const [now] = React.useState(() => new Date());
 
     const today = zonedDate(now, NEW_YORK);
@@ -360,13 +340,9 @@ function IndexPage() {
                 holiday={{ data: holidays.data?.pages.at(0)?.data.at(0) ?? null, failed: Boolean(holidays.error), isLoading: holidays.isLoading }}
                 ipos={{ data: ipos.data?.pages.at(0)?.data ?? [], failed: Boolean(ipos.error), isLoading: ipos.isLoading }}
                 live={{ asOf: new Date(live.dataUpdatedAt), data: live.data?.data ?? [], failed: Boolean(live.error) && !live.data, isLoading: live.isLoading }}
-                recents={recents}
                 today={today}
                 week={{ data: events.data?.pages.flatMap(page => page.data) ?? [], failed: Boolean(events.error), isLoading: events.isLoading }}
             />
-            <Section description="Any SEC filer by CIK or name — including pre-IPO issuers, SPACs and 13F managers without a ticker." title="Look up an SEC filer">
-                <SecFilerLookup />
-            </Section>
         </PageContainer>
     );
 }

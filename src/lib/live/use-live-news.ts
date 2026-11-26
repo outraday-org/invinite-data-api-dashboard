@@ -5,7 +5,7 @@ import type { NewsItemPublic } from "@/lib/api/types";
 import type { StreamMode, StreamStop } from "./stream-socket";
 import type { NewsServerFrame, NewsSubscribeOptions } from "./ws-frames";
 
-import { admissionCloses, openStreamSocket } from "./stream-socket";
+import { admissionCloses, feedMode, openStreamSocket } from "./stream-socket";
 import { liveWsUrl, NEWS_LIVE_CHANNEL, newsSubscribeFrame, parseNewsFrame } from "./ws-frames";
 
 /**
@@ -145,6 +145,6 @@ export function useLiveNews({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, filters
 
     return {
         items: enabled && received.key === filterKey ? received.items : [],
-        mode,
+        mode: feedMode(enabled, apiKey, mode),
     };
 }

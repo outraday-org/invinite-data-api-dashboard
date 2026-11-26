@@ -7,6 +7,12 @@ import { Notice } from "@/components/ui/notice";
 import { STREAM_TIER } from "@/lib/api/operations.gen";
 import { LiveDot } from "@/routes/$ticker/earnings-calls/-components/live-dot";
 
+/** The pill's words; `live` = the feed's own `listening` text. */
+const LIVE_PILL_TEXT: Partial<Record<StreamMode, string>> = { connecting: "Connecting…", no_key: "API key needed", retrying: "Reconnecting…" };
+
+/** A feed switched on without a key stored in this browser (`no_key`): the socket needs it. */
+export const LIVE_NO_KEY_TEXT = "Live feeds need an API key stored in this browser: enter it with the key button in the top bar. The server's key is used for the lists only and never sent to the browser.";
+
 /**
  * The "Live" switch of a `/v1/stream` feed (filings, news): on = new rows arrive over the feed's channel. The pill says
  * whether the socket is up (`listening` = the feed's own words while it is); a stop (plan, connection limit, key, not
@@ -27,15 +33,15 @@ export function LiveToggle({
 }) {
     return (
         <div className="flex items-center gap-2">
-            <Button aria-pressed={live} onClick={() => onChange(!live)} size={size} type="button" variant={live ? "default" : "outline"}>
-                Live
-            </Button>
             {live && (
                 <Badge variant={mode === "live" ? "secondary" : "outline"}>
                     {mode === "live" && <LiveDot />}
-                    {mode === "live" ? listening : mode === "retrying" ? "Reconnecting…" : "Connecting…"}
+                    {LIVE_PILL_TEXT[mode] ?? listening}
                 </Badge>
             )}
+            <Button aria-pressed={live} onClick={() => onChange(!live)} size={size} type="button" variant={live ? "default" : "outline"}>
+                Live
+            </Button>
         </div>
     );
 }

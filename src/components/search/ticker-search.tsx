@@ -427,7 +427,7 @@ export function TickerSearch() {
 
                 <TabStrip
                     aria-label="Search category"
-                    className="self-start"
+                    className="mt-1.5 self-start"
                     onSelect={(value) => {
                         setPill(value);
 
@@ -437,7 +437,7 @@ export function TickerSearch() {
                     value={pill}
                 />
 
-                <div className="min-h-0 flex-1 overflow-auto">
+                <div className="-mt-1.5 min-h-0 flex-1 overflow-auto">
                     {query && !settled && options.length === 0 && (
                         <div className="text-muted-foreground px-2 py-2">Searching…</div>
                     )}

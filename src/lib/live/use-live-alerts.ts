@@ -7,7 +7,7 @@ import { STREAM_TIER } from "@/lib/api/operations.gen";
 import type { StreamMode, StreamStop } from "./stream-socket";
 import type { AlertsServerFrame, AlertsSubscribeOptions } from "./ws-frames";
 
-import { admissionCloses, openStreamSocket } from "./stream-socket";
+import { admissionCloses, feedMode, openStreamSocket } from "./stream-socket";
 import { ALERTS_CHANNEL, alertsSubscribeFrame, liveWsUrl, parseAlertsFrame } from "./ws-frames";
 
 /**
@@ -177,5 +177,5 @@ export function useLiveAlerts({ after, apiKey, apiKeyUpdatedAt, baseUrl, enabled
 
     const mode = modeOf.key === filterKey ? modeOf.mode : "connecting";
 
-    return { events: current.events, ignored: current.ignored, mode, note: current.note, truncatedAt: current.truncatedAt };
+    return { events: current.events, ignored: current.ignored, mode: feedMode(enabled, apiKey, mode), note: current.note, truncatedAt: current.truncatedAt };
 }

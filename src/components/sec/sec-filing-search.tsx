@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { DayRange } from "@/components/ui/day-range";
 import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
+import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2FilingSearchInfinite } from "@/lib/api/queries";
 import { MATCH_TYPE_LABELS } from "@/lib/earnings/labels";
@@ -121,6 +122,12 @@ function SecHitCard({ hit, mode, onOpen, query, renderFilingLink }: {
     );
 }
 
+/** A timed-out search's advice: a search across every filer is narrowed by a company, a company's by its filters. */
+export const SEARCH_TIMEOUT_ADVICE = {
+    marketWide: "A search across every filer took too long. Search one company instead (its Filings page has \"Search text\"), or try again later. A timed-out search costs no credits.",
+    scoped: "Try fewer or more specific words, a form or a filed range, or try again later. A timed-out search costs no credits.",
+} as const;
+
 /**
  * The answer body (pure): every loaded page's hits, the index coverage note of the last page (`meta.index`), a notice
  * for a pending / partial page (`meta.coverage`), "No passages found" only for a complete answer with a complete
@@ -137,6 +144,7 @@ export function SecSearchResults({
     pages,
     query,
     renderFilingLink,
+    scoped = true,
 }: {
     error: unknown;
     hasNextPage: boolean;
@@ -148,6 +156,8 @@ export function SecSearchResults({
     query: string;
     /** A hit's link to its filing (the market-wide search: a hit names no company). */
     renderFilingLink?: (accession: string) => React.ReactNode;
+    /** False = a search without a company (the timeout advice differs). */
+    scoped?: boolean;
 }) {
     if (error && pages.length === 0) {
         return <SecReadinessNotice error={error} title="SEC filing search failed" titles={{ not_ready: SEC_SEARCH_OFF }} />;
@@ -164,6 +174,16 @@ export function SecSearchResults({
     const searchIndex = last.meta.index ?? null;
 
     const mode = last.meta.mode ?? "lexical";
+
+    // A timeout with nothing found is a failed search, not a partial answer (backend `search_timeout`: completeness
+    // unknown, no hits): say so once instead of "Partly available" + "results may be incomplete".
+    if (hits.length === 0 && searchIndex?.reasons.includes("search_timeout")) {
+        return (
+            <Notice title="The search timed out — no results" tone="warn">
+                {scoped ? SEARCH_TIMEOUT_ADVICE.scoped : SEARCH_TIMEOUT_ADVICE.marketWide}
+            </Notice>
+        );
+    }
 
     return (
         <>
@@ -335,6 +355,7 @@ export function SecFilingSearch({
                         pages={result.data?.pages ?? []}
                         query={query}
                         renderFilingLink={renderFilingLink}
+                        scoped={scoped}
                     />
                 </>
             )}

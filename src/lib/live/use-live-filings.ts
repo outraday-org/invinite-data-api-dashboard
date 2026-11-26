@@ -4,7 +4,7 @@ import type { ReceivedFiling } from "./live-filings";
 import type { StreamMode, StreamStop } from "./stream-socket";
 
 import { addLiveFiling } from "./live-filings";
-import { admissionCloses, openStreamSocket } from "./stream-socket";
+import { admissionCloses, feedMode, openStreamSocket } from "./stream-socket";
 import { liveWsUrl, parseFilingFrame } from "./ws-frames";
 
 /**
@@ -86,5 +86,5 @@ export function useLiveFilings({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, onRe
         };
     }, [apiKey, apiKeyUpdatedAt, baseUrl, enabled]);
 
-    return { filings: enabled ? filings : [], mode };
+    return { filings: enabled ? filings : [], mode: feedMode(enabled, apiKey, mode) };
 }

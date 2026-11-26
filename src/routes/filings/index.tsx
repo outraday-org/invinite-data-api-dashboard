@@ -7,7 +7,7 @@ import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 import type { ReceivedFiling } from "@/lib/live/live-filings";
 import type { LiveFilingsMode } from "@/lib/live/use-live-filings";
 
-import { LIVE_FILINGS_PLAN_NOTE, LiveStopNotice, LiveToggle } from "@/components/live/live-toggle";
+import { LIVE_FILINGS_PLAN_NOTE, LIVE_NO_KEY_TEXT, LiveStopNotice, LiveToggle } from "@/components/live/live-toggle";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { SecFilingSearch } from "@/components/sec/sec-filing-search";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
@@ -97,6 +97,7 @@ export function LiveFilingsView({ filings, mode, paused }: { filings: ReadonlyAr
     let emptyText = "Nothing has arrived since this page opened.";
 
     if (paused) emptyText = "The live feed is off.";
+    else if (mode === "no_key") emptyText = LIVE_NO_KEY_TEXT;
     else if (mode !== "live") emptyText = "Connecting to the live feed…";
 
     return (

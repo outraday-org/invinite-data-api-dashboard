@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { SecSearchCoverage, V2FilingSearchHit, V2FilingSearchResponse } from "@/lib/api/types";
 
-import { matchesText, SEC_SEARCH_OFF, SecFilingSearch, SecSearchResults } from "@/components/sec/sec-filing-search";
+import { matchesText, SEARCH_TIMEOUT_ADVICE, SEC_SEARCH_OFF, SecFilingSearch, SecSearchResults } from "@/components/sec/sec-filing-search";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useV2FilingSearchInfinite } from "@/lib/api/queries";
 import { V2_FILING_SEARCH } from "@/lib/sec/v2-fixtures";
@@ -59,6 +59,24 @@ describe("SecSearchResults", () => {
         expect(screen.getByText(SEC_SEARCH_OFF)).toBeInTheDocument();
 
         expect(screen.queryByText("No passages found")).toBeNull();
+    });
+
+    it("a timed-out search with no hits says so once (not \"Partly available\"), with advice by scope", () => {
+        const timedOut = page([], { completeness: "unknown", reasons: ["search_timeout"] } as SecSearchCoverage, { coverage: { state: "partial" } });
+
+        const { rerender } = render(results({ pages: [timedOut], scoped: false }));
+
+        expect(screen.getByText("The search timed out — no results")).toBeInTheDocument();
+
+        expect(screen.getByText(SEARCH_TIMEOUT_ADVICE.marketWide)).toBeInTheDocument();
+
+        expect(screen.queryByText(/Partly available/)).toBeNull();
+
+        expect(screen.queryByText("No passages found")).toBeNull();
+
+        rerender(results({ pages: [timedOut] }));
+
+        expect(screen.getByText(SEARCH_TIMEOUT_ADVICE.scoped)).toBeInTheDocument();
     });
 
     it("hits name form, date and document; spans are marked exactly; a hit opens its cited block and links the original", () => {
