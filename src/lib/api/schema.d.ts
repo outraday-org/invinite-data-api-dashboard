@@ -481,7 +481,7 @@ export interface paths {
          *
          *     Use `company` for the filings on a company or `filer` for one reporting person's filings across companies; one of the two is required. `current=true` (the default) lists only the latest filing per company, primary reporting person and class; `current=false` lists the whole amendment chain, linked by `supersedes_accession`. Rows run from the newest filing to the oldest.
          *
-         *     Coverage: structured filings since 2024-12-18 (the first day of mandatory XML), for listed subject companies only; older filings are not served.
+         *     With several companies or persons, results follow the requested order, newest filings first within each. Coverage: structured filings since 2024-12-18 (the first day of mandatory XML), for listed subject companies only; older filings are not served.
          */
         get: operations["listBeneficialOwnershipFilings"];
         put?: never;
@@ -1791,9 +1791,9 @@ export interface paths {
         };
         /**
          * List funds
-         * @description List ETFs and closed-end funds with active listings.
+         * @description List ETFs and closed-end funds listed today.
          *
-         *     Search by ticker prefix or part of a fund name in `q`. Use `structure=exchange_traded_trust` for exchange-traded trusts. Use the ticker or `fund_key` from a result to retrieve its profile.
+         *     Search by ticker prefix or part of a fund name in `q`. Use `is_active=all` to include delisted funds, `is_active=false` for delisted ones only. Use `structure=exchange_traded_trust` for exchange-traded trusts. Use the ticker or `fund_key` from a result to retrieve its profile.
          */
         get: operations["listFunds"];
         put?: never;
@@ -1989,7 +1989,7 @@ export interface paths {
          *
          *     An amendment (144/A) names the notice it replaces in `replaces_accession`, and the replaced notice names its newest replacement in `replaced_by`.
          *
-         *     Use `company` for an issuer's notices or `owner` for one seller's notices across issuers (one of the two is required). Rows run from the newest filing to the oldest. Coverage: electronic notices since 2023-04-13, for listed issuers only.
+         *     Use `company` for an issuer's notices or `owner` for one seller's notices across issuers (one of the two is required). Rows run from the newest filing to the oldest; with several companies or sellers, results follow the requested order, newest notices first within each. Coverage: electronic notices since 2023-04-13, for listed issuers only.
          */
         get: operations["listInsiderSaleNotices"];
         put?: never;
@@ -2057,7 +2057,7 @@ export interface paths {
          * List instruments
          * @description List US stocks, ETFs, closed-end funds and ETNs.
          *
-         *     Search by ticker prefix or part of a name with `q`. Results include active and delisted symbols in ticker order. Use `is_active=true` for current listings.
+         *     Search by ticker prefix or part of a name with `q`. Results are symbols listed today, in ticker order. Use `is_active=all` to include delisted symbols, `is_active=false` for delisted ones only.
          *
          *     Each instrument identifies the datasets its type supports. A stock points to its company and a fund to its fund profile.
          */
@@ -2718,6 +2718,8 @@ export interface paths {
          * @description Search for people who appeared on earnings calls.
          *
          *     Supply a `company`, an `event` or at least two characters of a name in `q`. Narrow by `role` to find executives or analysts. People with the most recent matching appearances come first.
+         *
+         *     Conference-call operators are left out unless `include_operators=true` or `role=operator`.
          */
         get: operations["listPeople"];
         put?: never;
@@ -3425,8 +3427,6 @@ export interface components {
             cusip: string;
             /** @description Composite FIGI */
             composite_figi: null | string;
-            /** @description Whether the security is delisted */
-            is_delisted: boolean;
             /**
              * Format: date
              * @description Listing date
@@ -14465,7 +14465,6 @@ export interface operations {
                      *       "currency": "USD",
                      *       "cusip": "",
                      *       "composite_figi": "BBG000B9XRY4",
-                     *       "is_delisted": false,
                      *       "list_date": "1980-12-12",
                      *       "employees": 167000,
                      *       "market_cap": 4975383151340,
@@ -22668,6 +22667,11 @@ export interface operations {
                  */
                 exchange?: string;
                 /**
+                 * @description `true` (default) = listed today, `false` = delisted, `all` = both
+                 * @example true
+                 */
+                is_active?: "all" | "false" | "true";
+                /**
                  * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `symbol`
                  * @example symbol
                  */
@@ -24142,10 +24146,10 @@ export interface operations {
                  */
                 exchange?: string;
                 /**
-                 * @description true = listed today, false = delisted; both when absent
+                 * @description `true` (default) = listed today, `false` = delisted, `all` = both
                  * @example true
                  */
-                is_active?: boolean;
+                is_active?: "all" | "false" | "true";
                 /**
                  * @description Sort field (`-` = descending); the id tiebreaker is always appended. Default `symbol`
                  * @example symbol
@@ -26214,6 +26218,11 @@ export interface operations {
                  * @example analyst
                  */
                 role?: "analyst" | "executive" | "operator" | "other";
+                /**
+                 * @description true = also list conference-call operators (hidden by default; `role=operator` lists them anyway)
+                 * @example false
+                 */
+                include_operators?: boolean;
                 /**
                  * @description Name
                  * @example smith

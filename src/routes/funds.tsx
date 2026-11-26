@@ -17,11 +17,13 @@ import { PageHeader } from "@/components/ui/page-header";
 import { listState } from "@/lib/api/list-state";
 import { useFunds } from "@/lib/api/queries";
 import { formatMoneyCompact } from "@/lib/format";
-import { EXCHANGE_LABELS, FUND_STRUCTURE_LABELS, INSTRUMENT_TYPE_LABELS } from "@/lib/instruments";
+import { activeFilterValue, EXCHANGE_LABELS, FUND_STRUCTURE_LABELS, INSTRUMENT_TYPE_LABELS, LISTED_FILTER_OPTIONS, LISTED_FILTERS, LISTED_TODAY } from "@/lib/instruments";
 import { titleHead } from "@/lib/layout";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 
 const fundsSearchSchema = z.object({
+    /** Absent = listed today (Data API 12.0's default); `all` = listed and delisted; `delisted` = delisted only. */
+    active: z.enum(LISTED_FILTERS).optional().catch(undefined),
     exchange: z.string().regex(/^[A-Z]{4}$/).optional().catch(undefined),
     q: z.string().trim().min(1).max(100).optional().catch(undefined),
     sort: z.enum(["symbol", "-symbol", "name", "-name"]).optional().catch(undefined),
@@ -67,6 +69,7 @@ const SORT_OPTIONS = [
 export function fundsRequest(search: FundsSearch) {
     return {
         exchange: search.exchange,
+        isActive: activeFilterValue(search.active),
         limit: FUNDS_PAGE,
         q: search.q ?? "",
         sort: search.sort,
@@ -75,39 +78,50 @@ export function fundsRequest(search: FundsSearch) {
     };
 }
 
-const COLUMNS: Array<ColumnDef<V2FundListItem>> = [
-    {
-        cell: ({ row }) => (
-            <Link className="font-medium underline-offset-4 hover:underline" params={{ ticker: row.original.symbol }} to="/$ticker">
-                {row.original.symbol}
-            </Link>
-        ),
-        header: "Symbol",
-        id: "symbol",
-    },
-    { cell: ({ row }) => <div className="truncate">{row.original.name ?? "—"}</div>, header: "Name", id: "name" },
-    {
-        cell: ({ row }) => (
-            <div className="flex gap-1">
-                <Badge variant="secondary">{INSTRUMENT_TYPE_LABELS[row.original.type]}</Badge>
-                {row.original.structure === "exchange_traded_trust" && <Badge variant="outline">Trust</Badge>}
-            </div>
-        ),
-        header: "Type",
-        id: "type",
-    },
-    { cell: ({ row }) => row.original.exchange ?? "—", header: "Exchange", id: "exchange" },
-    {
-        cell: ({ row }) => (
-            <div className="text-right tabular-nums">{formatMoneyCompact(row.original.net_assets_usd)}</div>
-        ),
-        header: () => <div className="text-right">Net assets</div>,
-        id: "net_assets_usd",
-    },
-];
+/**
+ * The columns; `delisted` = every row is delisted (the "Delisted" filter). A fund row carries no `is_active` (unlike an
+ * instrument), so under "Listed and delisted" a delisted fund cannot be badged.
+ */
+function fundColumns(delisted: boolean): Array<ColumnDef<V2FundListItem>> {
+    return [
+        {
+            cell: ({ row }) => (
+                <Link className="font-medium underline-offset-4 hover:underline" params={{ ticker: row.original.symbol }} to="/$ticker">
+                    {row.original.symbol}
+                </Link>
+            ),
+            header: "Symbol",
+            id: "symbol",
+        },
+        { cell: ({ row }) => <div className="truncate">{row.original.name ?? "—"}</div>, header: "Name", id: "name" },
+        {
+            cell: ({ row }) => (
+                <div className="flex gap-1">
+                    <Badge variant="secondary">{INSTRUMENT_TYPE_LABELS[row.original.type]}</Badge>
+                    {row.original.structure === "exchange_traded_trust" && <Badge variant="outline">Trust</Badge>}
+                    {delisted && <Badge variant="outline">Delisted</Badge>}
+                </div>
+            ),
+            header: "Type",
+            id: "type",
+        },
+        { cell: ({ row }) => row.original.exchange ?? "—", header: "Exchange", id: "exchange" },
+        {
+            cell: ({ row }) => (
+                <div className="text-right tabular-nums">{formatMoneyCompact(row.original.net_assets_usd)}</div>
+            ),
+            header: () => <div className="text-right">Net assets</div>,
+            id: "net_assets_usd",
+        },
+    ];
+}
 
-/** The fund list (pure): its state, the rows, "Load more". */
-export function FundsList({ state }: { state: ListState<V2FundsResponse> }) {
+const COLUMNS = fundColumns(false);
+
+const DELISTED_COLUMNS = fundColumns(true);
+
+/** The fund list (pure): its state, the rows, "Load more"; `delisted` = the "Delisted" filter is on. */
+export function FundsList({ delisted = false, state }: { delisted?: boolean; state: ListState<V2FundsResponse> }) {
     const { error, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages } = state;
 
     if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load the funds" />;
@@ -118,9 +132,9 @@ export function FundsList({ state }: { state: ListState<V2FundsResponse> }) {
         <div className="flex flex-col gap-2">
             <SecReadinessNotice coverage={meta?.coverage} />
             <DataTable
-                columns={COLUMNS}
+                columns={delisted ? DELISTED_COLUMNS : COLUMNS}
                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
-                emptyText="No fund matches these filters."
+                emptyText={delisted ? "No delisted fund matches these filters." : "No fund matches these filters."}
                 exportConfig={{ dataset: "funds", scope: "us" }}
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
@@ -135,9 +149,9 @@ export function FundsList({ state }: { state: ListState<V2FundsResponse> }) {
 }
 
 /**
- * The listed funds (Data API 7.0, `GET /v1/funds`): ETFs and closed-end funds with a ticker — an ETN is no fund and an
+ * The funds (Data API 7.0, `GET /v1/funds`; listed today by default, the "Listed" filter adds the delisted ones, 12.0): ETFs and closed-end funds with a ticker — an ETN is no fund and an
  * unlisted mutual fund is never a resource (owner decisions 4 and 13). Filters type, structure ("with holdings" =
- * registered fund), exchange, a name / ticker search and the sort, all in the URL; a row opens the fund's page.
+ * registered fund), exchange, listed, a name / ticker search and the sort, all in the URL; a row opens the fund's page.
  */
 function FundsPage() {
     const search = Route.useSearch();
@@ -153,7 +167,7 @@ function FundsPage() {
             <PageHeader
                 description={(
                     <>
-                        Every listed ETF and closed-end fund. Exchange-traded trusts (gold, bitcoin, futures pools) file no
+                        Every ETF and closed-end fund listed today (the Listed filter adds the delisted ones). Exchange-traded trusts (gold, bitcoin, futures pools) file no
                         holdings report; the others show their holdings and weights. Sorted by symbol or name (the API offers no
                         net-assets sort).
                     </>
@@ -161,8 +175,8 @@ function FundsPage() {
                 title="Funds"
             />
             <FilterBar
-                activeCount={[search.q, search.type, search.structure, search.exchange, search.sort].filter(value => value !== undefined).length}
-                onReset={() => onChange({ exchange: undefined, q: undefined, sort: undefined, structure: undefined, type: undefined })}
+                activeCount={[search.q, search.type, search.structure, search.exchange, search.active, search.sort].filter(value => value !== undefined).length}
+                onReset={() => onChange({ active: undefined, exchange: undefined, q: undefined, sort: undefined, structure: undefined, type: undefined })}
             >
                 <FilterField label="Search" span={2}>
                     {id => <DebouncedInput aria-label="Search funds" className="w-full" id={id} onCommit={q => onChange({ q: q || undefined })} placeholder="Ticker or name" value={search.q ?? ""} />}
@@ -176,11 +190,15 @@ function FundsPage() {
                 <FilterField label="Exchange">
                     {id => <FilterSelect aria-label="Exchange" className="w-full" id={id} onValueChange={value => onChange({ exchange: value === ALL ? undefined : value })} options={EXCHANGE_OPTIONS} value={search.exchange ?? ALL} />}
                 </FilterField>
+                <FilterField label="Listed">
+                    {id => <FilterSelect aria-label="Listed" className="w-full" id={id} onValueChange={value => onChange({ active: value === LISTED_TODAY ? undefined : value })} options={LISTED_FILTER_OPTIONS} value={search.active ?? LISTED_TODAY} />}
+                </FilterField>
                 <FilterField label="Sort">
                     {id => <FilterSelect aria-label="Sort" className="w-full" id={id} onValueChange={value => onChange({ sort: value === "symbol" ? undefined : value })} options={SORT_OPTIONS} value={search.sort ?? "symbol"} />}
                 </FilterField>
             </FilterBar>
             <FundsList
+                delisted={search.active === "delisted"}
                 state={listState(funds)}
             />
         </PageContainer>

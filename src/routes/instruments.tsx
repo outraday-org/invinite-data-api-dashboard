@@ -20,7 +20,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useCompaniesInfinite, useInstrumentsInfinite, useSectorCatalogInfinite } from "@/lib/api/queries";
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { formatDay } from "@/lib/format";
-import { EXCHANGE_LABELS, FUND_STRUCTURE_LABELS, INSTRUMENT_TABS, INSTRUMENT_TYPE_PLURALS, instrumentBadges } from "@/lib/instruments";
+import { activeFilterValue, EXCHANGE_LABELS, FUND_STRUCTURE_LABELS, INSTRUMENT_TABS, INSTRUMENT_TYPE_PLURALS, instrumentBadges, LISTED_FILTER_OPTIONS, LISTED_FILTERS, LISTED_TODAY } from "@/lib/instruments";
 import { titleHead, WRAPPING_TABS_LIST_CLASS } from "@/lib/layout";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 
@@ -29,7 +29,8 @@ const ALL = "all";
 const SORTS = ["symbol", "-symbol", "name", "-name"] as const;
 
 const instrumentsSearchSchema = z.object({
-    active: z.enum(["listed", "delisted"]).optional().catch(undefined),
+    /** Absent = listed today (Data API 12.0's default); `all` = listed and delisted. An old `?active=listed` reads as absent. */
+    active: z.enum(LISTED_FILTERS).optional().catch(undefined),
     exchange: z.string().regex(/^[A-Z]{4}$/).optional().catch(undefined),
     q: z.string().trim().min(1).max(100).optional().catch(undefined),
     /**
@@ -66,12 +67,6 @@ const STRUCTURE_OPTIONS = [
 ] satisfies Array<{ label: string; value: NonNullable<InstrumentsSearch["structure"]> | typeof ALL }>;
 
 const EXCHANGE_OPTIONS = [{ label: "Every exchange", value: ALL }, ...Object.entries(EXCHANGE_LABELS).map(([mic, label]) => ({ label: `${label} (${mic})`, value: mic }))];
-
-const ACTIVE_OPTIONS = [
-    { label: "Listed and delisted", value: ALL },
-    { label: "Listed today", value: "listed" },
-    { label: "Delisted", value: "delisted" },
-] satisfies Array<{ label: string; value: NonNullable<InstrumentsSearch["active"]> | typeof ALL }>;
 
 const SORT_OPTIONS = [
     { label: "Symbol A–Z", value: "symbol" },
@@ -142,7 +137,7 @@ export function instrumentsRequest(search: InstrumentsSearch) {
 
     return {
         exchange: search.exchange,
-        isActive: search.active === undefined ? undefined : search.active === "listed",
+        isActive: activeFilterValue(search.active),
         limit: 50,
         q: search.q,
         sort: search.sort,
@@ -227,7 +222,7 @@ function CompaniesTabBody({ search, sectors }: { search: InstrumentsSearch; sect
 
 /**
  * Every exchange-traded US symbol (`GET /v1/instruments`): tabs All / Stocks / ETFs / Closed-end funds / ETNs, filters
- * structure, exchange and listed / delisted, a ticker / name search and the sort, all in the URL; a row opens its page.
+ * structure, exchange and listed (today by default, or with the delisted ones, or delisted only), a ticker / name search and the sort, all in the URL; a row opens its page.
  * The Companies tab (`?view=companies`, O7 group 7) lists `GET /v1/companies` instead: the operating companies with
  * sector, fiscal year end and CIK, filtered by the same search, exchange and sort plus the sector.
  */
@@ -292,7 +287,7 @@ function InstrumentsPage() {
                         )
                     : (
                             <FilterField label="Listed">
-                                {id => <FilterSelect aria-label="Listed" className="w-full" id={id} onValueChange={value => onChange({ active: value === ALL ? undefined : value })} options={ACTIVE_OPTIONS} value={search.active ?? ALL} />}
+                                {id => <FilterSelect aria-label="Listed" className="w-full" id={id} onValueChange={value => onChange({ active: value === LISTED_TODAY ? undefined : value })} options={LISTED_FILTER_OPTIONS} value={search.active ?? LISTED_TODAY} />}
                             </FilterField>
                         )}
                 <FilterField label="Sort">

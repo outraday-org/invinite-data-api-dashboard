@@ -7,7 +7,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { INSTRUMENT_SEARCH } from "@/lib/instruments-fixtures";
 import { V2_FILERS } from "@/lib/sec/v2-fixtures";
 import { InstitutionsList } from "@/routes/institutions";
-import { InstrumentsList, instrumentsRequest } from "@/routes/instruments";
+import { companiesRequest, InstrumentsList, instrumentsRequest } from "@/routes/instruments";
 
 vi.mock("@tanstack/react-router", () => ({
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
@@ -35,10 +35,21 @@ describe("/instruments (`GET /v1/instruments`)", () => {
         expect(screen.getByRole("button", { name: /load more/i })).toBeInTheDocument();
     });
 
+    it("Listed (Data API 12.0): absent = listed today, nothing sent; `all` and `delisted` send `all` / `false`", () => {
+        expect(instrumentsRequest({}).isActive).toBeUndefined();
+
+        expect(instrumentsRequest({ active: "all" }).isActive).toBe("all");
+
+        expect(instrumentsRequest({ active: "delisted" }).isActive).toBe("false");
+
+        // The Companies tab's request (`GET /v1/companies`) has no `is_active`: the API would refuse it.
+        expect(companiesRequest({ active: "all", view: "companies" }, [])).not.toHaveProperty("isActive");
+    });
+
     it("the tab is the type; the structure goes only with a fund tab", () => {
         expect(instrumentsRequest({})).toMatchObject({ isActive: undefined, structure: undefined, type: undefined });
 
-        expect(instrumentsRequest({ active: "delisted", structure: "registered_fund", type: "etf" })).toMatchObject({ isActive: false, structure: ["registered_fund"], type: ["etf"] });
+        expect(instrumentsRequest({ active: "delisted", structure: "registered_fund", type: "etf" })).toMatchObject({ isActive: "false", structure: ["registered_fund"], type: ["etf"] });
 
         expect(instrumentsRequest({ structure: "registered_fund", type: "stock" }).structure).toBeUndefined();
     });

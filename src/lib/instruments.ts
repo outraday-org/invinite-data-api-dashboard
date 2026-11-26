@@ -1,4 +1,4 @@
-import type { V2Dataset, V2FundStructure, V2Instrument, V2InstrumentType } from "@/lib/api/types";
+import type { V2ActiveFilter, V2Dataset, V2FundStructure, V2Instrument, V2InstrumentType } from "@/lib/api/types";
 
 /**
  * The dashboard's view of an instrument (Data API 7.0): its type badge and which sections of `/$ticker` exist for it.
@@ -50,6 +50,31 @@ export function instrumentBadges(instrument: Pick<V2Instrument, "is_active" | "s
 }
 
 export const isFundType = (type: V2InstrumentType): boolean => type === "etf" || type === "closed_end_fund";
+
+/**
+ * The "Listed" filter of `/instruments` and `/funds` (Data API 12.0), the URL's `?active=`: absent = listed today (the
+ * API's default, nothing sent), `all` = listed and delisted, `delisted` = delisted only. An old `?active=listed` reads
+ * as absent (the routes' `.catch(undefined)`).
+ */
+export const LISTED_FILTERS = ["all", "delisted"] as const;
+
+export type ListedFilter = (typeof LISTED_FILTERS)[number];
+
+/** The select's value of the default (never written to the URL). */
+export const LISTED_TODAY = "listed";
+
+export const LISTED_FILTER_OPTIONS: Array<{ label: string; value: ListedFilter | typeof LISTED_TODAY }> = [
+    { label: "Listed today", value: LISTED_TODAY },
+    { label: "Listed and delisted", value: "all" },
+    { label: "Delisted", value: "delisted" },
+];
+
+/** The `is_active` a URL's `?active=` sends: `all` → `all`, `delisted` → `false`, absent → unset (listed today). */
+export function activeFilterValue(active: ListedFilter | undefined): undefined | V2ActiveFilter {
+    if (active === "all") return "all";
+
+    return active === "delisted" ? "false" : undefined;
+}
 
 /**
  * The `$ticker` section (the first path segment after the ticker; "" = the overview) → the dataset it shows; a list =

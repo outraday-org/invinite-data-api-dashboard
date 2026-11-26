@@ -12,7 +12,7 @@ import { personCalls, roleHistory } from "@/lib/people";
 import { EVENT_IDS, PERSON_ANALYST, PERSON_EVENTS, PERSON_EXECUTIVE, PERSON_PARTICIPATIONS, V2_PEOPLE } from "@/lib/people-fixtures";
 import { ParticipantsTab } from "@/routes/$ticker/earnings-calls/-components/tabs/participants-tab";
 import { historyNote, PersonCallsView, PersonProfileView, RoleHistoryView } from "@/routes/people/$personId";
-import { PeopleList } from "@/routes/people/index";
+import { PeopleList, peopleRequest } from "@/routes/people/index";
 
 vi.mock("@tanstack/react-router", () => ({
     createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
@@ -40,6 +40,16 @@ afterEach(cleanup);
 const list = { error: null, hasNextPage: true, isFetchingNextPage: false, isLoading: false, onLoadMore: () => undefined };
 
 describe("/people (`GET /v1/people`)", () => {
+    it("the default list sends no `role` / `include_operators` (Data API 12.0 leaves call operators out); Role → Operators sends `role=operator`", () => {
+        const request = peopleRequest({ company: "AAPL" });
+
+        expect(request).toEqual({ company: "AAPL", event: undefined, limit: 50, q: undefined, role: undefined, sort: undefined });
+
+        expect(request).not.toHaveProperty("include_operators");
+
+        expect(peopleRequest({ company: "AAPL", role: "operator" }).role).toBe("operator");
+    });
+
     it("each person links their page; role, latest title, calls; export and Load more", () => {
         render(<PeopleList {...list} pages={[V2_PEOPLE]} search={{}} />);
 
