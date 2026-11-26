@@ -13,7 +13,7 @@ import { V2_IPOS } from "@/lib/sec/v2-fixtures";
 import { CalendarFilters } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 import { CalendarWeekStrip } from "@/routes/$ticker/earnings-calls/-components/calendar-week-strip";
 import { CalendarView } from "@/routes/calendar";
-import { IpoDetail, ipoRequest, IposView, undatedPages, upcomingUndatedRequest } from "@/routes/ipo-calendar";
+import { IpoDetail, ipoListedTicker, ipoRequest, ipoRowTarget, IposView, undatedPages, upcomingUndatedRequest } from "@/routes/ipo-calendar";
 import { LiveCallsView, nextCallsOf } from "@/routes/live-calls";
 import { holidayStatus, MarketHolidaysView } from "@/routes/market-holidays";
 
@@ -248,16 +248,33 @@ describe("/ipo-calendar (`/v1/ipos`, `/v1/ipos/{ipo_id}`)", () => {
         expect(ipoRequest({ stage: "priced" }, "2026-11-21").stage).toEqual(["priced"]);
     });
 
-    it("a listed symbol opens its page; Details opens the offering", () => {
+    it("a row click hands the offering over; no Details column", () => {
         const onOpen = vi.fn();
 
         render(<IposView error={null} hasNextPage={false} isFetchingNextPage={false} isLoading={false} onLoadMore={() => undefined} onOpen={onOpen} pages={[V2_IPOS]} />);
 
-        expect(screen.getByRole("link", { name: "NEWCO" })).toHaveAttribute("href", "/NEWCO");
+        expect(screen.queryByRole("button", { name: "Details" })).toBeNull();
 
-        screen.getAllByRole("button", { name: "Details" })[0].click();
+        fireEvent.click(screen.getAllByRole("row")[1]);
 
-        expect(onOpen).toHaveBeenCalledWith(V2_IPOS.data[0]);
+        expect(onOpen).toHaveBeenCalledWith(V2_IPOS.data[0], false);
+    });
+
+    it("a row goes to the listed company, else the issuer's filer page, else the detail; a proposed ticker is no link", () => {
+        const base = V2_IPOS.data[0];
+
+        const listing = { ...base.sources.listing, ticker: "NEWCO" } as NonNullable<typeof base.sources.listing>;
+
+        expect(ipoRowTarget({ ...base, company: { cik: "0002156369", ticker: "NEWCO" } })).toEqual({ kind: "ticker", ticker: "NEWCO" });
+
+        expect(ipoRowTarget({ ...base, company: null, sources: { listing, registration: null }, stage: "trading" })).toEqual({ kind: "ticker", ticker: "NEWCO" });
+
+        // Before trading the calendar's ticker is only proposed: no instrument page yet.
+        expect(ipoListedTicker({ ...base, company: null, sources: { listing, registration: null }, stage: "announced" })).toBeNull();
+
+        expect(ipoRowTarget({ ...base, company: { cik: "0002156369", ticker: null }, stage: "registered" })).toEqual({ cik: "2156369", kind: "filer" });
+
+        expect(ipoRowTarget({ ...base, company: null, sources: { listing, registration: null }, stage: "announced" })).toEqual({ kind: "detail" });
     });
 
     it("the detail lists the stage timestamps and pricing", () => {

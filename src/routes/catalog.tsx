@@ -59,12 +59,14 @@ const STATEMENTS = ["income-statement", "balance-sheet", "cash-flow"] as const s
 
 /**
  * `?tab=` (absent = metrics), `?q=` (the text filter over the loaded rows), `?statement=` (metrics, mapping rules),
- * `?form=` (sections), `?metric=` (mapping rules: one metric's rules) — the last three are API parameters.
+ * `?form=` (sections), `?metric=` (mapping rules: one metric's rules) — those three are API parameters — and `?sector=`
+ * (sectors: one sector's industries, filtered in the page).
  */
 const catalogSearchSchema = z.object({
     form: z.string().trim().regex(/^[A-Z0-9][A-Z0-9 /-]{0,19}$/i).optional().catch(undefined),
     metric: z.string().trim().regex(/^[a-z0-9_]{1,120}$/).optional().catch(undefined),
     q: optionalText(120),
+    sector: optionalText(120),
     statement: optionalEnum(STATEMENTS),
     tab: optionalEnum(CATALOG_TABS),
 });
@@ -213,28 +215,37 @@ const EXCHANGE_COLUMNS: Array<ColumnDef<V2ExchangeCatalogEntry>> = [
     },
 ];
 
-const SECTOR_COLUMNS: Array<ColumnDef<V2SectorCatalogEntry>> = [
-    { cell: ({ row }) => <span className="font-medium">{row.original.sector}</span>, header: "Sector", id: "sector" },
-    { cell: ({ row }) => countCell(row.original.company_count), header: () => <div className="text-right">Companies</div>, id: "company_count" },
+/** One industry of `/v1/catalog/sectors` as its own row, with its sector and the sector's company count. */
+export type SectorIndustryRow = {
+    company_count: number;
+    industry: string;
+    sector: string;
+    sector_company_count: number;
+};
+
+/** Every sector's industries as one row each (pure), in the API's order: sectors as listed, industries largest first. */
+export function sectorIndustryRows(entries: ReadonlyArray<V2SectorCatalogEntry>): Array<SectorIndustryRow> {
+    return entries.flatMap(entry => entry.industries.map(industry => ({
+        company_count: industry.company_count,
+        industry: industry.industry,
+        sector: entry.sector,
+        sector_company_count: entry.company_count,
+    })));
+}
+
+const SECTOR_COLUMNS: Array<ColumnDef<SectorIndustryRow>> = [
+    { cell: ({ row }) => <span className="font-medium">{row.original.industry}</span>, header: "Industry", id: "industry" },
     {
-        // Largest first, as the API orders them; each with its company count.
         cell: ({ row }) => (
-            <ul className="flex min-w-[28rem] flex-wrap gap-1 whitespace-normal" data-testid="sector-industries">
-                {row.original.industries.map(entry => (
-                    <li key={entry.industry}>
-                        <Badge variant="outline">{`${entry.industry} · ${formatNumber(entry.company_count)}`}</Badge>
-                    </li>
-                ))}
-            </ul>
+            <span>
+                {row.original.sector}
+                <span className="text-muted-foreground">{` · ${formatNumber(row.original.sector_company_count)}`}</span>
+            </span>
         ),
-        header: "Industries",
-        id: "industries",
+        header: "Sector",
+        id: "sector",
     },
-    {
-        cell: ({ row }) => <Link className={linkClass} search={{ sector: row.original.sector, view: "companies" }} to="/instruments">Companies</Link>,
-        header: "",
-        id: "companies",
-    },
+    { cell: ({ row }) => countCell(row.original.company_count), header: () => <div className="text-right">Companies</div>, id: "company_count" },
 ];
 
 /** The state of one tab's list, as every catalog hook answers it. */
@@ -274,7 +285,7 @@ export const CATALOG_SPECS = {
     } satisfies TableSpec<V2MappingRule>,
     "metrics": { columns: METRIC_COLUMNS, idOf: row => row.metric_id, noun: "metrics", operationId: "listMetricCatalog", textsOf: row => [row.name, row.description, row.unit] } satisfies TableSpec<V2MetricCatalogEntry>,
     "sections": { columns: SECTION_COLUMNS, idOf: row => row.section_id, noun: "sections", operationId: "listSectionCatalog", textsOf: row => [row.form, row.title] } satisfies TableSpec<V2SectionCatalogEntry>,
-    "sectors": { columns: SECTOR_COLUMNS, idOf: row => row.sector, noun: "sectors", operationId: "listSectorCatalog", textsOf: row => row.industries.map(entry => entry.industry) } satisfies TableSpec<V2SectorCatalogEntry>,
+    "sectors": { columns: SECTOR_COLUMNS, idOf: row => row.industry, noun: "industries", operationId: "listSectorCatalog", textsOf: row => [row.sector] } satisfies TableSpec<SectorIndustryRow>,
 };
 
 /** "342 metrics" / "12 of 342 metrics" / "+" while pages are still loading. */
@@ -356,9 +367,15 @@ function CatalogTabBody({ search }: { search: CatalogSearch }) {
 
     const exchanges = useCatalogList(useExchangeCatalogInfinite({ enabled: tab === "exchanges" }));
 
-    const sectors = useCatalogList(useSectorCatalogInfinite({ enabled: tab === "sectors" }));
+    const sectorList = useCatalogList(useSectorCatalogInfinite({ enabled: tab === "sectors" }));
 
-    const scope = [search.statement, search.form, search.metric].filter(Boolean).join("-") || "all";
+    const sectors = React.useMemo(() => {
+        const rows = sectorIndustryRows(sectorList.rows);
+
+        return { ...sectorList, rows: search.sector ? rows.filter(row => row.sector === search.sector) : rows };
+    }, [sectorList, search.sector]);
+
+    const scope = [search.statement, search.form, search.metric, search.sector].filter(Boolean).join("-") || "all";
 
     switch (tab) {
         case "document-kinds": return <CatalogTable list={documentKinds} query={search.q} scope={scope} spec={CATALOG_SPECS["document-kinds"]} />;
@@ -371,6 +388,20 @@ function CatalogTabBody({ search }: { search: CatalogSearch }) {
         case "sections": return <CatalogTable list={sections} query={search.q} scope={scope} spec={CATALOG_SPECS.sections} />;
         case "sectors": return <CatalogTable list={sectors} query={search.q} scope={scope} spec={CATALOG_SPECS.sectors} />;
     }
+}
+
+/** The Sectors tab's sector picker: the sectors of the same `/v1/catalog/sectors` answer the table reads (one cache entry). */
+function SectorPicker({ id, onChange, value }: { id: string; onChange: (sector: string | undefined) => void; value: string | undefined }) {
+    const { rows } = useCatalogList(useSectorCatalogInfinite({ enabled: true }));
+
+    const options = [
+        { label: "Every sector", value: ALL },
+        ...rows.map(entry => ({ label: entry.sector, value: entry.sector })),
+        // A sector in the URL the list does not (yet) name stays shown as itself.
+        ...(value && !rows.some(entry => entry.sector === value) ? [{ label: value, value }] : []),
+    ];
+
+    return <FilterSelect aria-label="Sector" className="w-full" id={id} onValueChange={sector => onChange(sector === ALL ? undefined : sector)} options={options} value={value ?? ALL} />;
 }
 
 /** A removable filter chip ("Metric: is_total_revenue ×"). */
@@ -407,7 +438,7 @@ function CatalogPage() {
             />
             <Tabs
                 // A tab change keeps the text filter but drops the other tab's API filters.
-                onValueChange={value => onChange({ form: undefined, metric: undefined, statement: undefined, tab: value === "metrics" ? undefined : value as CatalogTab })}
+                onValueChange={value => onChange({ form: undefined, metric: undefined, sector: undefined, statement: undefined, tab: value === "metrics" ? undefined : value as CatalogTab })}
                 value={tab}
             >
                 <TabsList aria-label="Catalog" className={WRAPPING_TABS_LIST_CLASS} variant="line">
@@ -415,8 +446,8 @@ function CatalogPage() {
                 </TabsList>
             </Tabs>
             <FilterBar
-                activeCount={[search.q, search.statement, search.form, search.metric].filter(value => value !== undefined).length}
-                onReset={() => onChange({ form: undefined, metric: undefined, q: undefined, statement: undefined })}
+                activeCount={[search.q, search.statement, search.form, search.metric, search.sector].filter(value => value !== undefined).length}
+                onReset={() => onChange({ form: undefined, metric: undefined, q: undefined, sector: undefined, statement: undefined })}
             >
                 <FilterField label="Filter" span={2}>
                     {id => <DebouncedInput aria-label="Filter the catalog" className="w-full" id={id} onCommit={q => onChange({ q: q || undefined })} placeholder="Filter by name, id or text" value={search.q ?? ""} />}
@@ -429,6 +460,11 @@ function CatalogPage() {
                 {tab === "sections" && (
                     <FilterField label="Form">
                         {id => <DebouncedInput aria-label="Form" className="w-full" id={id} onCommit={form => onChange({ form: form.trim() || undefined })} placeholder="e.g. 10-K" value={search.form ?? ""} />}
+                    </FilterField>
+                )}
+                {tab === "sectors" && (
+                    <FilterField label="Sector">
+                        {id => <SectorPicker id={id} onChange={sector => onChange({ sector })} value={search.sector} />}
                     </FilterField>
                 )}
                 {tab === "mapping-rules" && search.metric && (

@@ -185,10 +185,13 @@
     position: relative;
     @apply font-sans bg-background text-foreground text-data;
     }
+  /* No rubber-band overscroll on the document: the bounce moves the sticky top bar and the content but not the fixed
+     sidebar, which opened a gap (or an overlap) between them at the top and bottom of the page. */
   html {
     position: relative;
     width: 100%;
     min-height: 100svh;
+    overscroll-behavior-y: none;
     @apply font-sans;
     }
   table, thead, tbody, tfoot, tr, th, td {

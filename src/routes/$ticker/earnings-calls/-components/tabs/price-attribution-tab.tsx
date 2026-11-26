@@ -227,8 +227,8 @@ export type PriceAttributionViewProps = {
 };
 
 /**
- * The tab's body: anchor facts, the largest minute moves with what was being said, the
- * cumulative-return line and every minute bucket. Derived returns only — the API sends no
+ * The tab's body: anchor facts, the cumulative-return line, the largest minute moves with what
+ * was being said and every minute bucket. Derived returns only — the API sends no
  * price or volume, so none is shown. While the call is live (`live`) a banner says the rows
  * are not settled, and the anchor facts / top minutes wait for the post-call summary.
  */
@@ -250,8 +250,8 @@ export function PriceAttributionView({ data, error, isLoading, speakerNames = NO
                                         ? <Notice title="No minute bars in the call window" />
                                         : (
                                                 <>
-                                                    <TopMinutes data={data} />
                                                     <CumulativeChart data={data} />
+                                                    <TopMinutes data={data} />
                                                     <BucketTable data={data} />
                                                 </>
                                             )}

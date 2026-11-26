@@ -7,8 +7,8 @@ export type AlertsTab = { label: string; to: "/alerts" | "/alerts/destinations" 
 export const ALERTS_TABS: ReadonlyArray<AlertsTab> = [
     { label: "Alerts", to: "/alerts" },
     { label: "Events", to: "/alerts/events" },
-    { label: "Destinations", to: "/alerts/destinations" },
+    { label: "Webhooks", to: "/alerts/destinations" },
     { label: "Users", to: "/alerts/users" },
     { label: "Scripts", to: "/alerts/scripts" },
-    { label: "Webhooks", to: "/alerts/webhooks" },
+    { label: "Webhook docs", to: "/alerts/webhooks" },
 ];

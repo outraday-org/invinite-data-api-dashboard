@@ -12,6 +12,7 @@ import { CALENDAR_EVENT } from "@/lib/earnings/calendar-fixtures";
 import { AAPL_INSTRUMENT, SPY_INSTRUMENT, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { PERSON_ANALYST } from "@/lib/people-fixtures";
 import { useSidebarGroupsStore } from "@/lib/stores/sidebar-groups-store";
+import { useTickerStore } from "@/lib/stores/ticker-store";
 
 const route = vi.hoisted(() => ({ params: {} as Record<string, string>, pathname: "/" }));
 
@@ -63,6 +64,8 @@ beforeEach(() => {
     window.localStorage.clear();
 
     useSidebarGroupsStore.setState({ hasHydrated: false, open: {} });
+
+    useTickerStore.setState({ hasHydrated: true, recents: [] });
 
     // The theme switch beside Account follows the system theme.
     vi.stubGlobal("matchMedia", (query: string) => ({ addEventListener: vi.fn(), matches: false, media: query, removeEventListener: vi.fn() }));
@@ -157,7 +160,7 @@ describe("the sidebar's collapsible groups (ui-redesign task 4)", () => {
         expect(screen.getByTestId("group-live-dot")).toHaveAccessibleName("2 calls live now");
     });
 
-    it("the subject's context comes before the groups", () => {
+    it("the subject's context comes after the groups", () => {
         route.params = { ticker: "AAPL" };
 
         vi.mocked(useInstrument).mockReturnValue({ data: AAPL_INSTRUMENT, error: null, isLoading: false } as never);
@@ -166,7 +169,7 @@ describe("the sidebar's collapsible groups (ui-redesign task 4)", () => {
 
         const context = screen.getByTestId("sidebar-context");
 
-        expect(context.compareDocumentPosition(groupHeader("Market")) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+        expect(context.compareDocumentPosition(groupHeader("Market")) & Node.DOCUMENT_POSITION_PRECEDING).toBeTruthy();
     });
 
     it("a long filer name keeps its full text in a title", () => {
@@ -203,6 +206,24 @@ describe("the sidebar on every page (context, groups, footer)", () => {
         expect(screen.queryByTestId("sidebar-context")).toBeNull();
 
         expect(screen.getByRole("img", { name: "Partial service disruption" })).toBeInTheDocument();
+    });
+
+    it("a tickerless page keeps the last opened instrument (recents) as its context; a filer in recents is skipped", () => {
+        useTickerStore.setState({
+            hasHydrated: true,
+            recents: [
+                { badge: null, kind: "filer", label: "Berkshire", name: null, ref: "1067983" },
+                { badge: "Stock", kind: "instrument", label: "AAPL", name: "Apple Inc.", ref: "AAPL" },
+            ],
+        });
+
+        vi.mocked(useInstrument).mockReturnValue({ data: AAPL_INSTRUMENT, error: null, isLoading: false } as never);
+
+        render(<AppSidebar />);
+
+        expect(useInstrument).toHaveBeenCalledWith("AAPL");
+
+        expect(screen.getByTestId("sidebar-context")).toHaveTextContent("AAPL");
     });
 
     it("the public status stays visible while account queries wait for a valid key", () => {

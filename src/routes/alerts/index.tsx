@@ -115,8 +115,8 @@ function AlertsListContent({ macroAvailable, search}: { search: AlertsSearch; ma
                 <FilterField label="Symbol">
                     {id => <DebouncedInput aria-label="Symbol" className="w-full" id={id} onCommit={symbol => onChange({ symbol: symbol || undefined })} placeholder="AAPL" value={search.symbol ?? ""} />}
                 </FilterField>
-                <FilterField label="Destination">
-                    {id => <DebouncedInput aria-label="Destination" className="w-full font-mono" id={id} onCommit={value => onChange({ destination_id: value || undefined })} placeholder="dst_…" value={search.destination_id ?? ""} />}
+                <FilterField label="Webhook">
+                    {id => <DebouncedInput aria-label="Webhook" className="w-full font-mono" id={id} onCommit={value => onChange({ destination_id: value || undefined })} placeholder="dst_…" value={search.destination_id ?? ""} />}
                 </FilterField>
                 <FilterField label="End user">
                     {id => <DebouncedInput aria-label="End user" className="w-full" id={id} onCommit={value => onChange({ external_user_id: value || undefined })} placeholder="End user id" value={search.external_user_id ?? ""} />}

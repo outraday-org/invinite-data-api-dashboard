@@ -12,8 +12,9 @@ export function statFillClass(count: number) {
 
 /**
  * A grid of label / value pairs (ui-redesign task 6) with hairlines between the cells instead of one bordered card per
- * value: 2 columns, 3 from 640 px, 4 from 1280 px. Each cell draws its top and left hairline and the grid is shifted
- * by 1 px inside a clipping frame, so only the lines BETWEEN cells show, whatever the last row's length. A last cell
+ * value: 2 columns, 3 from 640 px, 4 from 1280 px. Each cell draws its bottom and left hairline and the grid is shifted
+ * by 1 px inside a clipping frame, so only the lines BETWEEN cells show. A row line is the bottom of the row above —
+ * always a full row — so it runs the whole width even when the last row is short. A last cell
  * that would be alone in its row fills it (`statFillClass`): no orphan. Leave a null value out (`{value && <Stat/>}`):
  * the count is taken from the rendered cells.
  */
@@ -26,7 +27,7 @@ export function StatGrid({ children, className }: { children: React.ReactNode; c
 
     return (
         <div className={cn("overflow-hidden", className)} data-slot="stat-grid">
-            <dl className="-mt-px -ml-px grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
+            <dl className="-mb-px -ml-px grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4">
                 {fill && last ? [...cells.slice(0, -1), React.cloneElement(last, { className: cn(last.props.className, fill) })] : cells}
             </dl>
         </div>
@@ -36,7 +37,7 @@ export function StatGrid({ children, className }: { children: React.ReactNode; c
 /** One cell of a `StatGrid`: a 12 px muted label, the 15 px value, an optional muted sub-line. */
 export function Stat({ className, label, sub, value }: { className?: string; label: React.ReactNode; sub?: React.ReactNode; value: React.ReactNode }) {
     return (
-        <div className={cn("flex min-w-0 flex-col gap-0.5 border-t border-l px-3 py-2.5", className)} data-slot="stat">
+        <div className={cn("flex min-w-0 flex-col gap-0.5 border-b border-l px-3 py-2.5", className)} data-slot="stat">
             <dt className="text-muted-foreground text-xs">{label}</dt>
             <dd className="text-section font-medium tabular-nums wrap-break-word">{value}</dd>
             {sub !== undefined && sub !== null && <dd className="text-muted-foreground text-xs">{sub}</dd>}

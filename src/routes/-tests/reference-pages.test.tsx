@@ -23,7 +23,7 @@ import {
     V2_SECTOR_CATALOG,
 } from "@/lib/reference/reference-fixtures";
 import { dividendsRequest, DividendsView, dividendTypeLabel } from "@/routes/$ticker/dividends/index";
-import { CATALOG_SPECS, catalogCountText, CatalogTable } from "@/routes/catalog";
+import { CATALOG_SPECS, catalogCountText, CatalogTable, sectorIndustryRows } from "@/routes/catalog";
 import { companiesRequest, sectorFilter } from "@/routes/instruments";
 import { holidaysRequest } from "@/routes/market-holidays";
 
@@ -131,16 +131,30 @@ describe("/catalog exchanges and sectors (Data API 11.2)", () => {
         expect(screen.getByTestId("catalog-count")).toHaveTextContent("2 exchanges");
     });
 
-    it("a sector row lists its industries; the filter searches industries too", () => {
-        render(<CatalogTable list={{ ...list, rows: V2_SECTOR_CATALOG.data }} query="biotech" scope="all" spec={CATALOG_SPECS.sectors} />);
+    it("every industry is its own row with its sector; the filter searches industries and sectors", () => {
+        const rows = sectorIndustryRows(V2_SECTOR_CATALOG.data);
 
-        expect(screen.queryByText("Technology")).toBeNull();
+        expect(rows.map(row => row.industry)).toEqual(["Software - Application", "Semiconductors", "Biotechnology"]);
 
-        const healthcare = screen.getByText("Healthcare").closest("tr")!;
+        render(<CatalogTable list={{ ...list, rows }} query="biotech" scope="all" spec={CATALOG_SPECS.sectors} />);
 
-        expect(within(healthcare).getByTestId("sector-industries")).toHaveTextContent("Biotechnology · 300");
+        expect(screen.queryByText("Semiconductors")).toBeNull();
 
-        expect(within(healthcare).getByRole("link", { name: "Companies" })).toHaveAttribute("href", "/instruments?sector=Healthcare&view=companies");
+        const biotech = screen.getByText("Biotechnology").closest("tr")!;
+
+        expect(within(biotech).getByText("300")).toBeInTheDocument();
+
+        expect(within(biotech).getByText("Healthcare")).toBeInTheDocument();
+
+        expect(within(biotech).queryByRole("link")).toBeNull();
+
+        expect(screen.getByTestId("catalog-count")).toHaveTextContent("1 of 3 industries");
+    });
+
+    it("a sector name in the filter keeps that sector's industries", () => {
+        render(<CatalogTable list={{ ...list, rows: sectorIndustryRows(V2_SECTOR_CATALOG.data) }} query="healthcare" scope="all" spec={CATALOG_SPECS.sectors} />);
+
+        expect(screen.getByTestId("catalog-count")).toHaveTextContent("1 of 3 industries");
     });
 });
 

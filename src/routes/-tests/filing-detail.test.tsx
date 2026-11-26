@@ -39,7 +39,7 @@ import { SecDatasetsView } from "@/routes/sec/datasets";
 
 vi.mock("@tanstack/react-router", () => ({
     createFileRoute: () => () => ({}),
-    Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => (
+    Link: ({ children, params = {}, to }: { children: React.ReactNode; params?: Record<string, string>; to: string }) => (
         <a href={Object.entries(params).reduce((path, [key, value]) => path.replace(`$${key}`, value), to)}>{children}</a>
     ),
 }));
@@ -235,6 +235,14 @@ describe("SEC data sets", () => {
         expect(screen.getAllByText("zzz")).toHaveLength(2);
 
         expect(screen.getByText("13F-HR, 13F-HR/A, 13F-NT, 13F-NT/A")).toBeInTheDocument();
+    });
+
+    it("links each known data set to the page that shows its data, and offers no export", () => {
+        render(<SecDatasetsView error={null} isLoading={false} pages={[DATASETS]} />);
+
+        expect(screen.getByRole("link", { name: "Institutions" })).toHaveAttribute("href", "/institutions");
+
+        expect(screen.queryByRole("button", { name: /export/i })).not.toBeInTheDocument();
     });
 });
 

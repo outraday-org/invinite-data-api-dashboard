@@ -25,6 +25,7 @@ import { PLAN_LABELS } from "@/lib/account";
 import { isNotFound } from "@/lib/api/errors";
 import { useInstrument, useKeyState, useV2Filer, useV2FilingsInfinite, useV2LiveEvents, useV2Person } from "@/lib/api/queries";
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
+import { INVINITE_APP_URL } from "@/lib/app-url";
 import { brandIconHref } from "@/lib/brand";
 import { isSymbolParam } from "@/lib/instruments";
 import {
@@ -44,6 +45,7 @@ import {
 import { PERSON_ID_PATTERN, personSubjectLabel } from "@/lib/people";
 import { STATUS_PAGE_URL } from "@/lib/public-hosts";
 import { useSidebarGroupsStore } from "@/lib/stores/sidebar-groups-store";
+import { selectRecents, useTickerStore } from "@/lib/stores/ticker-store";
 import { cn } from "@/lib/utils";
 import { LiveDot } from "@/routes/$ticker/earnings-calls/-components/live-dot";
 
@@ -319,6 +321,10 @@ export function AppSidebar() {
 
     const currentGroupId = navGroupOfPath(pathname)?.id ?? null;
 
+    // The last opened instrument (recents, newest first): kept in the sidebar on a page without a subject, so one click
+    // goes back to it.
+    const lastInstrument = useTickerStore(store => selectRecents(store).find(subject => subject.kind === "instrument")?.ref ?? null);
+
     // The subject's context once the key answered (no key: the onboarding card, no context to load).
     const context = state === "invalid"
         ? null
@@ -326,7 +332,9 @@ export function AppSidebar() {
             ? <InstrumentContext enabled={keyReady} ticker={params.ticker} />
             : cik
                 ? <FilerContext cik={cik} enabled={keyReady} />
-                : personId ? <PersonContext enabled={keyReady} personId={personId} /> : null;
+                : personId
+                    ? <PersonContext enabled={keyReady} personId={personId} />
+                    : lastInstrument ? <InstrumentContext enabled={keyReady} ticker={lastInstrument} /> : null;
 
     return (
         <Sidebar className="border-sidebar-border [&>div]:bg-background">
@@ -334,17 +342,11 @@ export function AppSidebar() {
             <nav aria-label="Main" className="flex min-h-0 flex-1 flex-col">
                 {/* Below 640 px the top bar shows no brand: the off-canvas sidebar does. */}
                 <SidebarHeader className="border-sidebar-border border-b px-4 py-3 sm:hidden">
-                    <Link aria-label="Invinite Data home" className="flex items-center gap-2" to="/">
+                    <a aria-label="Invinite Data" className="flex cursor-pointer! items-center gap-2" href={INVINITE_APP_URL}>
                         <img alt="" className="size-6" height={24} src={brandIconHref("/brand/icon.svg")} width={24} />
                         <span className="text-sm font-semibold tracking-tight">Invinite Data</span>
-                    </Link>
+                    </a>
                 </SidebarHeader>
-                {context && (
-                    // Stays put above the groups; scrolls itself only on a short screen.
-                    <div className="border-sidebar-border max-h-[60svh] shrink-0 overflow-y-auto border-b pb-1">
-                        {context}
-                    </div>
-                )}
                 <SidebarContent className="py-1">
                     {NAV_GROUPS.map((group) => {
                         const current = group.id === currentGroupId;
@@ -362,6 +364,13 @@ export function AppSidebar() {
                             />
                         );
                     })}
+                    {context && (
+                        // The subject's sections (only on an instrument, filer or person page) under the groups that
+                        // are always there, a hairline between them; they scroll with the groups.
+                        <div className="border-sidebar-border mt-1 shrink-0 border-t pt-1">
+                            {context}
+                        </div>
+                    )}
                 </SidebarContent>
                 <SidebarFooter className="border-sidebar-border gap-1 border-t">
                     <SidebarMenu className="flex-row flex-wrap gap-1" data-testid="sidebar-help">

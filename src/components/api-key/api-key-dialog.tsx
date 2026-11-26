@@ -43,6 +43,17 @@ export function ApiKeyDialogButton({ className }: { className?: string }) {
 
     const hasKey = hasHydrated && Boolean(apiKey);
 
+    // On first load without a stored key the dialog opens by itself, once (never again after it is closed).
+    const autoOpened = React.useRef(false);
+
+    React.useEffect(() => {
+        if (!hasHydrated || autoOpened.current) return;
+
+        autoOpened.current = true;
+
+        if (!apiKey) setOpen(true);
+    }, [apiKey, hasHydrated]);
+
     const isDirty = hasHydrated && draft.trim().length > 0 && draft.trim() !== (apiKey ?? "");
 
     function onOpenChange(next: boolean) {

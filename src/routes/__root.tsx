@@ -1,6 +1,6 @@
 import { TanStackDevtools } from "@tanstack/react-devtools";
 import { QueryCache, QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createRootRoute, HeadContent, Link, Outlet, Scripts } from "@tanstack/react-router";
+import { createRootRoute, HeadContent, Outlet, Scripts } from "@tanstack/react-router";
 import { TanStackRouterDevtoolsPanel } from "@tanstack/react-router-devtools";
 import { PanelLeftIcon } from "lucide-react";
 import * as React from "react";
@@ -17,6 +17,7 @@ import { Toaster } from "@/components/ui/sonner";
 import { isUnauthorized } from "@/lib/api/errors";
 import { isMeQueryKey, ME_QUERY_KEY } from "@/lib/api/queries";
 import { shareWithRequests } from "@/lib/api/request-meta";
+import { INVINITE_APP_URL } from "@/lib/app-url";
 import { brandIconHref } from "@/lib/brand";
 import { THEME_SCRIPT } from "@/lib/theme";
 
@@ -99,16 +100,16 @@ function RootLayout() {
                         >
                             <PanelLeftIcon className="size-4" />
                         </SidebarTrigger>
-                        {/* The brand mark links home; it leaves the phone's bar to the search. */}
-                        <Link
-                            aria-label="Invinite Data home"
-                            className="hidden shrink-0 items-center gap-2 rounded-md px-1 py-1 sm:flex"
+                        {/* The brand mark links the Invinite Data app; it leaves the phone's bar to the search. */}
+                        <a
+                            aria-label="Invinite Data"
+                            className="hidden shrink-0 cursor-pointer! items-center gap-2 rounded-md px-1 py-1 sm:flex"
                             data-testid="brand-link"
-                            to="/"
+                            href={INVINITE_APP_URL}
                         >
                             <img alt="" className="size-6" height={24} src={brandIconHref("/brand/icon.svg")} width={24} />
                             <span className="text-sm font-semibold tracking-tight">Invinite Data</span>
-                        </Link>
+                        </a>
                     </div>
                     <TickerSearch />
                     <div className="flex items-center gap-2 justify-self-end">

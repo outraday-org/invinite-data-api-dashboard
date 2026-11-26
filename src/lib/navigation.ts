@@ -108,7 +108,7 @@ const TRANSCRIPT_SEARCH_NAV: NavPage = { description: "What was said on every co
 
 const CATALOG_NAV: NavPage = { description: "Metrics, mapping rules, SEC forms and sections, event types, document kinds.", icon: BookOpenIcon, keywords: ["catalog", "reference", "metrics", "definitions", "mapping", "forms", "sections", "glossary"], label: "Catalog", to: "/catalog" };
 
-const OFFERINGS_NAV: NavPage = { description: "Form D private offerings of every issuer, with amounts, exemptions and related persons.", icon: HandCoinsIcon, keywords: ["offerings", "form d", "private", "placements", "exemptions", "raises"], label: "Offerings", to: "/offerings" };
+const OFFERINGS_NAV: NavPage = { description: "Form D private offerings of every issuer, with amounts, exemptions and related persons.", icon: HandCoinsIcon, keywords: ["offerings", "form d", "private", "placements", "exemptions", "raises"], label: "Private offerings", to: "/offerings" };
 
 const ALERTS_NAV: NavPage = { description: "Your alert rules, what fired, live, and every alert's actions.", icon: BellIcon, keywords: ["alerts", "alert", "notifications", "webhooks", "events", "triggers", "watch"], label: "Alerts", to: "/alerts" };
 

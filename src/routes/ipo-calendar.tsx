@@ -9,7 +9,6 @@ import type { V2Ipo, V2IposResponse, V2IpoStage } from "@/lib/api/types";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { DataTable } from "@/components/ui/data-table";
 import { DayRange } from "@/components/ui/day-range";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -107,13 +106,29 @@ export function ipoIssuerCik(ipo: Pick<V2Ipo, "company" | "sources">) {
     return cik && /^\d{1,10}$/.test(cik) && Number(cik) > 0 ? String(Number(cik)) : null;
 }
 
-/** The listed ticker (the company row's, else the listing calendar's), else null. */
-export function ipoListedTicker(ipo: Pick<V2Ipo, "company" | "sources">) {
-    return ipo.company?.ticker ?? ipo.sources.listing?.ticker ?? null;
+/**
+ * The listed ticker (the company row's, else — once trading — the listing calendar's), else null. Before trading the
+ * calendar's ticker is only proposed: no instrument exists yet, so `/$ticker` would answer "not known".
+ */
+export function ipoListedTicker(ipo: Pick<V2Ipo, "company" | "sources" | "stage">) {
+    return ipo.company?.ticker ?? (ipo.stage === "trading" ? ipo.sources.listing?.ticker ?? null : null);
+}
+
+/** Where a row click goes (owner, 2026-11-26): the instrument once listed, else the issuer's SEC filer page, else the offering's detail. */
+export type IpoRowTarget = { cik: string; kind: "filer" } | { kind: "detail" } | { kind: "ticker"; ticker: string };
+
+export function ipoRowTarget(ipo: Pick<V2Ipo, "company" | "sources" | "stage">): IpoRowTarget {
+    const ticker = ipoListedTicker(ipo);
+
+    if (ticker) return { kind: "ticker", ticker };
+
+    const cik = ipoIssuerCik(ipo);
+
+    return cik ? { cik, kind: "filer" } : { kind: "detail" };
 }
 
 /** The listed ticker, else the proposed symbols (marked as proposed), else "—". */
-export function ipoSymbolText(ipo: Pick<V2Ipo, "company" | "proposed_symbols" | "sources">) {
+export function ipoSymbolText(ipo: Pick<V2Ipo, "company" | "proposed_symbols" | "sources" | "stage">) {
     const listed = ipoListedTicker(ipo);
 
     if (listed) return listed;
@@ -235,23 +250,11 @@ export function IposView({
     isFetchingNextPage: boolean;
     isLoading: boolean;
     onLoadMore: () => void;
-    /** Opens a row's detail (stage timestamps, pricing); no detail column without it. */
-    onOpen?: (ipo: V2Ipo) => void;
+    /** A row click (`newTab`: ⌘ / Ctrl): the page routes it by `ipoRowTarget`. */
+    onOpen?: (ipo: V2Ipo, newTab: boolean) => void;
     pages: ReadonlyArray<V2IposResponse>;
 }) {
     const rows = React.useMemo(() => pages.flatMap(page => page.data), [pages]);
-
-    const columns = React.useMemo<Array<ColumnDef<V2Ipo>>>(() => (onOpen
-        ? [...COLUMNS, {
-                cell: ({ row }) => (
-                    <Button onClick={() => onOpen(row.original)} size="xs" type="button" variant="outline">
-                        Details
-                    </Button>
-                ),
-                header: "",
-                id: "details",
-            }]
-        : COLUMNS), [onOpen]);
 
     if (error && pages.length === 0) return <SecReadinessNotice error={error} title="Failed to load IPOs" />;
 
@@ -262,13 +265,14 @@ export function IposView({
             <SecReadinessNotice coverage={meta?.coverage} />
             <V2MetaLine meta={meta} />
             <DataTable
-                columns={columns}
+                columns={COLUMNS}
                 emptyIsGenuine={isV2GenuineEmpty(meta?.coverage)}
                 emptyText="No IPOs match these filters."
                 hasNextPage={hasNextPage}
                 isFetchingNextPage={isFetchingNextPage}
                 isLoading={isLoading}
                 onLoadMore={onLoadMore}
+                onRowClick={onOpen ? (ipo, click) => onOpen(ipo, click.metaKey || click.ctrlKey) : undefined}
                 rows={rows}
             />
             {error ? <SecReadinessNotice error={error} title="Failed to load more IPOs" /> : null}
@@ -396,8 +400,8 @@ const SPAC_OPTIONS = [
 
 /**
  * The IPO calendar (`/v1/ipos`, market-wide): Upcoming (by listing date ascending) and Recent (newest listing first),
- * stage, SPAC and listing-date filters in the URL; a listed symbol opens its page, the issuer its SEC filer page, a row's
- * "Details" the offering (`/v1/ipos/{ipo_id}`).
+ * stage, SPAC and listing-date filters in the URL; a row opens the listed company, else the issuer's SEC filer page, else (no
+ * CIK: a listing-calendar row only) the offering's detail (`/v1/ipos/{ipo_id}`).
  */
 function IposPage() {
     const search = Route.useSearch();
@@ -434,10 +438,34 @@ function IposPage() {
 
     const onChange = (patch: Partial<IpoSearch>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
 
+    // A row opens the instrument once listed, else the issuer's filer page, else (a listing-calendar row without a CIK)
+    // the offering's detail — the only page such a row has.
+    const openRow = (ipo: V2Ipo, newTab: boolean) => {
+        const target = ipoRowTarget(ipo);
+
+        if (target.kind === "detail") {
+            setOpen(ipo);
+
+            return;
+        }
+
+        const path = target.kind === "ticker" ? `/${encodeURIComponent(target.ticker)}` : `/sec/${target.cik}`;
+
+        if (newTab) {
+            window.open(path, "_blank", "noopener");
+
+            return;
+        }
+
+        void (target.kind === "ticker"
+            ? navigate({ params: { ticker: target.ticker }, to: "/$ticker" })
+            : navigate({ params: { cik: target.cik }, to: "/sec/$cik" }));
+    };
+
     return (
         <PageContainer>
             <PageHeader
-                description="Offerings from SEC registration to listing. Upcoming = not trading or withdrawn yet, from the next listing date on (offerings without one last); Recent = listed, newest first."
+                description="Offerings from SEC registration to listing. Upcoming = not trading or withdrawn yet, from the next listing date on (offerings without one last); Recent = listed, newest first. A row opens the listed company, else the issuer's SEC filer page."
                 title="IPO calendar"
             />
             <Tabs onValueChange={value => onChange({ tab: value === "recent" ? "recent" : undefined })} value={search.tab ?? "upcoming"}>
@@ -485,7 +513,7 @@ function IposPage() {
                 isFetchingNextPage={dated.isFetchingNextPage || tail.isFetchingNextPage}
                 isLoading={dated.isLoading}
                 onLoadMore={() => void (dated.hasNextPage ? dated.fetchNextPage() : tail.fetchNextPage())}
-                onOpen={setOpen}
+                onOpen={openRow}
                 pages={pages}
             />
             <IpoDetailDialog ipo={open} onClose={() => setOpen(null)} />
