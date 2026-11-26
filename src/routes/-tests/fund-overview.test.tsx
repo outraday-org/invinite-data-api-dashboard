@@ -5,8 +5,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { HeadingLevelProvider } from "@/components/ui/page-header";
-import { useFund, useFundPositionsInfinite, useInstrument } from "@/lib/api/queries";
-import { GLD_INSTRUMENT, VOO_FUND, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
+import { useFund, useFundPositionsInfinite, useInstrument, useV2Company } from "@/lib/api/queries";
+import { AAPL_INSTRUMENT, GLD_INSTRUMENT, VOO_FUND, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { V2_FUND_POSITIONS } from "@/lib/sec/v2-fixtures";
 import { CompositionMeta, FundProfileView, netAssetsParts } from "@/routes/$ticker/-overview/fund-overview";
 import { Route } from "@/routes/$ticker/index";
@@ -157,5 +157,34 @@ describe("fund overview (`/v1/funds/{fund}`)", () => {
         expect(screen.getByText("ETN")).toBeInTheDocument();
 
         expect(useFund).not.toHaveBeenCalledWith("VXX");
+    });
+
+    it("a delisted stock says it is delisted (not \"not covered\"), shows its listing and asks no company profile", () => {
+        route.ticker = "ACA";
+
+        vi.mocked(useV2Company).mockClear();
+
+        vi.mocked(useInstrument).mockReturnValue({
+            data: { ...AAPL_INSTRUMENT, company: { cik: "0001739445" }, is_active: false, name: "Arcosa, Inc.", symbol: "ACA" },
+            isLoading: false,
+        } as never);
+
+        render(<TickerOverview />);
+
+        expect(screen.getByText("ACA is delisted")).toBeInTheDocument();
+
+        expect(screen.getByText(/for ACA it serves the listing\. Its SEC filer record stays available\./)).toBeInTheDocument();
+
+        expect(screen.getByRole("link", { name: "SEC filer record" })).toHaveAttribute("href", "/sec/0001739445");
+
+        // On the Overview itself: no link back to it.
+        expect(screen.queryByRole("link", { name: "The listing" })).toBeNull();
+
+        // The notice's badge and the listing's Status stat.
+        expect(screen.getAllByText("Delisted")).toHaveLength(2);
+
+        expect(screen.queryByText(/not covered/i)).toBeNull();
+
+        expect(useV2Company).not.toHaveBeenCalled();
     });
 });

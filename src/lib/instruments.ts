@@ -51,6 +51,26 @@ export function instrumentBadges(instrument: Pick<V2Instrument, "is_active" | "s
 
 export const isFundType = (type: V2InstrumentType): boolean => type === "etf" || type === "closed_end_fund";
 
+/** A delisted symbol's only section: its listing (`GET /v1/instruments/{symbol}`). */
+const DELISTED_DATASETS: ReadonlyArray<V2Dataset> = ["profile"];
+
+/**
+ * The datasets the API answers for an instrument: its `datasets`, or for a delisted symbol only its listing. Data API 12
+ * resolves no `company=` / `symbol=` / `{fund}` read for a delisted symbol (checked 2026-11-26: ACA, ADBU answer 404
+ * "No instrument is known"), although `datasets` still names its type's families. Every navigation reads this, never
+ * `datasets` directly.
+ */
+export function servedDatasets(instrument: Pick<V2Instrument, "datasets" | "is_active">): ReadonlyArray<V2Dataset> {
+    return instrument.is_active ? instrument.datasets : DELISTED_DATASETS;
+}
+
+/** The delisted state's sentence: what the API still answers for the symbol (`DelistedNotice`). */
+export function delistedText(instrument: Pick<V2Instrument, "company" | "symbol">): string {
+    const filer = instrument.company ? " Its SEC filer record stays available." : "";
+
+    return `The Invinite API serves company, fund and market data for symbols listed today; for ${instrument.symbol} it serves the listing.${filer}`;
+}
+
 /**
  * The "Listed" filter of `/instruments` and `/funds` (Data API 12.0), the URL's `?active=`: absent = listed today (the
  * API's default, nothing sent), `all` = listed and delisted, `delisted` = delisted only. An old `?active=listed` reads

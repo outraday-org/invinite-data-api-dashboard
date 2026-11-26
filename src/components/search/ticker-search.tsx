@@ -14,7 +14,7 @@ import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { useInstrumentSearch, useKeyReady, useV2Filers, useV2PeopleSearch } from "@/lib/api/queries";
-import { INSTRUMENT_TYPE_PLURALS, instrumentBadges, servesSection } from "@/lib/instruments";
+import { INSTRUMENT_TYPE_PLURALS, instrumentBadges, servedDatasets, servesSection } from "@/lib/instruments";
 import { filesThirteenF, searchPages } from "@/lib/navigation";
 import { personDetail, personRoleLabel } from "@/lib/people";
 import { selectRecents, useTickerStore } from "@/lib/stores/ticker-store";
@@ -254,7 +254,7 @@ export function TickerSearch() {
                     id: `instrument-${instrument.symbol}`,
                     label: instrument.symbol,
                     logoUrl: instrument.logo_url,
-                    pick: close(() => goToTicker(instrument.symbol, instrument.datasets)),
+                    pick: close(() => goToTicker(instrument.symbol, servedDatasets(instrument))),
                     sub: instrument.name,
                 });
             }

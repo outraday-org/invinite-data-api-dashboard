@@ -9,9 +9,10 @@ import { HeadingLevelProvider, PageHeader } from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isNotFound } from "@/lib/api/errors";
 import { useInstrument } from "@/lib/api/queries";
-import { datasetGateText, instrumentBadges, isSymbolParam, sectionDatasets, sectionOf, servesSection, SYMBOL_MAX_LENGTH } from "@/lib/instruments";
+import { datasetGateText, instrumentBadges, isSymbolParam, sectionDatasets, sectionOf, servedDatasets, servesSection, SYMBOL_MAX_LENGTH } from "@/lib/instruments";
 import { TICKER_HEADER_HEIGHT_VAR, titleHead } from "@/lib/layout";
 import { recentInstrument, useRecordRecent } from "@/lib/recents";
+import { DelistedNotice } from "@/routes/$ticker/-components/delisted-notice";
 import { SectionTabs, SectionTabsSkeleton } from "@/routes/$ticker/-components/section-tabs";
 
 export const Route = createFileRoute("/$ticker")({
@@ -92,7 +93,8 @@ function useScrolledPast(sentinel: React.RefObject<HTMLElement | null>, enabled:
  * symbol, name, type badges, exchange · currency) and the pinned row of section links (`SectionTabs`, the sidebar's
  * context group's twin — both from the same answer's `datasets`). A symbol the API does not
  * know renders one "not known" notice instead of the pages; a section the instrument has no data family for (a typed
- * URL) renders the reason instead of a failing page.
+ * URL) renders the reason instead of a failing page, and a delisted symbol's sections say it is delisted
+ * (`servedDatasets`: its only section is the Overview).
  */
 function TickerLayout() {
     const { ticker } = Route.useParams();
@@ -108,7 +110,9 @@ function TickerLayout() {
 
     const isUnknown = notSymbol || isNotFound(error);
 
-    const gatedDatasets = instrument && !servesSection(instrument.datasets, section) ? sectionDatasets(section) : [];
+    const datasets = instrument ? servedDatasets(instrument) : null;
+
+    const gatedDatasets = instrument && datasets && !servesSection(datasets, section) ? sectionDatasets(section) : [];
 
     const showHeader = !isUnknown;
 
@@ -142,6 +146,8 @@ function TickerLayout() {
         );
     }
     else if (isLoading) body = <PageSkeleton />;
+    // A delisted symbol: its sections say so (the API answers none of them), never a "Not covered" refusal.
+    else if (instrument && !instrument.is_active && section !== "") body = <DelistedNotice instrument={instrument} onOverview={false} />;
     else if (instrument && gatedDatasets.length > 0) body = <Notice badge="Not served" title={datasetGateText(instrument, gatedDatasets[0])} />;
     else body = <Outlet />;
 
@@ -195,7 +201,7 @@ function TickerLayout() {
                                 </span>
                                 {isLoading
                                     ? <SectionTabsSkeleton />
-                                    : <SectionTabs datasets={instrument?.datasets ?? null} section={section} ticker={ticker} />}
+                                    : <SectionTabs datasets={datasets} section={section} ticker={ticker} />}
                             </header>
                         </>
                     )
