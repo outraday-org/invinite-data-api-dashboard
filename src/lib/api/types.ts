@@ -472,7 +472,8 @@ export type AlertTriggerInput = NonNullable<CreateAlertBody["trigger"]>;
 export type AlertTriggerField = keyof AlertTriggerInput;
 export type AlertActiveWindow = NonNullable<AlertTriggerInput["active_window"]>;
 export type CreateAlertRequest = SecJson<CreateAlertBody>;
-export type UpdateAlertRequest = SecJson<NonNullable<paths["/v1/alerts/{id}"]["patch"]["requestBody"]>["content"]["application/json"]>;
+/** Stored type accompanies condition edits during the 12.x → 13.0 cutover, before the full contract repin. */
+export type UpdateAlertRequest = SecJson<NonNullable<paths["/v1/alerts/{id}"]["patch"]["requestBody"]>["content"]["application/json"]> & { type?: AlertType };
 export type AlertBatchItem = SecJson<BatchAlertsBody["items"][number]>;
 export type AlertBatchOp = AlertBatchItem["op"];
 export type AlertBatchResponse = SecJson<ApiResponse<"/v1/alerts:batch", "post">>;
