@@ -147,7 +147,7 @@ describe("toUpdateBody", () => {
 
         expect(body).toMatchObject({ client_reference_id: null, destination_ids: ALERT_FILING.destination_ids, external_user_id: "user_8812", trigger: { mode: "every_time" }, version: 7 });
 
-        expect("type" in body).toBe(false);
+        expect(body.type).toBe(ALERT_FILING.type);
     });
 });
 

@@ -404,7 +404,7 @@ export function toCreateBody(state: AlertFormState, templates: ReadonlyArray<Ale
 /**
  * The body of `PATCH /v1/alerts/{id}`: the whole condition, trigger, destinations and metadata as the form holds them
  * (an emptied reference is sent as null = cleared), and `version` = the version the form was loaded at (a 409
- * `conflict` when the alert changed since). The type is never sent: it never changes.
+ * `conflict` when the alert changed since). The stored type accompanies the condition so the API can select its typed variant.
  */
 export function toUpdateBody(state: AlertFormState, version: number, templates: ReadonlyArray<AlertTemplate> = []): { body: UpdateAlertRequest; errors: FieldErrors } {
     const { condition, destinationIds, errors, metadata, trigger } = readForm(state, templates);
@@ -413,6 +413,7 @@ export function toUpdateBody(state: AlertFormState, version: number, templates: 
         body: {
             client_reference_id: state.clientReferenceId.trim() || null,
             condition,
+            type: state.type,
             destination_ids: destinationIds,
             external_user_id: state.externalUserId.trim() || null,
             metadata,
