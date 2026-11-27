@@ -1,12 +1,15 @@
 import type * as React from "react";
 
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ListState } from "@/lib/api/list-state";
+import type { ReceivedFiling } from "@/lib/live/live-filings";
 
 import { ApiRequestError } from "@/lib/api/errors";
+import { mergeLatest } from "@/lib/live/live-filings";
+import { ARRIVAL_FLASH_MS, useArrivalFlash } from "@/lib/live/use-arrival-flash";
 import {
     DATASETS,
     DOCUMENT_SECTIONS,
@@ -21,6 +24,7 @@ import {
     REVIEW_CHAIN_ALONE,
     REVIEW_CHAIN_LETTERS,
 } from "@/lib/sec/filing-detail-fixtures";
+import { V2_FILING_PRE_IPO, V2_FILINGS, V2_LATEST_FILINGS } from "@/lib/sec/v2-fixtures";
 import {
     DocumentSectionsView,
     factPeriodText,
@@ -34,7 +38,7 @@ import {
     ReviewChainView,
     sectionStartBlock,
 } from "@/routes/filings/-components/filing-detail-views";
-import { LiveFilingsView } from "@/routes/filings/index";
+import { latestEmptyText, LatestFilingsView } from "@/routes/filings/index";
 import { SecDatasetsView } from "@/routes/sec/datasets";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -246,40 +250,155 @@ describe("SEC data sets", () => {
     });
 });
 
-describe("live filings list (/filings)", () => {
-    it("states what it shows: nothing since the page opened, connecting, no stored key, or off", () => {
-        const { rerender } = render(<LiveFilingsView filings={[]} mode="live" paused={false} />);
+describe("latest filings list (/filings)", () => {
+    const pager = { hasNext: false, isFetching: false, onNext: () => undefined, onPrevious: () => undefined, page: 1 };
 
-        expect(screen.getByText("Nothing has arrived since this page opened.")).toBeInTheDocument();
+    const view = (props: Partial<React.ComponentProps<typeof LatestFilingsView>> = {}) => (
+        <LatestFilingsView error={null} flashing={new Set()} forms={[]} isLoading={false} pager={pager} paused={false} rows={[]} {...props} />
+    );
 
-        rerender(<LiveFilingsView filings={[]} mode="connecting" paused={false} />);
+    it("empty texts: none in the last 7 days (the forms named), the live feed off", () => {
+        const { rerender } = render(view());
 
-        expect(screen.getByText("Connecting to the live feed…")).toBeInTheDocument();
+        expect(screen.getByText("No filings in the last 7 days.")).toBeInTheDocument();
 
-        rerender(<LiveFilingsView filings={[]} mode="no_key" paused={false} />);
+        rerender(view({ forms: ["8-K", "S-1"] }));
 
-        expect(screen.getByText(/Live feeds need an API key stored in this browser/)).toBeInTheDocument();
+        expect(screen.getByText("No 8-K, S-1 filings in the last 7 days.")).toBeInTheDocument();
 
-        rerender(<LiveFilingsView filings={[]} mode="live" paused />);
+        rerender(view({ paused: true }));
 
-        expect(screen.getByText("The live feed is off.")).toBeInTheDocument();
+        expect(screen.getByText("No filings in the last 7 days. The live feed is off.")).toBeInTheDocument();
+
+        expect(latestEmptyText([], false)).toBe("No filings in the last 7 days.");
     });
 
-    it("a filing with a ticker links its filings; a pre-IPO one its filer page and proposed tickers; each opens its filing page", () => {
-        render(
-            <LiveFilingsView
-                filings={[{ filing: LIVE_FILING_S1, receivedAt: "2026-11-20T21:01:00Z" }, { filing: LIVE_FILING, receivedAt: "2026-11-20T21:00:00Z" }]}
-                mode="live"
-                paused={false}
-            />,
-        );
+    it("prefilled rows: filer name → filer page for a null symbol, ticker badge → its filings, the filed instant; the pager pages", () => {
+        const onNext = vi.fn();
 
-        expect(screen.getByRole("link", { name: "AAPL" })).toHaveAttribute("href", "/AAPL/filings");
+        render(view({ pager: { ...pager, hasNext: true, onNext }, rows: mergeLatest([], V2_LATEST_FILINGS.data) }));
+
+        expect(screen.getByRole("link", { name: "Fidelity Chainlink Fund" })).toHaveAttribute("href", "/sec/2166611");
+
+        expect(screen.getAllByRole("link", { name: "AAPL" })[0]).toHaveAttribute("href", "/AAPL/filings");
+
+        expect(screen.getByRole("link", { name: V2_FILING_PRE_IPO.accession })).toHaveAttribute("href", `/filings/${V2_FILING_PRE_IPO.accession}`);
+
+        // No "Arrived" column: the flash says it.
+        expect(screen.queryByText("Arrived")).toBeNull();
+
+        fireEvent.click(screen.getByText("Next"));
+
+        expect(onNext).toHaveBeenCalled();
+    });
+
+    it("a live row without a listed copy on top: its filer page by CIK and its proposed tickers", () => {
+        render(view({ rows: mergeLatest([{ filing: LIVE_FILING_S1, receivedAt: "2026-11-27T10:00:00Z" }], V2_FILINGS.data) }));
 
         expect(screen.getByRole("link", { name: "CIK 1999999" })).toHaveAttribute("href", "/sec/1999999");
 
         expect(screen.getByText("NEWC")).toBeInTheDocument();
 
-        expect(screen.getByRole("link", { name: LIVE_FILING.accession_number })).toHaveAttribute("href", `/filings/${LIVE_FILING.accession_number}`);
+        expect(screen.getAllByRole("row")[1]).toHaveTextContent(LIVE_FILING_S1.accession_number);
+    });
+
+    it("a REST error stands above the table; live rows stay", () => {
+        const error = new ApiRequestError(503, { error: "unavailable", message: "The filings door is switched off.", requestId: "req_4" });
+
+        render(view({ error, rows: mergeLatest([{ filing: LIVE_FILING, receivedAt: "2026-11-27T10:00:00Z" }], []) }));
+
+        expect(screen.getByText("The filings door is switched off.")).toBeInTheDocument();
+
+        expect(screen.getByRole("link", { name: LIVE_FILING.accession_number })).toBeInTheDocument();
+    });
+});
+
+describe("arrival flash (useArrivalFlash on /filings)", () => {
+    /** The page's wiring: REST rows + live frames merged, the flash hook, the view. */
+    function Harness({ live, paused = false, ready }: { live: Array<ReceivedFiling>; paused?: boolean; ready: boolean }) {
+        const rows = mergeLatest(live, ready ? V2_FILINGS.data : []);
+
+        const flashing = useArrivalFlash(rows, { arrivedAt: row => row.arrivedAt, enabled: !paused, idOf: row => row.accession, ready });
+
+        return (
+            <LatestFilingsView
+                error={null}
+                flashing={flashing}
+                forms={[]}
+                isLoading={!ready}
+                pager={{ hasNext: false, isFetching: false, onNext: () => undefined, onPrevious: () => undefined, page: 1 }}
+                paused={paused}
+                rows={rows}
+            />
+        );
+    }
+
+    const rowOf = (accession: string) => screen.getByRole("link", { name: accession }).closest("tr");
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it("a frame after the prefill flashes for 2.5 s, then the class is gone and the row stays; a frame before it never flashes", () => {
+        vi.useFakeTimers();
+
+        vi.setSystemTime(new Date("2026-11-27T10:00:00Z"));
+
+        const early = { filing: LIVE_FILING, receivedAt: "2026-11-27T10:00:00Z" };
+
+        const { rerender } = render(<Harness live={[early]} ready={false} />);
+
+        rerender(<Harness live={[early]} ready />);
+
+        act(() => vi.advanceTimersByTime(10));
+
+        expect(rowOf(LIVE_FILING.accession_number)?.className).not.toContain("row-arrive");
+
+        vi.setSystemTime(new Date("2026-11-27T10:00:05Z"));
+
+        const late = { filing: LIVE_FILING_S1, receivedAt: "2026-11-27T10:00:05.000Z" };
+
+        rerender(<Harness live={[late, early]} ready />);
+
+        act(() => vi.advanceTimersByTime(10));
+
+        expect(rowOf(LIVE_FILING_S1.accession_number)?.className).toContain("row-arrive");
+
+        // The rows below keep their elements (keyed by accession): a row on top never restarts their animation.
+        expect(rowOf(V2_FILINGS.data[0].accession)?.className).not.toContain("row-arrive");
+
+        act(() => vi.advanceTimersByTime(ARRIVAL_FLASH_MS));
+
+        expect(rowOf(LIVE_FILING_S1.accession_number)?.className).not.toContain("row-arrive");
+
+        expect(rowOf(LIVE_FILING_S1.accession_number)).toBeInTheDocument();
+    });
+
+    it("a listed accession that then arrives live flashes once, shown once; paused flashes nothing", () => {
+        vi.useFakeTimers();
+
+        vi.setSystemTime(new Date("2026-11-27T10:00:00Z"));
+
+        const { rerender } = render(<Harness live={[]} ready />);
+
+        const relisted = { filing: { ...LIVE_FILING, accession_number: V2_FILINGS.data[0].accession }, receivedAt: "2026-11-27T10:00:00.000Z" };
+
+        rerender(<Harness live={[relisted]} ready />);
+
+        act(() => vi.advanceTimersByTime(10));
+
+        expect(screen.getAllByRole("link", { name: V2_FILINGS.data[0].accession })).toHaveLength(1);
+
+        expect(rowOf(V2_FILINGS.data[0].accession)?.className).toContain("row-arrive");
+
+        cleanup();
+
+        const paused = render(<Harness live={[]} paused ready />);
+
+        paused.rerender(<Harness live={[{ filing: LIVE_FILING_S1, receivedAt: "2026-11-27T10:00:00.000Z" }]} paused ready />);
+
+        act(() => vi.advanceTimersByTime(10));
+
+        expect(rowOf(LIVE_FILING_S1.accession_number)?.className).not.toContain("row-arrive");
     });
 });

@@ -38,6 +38,7 @@ export const V2_FILINGS: V2FilingsResponse = {
             company: AAPL,
             edgar_index_url: "https://www.sec.gov/Archives/edgar/data/320193/000114036126042505/0001140361-26-042505-index.htm",
             filed_at: "2026-11-06T21:30:47Z",
+            filer: { cik: "0000320193", name: "Apple Inc.", role: "filer" },
             filing_date: "2026-11-06",
             form: "424B2",
             fund: null,
@@ -52,6 +53,7 @@ export const V2_FILINGS: V2FilingsResponse = {
             company: AAPL,
             edgar_index_url: "https://www.sec.gov/Archives/edgar/data/320193/000032019326000026/0000320193-26-000026-index.htm",
             filed_at: "2026-11-03T13:05:15Z",
+            filer: { cik: "0000320193", name: "Apple Inc.", role: "filer" },
             filing_date: "2026-11-03",
             form: "10-K",
             fund: null,
@@ -73,6 +75,31 @@ export const V2_FILINGS: V2FilingsResponse = {
         ],
     },
     next_cursor: "eyJ2IjoyfQ",
+};
+
+/** A pre-IPO filer's S-1 (Data API 12.3: `symbol: null`, `company` without a ticker, the filer named by `filer`). */
+export const V2_FILING_PRE_IPO: V2FilingsResponse["data"][number] = {
+    accession: "0002166611-26-000003",
+    company: { cik: "0002166611", ticker: null },
+    edgar_index_url: "https://www.sec.gov/Archives/edgar/data/2166611/000216661126000003/0002166611-26-000003-index.htm",
+    filed_at: "2026-11-25T21:40:02Z",
+    filer: { cik: "0002166611", name: "Fidelity Chainlink Fund", role: "filer" },
+    filing_date: "2026-11-26",
+    form: "S-1",
+    fund: null,
+    items: [],
+    primary_document: "s1.htm",
+    report_date: null,
+    roles: ["filer"],
+    symbol: null,
+};
+
+/** Page 1 of the market-wide list (`GET /v1/filings` without `symbol`): no `form_facet`. */
+export const V2_LATEST_FILINGS: V2FilingsResponse = {
+    data: [V2_FILING_PRE_IPO, ...V2_FILINGS.data],
+    has_more: true,
+    meta: { coverage: { state: "complete" } },
+    next_cursor: "eyJ2IjoyLCJsYXRlc3QiOnRydWV9",
 };
 
 export const V2_FILING_10K: V2FilingDetailResponse = {

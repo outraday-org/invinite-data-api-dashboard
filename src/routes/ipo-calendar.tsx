@@ -4,6 +4,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import * as React from "react";
 import { z } from "zod";
 
+import type { V2IposInput } from "@/lib/api/queries";
 import type { V2Ipo, V2IposResponse, V2IpoStage } from "@/lib/api/types";
 
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
@@ -20,7 +21,7 @@ import { Section } from "@/components/ui/section";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIpo, useV2IposInfinite } from "@/lib/api/queries";
-import { V2_IPO_STAGES } from "@/lib/api/v2";
+import { V2_IPO_REGISTRATION_STAGES, V2_IPO_STAGES } from "@/lib/api/v2";
 import { zonedDate } from "@/lib/earnings/format";
 import { formatDay, formatInstant, formatShares } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
@@ -55,6 +56,7 @@ type StageFilter = typeof ALL | V2IpoStage;
 /** One vocabulary for the registration stages and the listing calendar's status. */
 export const IPO_STAGE_LABELS: Record<V2IpoStage, string> = {
     announced: "Announced",
+    dormant: "Dormant",
     effective: "Effective",
     exchange_approved: "Exchange approved",
     postponed: "Postponed",
@@ -186,7 +188,8 @@ const COLUMNS: Array<ColumnDef<V2Ipo>> = [
     },
     {
         accessorKey: "stage",
-        cell: ({ row }) => <Badge variant="outline">{IPO_STAGE_LABELS[row.original.stage]}</Badge>,
+        // A dormant announcement (over a year old, no registration) reads grey.
+        cell: ({ row }) => <Badge variant={row.original.stage === "dormant" ? "secondary" : "outline"}>{IPO_STAGE_LABELS[row.original.stage]}</Badge>,
         header: "Stage",
     },
     {
@@ -283,14 +286,17 @@ export function IposView({
 /** Today's New York day (`YYYY-MM-DD`). */
 const newYorkToday = () => zonedDate(new Date(), "America/New_York");
 
-/** The request of a tab: Upcoming = every offering not yet trading or withdrawn, listing on or after today (New York)
- * by listing date ascending, so page 1 starts at the next listing (backend data-api-ui-walk-findings task 3, F013);
- * Recent = listed on or before today, newest first. A date range replaces the defaults. The offerings without a listing
- * date yet follow the Upcoming list (`upcomingUndatedRequest`): a `listing_date` range never matches them. */
+/** Stages Upcoming leaves out by default: listed, withdrawn, and dormant announcements (over a year without a registration). */
+const NOT_UPCOMING: ReadonlySet<V2IpoStage> = new Set(["dormant", "trading", "withdrawn"]);
+
+/** The request of a tab: Upcoming = every offering not yet trading, withdrawn or dormant, listing on or after today
+ * (New York) by listing date ascending, so page 1 starts at the next listing (backend data-api-ui-walk-findings task 3,
+ * F013); Recent = listed on or before today, newest first. A date range replaces the defaults. The offerings without a
+ * listing date yet follow the Upcoming list (`upcomingUndatedRequests`): a `listing_date` range never matches them. */
 export function ipoRequest(search: IpoSearch, today: string) {
     const recent = search.tab === "recent";
 
-    const stage = search.stage ? [search.stage] : recent ? undefined : V2_IPO_STAGES.filter(value => value !== "trading" && value !== "withdrawn");
+    const stage = search.stage ? [search.stage] : recent ? undefined : V2_IPO_STAGES.filter(value => !NOT_UPCOMING.has(value));
 
     return {
         isSpac: search.spac === undefined ? undefined : search.spac === "yes",
@@ -302,13 +308,27 @@ export function ipoRequest(search: IpoSearch, today: string) {
     };
 }
 
-/** The Upcoming tab's tail: the same offerings without the date floor; the API sorts the ones without a listing date
- * last (owner decision D4), and only those are shown from it (the dated ones were listed above). None for Recent or a
- * user's date range (a range never matches an undated offering). */
-export function upcomingUndatedRequest(search: IpoSearch, today: string) {
-    if (search.tab === "recent" || search.from !== undefined || search.to !== undefined) return null;
+const REGISTRATION_STAGES: ReadonlySet<V2IpoStage> = new Set(V2_IPO_REGISTRATION_STAGES);
 
-    return { ...ipoRequest(search, today), listingDateGte: undefined };
+/** The Upcoming tab's tail, in order: the same offerings without the date floor, first the SEC registrations (newest
+ * `first_public_at` first), then the listing-calendar rows (the API sorts the ones without a listing date last, owner
+ * decision D4) — never an alphabetical mix of real S-1s and stale calendar rows. Only their undated rows are shown (the
+ * dated ones were listed above). None for Recent or a user's date range (a range never matches an undated offering). */
+export function upcomingUndatedRequests(search: IpoSearch, today: string) {
+    if (search.tab === "recent" || search.from !== undefined || search.to !== undefined) return [];
+
+    const base = { ...ipoRequest(search, today), listingDateGte: undefined };
+
+    const stages = base.stage ?? [];
+
+    const registrations = stages.filter(stage => REGISTRATION_STAGES.has(stage));
+
+    const calendar = stages.filter(stage => !REGISTRATION_STAGES.has(stage));
+
+    return [
+        ...(registrations.length > 0 ? [{ ...base, sort: "-first_public_at" as const, stage: registrations }] : []),
+        ...(calendar.length > 0 ? [{ ...base, stage: calendar }] : []),
+    ];
 }
 
 /** The undated rows of the tail's pages (`listing_date` null). */
@@ -392,6 +412,38 @@ function IpoDetailDialog({ ipo, onClose }: { ipo: null | V2Ipo; onClose: () => v
     );
 }
 
+/**
+ * One part of Upcoming's undated tail (`upcomingUndatedRequests`): idle until `start` (the parts before it are
+ * complete), only its undated rows, a page of dated rows only asking for the next one at once. `done` = complete (or
+ * no such part).
+ */
+function useUndatedTail(request: null | V2IposInput, start: boolean, fallback: V2IposInput) {
+    const query = useV2IposInfinite(request ?? fallback, { enabled: request !== null && start });
+
+    const active = request !== null && start && query.data !== null;
+
+    const pages = active ? undatedPages(query.data?.pages ?? []) : [];
+
+    // A page of dated rows only (the dated offerings were listed above) shows nothing: ask for the next one at once.
+    const lastEmpty = pages.at(-1)?.data.length === 0;
+
+    const { fetchNextPage, hasNextPage, isFetchingNextPage } = query;
+
+    React.useEffect(() => {
+        if (active && lastEmpty && hasNextPage && !isFetchingNextPage) void fetchNextPage();
+    }, [active, lastEmpty, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+    return {
+        active,
+        done: request === null || (active && !hasNextPage),
+        error: active ? query.error : null,
+        fetchNextPage,
+        hasNextPage: active && hasNextPage,
+        isFetchingNextPage,
+        pages,
+    };
+}
+
 const SPAC_OPTIONS = [
     { label: "SPACs and others", value: ALL },
     { label: "SPACs only", value: "yes" },
@@ -414,27 +466,22 @@ function IposPage() {
 
     const dated = useV2IposInfinite(ipoRequest(search, today));
 
-    const tailRequest = upcomingUndatedRequest(search, today);
+    const tailRequests = upcomingUndatedRequests(search, today);
 
-    // The undated tail starts once the dated list is complete.
-    const tail = useV2IposInfinite(tailRequest ?? ipoRequest(search, today), {
-        enabled: tailRequest !== null && !dated.isLoading && dated.data !== null && !dated.hasNextPage,
-    });
+    // The undated tail starts once the dated list is complete, one part after the other (registrations, then calendar rows).
+    const datedDone = !dated.isLoading && dated.data !== null && !dated.hasNextPage;
 
-    const tailActive = tailRequest !== null && !dated.hasNextPage && tail.data !== null;
+    const first = useUndatedTail(tailRequests.at(0) ?? null, datedDone, ipoRequest(search, today));
 
-    const tailPages = React.useMemo(() => (tailActive ? undatedPages(tail.data?.pages ?? []) : []), [tailActive, tail.data]);
+    const second = useUndatedTail(tailRequests.at(1) ?? null, datedDone && first.done, ipoRequest(search, today));
 
-    // A tail page of dated rows only (the dated offerings come first) shows nothing: ask for the next one at once.
-    const lastTailEmpty = tailPages.at(-1)?.data.length === 0;
+    const tails = [first, second].filter(tail => tail.active);
 
-    React.useEffect(() => {
-        if (tailActive && lastTailEmpty && tail.hasNextPage && !tail.isFetchingNextPage) void tail.fetchNextPage();
-    }, [tailActive, lastTailEmpty, tail]);
+    const pages = [...(dated.data?.pages ?? []), ...tails.flatMap(tail => tail.pages)];
 
-    const pages = React.useMemo(() => [...(dated.data?.pages ?? []), ...tailPages], [dated.data, tailPages]);
+    const tailNext = tails.find(tail => tail.hasNextPage);
 
-    const error = dated.error ?? (tailActive ? tail.error : null);
+    const error = dated.error ?? tails.find(tail => tail.error)?.error ?? null;
 
     const onChange = (patch: Partial<IpoSearch>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
 
@@ -465,7 +512,7 @@ function IposPage() {
     return (
         <PageContainer>
             <PageHeader
-                description="Offerings from SEC registration to listing. Upcoming = not trading or withdrawn yet, from the next listing date on (offerings without one last); Recent = listed, newest first. A row opens the listed company, else the issuer's SEC filer page."
+                description="Offerings from SEC registration to listing. Upcoming = not trading, withdrawn or dormant yet, from the next listing date on (offerings without one last: SEC registrations first, then calendar announcements); Recent = listed, newest first. An announcement over a year old without a registration is dormant (Stage filter). A row opens the listed company, else the issuer's SEC filer page."
                 title="IPO calendar"
             />
             <Tabs onValueChange={value => onChange({ tab: value === "recent" ? "recent" : undefined })} value={search.tab ?? "upcoming"}>
@@ -509,10 +556,10 @@ function IposPage() {
 
             <IposView
                 error={error}
-                hasNextPage={dated.hasNextPage || (tailActive && tail.hasNextPage)}
-                isFetchingNextPage={dated.isFetchingNextPage || tail.isFetchingNextPage}
+                hasNextPage={dated.hasNextPage || tailNext !== undefined}
+                isFetchingNextPage={dated.isFetchingNextPage || tails.some(tail => tail.isFetchingNextPage)}
                 isLoading={dated.isLoading}
-                onLoadMore={() => void (dated.hasNextPage ? dated.fetchNextPage() : tail.fetchNextPage())}
+                onLoadMore={() => void (dated.hasNextPage ? dated.fetchNextPage() : tailNext?.fetchNextPage())}
                 onOpen={openRow}
                 pages={pages}
             />

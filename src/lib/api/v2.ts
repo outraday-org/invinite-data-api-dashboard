@@ -52,8 +52,15 @@ export const V2_IPO_STAGES = [
     "priced",
     "trading",
     "postponed",
+    "dormant",
     "withdrawn",
 ] as const satisfies ReadonlyArray<V2IpoStage>;
+
+/**
+ * The stages of an SEC registration track (an offering with `sources.registration`); the others (`announced`,
+ * `postponed`, `dormant`, `withdrawn` without a track) are listing-calendar rows.
+ */
+export const V2_IPO_REGISTRATION_STAGES = ["registered", "price_range", "exchange_approved", "effective", "priced"] as const satisfies ReadonlyArray<V2IpoStage>;
 
 type MissingIpoStage = Exclude<V2IpoStage, (typeof V2_IPO_STAGES)[number]>;
 

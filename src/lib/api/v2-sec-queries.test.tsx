@@ -7,16 +7,18 @@ import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FILING_FACTS } from "@/lib/sec/filing-detail-fixtures";
-import { V2_FILING_10K, V2_FILING_SEARCH, V2_FILINGS, V2_HOLDERS_13F, V2_HOLDERS_OVERVIEW, V2_HOLDERS_PENDING, V2_INSIDER_TRADES, V2_IPOS } from "@/lib/sec/v2-fixtures";
+import { V2_FILING_10K, V2_FILING_SEARCH, V2_FILINGS, V2_HOLDERS_13F, V2_HOLDERS_OVERVIEW, V2_HOLDERS_PENDING, V2_INSIDER_TRADES, V2_IPOS, V2_LATEST_FILINGS } from "@/lib/sec/v2-fixtures";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import { ApiRequestError } from "./errors";
 import {
+    LATEST_FILINGS_PAGE,
     refetchWhileCoveragePending,
     useFilerHoldingsInfinite,
     useHolderChangesInfinite,
     useHoldersInfinite,
     useInstrument,
+    useLatestFilingsPage,
     useV2DocumentVersion,
     useV2Filing,
     useV2FilingFactsInfinite,
@@ -126,6 +128,39 @@ describe("useV2FilingsInfinite", () => {
         expect(getV2Filings).toHaveBeenCalledTimes(1);
 
         expect(toast.error).not.toHaveBeenCalled();
+    });
+});
+
+describe("useLatestFilingsPage (/filings, market-wide)", () => {
+    it("sends no symbol and no window: one page of 100 at the cursor, the forms as a list", async () => {
+        vi.mocked(getV2Filings).mockResolvedValue(V2_LATEST_FILINGS);
+
+        const { rerender, result } = renderHook(({ cursor, form }) => useLatestFilingsPage({ cursor, form }), {
+            initialProps: { cursor: null as null | string, form: [] as Array<string> },
+            wrapper,
+        });
+
+        await waitFor(() => expect(result.current.data).toEqual(V2_LATEST_FILINGS));
+
+        expect(LATEST_FILINGS_PAGE).toBe(100);
+
+        expect(getV2Filings).toHaveBeenLastCalledWith({ data: { apiKey: "test-key", cursor: undefined, form: undefined, limit: 100 } });
+
+        rerender({ cursor: "eyJ2IjoyLCJsYXRlc3QiOnRydWV9", form: ["8-K", "S-1"] });
+
+        await waitFor(() => expect(getV2Filings).toHaveBeenCalledTimes(2));
+
+        expect(getV2Filings).toHaveBeenLastCalledWith({ data: { apiKey: "test-key", cursor: "eyJ2IjoyLCJsYXRlc3QiOnRydWV9", form: ["8-K", "S-1"], limit: 100 } });
+    });
+
+    it("useV2FilingsInfinite with an empty symbol stays idle (never a market-wide request)", async () => {
+        const { result } = renderHook(() => useV2FilingsInfinite({ symbol: " " }), { wrapper });
+
+        await new Promise(resolve => setTimeout(resolve, 20));
+
+        expect(result.current.fetchStatus).toBe("idle");
+
+        expect(getV2Filings).not.toHaveBeenCalled();
     });
 });
 

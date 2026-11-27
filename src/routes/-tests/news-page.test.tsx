@@ -84,7 +84,7 @@ describe("NewsPageView", () => {
         expect(within(rows[1]).getByRole("link", { name: "NVIDIA Announces Financial Results for Third Quarter Fiscal 2027" }))
             .toHaveAttribute("href", `?item=${edgarItem().id}`);
 
-        const pager = screen.getByTestId("news-pager");
+        const pager = screen.getByTestId("keyset-pager");
 
         expect(within(pager).getByText("Page 1")).toBeTruthy();
 
@@ -100,7 +100,7 @@ describe("NewsPageView", () => {
 
         render(<NewsPageView {...pageProps} items={[edgarItem()]} pager={{ ...pageProps.pager, onPrevious, page: 3 }} />);
 
-        const pager = screen.getByTestId("news-pager");
+        const pager = screen.getByTestId("keyset-pager");
 
         expect(within(pager).getByText("Page 3")).toBeTruthy();
 
@@ -125,7 +125,7 @@ describe("NewsPageView", () => {
         expect(screen.getByText("No news in this window.")).toBeTruthy();
 
         // One page: no pager.
-        expect(screen.queryByTestId("news-pager")).toBeNull();
+        expect(screen.queryByTestId("keyset-pager")).toBeNull();
     });
 
     it("never looks empty while the page-side filters hid every row and older news follows: it offers the next page", () => {

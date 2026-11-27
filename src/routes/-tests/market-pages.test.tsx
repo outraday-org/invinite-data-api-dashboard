@@ -13,7 +13,7 @@ import { V2_IPOS } from "@/lib/sec/v2-fixtures";
 import { CalendarFilters } from "@/routes/$ticker/earnings-calls/-components/calendar-filters";
 import { CalendarWeekStrip } from "@/routes/$ticker/earnings-calls/-components/calendar-week-strip";
 import { CalendarView } from "@/routes/calendar";
-import { IpoDetail, ipoListedTicker, ipoRequest, ipoRowTarget, IposView, undatedPages, upcomingUndatedRequest } from "@/routes/ipo-calendar";
+import { IpoDetail, ipoListedTicker, ipoRequest, ipoRowTarget, IposView, undatedPages, upcomingUndatedRequests } from "@/routes/ipo-calendar";
 import { LiveCallsView, nextCallsOf } from "@/routes/live-calls";
 import { holidayStatus, MarketHolidaysView } from "@/routes/market-holidays";
 
@@ -221,23 +221,25 @@ describe("/live-calls", () => {
 });
 
 describe("/ipo-calendar (`/v1/ipos`, `/v1/ipos/{ipo_id}`)", () => {
-    it("Upcoming = not trading / withdrawn, by listing date ascending; Recent = listed up to today, newest first", () => {
+    it("Upcoming = not trading / withdrawn / dormant, by listing date ascending; Recent = listed up to today, newest first", () => {
         const upcoming = ipoRequest({}, "2026-11-21");
 
         expect(upcoming.sort).toBe("listing_date");
 
         expect(upcoming.stage).not.toContain("trading");
 
+        expect(upcoming.stage).not.toContain("withdrawn");
+
+        expect(upcoming.stage).not.toContain("dormant");
+
         expect(upcoming.listingDateLte).toBeUndefined();
 
         // F013: page 1 starts at the next listing (today, New York); the undated offerings follow from the tail.
         expect(upcoming.listingDateGte).toBe("2026-11-21");
 
-        expect(upcomingUndatedRequest({}, "2026-11-21")).toMatchObject({ listingDateGte: undefined, sort: "listing_date" });
+        expect(upcomingUndatedRequests({ tab: "recent" }, "2026-11-21")).toEqual([]);
 
-        expect(upcomingUndatedRequest({ tab: "recent" }, "2026-11-21")).toBeNull();
-
-        expect(upcomingUndatedRequest({ from: "2026-12-01" }, "2026-11-21")).toBeNull();
+        expect(upcomingUndatedRequests({ from: "2026-12-01" }, "2026-11-21")).toEqual([]);
 
         expect(ipoRequest({ to: "2026-12-31" }, "2026-11-21").listingDateGte).toBeUndefined();
 
@@ -246,6 +248,26 @@ describe("/ipo-calendar (`/v1/ipos`, `/v1/ipos/{ipo_id}`)", () => {
         expect(ipoRequest({ spac: "yes", tab: "recent" }, "2026-11-21")).toMatchObject({ isSpac: true, listingDateLte: "2026-11-21", sort: "-listing_date", stage: undefined });
 
         expect(ipoRequest({ stage: "priced" }, "2026-11-21").stage).toEqual(["priced"]);
+    });
+
+    it("Upcoming's undated tail: SEC registrations first (newest first_public_at), then the calendar announcements; dormant only by the Stage filter", () => {
+        const [registrations, calendar] = upcomingUndatedRequests({}, "2026-11-21");
+
+        expect(registrations).toMatchObject({ listingDateGte: undefined, sort: "-first_public_at", stage: ["registered", "price_range", "exchange_approved", "effective", "priced"] });
+
+        expect(calendar).toMatchObject({ listingDateGte: undefined, sort: "listing_date", stage: ["announced", "postponed"] });
+
+        expect(upcomingUndatedRequests({ stage: "priced" }, "2026-11-21")).toMatchObject([{ sort: "-first_public_at", stage: ["priced"] }]);
+
+        expect(ipoRequest({ stage: "dormant" }, "2026-11-21").stage).toEqual(["dormant"]);
+
+        expect(upcomingUndatedRequests({ stage: "dormant" }, "2026-11-21")).toMatchObject([{ sort: "listing_date", stage: ["dormant"] }]);
+    });
+
+    it("a dormant announcement reads \"Dormant\" in a grey badge", () => {
+        render(<IposView error={null} hasNextPage={false} isFetchingNextPage={false} isLoading={false} onLoadMore={() => undefined} pages={[{ ...V2_IPOS, data: [{ ...V2_IPOS.data[0], stage: "dormant" }] }]} />);
+
+        expect(screen.getByText("Dormant").closest("[data-slot=badge]")?.className).toContain("bg-secondary");
     });
 
     it("a row click hands the offering over; no Details column", () => {
