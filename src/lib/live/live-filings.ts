@@ -40,29 +40,46 @@ export function commaList(value: string | undefined): Array<string> {
     return (value ?? "").split(",").map(part => part.trim()).filter(Boolean);
 }
 
+/** The fields every row model reads off a `new_filing` frame: accession, form, the filing and period days. */
+function liveFrameFields(filing: LiveFiling) {
+    return {
+        accession: filing.accession_number,
+        filedDay: filing.filing_date.slice(0, 10),
+        form: filing.form_type,
+        periodEnd: filing.period_end ? filing.period_end.slice(0, 10) : null,
+    };
+}
+
+/** The live rows on top of the listed ones; an accession in both is shown once, as listed (both list models). */
+function mergeByAccession<T>(live: ReadonlyArray<T>, listed: ReadonlyArray<T>, accessionOf: (row: T) => string): Array<T> {
+    const listedIds = new Set(listed.map(accessionOf));
+
+    return [...live.filter(row => !listedIds.has(accessionOf(row))), ...listed];
+}
+
 /** A live filing as a row of the filings list (`live: true`; the frame names no items or primary document). */
 export function toLiveFilingRow(filing: LiveFiling): FilingListRow {
+    const { accession, filedDay, form, periodEnd } = liveFrameFields(filing);
+
     return {
-        accessionNumber: filing.accession_number,
+        accessionNumber: accession,
         calendarQuarter: filing.calendar_quarter,
         calendarYear: filing.calendar_year,
         edgarIndexUrl: null,
-        filingDate: filing.filing_date.slice(0, 10),
+        filingDate: filedDay,
         fiscalQuarter: filing.fiscal_quarter,
         fiscalYear: filing.fiscal_year,
-        formType: filing.form_type,
+        formType: form,
         items: [],
         live: true,
-        periodEnd: filing.period_end ? filing.period_end.slice(0, 10) : null,
+        periodEnd,
         primaryDocument: null,
     };
 }
 
 /** The live rows on top of the listed ones; a live accession already listed is shown once, as listed. */
 export function mergeLiveRows(live: ReadonlyArray<FilingListRow>, listed: ReadonlyArray<FilingListRow>): Array<FilingListRow> {
-    const listedIds = new Set(listed.map(row => row.accessionNumber));
-
-    return [...live.filter(row => !listedIds.has(row.accessionNumber)), ...listed];
+    return mergeByAccession(live, listed, row => row.accessionNumber);
 }
 
 // ── The market-wide list (`/filings`, Data API 12.3) ──────────────────────────────────────────────────────────────
@@ -120,14 +137,11 @@ export function fromRestFiling(filing: V2Filing): LatestFilingRow {
 /** A `new_filing` frame received at `receivedAt`. */
 export function fromLiveFiling(filing: LiveFiling, receivedAt: string): LatestFilingRow {
     return {
-        accession: filing.accession_number,
+        ...liveFrameFields(filing),
         arrivedAt: receivedAt,
         cik: padCik(filing.cik),
         filedAt: null,
-        filedDay: filing.filing_date.slice(0, 10),
         filerName: null,
-        form: filing.form_type,
-        periodEnd: filing.period_end ? filing.period_end.slice(0, 10) : null,
         proposedTickers: (filing.proposed_symbols ?? []).map(symbol => symbol.symbol),
         source: "live",
         ticker: filing.ticker,
@@ -146,10 +160,9 @@ export function mergeLatest(live: ReadonlyArray<ReceivedFiling>, listed: Readonl
 
     const arrivals = new Map(live.map(entry => [entry.filing.accession_number, entry.receivedAt]));
 
-    const listedIds = new Set(listedRows.map(row => row.accession));
-
-    return [
-        ...live.filter(entry => !listedIds.has(entry.filing.accession_number)).map(entry => fromLiveFiling(entry.filing, entry.receivedAt)),
-        ...listedRows.map(row => ({ ...row, arrivedAt: arrivals.get(row.accession) ?? null })),
-    ];
+    return mergeByAccession(
+        live.map(entry => fromLiveFiling(entry.filing, entry.receivedAt)),
+        listedRows.map(row => ({ ...row, arrivedAt: arrivals.get(row.accession) ?? null })),
+        row => row.accession,
+    );
 }

@@ -176,7 +176,7 @@ export function DataTable<TRow>({
     /** A meta / coverage line in the toolbar, after the count. */
     toolbarMeta?: React.ReactNode;
 }) {
-    const table = useReactTable({ columns, data: rows, getCoreRowModel: getCoreRowModel(), getRowId: getRowId ? row => getRowId(row) : undefined });
+    const table = useReactTable({ columns, data: rows, getCoreRowModel: getCoreRowModel(), getRowId });
 
     const columnCount = Math.max(1, columns.length);
 
