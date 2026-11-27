@@ -11,7 +11,7 @@ import { edgarItem, newsroomItem, newsText } from "@/lib/news/news-fixtures";
 import { eventChoices } from "@/routes/$ticker/news/-components/news-event-filter";
 import { NewsFilters } from "@/routes/$ticker/news/-components/news-filters";
 import { AttributionBlock, NewsItemView } from "@/routes/$ticker/news/-components/news-item-panel";
-import { NewsPageView } from "@/routes/$ticker/news/index";
+import { NewsLayout } from "@/routes/$ticker/news/-components/news-layout";
 
 // The page module's route needs a router; the pure views do not.
 vi.mock("@tanstack/react-router", () => ({
@@ -45,12 +45,12 @@ const pageProps = {
     scopeLabel: "News about NVDA",
 };
 
-describe("NewsPageView", () => {
+describe("NewsLayout", () => {
     it("lists items with their publisher, source and kind; opens one; pages on by cursor", () => {
         const onNext = vi.fn();
 
         render(
-            <NewsPageView
+            <NewsLayout
                 {...pageProps}
                 items={[newsroomItem(), edgarItem()]}
                 liveIds={new Set([newsroomItem().id])}
@@ -98,7 +98,7 @@ describe("NewsPageView", () => {
     it("pages back from a later page and ends Next on the last page", () => {
         const onPrevious = vi.fn();
 
-        render(<NewsPageView {...pageProps} items={[edgarItem()]} pager={{ ...pageProps.pager, onPrevious, page: 3 }} />);
+        render(<NewsLayout {...pageProps} items={[edgarItem()]} pager={{ ...pageProps.pager, onPrevious, page: 3 }} />);
 
         const pager = screen.getByTestId("keyset-pager");
 
@@ -112,7 +112,7 @@ describe("NewsPageView", () => {
     });
 
     it("has no media column (API 2.0.0 serves no media)", () => {
-        render(<NewsPageView {...pageProps} items={[newsroomItem(), edgarItem()]} />);
+        render(<NewsLayout {...pageProps} items={[newsroomItem(), edgarItem()]} />);
 
         expect(screen.queryByText("Media")).toBeNull();
 
@@ -120,7 +120,7 @@ describe("NewsPageView", () => {
     });
 
     it("says when the window is empty", () => {
-        render(<NewsPageView {...pageProps} items={[]} />);
+        render(<NewsLayout {...pageProps} items={[]} />);
 
         expect(screen.getByText("No news in this window.")).toBeTruthy();
 
@@ -131,7 +131,7 @@ describe("NewsPageView", () => {
     it("never looks empty while the page-side filters hid every row and older news follows: it offers the next page", () => {
         const onNext = vi.fn();
 
-        render(<NewsPageView {...pageProps} hiddenByFilters={50} items={[]} pager={{ ...pageProps.pager, hasNext: true, onNext }} />);
+        render(<NewsLayout {...pageProps} hiddenByFilters={50} items={[]} pager={{ ...pageProps.pager, hasNext: true, onNext }} />);
 
         expect(screen.queryByText("No news in this window.")).toBeNull();
 
@@ -145,7 +145,7 @@ describe("NewsPageView", () => {
     });
 
     it("says the filters hid the rest on the last page, and counts hidden rows under a shorter page", () => {
-        render(<NewsPageView {...pageProps} hiddenByFilters={3} items={[]} />);
+        render(<NewsLayout {...pageProps} hiddenByFilters={3} items={[]} />);
 
         expect(screen.getByText("No news on this page matches the filters.")).toBeTruthy();
 
@@ -153,7 +153,7 @@ describe("NewsPageView", () => {
 
         cleanup();
 
-        render(<NewsPageView {...pageProps} hiddenByFilters={1} items={[edgarItem()]} />);
+        render(<NewsLayout {...pageProps} hiddenByFilters={1} items={[edgarItem()]} />);
 
         expect(screen.getAllByTestId("news-row")).toHaveLength(1);
 
@@ -161,15 +161,15 @@ describe("NewsPageView", () => {
     });
 
     it("renders the plan gate as a notice, not an error", () => {
-        render(<NewsPageView {...pageProps} error={new ApiRequestError(403, { error: "Forbidden", message: "Upgrade" })} items={[]} />);
+        render(<NewsLayout {...pageProps} error={new ApiRequestError(403, { error: "Forbidden", message: "Upgrade" })} items={[]} />);
 
         expect(screen.getByText("Your plan does not include news")).toBeTruthy();
     });
 });
 
-describe("NewsPageView (O7 group 2)", () => {
+describe("NewsLayout (O7 group 2)", () => {
     it("offers the shown page as an export, and names the pages the auto-advance skipped", () => {
-        render(<NewsPageView {...pageProps} exportScope="NVDA" hiddenByFilters={50} items={[]} pager={{ ...pageProps.pager, hasNext: true, page: 4 }} skippedPages={3} />);
+        render(<NewsLayout {...pageProps} exportScope="NVDA" hiddenByFilters={50} items={[]} pager={{ ...pageProps.pager, hasNext: true, page: 4 }} skippedPages={3} />);
 
         expect(screen.getByText("Export")).toBeTruthy();
 
@@ -177,7 +177,7 @@ describe("NewsPageView (O7 group 2)", () => {
     });
 
     it("renders the search box and the header actions (the News | Announcements tabs)", () => {
-        render(<NewsPageView {...pageProps} headerActions={<span>tabs</span>} items={[]} search={<span>search box</span>} />);
+        render(<NewsLayout {...pageProps} headerActions={<span>tabs</span>} items={[]} search={<span>search box</span>} />);
 
         expect(screen.getByText("tabs")).toBeTruthy();
 

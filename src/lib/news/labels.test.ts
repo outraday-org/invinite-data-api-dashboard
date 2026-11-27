@@ -31,7 +31,6 @@ describe("validateNewsSearch", () => {
         expect(validateNewsSearch({ item: "nope", kind: "guidance", scope: "market", source: "wire" })).toMatchObject({
             item: undefined,
             kind: "guidance",
-            scope: "market",
             source: undefined,
         });
     });
@@ -48,10 +47,10 @@ describe("validateNewsSearch", () => {
         expect(validateNewsSearch({ earnings: "maybe" }).earnings).toBeUndefined();
     });
 
-    it("drops the publisher-only filters in the market scope and without Company-published", () => {
+    it("ignores a legacy scope and keeps fixed-ticker publisher filters only with Company-published", () => {
         expect(validateNewsSearch({ category: "Press Releases", published: true, scope: "market" })).toMatchObject({
-            category: undefined,
-            published: undefined,
+            category: "Press Releases",
+            published: true,
         });
 
         expect(validateNewsSearch({ pubType: "press_release", tag: "AI" })).toMatchObject({ pubType: undefined, tag: undefined });
@@ -105,14 +104,16 @@ describe("matchesNewsFilters (live items)", () => {
 });
 
 describe("mergeLiveItems", () => {
-    it("puts a pushed item on top once, newest first", () => {
+    it("places newly received items before REST rows, retaining the authoritative REST copy and order", () => {
         const listed = [newsroomItem(), edgarItem()];
 
-        const pushed = newsroomItem({ id: "00000000-0000-4000-8000-0000000000aa", published_at: "2026-10-29T15:00:00.000Z" });
+        const older = newsroomItem({ id: "00000000-0000-4000-8000-0000000000aa", published_at: "2025-10-29T15:00:00.000Z" });
 
-        const merged = mergeLiveItems([pushed, listed[0]], listed);
+        const duplicate = { ...listed[0], title: "stale frame title" };
 
-        expect(merged.map(item => item.id)).toEqual([pushed.id, listed[0].id, listed[1].id]);
+        expect(mergeLiveItems([older, duplicate, older], listed)).toEqual([older, ...listed]);
+
+        expect(mergeLiveItems([], [...listed].reverse())).toEqual([...listed].reverse());
     });
 });
 
@@ -146,6 +147,6 @@ describe("validateNewsFeedSearch", () => {
             .toEqual({ from: "2026-11-01", kind: "dividend", scope: undefined, sort: "oldest" });
 
         expect(validateNewsFeedSearch({ from: "2026-11-01", live: true, scope: "market", sort: "oldest", topic: "partnership" }))
-            .toEqual({ from: undefined, live: true, scope: "market", sort: undefined, to: undefined, topic: "partnership" });
+            .toEqual({ from: "2026-11-01", live: true, sort: "oldest", topic: "partnership" });
     });
 });

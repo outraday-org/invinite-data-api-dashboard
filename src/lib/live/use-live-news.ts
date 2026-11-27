@@ -54,7 +54,9 @@ export function useLiveNews({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, filters
     // One key per subscription: items of an earlier filter set are never shown under a new one.
     const filterKey = JSON.stringify(newsSubscribeFrame(filters));
 
-    const [received, setReceived] = useState<{ items: Array<NewsItemPublic>; key: string }>({ items: [], key: "" });
+    const sessionKey = JSON.stringify([apiKeyUpdatedAt, baseUrl, filterKey]);
+
+    const [received, setReceived] = useState<{ items: Array<{ item: NewsItemPublic; arrivedAt: string }>; key: string }>({ items: [], key: "" });
 
     const [mode, setMode] = useState<StreamMode>("connecting");
 
@@ -93,12 +95,14 @@ export function useLiveNews({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, filters
                 case "news_item": {
                     const item = frame.item as unknown as NewsItemPublic;
 
+                    const arrivedAt = new Date().toISOString();
+
                     setReceived((prev) => {
-                        const items = prev.key === filterKey ? prev.items : [];
+                        const items = prev.key === sessionKey ? prev.items : [];
 
-                        if (items.some(held => held.id === item.id)) return prev;
+                        if (items.some(held => held.item.id === item.id)) return prev;
 
-                        return { items: [item, ...items].slice(0, MAX_LIVE_ITEMS), key: filterKey };
+                        return { items: [{ arrivedAt, item }, ...items].slice(0, MAX_LIVE_ITEMS), key: sessionKey };
                     });
 
                     break;
@@ -141,10 +145,13 @@ export function useLiveNews({ apiKey, apiKeyUpdatedAt, baseUrl, enabled, filters
         });
 
         return () => stream.dispose();
-    }, [apiKey, apiKeyUpdatedAt, baseUrl, enabled, filterKey]);
+    }, [apiKey, apiKeyUpdatedAt, baseUrl, enabled, filterKey, sessionKey]);
+
+    const rows = enabled && apiKey !== null && baseUrl !== null && received.key === sessionKey ? received.items : [];
 
     return {
-        items: enabled && received.key === filterKey ? received.items : [],
+        arrivals: new Map(rows.map(row => [row.item.id, row.arrivedAt])),
+        items: rows.map(row => row.item),
         mode: feedMode(enabled, apiKey, mode),
     };
 }

@@ -1,12 +1,12 @@
 // @vitest-environment jsdom
 import type * as React from "react";
 
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiRequestError } from "@/lib/api/errors";
 import { newsroomItem, newsSearchPage } from "@/lib/news/news-fixtures";
-import { hitFieldLabel, newsSearchCostText, NewsSearchResults } from "@/routes/$ticker/news/-components/news-search";
+import { hitFieldLabel, NewsSearchResults } from "@/routes/$ticker/news/-components/news-search";
 
 vi.mock("@tanstack/react-router", () => ({
     // A hit's headline is a `?item=` link: the mock shows the search it would navigate to.
@@ -53,22 +53,16 @@ describe("NewsSearchResults", () => {
     });
 
     it("pages on by cursor and notes incomplete coverage; an empty answer with complete coverage says so", () => {
-        const onLoadMore = vi.fn();
-
         const coverage = { completeness: "partial", reasons: ["lexical_backfill_pending"] } as const;
 
         render(
             <NewsSearchResults
                 {...props}
-                hasNextPage
-                onLoadMore={onLoadMore}
                 pages={[newsSearchPage({ has_more: true, meta: { index: coverage as never, query: "Rubin" }, next_cursor: "c2" })]}
             />,
         );
 
-        fireEvent.click(screen.getByText("More results (10 credits)"));
-
-        expect(onLoadMore).toHaveBeenCalledTimes(1);
+        expect(screen.queryByText(/More results/)).toBeNull();
 
         expect(screen.getByRole("status")).toBeTruthy();
 
@@ -89,13 +83,5 @@ describe("NewsSearchResults", () => {
         render(<NewsSearchResults {...props} error={new ApiRequestError(400, { error: "Bad Request", message: "Exact search needs 3 characters" })} pages={[]} />);
 
         expect(screen.getByText("Exact search needs 3 characters")).toBeTruthy();
-    });
-});
-
-describe("newsSearchCostText", () => {
-    it("names the page's day window only when one is set (the market scope has none)", () => {
-        expect(newsSearchCostText(true)).toBe("10 credits per page · the page's date window applies");
-
-        expect(newsSearchCostText(false)).toBe("10 credits per page");
     });
 });

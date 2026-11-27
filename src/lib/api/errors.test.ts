@@ -41,10 +41,10 @@ describe("ApiRequestError", () => {
         expect(() => throwApiError(undefined, new Response(null, { status: 502 }))).toThrow(ApiRequestError);
 
         try {
-            throwApiError({ error: "search_disabled", message: "off" }, new Response(null, { status: 503 }));
+            throwApiError({ error: "unavailable", message: "News search is not enabled" }, new Response(null, { status: 503 }));
         }
         catch (error) {
-            expect((error as ApiRequestError).code).toBe("search_disabled");
+            expect((error as ApiRequestError).code).toBe("unavailable");
 
             expect((error as ApiRequestError).status).toBe(503);
         }

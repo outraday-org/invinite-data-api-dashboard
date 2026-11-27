@@ -2,11 +2,12 @@
 import type * as React from "react";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
+import { ApiRequestError, SEARCH_RETRY_DELAY_MS } from "./errors";
 import { useNewsPage, useV2AnnouncementsInfinite, useV2NewsSearchInfinite } from "./queries";
 import { getV2AnnouncementsList, getV2News, getV2NewsSearch } from "./server-functions";
 
@@ -55,6 +56,51 @@ describe("useNewsPage (O7 group 2)", () => {
     });
 });
 
+it("requests market news without a company and converts historic New York days", async () => {
+    const { result } = renderHook(() => useNewsPage({ cursor: null, from: "2026-11-01", limit: 50, market: true, to: "2026-11-03" }), { wrapper });
+
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+    expect(vi.mocked(getV2News).mock.calls[0][0].data).toMatchObject({ company: undefined, publishedAtGte: "2026-11-01T04:00:00.000Z", publishedAtLt: "2026-11-04T05:00:00.000Z" });
+});
+
+it("separates market and company cache entries and refreshes the rolling market anchor at midnight", async () => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+
+    try {
+        vi.setSystemTime(new Date("2026-11-28T04:59:55Z"));
+
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+        const provider = ({ children}: { children: React.ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+
+        const { rerender, result } = renderHook(({ market}: { market: boolean }) => useNewsPage(market ? { cursor: null, limit: 50, market: true } : { company: "market", cursor: null, limit: 50 }), { initialProps: { market: true }, wrapper: provider });
+
+        await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+        rerender({ market: false });
+
+        await waitFor(() => expect(getV2News).toHaveBeenCalledTimes(2));
+
+        expect(vi.mocked(getV2News).mock.lastCall?.[0].data.company).toBe("market");
+
+        rerender({ market: true });
+
+        expect(getV2News).toHaveBeenCalledTimes(2);
+
+        vi.setSystemTime(new Date("2026-11-28T05:00:01Z"));
+
+        rerender({ market: true });
+
+        await waitFor(() => expect(getV2News).toHaveBeenCalledTimes(3));
+
+        expect(vi.mocked(getV2News).mock.lastCall?.[0].data.company).toBeUndefined();
+    }
+    finally {
+        vi.useRealTimers();
+    }
+});
+
 describe("useV2NewsSearchInfinite", () => {
     it("searches on a submitted query only, the whole market without a company, the day window as instants", async () => {
         const { rerender, result } = renderHook(
@@ -74,6 +120,44 @@ describe("useV2NewsSearchInfinite", () => {
             publishedAtLt: "2026-11-03T00:00:00.000Z",
             q: "buyback",
         });
+    });
+});
+
+describe("news search error retry policy", () => {
+    it.each([
+        ["Search is temporarily unavailable", 2],
+        ["News search is not enabled", 1],
+    ] as const)("applies the five-second retry only to a timeout: %s", async (detail, expected) => {
+        vi.useFakeTimers();
+
+        try {
+            vi.mocked(getV2NewsSearch).mockRejectedValue(new ApiRequestError(503, { error: "unavailable", message: detail }));
+
+            const { unmount } = renderHook(() => useV2NewsSearchInfinite({ limit: 8, mode: "lexical", q: "revenue" }), { wrapper });
+
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(SEARCH_RETRY_DELAY_MS - 1);
+            });
+
+            expect(getV2NewsSearch).toHaveBeenCalledTimes(1);
+
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(1);
+            });
+
+            expect(getV2NewsSearch).toHaveBeenCalledTimes(expected);
+
+            await act(async () => {
+                await vi.advanceTimersByTimeAsync(2 * SEARCH_RETRY_DELAY_MS);
+            });
+
+            expect(getV2NewsSearch).toHaveBeenCalledTimes(expected);
+
+            unmount();
+        }
+        finally {
+            vi.useRealTimers();
+        }
     });
 });
 

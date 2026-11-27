@@ -3,7 +3,7 @@ import { z } from "zod";
 import type { NewsDevelopment, NewsItemPublic, NewsKind, NewsPublication, V2AnnouncementTopic } from "@/lib/api/types";
 import type { ListsEvery } from "@/lib/earnings/labels";
 
-import { optionalDay, optionalEnum } from "@/lib/url-state";
+import { optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
 
 /**
  * Labels, the route's search params and the pure filter / merge rules of the News page (backend earnings
@@ -159,14 +159,16 @@ const newsSearchSchema = z.object({
     effTo: optionalDay(),
     /** The news linked to one event (an event id, `/v1/news?event=`). */
     event: z.uuid().optional().catch(undefined),
+    field: optionalEnum(["title", "lede", "summary"] as const),
     from: z.iso.date().optional().catch(undefined),
     item: z.uuid().optional().catch(undefined),
     kind: z.enum(NEWS_KINDS as [NewsKind, ...Array<NewsKind>]).optional().catch(undefined),
     live: z.boolean().optional().catch(undefined),
+    mode: optionalEnum(["literal"] as const),
     /** "Company-published": items the company published itself (`publisher=<cik>`), company scope only. */
     published: z.boolean().optional().catch(undefined),
     pubType: z.enum(NEWS_PUBLICATION_TYPES as [string, ...Array<string>]).optional().catch(undefined),
-    scope: z.enum(["company", "market"]).optional().catch(undefined),
+    q: optionalText(500),
     /** Oldest first (absent = newest first, the API's default). */
     sort: z.literal("oldest").optional().catch(undefined),
     source: z.enum(NEWS_SOURCES as [NewsSourceFilter, ...Array<NewsSourceFilter>]).optional().catch(undefined),
@@ -181,13 +183,12 @@ export type NewsSearch = z.infer<typeof newsSearchSchema>;
 
 /**
  * `validateSearch` of `/$ticker/news`: every field optional, an invalid value falls back to none. The publisher-only
- * filters (`published`, `pubType`, `category`, `tag`) are dropped in the market scope; `category` / `tag` need one
- * publisher (the API's rule), so they are dropped without `published`.
+ * filters (`pubType`, `category`, `tag`) require the ticker page’s Company-published switch.
  */
 export function validateNewsSearch(search: Record<string, unknown>): NewsSearch {
     const parsed = newsSearchSchema.parse(search);
 
-    const companyPublished = parsed.scope !== "market" && parsed.published === true;
+    const companyPublished = parsed.published === true;
 
     return {
         ...parsed,
@@ -198,14 +199,14 @@ export function validateNewsSearch(search: Record<string, unknown>): NewsSearch 
     };
 }
 
-/** `validateSearch` of `/news-feed`: the list filters, the live switch, the open item and `scope=market` (live only). */
+/** `validateSearch` of `/news-feed`: the list filters, the live switch, the open item and submitted search. */
 const newsFeedSearchSchema = newsSearchSchema.pick({
-    earnings: true,
-    from: true,
+    earnings: true, field: true, from: true,
     item: true,
     kind: true,
     live: true,
-    scope: true,
+    mode: true,
+    q: true,
     sort: true,
     source: true,
     to: true,
@@ -215,12 +216,7 @@ const newsFeedSearchSchema = newsSearchSchema.pick({
 export type NewsFeedSearch = z.infer<typeof newsFeedSearchSchema>;
 
 export function validateNewsFeedSearch(search: Record<string, unknown>): NewsFeedSearch {
-    const parsed = newsFeedSearchSchema.parse(search);
-
-    // `company` is the default scope: never written. The market scope has no REST list, so no order or window.
-    if (parsed.scope !== "market") return { ...parsed, scope: undefined };
-
-    return { ...parsed, from: undefined, sort: undefined, to: undefined };
+    return newsFeedSearchSchema.parse(search);
 }
 
 /** What a list request and a live item are both filtered by (the request's own parameters, resolved). */
@@ -266,22 +262,19 @@ export function matchesNewsFilters(item: NewsItemPublic, filters: NewsFilters): 
     return true;
 }
 
-/** Live items on top of the listed pages: one row per id (the live copy wins), newest `published_at` first. */
+/** New arrivals lead page one; retain the REST copy and REST order once an item appears in the list. */
 export function mergeLiveItems(live: ReadonlyArray<NewsItemPublic>, listed: ReadonlyArray<NewsItemPublic>): Array<NewsItemPublic> {
-    const seen = new Set<string>();
+    const seen = new Set(listed.map(item => item.id));
 
-    const merged: Array<NewsItemPublic> = [];
-
-    for (const item of [...live, ...listed]) {
-        if (seen.has(item.id)) continue;
+    const arrivals = live.filter((item) => {
+        if (seen.has(item.id)) return false;
 
         seen.add(item.id);
 
-        merged.push(item);
-    }
+        return true;
+    });
 
-    // A pushed item is new, not necessarily newer than every listed one: re-sort by publication time (stable).
-    return merged.sort((a, b) => Date.parse(b.published_at) - Date.parse(a.published_at));
+    return [...arrivals, ...listed];
 }
 
 /** The publisher's own newsroom categories / tags seen in the loaded items (the "Company-published" pickers). */

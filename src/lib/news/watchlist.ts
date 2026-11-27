@@ -3,7 +3,7 @@ import * as React from "react";
 import { isCompanyToken } from "@/lib/company-list";
 
 /**
- * The news watchlist of `/news-feed` (backend tasks/data-api-dashboard O7 group 2): up to `WATCHLIST_MAX` tickers kept
+ * The Companies field of `/news-feed` (backend tasks/data-api-dashboard O7 group 2): up to `WATCHLIST_MAX` tickers kept
  * in this browser only (`localStorage`; a private window or blocked storage = an empty list that still works for the
  * visit). The feed reads them as ONE `/v1/news?company=<comma list>` per page (the API takes 1–50 companies).
  */

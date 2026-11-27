@@ -7,6 +7,7 @@ import type { SearchMode, V2TranscriptSearchResponse, V2TranscriptSearchType } f
 import { ExportMenu } from "@/components/api/export-menu";
 import { CompanyFilter } from "@/components/search/company-filter";
 import { SearchChip, SearchModeChips, SearchQueryForm } from "@/components/search/search-box";
+import { SearchNarrowHint, SearchTimeoutNotice } from "@/components/search/search-timeout-notice";
 import { DayRange } from "@/components/ui/day-range";
 import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { Notice } from "@/components/ui/notice";
@@ -66,7 +67,7 @@ export function windowText(search: Pick<TranscriptSearchPageSearch, "company" | 
         return search.to ? `Calls in the 365 days to ${formatDay(search.to)} (the API's default window)` : "Calls of the last 365 days (the API's default window)";
     }
 
-    return search.to ? `Calls up to ${formatDay(search.to)}` : "Every call of the company";
+    return search.to ? `Calls up to ${formatDay(search.to)}` : (search.company.includes(",") ? "Every call of the chosen companies" : "Every call of the company");
 }
 
 /**
@@ -91,13 +92,7 @@ export function TranscriptSearchView({
     }
 
     if (isSearchTimeout(error)) {
-        return (
-            <Notice badge="Timed out" title="The search took too long" tone="warn">
-                {search.company
-                    ? "The API stopped the search at its time limit, after a second attempt. Try again in a moment."
-                    : "The API stopped the search at its time limit, after a second attempt. A common word across every company's calls is the usual cause: try again in a moment, or narrow the search with a company, a shorter call window or one type."}
-            </Notice>
-        );
+        return <SearchTimeoutNotice narrowBy="a company, a shorter call window or one type" scoped={Boolean(search.company)} />;
     }
 
     const capped = (data?.data.length ?? 0) >= TRANSCRIPT_SEARCH_LIMIT;
@@ -106,9 +101,7 @@ export function TranscriptSearchView({
         <div className={cn("flex flex-col gap-2", READING_COLUMN_CLASS)}>
             <AskResults data={data} error={error} isLoading={isLoading} scope={{ kind: "market" }} />
             {data && capped && (
-                <p className="text-muted-foreground" data-testid="search-narrow">
-                    {`These are the top ${TRANSCRIPT_SEARCH_LIMIT} passages — the API answers one page and pages no further. To find more, narrow the search: a company, a shorter call window or one type (Q&A, prepared remarks, slides).`}
-                </p>
+                <SearchNarrowHint limit={TRANSCRIPT_SEARCH_LIMIT} narrowBy="a company, a shorter call window or one type (Q&A, prepared remarks, slides)" />
             )}
         </div>
     );
@@ -134,7 +127,7 @@ function SearchBox({ initial, isFetching, onSubmit }: { initial: string; isFetch
 /**
  * Cross-company transcript search (`/v1/search/transcripts` without `company` / `event`, 10 credits a search): keyword
  * (BM25, any word may match) or exact text, the call window (`conference_date.gte` / `.lte`; none = the API's last 365
- * days), a type and optionally one company. ONE page of ≤ 8 passages: the page says so and offers narrowing, not
+ * days), a type and optionally a company list. ONE page of ≤ 8 passages: the page says so and offers narrowing, not
  * paging. Every hit names its company and call and opens the call page.
  */
 function SearchPage() {
@@ -193,8 +186,8 @@ function SearchPage() {
                         ))}
                     </div>
                 </FilterField>
-                <FilterField label="Company" span={2}>
-                    {id => <CompanyFilter id={id} max={1} onChange={companies => onChange({ company: joinCompanyList(companies) })} value={parseCompanyList(search.company)} />}
+                <FilterField label="Companies" span={2}>
+                    {id => <CompanyFilter id={id} onChange={companies => onChange({ company: joinCompanyList(companies) })} value={parseCompanyList(search.company)} />}
                 </FilterField>
                 <FilterField label="Calls" span={2}>
                     <DayRange from={search.from} labels={{ from: "Calls from", to: "Calls to" }} onChange={onChange} to={search.to} />

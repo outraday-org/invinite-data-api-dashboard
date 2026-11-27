@@ -9,6 +9,7 @@ import type { ValueLookup } from "@/lib/financials/value-ref";
 
 import { withoutReplayCaptures } from "@/lib/earnings/capture-mode";
 import { isSymbolParam } from "@/lib/instruments";
+import { marketWindowAnchor, marketWindowBounds, marketWindowProblem, newsSearchWindowProblem } from "@/lib/news/market-window";
 import { isOpenExport } from "@/lib/sec/bulk";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
@@ -390,6 +391,8 @@ export function useEarningsInfinite<TPage extends { next_cursor?: null | string 
     enabled: boolean;
     errorMessage: null | string;
     cancelable?: boolean;
+    retry?: typeof retryUnlessApiError;
+    retryDelay?: number;
     fetchPage: (cursor: null | string, apiKey: string | undefined, signal?: AbortSignal) => Promise<TPage>;
     queryKey: ReadonlyArray<unknown>;
     quietStatuses?: ReadonlyArray<number>;
@@ -408,7 +411,8 @@ export function useEarningsInfinite<TPage extends { next_cursor?: null | string 
         queryFn: context => fetchPage(context.pageParam, apiKey ?? undefined, options.cancelable ? context.signal : undefined).catch(rethrowApiError),
         queryKey: [...queryKey, String(apiKeyUpdatedAt)],
         refetchInterval,
-        retry: retryUnlessApiError,
+        retry: options.retry ?? retryUnlessApiError,
+        retryDelay: options.retryDelay,
         staleTime,
     });
 
@@ -435,8 +439,9 @@ export function isEarningsEventLiveish(event: Pick<V2Event, "capture_status" | "
 // News (IDA `/v1/news*`, backend tasks/data-api-v2 task 8; the page since backend earnings inhouse-news-pipeline task 17)
 
 export type NewsListInput = {
-    /** The company (ticker): v2 lists a company's news only. */
-    company: string;
+    company?: string;
+    /** Explicit opt-in to the seven-day market-wide feed. */
+    market?: true;
     /** An event id: the news linked to that call. */
     event?: string;
     /** Day (`YYYY-MM-DD`, UTC): `published_at.gte` its midnight. */
@@ -465,21 +470,25 @@ export function dayStartInstant(day: string, next = false): string {
  * back through the company's whole history. Status-aware: the News page renders the plan / error state. A visited page
  * stays cached, so the pager's Previous does not refetch.
  */
-export function useNewsPage(input: NewsListInput & { cursor: null | string }) {
+export function useNewsPage(input: NewsListInput & { cursor: null | string; enabled?: boolean; recovery?: number }) {
+    const market = input.market === true && !input.company?.trim();
+
+    const bounds = market ? marketWindowBounds(input) : { gte: input.from ? dayStartInstant(input.from) : undefined, lt: input.to ? dayStartInstant(input.to, true) : undefined };
+
     return useEarningsQuery<V2NewsListResponse>({
-        enabled: input.company.trim().length > 0,
+        enabled: input.enabled !== false && (market ? !marketWindowProblem(input) : Boolean(input.company?.trim())),
         errorMessage: null,
         load: apiKey =>
             getV2News({
                 data: {
                     apiKey,
-                    company: input.company,
+                    company: input.company?.trim() || undefined,
                     cursor: input.cursor ?? undefined,
                     event: input.event,
                     kind: input.kind,
                     limit: input.limit,
-                    publishedAtGte: input.from ? dayStartInstant(input.from) : undefined,
-                    publishedAtLt: input.to ? dayStartInstant(input.to, true) : undefined,
+                    publishedAtGte: bounds.gte,
+                    publishedAtLt: bounds.lt,
                     sort: input.sort,
                     topic: input.topic,
                 },
@@ -488,7 +497,10 @@ export function useNewsPage(input: NewsListInput & { cursor: null | string }) {
             "news",
             "v2",
             "list",
-            input.company,
+            market ? "market" : "companies",
+            marketWindowAnchor(input, market),
+            input.recovery ?? 0,
+            input.company ?? "",
             input.from ?? "",
             input.to ?? "",
             input.kind?.join(",") ?? "",
@@ -2117,12 +2129,12 @@ export type NewsSearchInput = {
     to?: string;
 };
 
-/** News search (`GET /v1/search/news`, 10 credits a page): runs once `q` is set (on submit); "More results" by `next_cursor`. */
+/** News search returns one page of up to eight hits; UTC search days default to the last 365, at most 731. */
 export function useV2NewsSearchInfinite(input: NewsSearchInput) {
     const q = input.q.trim();
 
     return useEarningsInfinite<V2NewsSearchResponse>({
-        enabled: q.length > 0,
+        enabled: q.length >= 2 && !newsSearchWindowProblem(input) && !(input.mode === "literal" && !input.company && Array.from(q).length < 3),
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2NewsSearch({
             data: {
@@ -2138,6 +2150,8 @@ export function useV2NewsSearchInfinite(input: NewsSearchInput) {
             },
         }),
         queryKey: ["news", "v2", "search", q, input.company ?? "", input.field ?? "", input.mode, input.from ?? "", input.to ?? "", input.limit],
+        retry: retrySearchTimeoutOnce,
+        retryDelay: SEARCH_RETRY_DELAY_MS,
         staleTime: EARNINGS_LIST_STALE_MS,
     });
 }

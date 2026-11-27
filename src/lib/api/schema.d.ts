@@ -1385,7 +1385,7 @@ export interface paths {
          *
          *     Read the current version or select a published `version`. The raw layer supports `include=words`. With `layer=cleaned`, word timings, turn end times and speaker confidence are unavailable.
          *
-         *     The call-relative `qa_start_ms` can begin when a host opens submitted questions. An invitation to submit questions during the introduction stays in prepared remarks. The boundary is null for a live version, an Q&A opening turn without a timestamp or a call with no detected Q&A.
+         *     The call-relative `qa_start_ms` can begin when a host opens submitted questions. An invitation to submit questions during the introduction stays in prepared remarks. The boundary is null for a live version, a Q&A opening turn without a timestamp or a call with no detected Q&A.
          *
          *     A missing transcript, unavailable version or missing cleaned layer returns `404 not_found`.
          */
@@ -2673,7 +2673,7 @@ export interface paths {
          * Get my usage
          * @description Get your account’s API requests and credit usage.
          *
-         *     Use `days` for a 7-, 30- or 90-day reporting window. The default is 30 days. The current period total reflects live credit usage. The daily, product-family and key breakdowns can lag behind it.
+         *     The reporting window defaults to 30 days. The API rounds `days` up to the smallest of 7, 30 or 90 days that covers your request. The current period total includes live credit usage when available and otherwise uses the last recorded total. The daily, product-family and key breakdowns can lag behind it.
          *
          *     The `by_family` breakdown uses the product families shown by `GET /status`. To look up accessible documentation groups, use `GET /v1/me`.
          */
@@ -2763,9 +2763,11 @@ export interface paths {
         };
         /**
          * List news items
-         * @description List news items for a company or an earnings event.
+         * @description List news items for a company, an earnings event or every company.
          *
          *     Supply `company` for mentions or `event` for earnings news matched to that call's company and fiscal period or conference time. Supply both to intersect the results. Items appear newest first.
+         *
+         *     Without `company` and `event`, the list includes every company's items, newest first. It starts six New York calendar days before today. Move the window with `published_at.*` and use `kind`, `topic` and `sort` to filter and order items. A published window wider than seven New York days returns 400 `invalid_parameter`.
          *
          *     The list covers issuer publications and public records. Follow an item's ID to `GET /v1/news/{id}/text` for the available Invinite summary.
          */
@@ -3107,9 +3109,11 @@ export interface paths {
          * Search news
          * @description Search news headlines, ledes and summary text.
          *
-         *     Use keywords to rank by relevance or `mode=literal` for an exact, case-sensitive match. Narrow by company, field or publication date. The default window covers the last 365 days.
+         *     Use keywords or `mode=literal` for exact, case-sensitive text. Search one company, a comma list of up to 50, or omit `company` for every company. The window covers the last 365 days by default, at most 731. Summary hits can identify the matching block.
          *
-         *     The response returns a single page of up to eight hits. Summary hits can identify the matching block. Search returns `503 unavailable` when it is switched off.
+         *     One page of at most 8 hits, ordered by relevance (exact mode: newest first). `has_more` is always false. Narrow the search to find other passages. For a very common word, results are the most relevant of the newest 5,000 matching passages in the window.
+         *
+         *     `503 unavailable` means the search is switched off (detail “News search is not enabled”) or the text query timed out. For a timeout, retry once after `Retry-After` or narrow by company, date or field. A 503 is not billed.
          */
         get: operations["searchNews"];
         put?: never;
@@ -3131,9 +3135,11 @@ export interface paths {
          * Search transcripts
          * @description Search call transcripts and slides for cited passages.
          *
-         *     Search by keyword or use `mode=literal` for exact text. Filter by company, event, passage type or conference date. A search with neither company nor event defaults to the last 365 days.
+         *     Use keywords or `mode=literal` for exact, case-sensitive text. Search one company, a comma list of up to 50, or omit `company` for every company. An `event` narrows the search to one call. Without a company or event the window defaults to the last 365 days. With a scope it includes every matching call unless dates narrow it.
          *
-         *     The response returns a single page of up to eight hits. Narrow the search to find other passages. Search returns `503 unavailable` when it is switched off.
+         *     One page of at most 8 hits, ordered by relevance (exact mode: newest first). `has_more` is always false. Narrow the search to find other passages. For a common word across every company or more than 10 companies without an event, results are the most relevant of the newest 1,000 matching passages. A search scoped to one event or up to 10 companies ranks its whole scope.
+         *
+         *     `503 unavailable` means the search is switched off (detail “Transcript search is not enabled”) or the text query timed out. For a timeout, retry once after `Retry-After` or narrow by company, date or type. A 503 is not billed.
          */
         get: operations["searchTranscripts"];
         put?: never;
@@ -8799,6 +8805,72 @@ export interface components {
             reasons: Array<"coverage_unavailable" | "lexical_backfill_pending" | "projection_failed">;
         };
         /**
+         * Problem
+         * @description RFC 9457 problem details (R8); every 4xx / 5xx body
+         */
+        Problem: {
+            /**
+             * Format: uri
+             * @description URI of the problem type: `https://data.invinite.com/docs/errors#<code>`
+             * @example https://data.invinite.com/docs/errors#invalid_parameter
+             */
+            type: string;
+            /**
+             * @description Short, human-readable summary of the problem type
+             * @example Invalid parameter
+             */
+            title: string;
+            /**
+             * @description HTTP status code
+             * @example 400
+             */
+            status: number;
+            /**
+             * @description Explanation of this occurrence
+             * @example limit: must be at most 200.
+             */
+            detail: string;
+            /**
+             * @description Stable machine-readable code (lower_snake)
+             * @example invalid_parameter
+             * @enum {string}
+             */
+            code: "alert_user_limit_reached" | "alert_user_paused" | "conflict" | "cursor_mismatch" | "excluded" | "forbidden" | "idempotency_in_flight" | "insufficient_credits" | "internal" | "invalid_parameter" | "not_covered" | "not_found" | "plan_required" | "rate_limited" | "unauthorized" | "unavailable" | "unknown_parameter";
+            /**
+             * @description The query parameter the problem is about
+             * @example limit
+             */
+            param?: null | string;
+            /** @description Every parameter problem of a 400 (invalid_parameter / unknown_parameter) */
+            errors?: Array<{
+                /** @description Parameter */
+                param: null | string;
+                /**
+                 * @description Code
+                 * @enum {string}
+                 */
+                code: "conflict" | "cursor_mismatch" | "excluded" | "forbidden" | "idempotency_in_flight" | "insufficient_credits" | "internal" | "invalid_parameter" | "not_covered" | "not_found" | "plan_required" | "rate_limited" | "unauthorized" | "unavailable" | "unknown_parameter";
+                /** @description Explanation */
+                detail: string;
+            }>;
+            /**
+             * @description What to do next: one imperative sentence ending with a period, surface neutral (no CLI command, no HTTP status number). A per-code default when the operation gives none
+             * @example Pass a limit of at most 200, or walk the pages with next_cursor.
+             */
+            remedy: string;
+            /**
+             * @description The `X-Request-Id` of this response
+             * @example req_01JCX3V7Q9W2N8M4K6T0B5R1YZ
+             */
+            request_id: string;
+            /**
+             * Format: uri
+             * @description Documentation of the code
+             * @example https://data.invinite.com/docs/errors#invalid_parameter
+             */
+            docs_url: string;
+        };
+        /**
          * GuidanceItem
          * @description One guidance item (field union of the v1 extraction and history rows)
          */
@@ -12616,72 +12688,6 @@ export interface components {
             data: {
                 [key: string]: unknown;
             };
-        };
-        /**
-         * Problem
-         * @description RFC 9457 problem details (R8); every 4xx / 5xx body
-         */
-        Problem: {
-            /**
-             * Format: uri
-             * @description URI of the problem type: `https://data.invinite.com/docs/errors#<code>`
-             * @example https://data.invinite.com/docs/errors#invalid_parameter
-             */
-            type: string;
-            /**
-             * @description Short, human-readable summary of the problem type
-             * @example Invalid parameter
-             */
-            title: string;
-            /**
-             * @description HTTP status code
-             * @example 400
-             */
-            status: number;
-            /**
-             * @description Explanation of this occurrence
-             * @example limit: must be at most 200.
-             */
-            detail: string;
-            /**
-             * @description Stable machine-readable code (lower_snake)
-             * @example invalid_parameter
-             * @enum {string}
-             */
-            code: "alert_user_limit_reached" | "alert_user_paused" | "conflict" | "cursor_mismatch" | "excluded" | "forbidden" | "idempotency_in_flight" | "insufficient_credits" | "internal" | "invalid_parameter" | "not_covered" | "not_found" | "plan_required" | "rate_limited" | "unauthorized" | "unavailable" | "unknown_parameter";
-            /**
-             * @description The query parameter the problem is about
-             * @example limit
-             */
-            param?: null | string;
-            /** @description Every parameter problem of a 400 (invalid_parameter / unknown_parameter) */
-            errors?: Array<{
-                /** @description Parameter */
-                param: null | string;
-                /**
-                 * @description Code
-                 * @enum {string}
-                 */
-                code: "conflict" | "cursor_mismatch" | "excluded" | "forbidden" | "idempotency_in_flight" | "insufficient_credits" | "internal" | "invalid_parameter" | "not_covered" | "not_found" | "plan_required" | "rate_limited" | "unauthorized" | "unavailable" | "unknown_parameter";
-                /** @description Explanation */
-                detail: string;
-            }>;
-            /**
-             * @description What to do next: one imperative sentence ending with a period, surface neutral (no CLI command, no HTTP status number). A per-code default when the operation gives none
-             * @example Pass a limit of at most 200, or walk the pages with next_cursor.
-             */
-            remedy: string;
-            /**
-             * @description The `X-Request-Id` of this response
-             * @example req_01JCX3V7Q9W2N8M4K6T0B5R1YZ
-             */
-            request_id: string;
-            /**
-             * Format: uri
-             * @description Documentation of the code
-             * @example https://data.invinite.com/docs/errors#invalid_parameter
-             */
-            docs_url: string;
         };
     };
 }
@@ -23300,51 +23306,59 @@ export interface operations {
                      * @example {
                      *       "data": [
                      *         {
-                     *           "accession": "0001410368-26-089410",
-                     *           "symbol": "SPY",
-                     *           "company": null,
-                     *           "fund": {
-                     *             "fund_key": "cik:884394",
-                     *             "symbol": "SPY"
+                     *           "accession": "0001193125-26-478907",
+                     *           "symbol": "ALTI",
+                     *           "company": {
+                     *             "cik": "0001838615",
+                     *             "ticker": "ALTI"
                      *           },
+                     *           "fund": null,
                      *           "filer": {
-                     *             "cik": "0000884394",
-                     *             "name": "SPDR S&P 500 ETF TRUST",
-                     *             "role": "listed"
+                     *             "cik": "0001838615",
+                     *             "name": "AlTi Global, Inc.",
+                     *             "role": "subject_company"
                      *           },
-                     *           "form": "NPORT-P",
-                     *           "filing_date": "2026-08-28",
-                     *           "report_date": "2026-06-30",
-                     *           "filed_at": null,
+                     *           "form": "SCHEDULE 13D/A",
+                     *           "filing_date": "2026-11-25",
+                     *           "report_date": null,
+                     *           "filed_at": "2026-11-26T02:52:44Z",
                      *           "items": [],
-                     *           "primary_document": "xslFormNPORT-P_X01/primary_doc.xml",
+                     *           "primary_document": "xslSCHEDULE_13D_X02/primary_doc.xml",
                      *           "roles": [
                      *             "listed"
                      *           ],
-                     *           "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/884394/000141036826089410/0001410368-26-089410-index.htm"
+                     *           "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/1838615/000119312526478907/0001193125-26-478907-index.htm"
                      *         }
                      *       ],
                      *       "has_more": true,
-                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsImV5SjJJam94TENKaFpuUmxjaUk2V3lJeU1ESTBMVEExTFRJNUlpd2lNREF3TVRFNU16RXlOUzB5TkMweE5Ea3dPVGNpWFN3aVppSTZJbVF5T1RSa09UZzFPV1psT1RBM1lUWWlmUSIsMjUsMCwwXSwiZiI6ImMzZWU0ZTMzMDk3YjMwZTkifQ",
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WzAsIjIwMjYtMTEtMjF-fmV5SjJJam94TENKaFpuUmxjaUk2V3lJeU1ESTJMVEV4TFRJMUlpd2lNakF5TmkweE1TMHlObFF3TVRvd016b3lPQ3N3TURvd01DSXNJakF3TURFeE9UTXhNalV0TWpZdE5EYzRPREkySWwwc0ltWWlPaUprTm1aalltWXhPV0ZpT0RrMU5UZ3dJbjAiLDI1LDAsMF0s…",
                      *       "meta": {
                      *         "coverage": {
                      *           "state": "complete",
                      *           "through": null,
-                     *           "retry_after_s": null
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
                      *         },
-                     *         "form_facet": [
-                     *           {
-                     *             "form": "24F-2NT",
-                     *             "count": 31,
-                     *             "newest_filing_date": "2025-12-17"
-                     *           }
-                     *         ],
                      *         "source": {
                      *           "dataset_release": null,
                      *           "version_id": null,
                      *           "accession": null,
                      *           "fetched_at": null
-                     *         }
+                     *         },
+                     *         "form_facet": [
+                     *           {
+                     *             "form": "string",
+                     *             "count": 0,
+                     *             "newest_filing_date": null
+                     *           }
+                     *         ],
+                     *         "resolved": [
+                     *           {
+                     *             "symbol": "0002166480",
+                     *             "cik": "0002166480",
+                     *             "via": "filer"
+                     *           }
+                     *         ]
                      *       }
                      *     }
                      */
@@ -27204,7 +27218,7 @@ export interface operations {
         parameters: {
             query?: {
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Omit `company` and `event` to list every company's news of a short published window (default the last 7 days; `published_at.*` move it, at most 7 days).
                  * @example AAPL
                  */
                 "company"?: string;
@@ -29878,7 +29892,7 @@ export interface operations {
                  */
                 "q": string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Omit it to search every company. A listed company without coverage is skipped.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -29913,12 +29927,12 @@ export interface operations {
                  */
                 "published_at.lt"?: string;
                 /**
-                 * @description Rows per page (default 25, max 200)
+                 * @description At most 8 hits are returned whatever the value (schema kept for compatibility).
                  * @example 25
                  */
                 "limit"?: number;
                 /**
-                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @description Never needed: the answer is one page (`has_more` false).
                  * @example eyJ2IjoyfQ
                  */
                 "cursor"?: string;
@@ -29973,7 +29987,17 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
-            503: components["responses"]["ServiceUnavailable"];
+            /** @description 503 unavailable: News search is not enabled, or the text query timed out. A timeout includes Retry-After. */
+            503: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "Retry-After": components["headers"]["Retry-After"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     searchTranscripts: {
@@ -29985,7 +30009,7 @@ export interface operations {
                  */
                 "q": string;
                 /**
-                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. One of the scope filters of this list is required.
+                 * @description Ticker (`AAPL`) or CIK of a company (all digits, any padding); a comma list of 1–50 reads several companies in one request (R2). A fund is not a company (GET /v1/funds): an ETF, closed-end fund or ETN answers one 404 `not_covered` naming what is served for it (`datasets` of GET /v1/instruments/{symbol}); a closed-end fund is served where its type has the family (earnings events, IPOs, Form D offerings, beneficial ownership filings). In a mixed list the served subjects answer. Omit it to search every company. A listed company without coverage is skipped.
                  * @example AAPL
                  */
                 "company"?: string;
@@ -30025,12 +30049,12 @@ export interface operations {
                  */
                 "conference_date.lt"?: string;
                 /**
-                 * @description Rows per page (default 25, max 200)
+                 * @description At most 8 hits are returned whatever the value (schema kept for compatibility).
                  * @example 25
                  */
                 "limit"?: number;
                 /**
-                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @description Never needed: the answer is one page (`has_more` false).
                  * @example eyJ2IjoyfQ
                  */
                 "cursor"?: string;
@@ -30149,7 +30173,17 @@ export interface operations {
             403: components["responses"]["Forbidden"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
-            503: components["responses"]["ServiceUnavailable"];
+            /** @description 503 unavailable: Transcript search is not enabled, or the text query timed out. A timeout includes Retry-After. */
+            503: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "Retry-After": components["headers"]["Retry-After"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
         };
     };
     statusGet: {

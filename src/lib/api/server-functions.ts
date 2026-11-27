@@ -307,8 +307,8 @@ export const getCompanyFiscalPeriods = createServerFn({ method: "POST" })
 
 const newsListSchema = z.object({
     apiKey: apiKeySchema,
-    /** Ticker or CIK: v2 lists a company's news only (no market-wide feed, decision 15). */
-    company: z.string().trim().min(1),
+    /** Omitting company and event lists every company in a seven-day New York window. */
+    company: z.string().trim().min(1).optional(),
     cursor: z.string().optional(),
     /** An event id: the news linked to that call (O7 group 2). */
     event: z.string().trim().min(1).max(100).optional(),

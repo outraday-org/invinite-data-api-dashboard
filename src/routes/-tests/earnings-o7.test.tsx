@@ -113,11 +113,11 @@ describe("TranscriptSearchView (/search)", () => {
     });
 
     it("renders a 400 in the API's words", () => {
-        const error = new ApiRequestError(400, { error: "invalid_parameter", message: "company: one company per search" });
+        const error = new ApiRequestError(400, { error: "invalid_parameter", message: "Query contains only stopwords" });
 
-        render(<TranscriptSearchView data={null} error={error} isLoading={false} search={{ company: "AAPL,MSFT", q: "margin" }} />);
+        render(<TranscriptSearchView data={null} error={error} isLoading={false} search={{ q: "the" }} />);
 
-        expect(screen.getByText("company: one company per search")).toBeInTheDocument();
+        expect(screen.getByText("Query contains only stopwords")).toBeInTheDocument();
     });
 
     it("says a timed-out search took too long and how to narrow it", () => {
@@ -140,6 +140,8 @@ describe("TranscriptSearchView (/search)", () => {
 
     it("states the call window, the API's 365-day default without a company", () => {
         expect(windowText({})).toBe("Calls of the last 365 days (the API's default window)");
+
+        expect(windowText({ company: "AAPL,MSFT" })).toBe("Every call of the chosen companies");
 
         expect(windowText({ company: "NVDA" })).toBe("Every call of the company");
 
