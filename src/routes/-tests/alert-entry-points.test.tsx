@@ -4,10 +4,11 @@ import type * as React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AlertEntryPoints, CreateAlertButton, ENTRY_TYPES, entryTypesFor, symbolAlertsText } from "@/components/alerts/create-alert-button";
+import { AlertEntryPoints, CreateAlertButton, ENTRY_TYPES, entryTypesFor, NON_STOCK_ALERT_TYPES, symbolAlertsText } from "@/components/alerts/create-alert-button";
 import { prefilledForm } from "@/lib/alerts/alert-form";
 import { ALERT_FILING, ALERT_PRICE } from "@/lib/alerts/alerts-fixtures";
 import { AAPL_INSTRUMENT, PDI_INSTRUMENT, SPY_INSTRUMENT } from "@/lib/instruments-fixtures";
+import { ALERT_TYPE_CATALOG_FIXTURE } from "@/lib/reference/reference-fixtures";
 import { newAlertDescription } from "@/routes/alerts/new";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -170,4 +171,10 @@ describe("/alerts/new pre-fill (`?type=&symbol=&script=&version=&template=`)", (
 
         expect(newAlertDescription({ template: "rsi-cross", type: "indicator" })).toContain("built-in template rsi-cross");
     });
+});
+
+it("ETF entry types match the complete released alert-type catalog fixture", () => {
+    expect(ALERT_TYPE_CATALOG_FIXTURE.data).toHaveLength(18);
+
+    expect([...NON_STOCK_ALERT_TYPES].sort()).toEqual(ALERT_TYPE_CATALOG_FIXTURE.data.filter(row => row.subjects.etf).map(row => row.type).sort());
 });

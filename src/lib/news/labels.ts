@@ -1,65 +1,19 @@
 import { z } from "zod";
 
 import type { NewsDevelopment, NewsItemPublic, NewsKind, NewsPublication, V2AnnouncementTopic } from "@/lib/api/types";
-import type { ListsEvery } from "@/lib/earnings/labels";
 
+import { NEWS_FILTER_VALUES } from "@/lib/api/operations.gen";
 import { optionalDay, optionalEnum, optionalText } from "@/lib/url-state";
-
-/**
- * Labels, the route's search params and the pure filter / merge rules of the News page (backend earnings
- * tasks/inhouse-news-pipeline task 17). Value sets mirror IDA `src/lib/news/constants.ts` (compile-time exhaustive over
- * the generated unions where the spec has one) — change with IDA. Wire services are never a source (owner
- * 2026-10-28): the only sources are SEC EDGAR and the companies' own newsrooms.
- */
-
-export const NEWS_KIND_LABELS: Record<NewsKind, string> = {
-    call_announcement: "Call announcement",
-    capital_markets: "Capital markets",
-    dividend: "Dividend",
-    earnings_results: "Earnings results",
-    event_announcement: "Event announcement",
-    guidance: "Guidance",
-    legal_spam: "Legal notice",
-    m_and_a: "M&A",
-    management_change: "Management change",
-    material_agreement: "Material agreement",
-    other: "Other",
-    promo: "Promotional",
-    results_date: "Results date",
-};
-
-export const NEWS_KINDS = Object.keys(NEWS_KIND_LABELS) as Array<NewsKind>;
 
 type NewsTopic = NewsItemPublic["topics"][number];
 
-export const NEWS_TOPIC_LABELS: Record<NewsTopic, string> = {
-    availability: "Availability",
-    capacity_expansion: "Capacity expansion",
-    customer_contract: "Customer contract",
-    other: "Other",
-    partnership: "Partnership",
-    product_launch: "Product launch",
-    product_update: "Product update",
-    regulatory: "Regulatory",
-    research: "Research",
-};
+/** Synchronous URL filters come from the pinned contract; displayed names come from the runtime catalogs. */
+export const NEWS_KINDS = NEWS_FILTER_VALUES.kinds;
 
-export const NEWS_TOPICS = Object.keys(NEWS_TOPIC_LABELS) as Array<NewsTopic>;
+export const NEWS_TOPICS = NEWS_FILTER_VALUES.topics;
 
-/** The `/v1/announcements` topic filter (an announcement is never `other`); labels = `NEWS_TOPIC_LABELS`. */
-export const ANNOUNCEMENT_TOPICS = [
-    "product_launch",
-    "product_update",
-    "availability",
-    "partnership",
-    "customer_contract",
-    "capacity_expansion",
-    "regulatory",
-    "research",
-] as const satisfies ReadonlyArray<V2AnnouncementTopic>;
-
-// Compile-time: a topic the API adds fails here until it is listed above.
-export const ANNOUNCEMENT_TOPICS_COMPLETE: ListsEvery<V2AnnouncementTopic, (typeof ANNOUNCEMENT_TOPICS)[number]> = true;
+/** The announcement topic enum is generated separately from the news topic enum (which also allows `other`). */
+export const ANNOUNCEMENT_TOPICS = NEWS_FILTER_VALUES.developmentTopics satisfies ReadonlyArray<V2AnnouncementTopic>;
 
 /** `date_precision` of an announcement's effective dates. */
 export const DATE_PRECISION_LABELS: Record<NewsDevelopment["date_precision"], string> = {
@@ -162,7 +116,7 @@ const newsSearchSchema = z.object({
     field: optionalEnum(["title", "lede", "summary"] as const),
     from: z.iso.date().optional().catch(undefined),
     item: z.uuid().optional().catch(undefined),
-    kind: z.enum(NEWS_KINDS as [NewsKind, ...Array<NewsKind>]).optional().catch(undefined),
+    kind: z.enum(NEWS_KINDS).optional().catch(undefined),
     live: z.boolean().optional().catch(undefined),
     mode: optionalEnum(["literal"] as const),
     /** "Company-published": items the company published itself (`publisher=<cik>`), company scope only. */
@@ -174,7 +128,7 @@ const newsSearchSchema = z.object({
     source: z.enum(NEWS_SOURCES as [NewsSourceFilter, ...Array<NewsSourceFilter>]).optional().catch(undefined),
     tag: z.string().trim().min(1).optional().catch(undefined),
     to: z.iso.date().optional().catch(undefined),
-    topic: z.enum(NEWS_TOPICS as [NewsTopic, ...Array<NewsTopic>]).optional().catch(undefined),
+    topic: z.enum(NEWS_TOPICS).optional().catch(undefined),
     /** `announcements` = the Announcements tab (absent = the news list). */
     view: z.literal("announcements").optional().catch(undefined),
 });

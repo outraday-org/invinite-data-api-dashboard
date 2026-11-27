@@ -4,6 +4,7 @@ import { z } from "zod";
 import type {
     CompanyFiscalPeriod,
     V2ActiveFilter,
+    V2AlertTypeCatalogResponse,
     V2AnnouncementsResponse,
     V2ApiStatus,
     V2AsReportedDetailedResponse,
@@ -20,6 +21,7 @@ import type {
     V2DateKind,
     V2DividendsResponse,
     V2DividendsSort,
+    V2DividendTypeCatalogResponse,
     V2DocumentFigureResponse,
     V2DocumentKindCatalogResponse,
     V2DocumentSectionsResponse,
@@ -62,6 +64,7 @@ import type {
     V2GuidanceBasis,
     V2GuidancePeriodKind,
     V2GuidanceResponse,
+    V2HaltReasonCatalogResponse,
     V2HolderChangesResponse,
     V2HolderChangeType,
     V2HoldersInstruments,
@@ -96,6 +99,7 @@ import type {
     V2Me,
     V2MetricCatalogResponse,
     V2NewsItem,
+    V2NewsKindCatalogResponse,
     V2NewsListResponse,
     V2NewsSearchResponse,
     V2NewsText,
@@ -2187,6 +2191,54 @@ export const getDocumentKindCatalog = createServerFn({ method: "POST" })
         if (error) throwApiError(error, response);
 
         return res;
+    });
+
+export const getAlertTypeCatalog = createServerFn({ method: "POST" })
+    .inputValidator(catalogPageSchema)
+    .handler(async ({ data }): Promise<V2AlertTypeCatalogResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/alert-types", {
+            params: { query: v2Query({ cursor: data.cursor, limit: data.limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as V2AlertTypeCatalogResponse;
+    });
+
+export const getNewsKindCatalog = createServerFn({ method: "POST" })
+    .inputValidator(catalogPageSchema)
+    .handler(async ({ data }): Promise<V2NewsKindCatalogResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/news-kinds", {
+            params: { query: v2Query({ cursor: data.cursor, limit: data.limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as V2NewsKindCatalogResponse;
+    });
+
+export const getHaltReasonCatalog = createServerFn({ method: "POST" })
+    .inputValidator(catalogPageSchema)
+    .handler(async ({ data }): Promise<V2HaltReasonCatalogResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/halt-reasons", {
+            params: { query: v2Query({ cursor: data.cursor, limit: data.limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as V2HaltReasonCatalogResponse;
+    });
+
+export const getDividendTypeCatalog = createServerFn({ method: "POST" })
+    .inputValidator(catalogPageSchema)
+    .handler(async ({ data }): Promise<V2DividendTypeCatalogResponse> => {
+        const { data: res, error, response } = await createApiClient(data.apiKey).GET("/v1/catalog/dividend-types", {
+            params: { query: v2Query({ cursor: data.cursor, limit: data.limit }) },
+        });
+
+        if (error) throwApiError(error, response);
+
+        return res as V2DividendTypeCatalogResponse;
     });
 
 /** The standardized metrics' mapping rules (`GET /v1/catalog/mapping-rules`, `statement` / `metric_id` comma lists). */

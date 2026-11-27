@@ -19,7 +19,7 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 // Keep the server functions (TanStack Start) unloaded.
-vi.mock("@/lib/api/queries", () => ({ useInstrumentSearch: () => ({ data: undefined, isFetching: false }), useV2NewsSearchInfinite: feed.search }));
+vi.mock("@/lib/api/queries", () => ({ useInstrumentSearch: () => ({ data: undefined, isFetching: false }), useNewsKindCatalogInfinite: () => ({ data: null, error: null, fetchNextPage: () => undefined, hasNextPage: false, isFetching: false, isFetchNextPageError: false }), useV2NewsSearchInfinite: feed.search }));
 
 afterEach(cleanup);
 

@@ -1,19 +1,20 @@
 // @vitest-environment jsdom
 import type * as React from "react";
 
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { WebhookReferenceView } from "@/components/alerts/webhook-reference-view";
-import { WEBHOOK_ENVELOPE, WEBHOOKS } from "@/lib/api/operations.gen";
-import { Route } from "@/routes/alerts/webhooks";
+import { ALERT_TYPE_FIELDS, WEBHOOK_ENVELOPE, WEBHOOKS } from "@/lib/api/operations.gen";
+import { Route, webhookSearchSchema } from "@/routes/alerts/webhooks";
 
 import { webhookEntries } from "../../../scripts/webhooks.mjs";
 
 vi.mock("@tanstack/react-router", () => ({
-    createFileRoute: () => (options: Record<string, unknown>) => ({ options }),
+    createFileRoute: () => (options: Record<string, unknown>) => ({ options, useNavigate: () => vi.fn(), useSearch: () => ({}) }),
+    Link: ({ children, hash, search, to }: { children: React.ReactNode; hash?: string; search?: Record<string, string>; to: string }) => <a href={`${to}${search ? `?${new URLSearchParams(search)}` : ""}${hash ? `#${hash}` : ""}`}>{children}</a>,
 }));
 
 afterEach(cleanup);
@@ -65,5 +66,77 @@ describe("/alerts/webhooks (x-webhooks of the pinned spec)", () => {
         expect(types).not.toContain("destination.test");
 
         expect(screen.queryByRole("link", { name: "destination.test" })).toBeNull();
+    });
+});
+
+describe("typed webhook reference", () => {
+    it.each(Object.keys(ALERT_TYPE_FIELDS))("%s is reachable and shows its own fields and published example", (type) => {
+        const { container } = render(<WebhookReferenceView envelope={WEBHOOK_ENVELOPE} selectedType={type} webhooks={WEBHOOKS} />);
+
+        const fired = container.querySelector<HTMLElement>(`#webhook-alert\\.fired-${type}`)!;
+
+        expect(fired).not.toBeNull();
+
+        expect(within(fired).getByRole("table", { name: "alert.fired data fields" })).toHaveTextContent("alert_type");
+
+        expect(within(fired).getByText("Published schema example")).toBeInTheDocument();
+
+        expect(fired).toHaveTextContent(`"${type}"`);
+
+        expect(within(screen.getByRole("navigation", { name: "Webhook types" })).getAllByRole("link").length).toBe(27);
+    });
+
+    it("unknown URL values select the first variant and retain all per-type anchors", () => {
+        expect(webhookSearchSchema.parse({ type: "unknown" })).toEqual({ type: undefined });
+
+        render(<WebhookReferenceView envelope={WEBHOOK_ENVELOPE} selectedType="unknown" webhooks={WEBHOOKS} />);
+
+        expect(screen.getByRole("button", { name: "Alert type" })).toHaveTextContent("SEC filing (filing)");
+
+        expect(screen.getByRole("link", { name: "Trading halt" })).toHaveAttribute("href", "/alerts/webhooks?type=halt#webhook-alert.fired-halt");
+    });
+
+    it("clearing or rejecting a controlled URL type restores the first variant", async () => {
+        const onTypeChange = vi.fn();
+
+        const view = render(<WebhookReferenceView envelope={WEBHOOK_ENVELOPE} onTypeChange={onTypeChange} selectedType="price" webhooks={WEBHOOKS} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Alert type" }));
+
+        fireEvent.click(await screen.findByRole("menuitemradio", { name: "Trading halt (halt)" }));
+
+        expect(onTypeChange).toHaveBeenCalledWith("halt");
+
+        view.rerender(<WebhookReferenceView envelope={WEBHOOK_ENVELOPE} onTypeChange={onTypeChange} selectedType="halt" webhooks={WEBHOOKS} />);
+
+        expect(screen.getByRole("button", { name: "Alert type" })).toHaveTextContent("Trading halt (halt)");
+
+        view.rerender(<WebhookReferenceView envelope={WEBHOOK_ENVELOPE} onTypeChange={onTypeChange} selectedType={undefined} webhooks={WEBHOOKS} />);
+
+        expect(screen.getByRole("button", { name: "Alert type" })).toHaveTextContent("SEC filing (filing)");
+    });
+
+    it("the picker updates the selected example and copy carries exactly one webhook data envelope", async () => {
+        const writeText = vi.fn().mockResolvedValue(undefined);
+
+        Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+
+        const onTypeChange = vi.fn();
+
+        const view = render(<WebhookReferenceView envelope={WEBHOOK_ENVELOPE} onTypeChange={onTypeChange} webhooks={WEBHOOKS} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Alert type" }));
+
+        fireEvent.click(await screen.findByRole("menuitemradio", { name: "Trading halt (halt)" }));
+
+        expect(onTypeChange).toHaveBeenCalledWith("halt");
+
+        view.rerender(<WebhookReferenceView envelope={WEBHOOK_ENVELOPE} onTypeChange={onTypeChange} selectedType="halt" webhooks={WEBHOOKS} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Copy the alert.fired example" }));
+
+        await waitFor(() => expect(writeText).toHaveBeenCalledTimes(1));
+
+        expect(JSON.parse(writeText.mock.calls[0][0])).toEqual({ data: ALERT_TYPE_FIELDS.halt.firedExample, timestamp: "2026-11-21T14:30:00Z", type: "alert.fired" });
     });
 });

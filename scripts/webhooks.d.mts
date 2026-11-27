@@ -5,7 +5,7 @@ export type WebhookSchema = {
     /** A free object (`additionalProperties`). */
     additionalProperties?: boolean;
     discriminator?: { propertyName: string; mapping?: Readonly<Record<string, string>> };
-    oneOf?: ReadonlyArray<WebhookSchema>;
+    variants?: ReadonlyArray<{ value: string; schema: WebhookSchema }>;
     example?: import("../src/lib/api/types").JsonValue;
     description?: string;
     enum?: ReadonlyArray<boolean | null | number | string>;

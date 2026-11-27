@@ -16,6 +16,7 @@ import { RequestErrorState } from "@/components/ui/request-error-state";
 import { useV2DividendsInfinite } from "@/lib/api/queries";
 import { DASH, formatDay, formatMoney } from "@/lib/format";
 import { tickerHead } from "@/lib/layout";
+import { rawCatalogLabel, useDividendTypeNames } from "@/lib/reference/catalog-labels";
 import { IN_PLACE, optionalDay, optionalEnum, orderedWindow } from "@/lib/url-state";
 
 const SORTS = ["-ex_date", "ex_date", "-pay_date", "pay_date"] as const satisfies ReadonlyArray<V2DividendsSort>;
@@ -51,19 +52,9 @@ export function dividendFrequencyLabel(frequency: null | number | undefined) {
     return FREQUENCY_LABELS[frequency] ?? `${frequency}× a year`;
 }
 
-/** The dividend type codes of the market-data source the API passes through (the spec states the field as a code). */
-const DIVIDEND_TYPE_LABELS: Record<string, string> = {
-    CD: "Regular cash",
-    LT: "Long-term capital gain",
-    SC: "Special cash",
-    ST: "Short-term capital gain",
-};
-
-/** "Regular cash" for `CD`; an unknown code as itself; none = "—". */
-export function dividendTypeLabel(code: null | string | undefined) {
-    if (!code) return DASH;
-
-    return DIVIDEND_TYPE_LABELS[code] ?? code;
+/** A catalog name when known, raw code while loading/on failure, and a dash when no type was supplied. */
+export function dividendTypeLabel(code: null | string | undefined, name: (value: string) => string = rawCatalogLabel) {
+    return code ? name(code) : DASH;
 }
 
 const SORT_OPTIONS = [
@@ -73,12 +64,12 @@ const SORT_OPTIONS = [
     { label: "Pay date, oldest first", value: "pay_date" },
 ] satisfies Array<{ label: string; value: (typeof SORTS)[number] }>;
 
-const COLUMNS: Array<ColumnDef<V2Dividend>> = [
+const columns = (typeName: (value: string) => string): Array<ColumnDef<V2Dividend>> => [
     { cell: ({ row }) => formatDay(row.original.ex_dividend_date), header: "Ex-date", id: "ex_dividend_date" },
     { cell: ({ row }) => formatDay(row.original.declaration_date), header: "Declared", id: "declaration_date" },
     { cell: ({ row }) => formatDay(row.original.record_date), header: "Record", id: "record_date" },
     { cell: ({ row }) => formatDay(row.original.pay_date), header: "Payable", id: "pay_date" },
-    { cell: ({ row }) => <span title={row.original.dividend_type || undefined}>{dividendTypeLabel(row.original.dividend_type)}</span>, header: "Type", id: "dividend_type" },
+    { cell: ({ row }) => <span title={row.original.dividend_type || undefined}>{dividendTypeLabel(row.original.dividend_type, typeName)}</span>, header: "Type", id: "dividend_type" },
     { cell: ({ row }) => dividendFrequencyLabel(row.original.frequency), header: "Frequency", id: "frequency" },
     {
         // Per-share amounts keep up to 4 decimals ($0.2625).
@@ -96,7 +87,7 @@ export function dividendsRequest(ticker: string, search: DividendsSearch) {
 }
 
 /** The dividends list (pure). */
-export function DividendsView({ error, filtered, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages, ticker }: {
+export function DividendsView({ error, filtered, hasNextPage, isFetchingNextPage, isLoading, onLoadMore, pages, ticker, typeName = rawCatalogLabel }: {
     error: unknown;
     /** A day range is set: an empty answer means "none in this range". */
     filtered: boolean;
@@ -106,12 +97,13 @@ export function DividendsView({ error, filtered, hasNextPage, isFetchingNextPage
     onLoadMore: () => void;
     pages: ReadonlyArray<V2DividendsResponse>;
     ticker: string;
+    typeName?: (value: string) => string;
 }) {
     const dividends = React.useMemo(() => pages.flatMap(page => page.data), [pages]);
 
     return (
         <DataTable
-            columns={COLUMNS}
+            columns={columns(typeName)}
             emptyText={filtered ? "No dividends with an ex-date in this range." : "No dividends available."}
             // A 404 `not_covered` ("No dividend data is available for VOO") is a state, not "Failed to load" (UI walk F093).
             errorState={error
@@ -136,6 +128,8 @@ export function DividendsView({ error, filtered, hasNextPage, isFetchingNextPage
 }
 
 function DividendsPage() {
+    const typeName = useDividendTypeNames();
+
     const { ticker } = Route.useParams();
 
     const search = Route.useSearch();
@@ -169,6 +163,7 @@ function DividendsPage() {
                 onLoadMore={() => void fetchNextPage()}
                 pages={data?.pages ?? []}
                 ticker={ticker}
+                typeName={typeName}
             />
         </div>
     );

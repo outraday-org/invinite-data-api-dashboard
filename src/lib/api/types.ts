@@ -417,6 +417,14 @@ export type V2SectorCatalogEntry = V2SectorCatalogResponse["data"][number];
 /** Data API 12.1: the KPIs each sector catalog names (the values `kpi=` of `/v1/kpi-series` accepts). */
 export type V2KpiCatalogResponse = ApiResponse<"/v1/catalog/kpis", "get">;
 export type V2KpiCatalogEntry = V2KpiCatalogResponse["data"][number];
+export type V2AlertTypeCatalogResponse = SecJson<ApiResponse<"/v1/catalog/alert-types", "get">>;
+export type V2AlertTypeCatalogEntry = V2AlertTypeCatalogResponse["data"][number];
+export type V2NewsKindCatalogResponse = SecJson<ApiResponse<"/v1/catalog/news-kinds", "get">>;
+export type V2NewsKindCatalogEntry = V2NewsKindCatalogResponse["data"][number];
+export type V2HaltReasonCatalogResponse = SecJson<ApiResponse<"/v1/catalog/halt-reasons", "get">>;
+export type V2HaltReasonCatalogEntry = V2HaltReasonCatalogResponse["data"][number];
+export type V2DividendTypeCatalogResponse = SecJson<ApiResponse<"/v1/catalog/dividend-types", "get">>;
+export type V2DividendTypeCatalogEntry = V2DividendTypeCatalogResponse["data"][number];
 /** A standardized metric's mapping rule; `rule` is free JSON in the spec (read by guards, `src/lib/reference/catalog.ts`). */
 export type V2MappingRulesResponse = SecJson<ApiResponse<"/v1/catalog/mapping-rules", "get">>;
 export type V2MappingRule = V2MappingRulesResponse["data"][number];

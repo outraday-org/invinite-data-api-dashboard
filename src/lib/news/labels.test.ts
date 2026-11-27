@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { NEWS_FILTER_VALUES } from "@/lib/api/operations.gen";
+
 import { issuerLabels, matchesNewsFilters, mergeLiveItems, publishedBy, sourceLabel, validateNewsFeedSearch, validateNewsSearch } from "./labels";
 import { edgarItem, newsroomItem } from "./news-fixtures";
 
@@ -148,5 +150,17 @@ describe("validateNewsFeedSearch", () => {
 
         expect(validateNewsFeedSearch({ from: "2026-11-01", live: true, scope: "market", sort: "oldest", topic: "partnership" }))
             .toEqual({ from: "2026-11-01", live: true, sort: "oldest", topic: "partnership" });
+    });
+});
+
+describe("catalog-backed synchronous filter values", () => {
+    it("validates every pinned kind/topic/development topic without waiting for runtime names", () => {
+        for (const kind of NEWS_FILTER_VALUES.kinds) expect(validateNewsSearch({ kind }).kind).toBe(kind);
+
+        for (const topic of NEWS_FILTER_VALUES.topics) expect(validateNewsFeedSearch({ topic }).topic).toBe(topic);
+
+        for (const aTopic of NEWS_FILTER_VALUES.developmentTopics) expect(validateNewsSearch({ aTopic }).aTopic).toBe(aTopic);
+
+        expect(validateNewsSearch({ aTopic: "other", kind: "future-kind", topic: "future-topic" })).toMatchObject({ aTopic: undefined, kind: undefined, topic: undefined });
     });
 });

@@ -14,6 +14,10 @@ import { ApiRequestError } from "@/lib/api/errors";
 import { KPI_CATALOG_ROWS } from "@/lib/earnings/extraction-fixtures";
 import {
     AAPL_FISCAL_PERIODS,
+    ALERT_TYPE_CATALOG_FIXTURE,
+    DIVIDEND_TYPE_CATALOG_FIXTURE,
+    HALT_REASON_CATALOG_FIXTURE,
+    NEWS_KIND_CATALOG_FIXTURE,
     V2_API_STATUS,
     V2_COMPANIES,
     V2_DIVIDENDS,
@@ -24,7 +28,7 @@ import {
     V2_SECTOR_CATALOG,
 } from "@/lib/reference/reference-fixtures";
 import { dividendsRequest, DividendsView, dividendTypeLabel } from "@/routes/$ticker/dividends/index";
-import { CATALOG_SPECS, catalogCountText, CatalogTable, sectorIndustryRows } from "@/routes/catalog";
+import { CATALOG_SPECS, catalogCountText, catalogSearchSchema, CatalogTable, sectorIndustryRows } from "@/routes/catalog";
 import { companiesRequest, sectorFilter } from "@/routes/instruments";
 import { holidaysRequest } from "@/routes/market-holidays";
 
@@ -394,7 +398,7 @@ describe("overview: fiscal periods (`/v1/fiscal-periods`)", () => {
 
 describe("dividends and holidays filters", () => {
     it("dividends: type in words (unknown code as itself), range sent as ex_date, a swapped range ordered", () => {
-        render(<DividendsView {...list} filtered={false} pages={[V2_DIVIDENDS]} ticker="AAPL" />);
+        render(<DividendsView {...list} filtered={false} pages={[V2_DIVIDENDS]} ticker="AAPL" typeName={code => DIVIDEND_TYPE_CATALOG_FIXTURE.data.find(row => row.code === code)?.name ?? code} />);
 
         expect(screen.getByText("Regular cash")).toBeInTheDocument();
 
@@ -450,5 +454,67 @@ describe("dividends and holidays filters", () => {
 
         // A swapped range is put in order.
         expect(holidaysRequest({ from: "2027-12-31", to: "2027-01-01" }, today)).toMatchObject({ dateGte: "2027-01-01", dateLte: "2027-12-31" });
+    });
+});
+
+describe("SDK 13 catalog tabs", () => {
+    it("alert types show the complete live fixture and link the exact create/payload type", () => {
+        render(<CatalogTable list={{ ...list, rows: ALERT_TYPE_CATALOG_FIXTURE.data }} query="halt" scope="all" spec={CATALOG_SPECS["alert-types"]} />);
+
+        expect(screen.getByTestId("catalog-count")).toHaveTextContent("1 of 18 alert types");
+
+        expect(screen.getByRole("link", { name: "halt" })).toHaveAttribute("href", "/alerts/new?type=halt");
+
+        expect(screen.getByRole("link", { name: "Webhook" })).toHaveAttribute("href", "/alerts/webhooks?type=halt");
+
+        for (const label of ["Type", "Name", "Family", "Subjects", "Coverage", "Required fields", "Minimum tier", "Plan per event"]) expect(screen.getByRole("columnheader", { name: label })).toBeInTheDocument();
+    });
+
+    it("event plans expand on demand for vocabulary-heavy alert types", () => {
+        render(<CatalogTable list={{ ...list, rows: ALERT_TYPE_CATALOG_FIXTURE.data }} query="news" scope="all" spec={CATALOG_SPECS["alert-types"]} />);
+
+        const disclosure = screen.getByText("13 event plans").closest("details")!;
+
+        expect(disclosure).not.toHaveAttribute("open");
+
+        fireEvent.click(screen.getByText("13 event plans"));
+
+        expect(disclosure).toHaveAttribute("open");
+
+        expect(within(disclosure).getByText("earnings_results")).toBeInTheDocument();
+
+        expect(within(disclosure).getAllByText("standard").length).toBeGreaterThan(0);
+    });
+
+    it("news vocabulary keeps group+value identity and q searches names/descriptions", () => {
+        const rows = NEWS_KIND_CATALOG_FIXTURE.data.filter(row => row.group === "topic");
+
+        render(<CatalogTable list={{ ...list, rows }} query="other" scope="topic" spec={CATALOG_SPECS["news-kinds"]} />);
+
+        expect(screen.getByText("topic")).toBeInTheDocument();
+
+        expect(screen.queryByText("kind")).toBeNull();
+
+        expect(screen.getByTestId("catalog-count")).toHaveTextContent("1 of 9 news kinds");
+
+        expect(catalogSearchSchema.parse({ group: "topic", tab: "news-kinds" })).toMatchObject({ group: "topic", tab: "news-kinds" });
+
+        expect(catalogSearchSchema.parse({ group: "unknown", tab: "news-kinds" }).group).toBeUndefined();
+    });
+
+    it("halt and dividend tables show catalog labels and descriptions with their codes", () => {
+        const view = render(<CatalogTable list={{ ...list, rows: HALT_REASON_CATALOG_FIXTURE.data }} query="T1" scope="all" spec={CATALOG_SPECS["halt-reasons"]} />);
+
+        expect(screen.getByText("News pending")).toBeInTheDocument();
+
+        expect(screen.getByText("T1")).toBeInTheDocument();
+
+        view.unmount();
+
+        render(<CatalogTable list={{ ...list, rows: DIVIDEND_TYPE_CATALOG_FIXTURE.data }} query="CD" scope="all" spec={CATALOG_SPECS["dividend-types"]} />);
+
+        expect(screen.getByText("Regular cash")).toBeInTheDocument();
+
+        expect(screen.getByText("CD")).toBeInTheDocument();
     });
 });

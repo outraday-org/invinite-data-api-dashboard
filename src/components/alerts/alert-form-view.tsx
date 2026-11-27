@@ -8,7 +8,7 @@ import type { ActiveWindowState, AlertFormState, FieldErrors, FieldText } from "
 import type { ConditionFieldSpec, FieldSpec, TriggerScalarField } from "@/lib/alerts/condition-fields";
 import type { AlertConditionField, AlertTemplate, AlertType, JsonValue } from "@/lib/api/types";
 
-import { declaredInputsOf, DestinationPicker, ScriptInputsFields, ScriptVersionPicker } from "@/components/alerts/alert-form-pickers";
+import { CatalogConditionPicker, declaredInputsOf, DestinationPicker, ScriptInputsFields, ScriptVersionPicker } from "@/components/alerts/alert-form-pickers";
 import { AlertUserPicker } from "@/components/alerts/alert-user-picker";
 import { JsonTree } from "@/components/api/json-tree";
 import { MacroAvailabilityNotice } from "@/components/macro/macro-availability";
@@ -611,6 +611,12 @@ export function AlertFormView({
 
     const conditionField = (spec: ConditionFieldSpec) => {
         if (spec.kind === "template") return <TemplatePicker errors={errors} key={spec.name} onChange={template => set({ template })} state={state.template} templates={templates} />;
+
+        if (spec.name === "dividend_types" || spec.name === "reason_codes") {
+            const selected = state.condition[spec.name];
+
+            return <FieldShell error={errors[`condition.${spec.name}`]} help={spec.help} key={spec.name} label={spec.label} required={spec.required} wide><CatalogConditionPicker codes={spec.options ?? []} field={spec.name} label={spec.label} onChange={value => set({ condition: { ...state.condition, [spec.name]: value } })} required={spec.required} value={Array.isArray(selected) ? selected : []} /></FieldShell>;
+        }
 
         const text = typeof state.condition[spec.name] === "string" ? state.condition[spec.name] as string : "";
 

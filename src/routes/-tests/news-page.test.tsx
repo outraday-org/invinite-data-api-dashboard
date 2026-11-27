@@ -448,3 +448,23 @@ describe("NewsItemView (v2: the item row + /text blocks + /v1/announcements?item
         expect(screen.getByText("Your plan does not include news summaries")).toBeTruthy();
     });
 });
+
+describe("runtime news catalog labels in pure views", () => {
+    it("passes a catalog kind name through the shared list layout", () => {
+        render(<NewsLayout {...pageProps} items={[newsroomItem()]} kindLabel={value => `Catalog kind: ${value}`} />);
+
+        expect(screen.getByText("Catalog kind: other")).toBeInTheDocument();
+    });
+
+    it("keeps kind and development-topic names distinct in the item view", () => {
+        const item = newsroomItem();
+
+        render(<NewsItemView announcements={[{ ...DEVELOPMENT, item_id: item.id }]} error={null} isLoading={false} item={item} labels={{ developmentTopicLabel: value => `Development: ${value}`, kindLabel: value => `Kind: ${value}`, topicLabel: value => `Topic: ${value}` }} text={newsText(item)} />);
+
+        expect(screen.getByText("Kind: other")).toBeInTheDocument();
+
+        expect(screen.getByText(`Development: ${DEVELOPMENT.topic}`)).toBeInTheDocument();
+
+        expect(screen.queryByText(`Topic: ${DEVELOPMENT.topic}`)).toBeNull();
+    });
+});

@@ -14,6 +14,7 @@ import { useV2Company } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
 import { liveOn, liveParam, useLiveDefault } from "@/lib/live/live-default";
 import { issuerLabels, validateNewsSearch } from "@/lib/news/labels";
+import { useNewsCatalogLabels } from "@/lib/reference/catalog-labels";
 import { IN_PLACE } from "@/lib/url-state";
 
 import { AnnouncementsTab } from "./-components/announcements";
@@ -100,6 +101,8 @@ function CompanyNews({
 }) {
     // "Company-published" keeps the items the company published itself (its verified publications, by CIK) among the
     // ones that mention it: v2 has no publisher filter, so it filters the loaded page (as source and earnings do).
+    const labels = useNewsCatalogLabels();
+
     const company = useV2Company(ticker).data;
 
     const publisherCik = search.published ? company?.cik.replace(/^0+/, "") : undefined;
@@ -139,6 +142,7 @@ function CompanyNews({
             activeCount={newsFilterCount(search) + (search.event ? 1 : 0)}
             categories={publisherCik ? issuerLabels(news.fetched, publisherCik, "categories") : []}
             eventFilter={id => <NewsEventFilter event={search.event} id={id} onChange={event => onFilterChange({ event })} ticker={ticker} />}
+            labels={labels}
             onChange={onFilterChange}
             onReset={() => onFilterChange({ ...NEWS_FILTER_RESET, event: undefined })}
             search={search}
@@ -175,6 +179,7 @@ function CompanyNews({
                 emptyText={search.from || search.to || search.event ? undefined : "No news yet."}
                 exportScope={ticker}
                 headerActions={headerActions}
+                labels={labels}
                 list={news}
                 notice={notice}
                 patch={onFilterChange}

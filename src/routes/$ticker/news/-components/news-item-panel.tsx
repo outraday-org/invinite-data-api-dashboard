@@ -1,4 +1,5 @@
 import type { NewsAttribution, NewsDevelopment, V2NewsItem, V2NewsText } from "@/lib/api/types";
+import type { NewsCatalogLabels } from "@/lib/reference/catalog-labels";
 
 import { PdfDocumentSection } from "@/components/pdf/pdf-inline-viewer";
 import { Badge } from "@/components/ui/badge";
@@ -15,12 +16,11 @@ import { READING_COLUMN_CLASS } from "@/lib/layout";
 import {
     CLAIM_STATUS_LABELS,
     edgarLabel,
-    NEWS_KIND_LABELS,
-    NEWS_TOPIC_LABELS,
     publicationTypeLabel,
     publishedBy,
     sourceLabel,
 } from "@/lib/news/labels";
+import { RAW_NEWS_CATALOG_LABELS, useNewsCatalogLabels } from "@/lib/reference/catalog-labels";
 import { cn } from "@/lib/utils";
 import { Notice } from "@/routes/$ticker/earnings-calls/-components/media-state";
 
@@ -66,14 +66,14 @@ export function AttributionBlock({ attribution }: { attribution: NewsAttribution
 }
 
 /** AI-read developments, each with its claim status (a planned launch is labelled planned). */
-function Developments({ developments }: { developments: ReadonlyArray<NewsDevelopment> }) {
+function Developments({ developments, topicLabel }: { developments: ReadonlyArray<NewsDevelopment>; topicLabel: (value: string) => string }) {
     return (
         <Section description="Read by a model from the publication: what the publisher announced — not verified facts." title="AI-extracted developments">
             <ul className="flex flex-col divide-y">
                 {developments.map(development => (
                     <li className="flex flex-col gap-1 py-2" data-testid="news-development" key={development.id}>
                         <div className="flex flex-wrap items-center gap-2">
-                            <Badge variant="outline">{NEWS_TOPIC_LABELS[development.topic]}</Badge>
+                            <Badge variant="outline">{topicLabel(development.topic)}</Badge>
                             <Badge variant={development.claim_status === "planned" ? "secondary" : "outline"}>
                                 {CLAIM_STATUS_LABELS[development.claim_status]}
                             </Badge>
@@ -108,6 +108,7 @@ export function NewsItemView({
     error,
     isLoading,
     item,
+    labels = RAW_NEWS_CATALOG_LABELS,
     text,
     textError,
 }: {
@@ -115,6 +116,7 @@ export function NewsItemView({
     error: unknown;
     isLoading: boolean;
     item: null | V2NewsItem;
+    labels?: NewsCatalogLabels;
     /** null while the text loads (or when it failed: `textError`); the header renders meanwhile. */
     text: null | V2NewsText;
     textError?: unknown;
@@ -134,7 +136,7 @@ export function NewsItemView({
     return (
         <div className="flex flex-col gap-4">
             <div className="flex flex-wrap items-center gap-2 text-xs">
-                <Badge variant="outline">{NEWS_KIND_LABELS[item.kind]}</Badge>
+                <Badge variant="outline">{labels.kindLabel(item.kind)}</Badge>
                 {item.is_earnings_news && <Badge variant="secondary">Earnings</Badge>}
                 <span className="text-muted-foreground">{sourceLabel(item.source)}</span>
                 {publishers.length > 0 && <span>{`Published by ${publishers.join(", ")}`}</span>}
@@ -176,7 +178,7 @@ export function NewsItemView({
                                 )}
             </div>
 
-            {announcements.length > 0 && <Developments developments={announcements} />}
+            {announcements.length > 0 && <Developments developments={announcements} topicLabel={labels.developmentTopicLabel} />}
 
             <PdfDocumentSection filename={`news-${item.id}.pdf`} pdf={item.pdf} />
         </div>
@@ -185,6 +187,8 @@ export function NewsItemView({
 
 /** `?item=<id>`: the item in a dialog; `id: null` = closed (no request). */
 export function NewsItemPanel({ id, onClose, title }: { id: null | string; onClose: () => void; title?: string }) {
+    const labels = useNewsCatalogLabels(id !== null);
+
     const item = useNewsItem(id);
 
     const text = useNewsText(id);
@@ -206,6 +210,7 @@ export function NewsItemPanel({ id, onClose, title }: { id: null | string; onClo
                             error={item.error}
                             isLoading={item.isLoading}
                             item={item.data ?? null}
+                            labels={labels}
                             text={text.data ?? null}
                             textError={text.error}
                         />

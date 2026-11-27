@@ -16796,6 +16796,48 @@ export const OPERATIONS = {
 
 export type OperationId = keyof typeof OPERATIONS;
 
+/** Synchronous URL vocabulary from the pinned schemas; names come from the runtime catalogs. */
+export const NEWS_FILTER_VALUES = {
+    developmentTopics: [
+        "product_launch",
+        "product_update",
+        "availability",
+        "partnership",
+        "customer_contract",
+        "capacity_expansion",
+        "regulatory",
+        "research",
+    ],
+    kinds: [
+        "earnings_results",
+        "results_date",
+        "call_announcement",
+        "event_announcement",
+        "guidance",
+        "m_and_a",
+        "material_agreement",
+        "management_change",
+        "dividend",
+        "capital_markets",
+        "legal_spam",
+        "promo",
+        "other",
+    ],
+    topics: [
+        "product_launch",
+        "product_update",
+        "availability",
+        "partnership",
+        "customer_contract",
+        "capacity_expansion",
+        "regulatory",
+        "research",
+        "other",
+    ],
+} as const;
+
+export const NEWS_CATALOG_GROUPS = ["kind", "topic", "development_topic"] as const;
+
 export const MACRO_ALERT_SERIES = {
     consumer_spending_contribution: {
         family: "gdp",
@@ -17890,7 +17932,7 @@ const SHARED_WEBHOOK_3 = [
     },
 ];
 
-const SHARED_WEBHOOK_9 = {
+const SHARED_WEBHOOK_10 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: null,
@@ -17924,7 +17966,7 @@ const SHARED_WEBHOOK_9 = {
     },
 };
 
-const SHARED_WEBHOOK_13 = [
+const SHARED_WEBHOOK_14 = [
     {
         name: "id",
         required: true,
@@ -17991,19 +18033,19 @@ const SHARED_WEBHOOK_13 = [
     },
 ];
 
-const SHARED_WEBHOOK_12 = {
+const SHARED_WEBHOOK_13 = {
     description: "The alert, as created",
-    fields: SHARED_WEBHOOK_13,
+    fields: SHARED_WEBHOOK_14,
     type: "object",
 };
 
-const SHARED_WEBHOOK_11 = {
+const SHARED_WEBHOOK_12 = {
     name: "alert",
     required: true,
-    schema: SHARED_WEBHOOK_12,
+    schema: SHARED_WEBHOOK_13,
 };
 
-const SHARED_WEBHOOK_19 = [
+const SHARED_WEBHOOK_20 = [
     {
         name: "accession_number",
         required: true,
@@ -18116,20 +18158,20 @@ const SHARED_WEBHOOK_19 = [
     },
 ];
 
-const SHARED_WEBHOOK_18 = {
+const SHARED_WEBHOOK_19 = {
     additionalProperties: false,
     description: "Facts emitted by filing alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_19,
+    fields: SHARED_WEBHOOK_20,
     type: "object",
 };
 
-const SHARED_WEBHOOK_17 = {
+const SHARED_WEBHOOK_18 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_18,
+    schema: SHARED_WEBHOOK_19,
 };
 
-const SHARED_WEBHOOK_16 = [
+const SHARED_WEBHOOK_17 = [
     {
         name: "summary",
         required: true,
@@ -18137,22 +18179,22 @@ const SHARED_WEBHOOK_16 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_17,
+    SHARED_WEBHOOK_18,
 ];
 
-const SHARED_WEBHOOK_15 = {
+const SHARED_WEBHOOK_16 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_16,
+    fields: SHARED_WEBHOOK_17,
     type: "object",
 };
 
-const SHARED_WEBHOOK_14 = {
+const SHARED_WEBHOOK_15 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_15,
+    schema: SHARED_WEBHOOK_16,
 };
 
-const SHARED_WEBHOOK_22 = [
+const SHARED_WEBHOOK_23 = [
     {
         name: "symbol",
         required: true,
@@ -18191,19 +18233,19 @@ const SHARED_WEBHOOK_22 = [
     },
 ];
 
-const SHARED_WEBHOOK_21 = {
+const SHARED_WEBHOOK_22 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_22,
+    fields: SHARED_WEBHOOK_23,
     type: "object",
 };
 
-const SHARED_WEBHOOK_20 = {
+const SHARED_WEBHOOK_21 = {
     name: "subject",
     required: false,
-    schema: SHARED_WEBHOOK_21,
+    schema: SHARED_WEBHOOK_22,
 };
 
-const SHARED_WEBHOOK_10 = [
+const SHARED_WEBHOOK_11 = [
     {
         name: "event_id",
         required: true,
@@ -18222,7 +18264,7 @@ const SHARED_WEBHOOK_10 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -18231,7 +18273,7 @@ const SHARED_WEBHOOK_10 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_14,
+    SHARED_WEBHOOK_15,
     {
         name: "source",
         required: false,
@@ -18289,18 +18331,23 @@ const SHARED_WEBHOOK_10 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_8 = {
+const SHARED_WEBHOOK_9 = {
     additionalProperties: false,
     description: "A filing fire: its reason details follow FilingFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_9,
-    fields: SHARED_WEBHOOK_10,
+    example: SHARED_WEBHOOK_10,
+    fields: SHARED_WEBHOOK_11,
     type: "object",
 };
 
-const SHARED_WEBHOOK_24 = {
+const SHARED_WEBHOOK_8 = {
+    schema: SHARED_WEBHOOK_9,
+    value: "filing",
+};
+
+const SHARED_WEBHOOK_26 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: null,
@@ -18336,7 +18383,7 @@ const SHARED_WEBHOOK_24 = {
     },
 };
 
-const SHARED_WEBHOOK_31 = [
+const SHARED_WEBHOOK_33 = [
     {
         name: "accession_number",
         required: true,
@@ -18409,20 +18456,20 @@ const SHARED_WEBHOOK_31 = [
     },
 ];
 
-const SHARED_WEBHOOK_30 = {
+const SHARED_WEBHOOK_32 = {
     additionalProperties: false,
     description: "Facts emitted by filing_keyword alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_31,
+    fields: SHARED_WEBHOOK_33,
     type: "object",
 };
 
-const SHARED_WEBHOOK_29 = {
+const SHARED_WEBHOOK_31 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_30,
+    schema: SHARED_WEBHOOK_32,
 };
 
-const SHARED_WEBHOOK_28 = [
+const SHARED_WEBHOOK_30 = [
     {
         name: "summary",
         required: true,
@@ -18430,22 +18477,22 @@ const SHARED_WEBHOOK_28 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_29,
+    SHARED_WEBHOOK_31,
 ];
 
-const SHARED_WEBHOOK_27 = {
+const SHARED_WEBHOOK_29 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_28,
+    fields: SHARED_WEBHOOK_30,
     type: "object",
 };
 
-const SHARED_WEBHOOK_26 = {
+const SHARED_WEBHOOK_28 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_27,
+    schema: SHARED_WEBHOOK_29,
 };
 
-const SHARED_WEBHOOK_25 = [
+const SHARED_WEBHOOK_27 = [
     {
         name: "event_id",
         required: true,
@@ -18464,7 +18511,7 @@ const SHARED_WEBHOOK_25 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -18473,7 +18520,7 @@ const SHARED_WEBHOOK_25 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_26,
+    SHARED_WEBHOOK_28,
     {
         name: "source",
         required: false,
@@ -18531,18 +18578,23 @@ const SHARED_WEBHOOK_25 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_23 = {
+const SHARED_WEBHOOK_25 = {
     additionalProperties: false,
     description: "A filing_keyword fire: its reason details follow FilingKeywordFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_24,
-    fields: SHARED_WEBHOOK_25,
+    example: SHARED_WEBHOOK_26,
+    fields: SHARED_WEBHOOK_27,
     type: "object",
 };
 
-const SHARED_WEBHOOK_33 = {
+const SHARED_WEBHOOK_24 = {
+    schema: SHARED_WEBHOOK_25,
+    value: "filing_keyword",
+};
+
+const SHARED_WEBHOOK_36 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: null,
@@ -18585,7 +18637,7 @@ const SHARED_WEBHOOK_33 = {
     },
 };
 
-const SHARED_WEBHOOK_40 = [
+const SHARED_WEBHOOK_43 = [
     {
         name: "news_id",
         required: true,
@@ -18696,20 +18748,20 @@ const SHARED_WEBHOOK_40 = [
     },
 ];
 
-const SHARED_WEBHOOK_39 = {
+const SHARED_WEBHOOK_42 = {
     additionalProperties: false,
     description: "Facts emitted by news alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_40,
+    fields: SHARED_WEBHOOK_43,
     type: "object",
 };
 
-const SHARED_WEBHOOK_38 = {
+const SHARED_WEBHOOK_41 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_39,
+    schema: SHARED_WEBHOOK_42,
 };
 
-const SHARED_WEBHOOK_37 = [
+const SHARED_WEBHOOK_40 = [
     {
         name: "summary",
         required: true,
@@ -18717,22 +18769,22 @@ const SHARED_WEBHOOK_37 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_38,
+    SHARED_WEBHOOK_41,
 ];
 
-const SHARED_WEBHOOK_36 = {
+const SHARED_WEBHOOK_39 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_37,
+    fields: SHARED_WEBHOOK_40,
     type: "object",
 };
 
-const SHARED_WEBHOOK_35 = {
+const SHARED_WEBHOOK_38 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_36,
+    schema: SHARED_WEBHOOK_39,
 };
 
-const SHARED_WEBHOOK_34 = [
+const SHARED_WEBHOOK_37 = [
     {
         name: "event_id",
         required: true,
@@ -18751,7 +18803,7 @@ const SHARED_WEBHOOK_34 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -18760,7 +18812,7 @@ const SHARED_WEBHOOK_34 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_35,
+    SHARED_WEBHOOK_38,
     {
         name: "source",
         required: false,
@@ -18818,18 +18870,23 @@ const SHARED_WEBHOOK_34 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_32 = {
+const SHARED_WEBHOOK_35 = {
     additionalProperties: false,
     description: "A news fire: its reason details follow NewsFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_33,
-    fields: SHARED_WEBHOOK_34,
+    example: SHARED_WEBHOOK_36,
+    fields: SHARED_WEBHOOK_37,
     type: "object",
 };
 
-const SHARED_WEBHOOK_42 = {
+const SHARED_WEBHOOK_34 = {
+    schema: SHARED_WEBHOOK_35,
+    value: "news",
+};
+
+const SHARED_WEBHOOK_46 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: "example-user",
@@ -18871,7 +18928,7 @@ const SHARED_WEBHOOK_42 = {
     },
 };
 
-const SHARED_WEBHOOK_49 = [
+const SHARED_WEBHOOK_53 = [
     {
         name: "news_id",
         required: true,
@@ -19025,20 +19082,20 @@ const SHARED_WEBHOOK_49 = [
     },
 ];
 
-const SHARED_WEBHOOK_48 = {
+const SHARED_WEBHOOK_52 = {
     additionalProperties: false,
     description: "Facts emitted by news_keyword alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_49,
+    fields: SHARED_WEBHOOK_53,
     type: "object",
 };
 
-const SHARED_WEBHOOK_47 = {
+const SHARED_WEBHOOK_51 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_48,
+    schema: SHARED_WEBHOOK_52,
 };
 
-const SHARED_WEBHOOK_46 = [
+const SHARED_WEBHOOK_50 = [
     {
         name: "summary",
         required: true,
@@ -19046,22 +19103,22 @@ const SHARED_WEBHOOK_46 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_47,
+    SHARED_WEBHOOK_51,
 ];
 
-const SHARED_WEBHOOK_45 = {
+const SHARED_WEBHOOK_49 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_46,
+    fields: SHARED_WEBHOOK_50,
     type: "object",
 };
 
-const SHARED_WEBHOOK_44 = {
+const SHARED_WEBHOOK_48 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_45,
+    schema: SHARED_WEBHOOK_49,
 };
 
-const SHARED_WEBHOOK_43 = [
+const SHARED_WEBHOOK_47 = [
     {
         name: "event_id",
         required: true,
@@ -19080,7 +19137,7 @@ const SHARED_WEBHOOK_43 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -19089,7 +19146,7 @@ const SHARED_WEBHOOK_43 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_44,
+    SHARED_WEBHOOK_48,
     {
         name: "source",
         required: false,
@@ -19147,18 +19204,23 @@ const SHARED_WEBHOOK_43 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_41 = {
+const SHARED_WEBHOOK_45 = {
     additionalProperties: false,
     description: "A news_keyword fire: its reason details follow NewsKeywordFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_42,
-    fields: SHARED_WEBHOOK_43,
+    example: SHARED_WEBHOOK_46,
+    fields: SHARED_WEBHOOK_47,
     type: "object",
 };
 
-const SHARED_WEBHOOK_51 = {
+const SHARED_WEBHOOK_44 = {
+    schema: SHARED_WEBHOOK_45,
+    value: "news_keyword",
+};
+
+const SHARED_WEBHOOK_56 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: null,
@@ -19191,7 +19253,7 @@ const SHARED_WEBHOOK_51 = {
     },
 };
 
-const SHARED_WEBHOOK_62 = [
+const SHARED_WEBHOOK_67 = [
     {
         name: "document_id",
         required: true,
@@ -19264,25 +19326,25 @@ const SHARED_WEBHOOK_62 = [
     },
 ];
 
-const SHARED_WEBHOOK_61 = {
+const SHARED_WEBHOOK_66 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_62,
+    fields: SHARED_WEBHOOK_67,
     type: "object",
 };
 
-const SHARED_WEBHOOK_60 = {
+const SHARED_WEBHOOK_65 = {
     description: "Newly available investor documents.",
-    items: SHARED_WEBHOOK_61,
+    items: SHARED_WEBHOOK_66,
     type: "array",
 };
 
-const SHARED_WEBHOOK_59 = {
+const SHARED_WEBHOOK_64 = {
     name: "added",
     required: false,
-    schema: SHARED_WEBHOOK_60,
+    schema: SHARED_WEBHOOK_65,
 };
 
-const SHARED_WEBHOOK_65 = [
+const SHARED_WEBHOOK_70 = [
     {
         name: "seq",
         required: true,
@@ -19386,19 +19448,19 @@ const SHARED_WEBHOOK_65 = [
     },
 ];
 
-const SHARED_WEBHOOK_64 = {
+const SHARED_WEBHOOK_69 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_65,
+    fields: SHARED_WEBHOOK_70,
     type: "object",
 };
 
-const SHARED_WEBHOOK_63 = {
+const SHARED_WEBHOOK_68 = {
     name: "guidance_flash",
     required: false,
-    schema: SHARED_WEBHOOK_64,
+    schema: SHARED_WEBHOOK_69,
 };
 
-const SHARED_WEBHOOK_58 = [
+const SHARED_WEBHOOK_63 = [
     {
         name: "event",
         required: true,
@@ -19576,8 +19638,8 @@ const SHARED_WEBHOOK_58 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_59,
-    SHARED_WEBHOOK_63,
+    SHARED_WEBHOOK_64,
+    SHARED_WEBHOOK_68,
     {
         name: "layer",
         required: false,
@@ -19640,20 +19702,20 @@ const SHARED_WEBHOOK_58 = [
     },
 ];
 
-const SHARED_WEBHOOK_57 = {
+const SHARED_WEBHOOK_62 = {
     additionalProperties: false,
     description: "Facts emitted by earnings_call alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_58,
+    fields: SHARED_WEBHOOK_63,
     type: "object",
 };
 
-const SHARED_WEBHOOK_56 = {
+const SHARED_WEBHOOK_61 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_57,
+    schema: SHARED_WEBHOOK_62,
 };
 
-const SHARED_WEBHOOK_55 = [
+const SHARED_WEBHOOK_60 = [
     {
         name: "summary",
         required: true,
@@ -19661,22 +19723,22 @@ const SHARED_WEBHOOK_55 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_56,
+    SHARED_WEBHOOK_61,
 ];
 
-const SHARED_WEBHOOK_54 = {
+const SHARED_WEBHOOK_59 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_55,
+    fields: SHARED_WEBHOOK_60,
     type: "object",
 };
 
-const SHARED_WEBHOOK_53 = {
+const SHARED_WEBHOOK_58 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_54,
+    schema: SHARED_WEBHOOK_59,
 };
 
-const SHARED_WEBHOOK_52 = [
+const SHARED_WEBHOOK_57 = [
     {
         name: "event_id",
         required: true,
@@ -19695,7 +19757,7 @@ const SHARED_WEBHOOK_52 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -19704,7 +19766,7 @@ const SHARED_WEBHOOK_52 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_53,
+    SHARED_WEBHOOK_58,
     {
         name: "source",
         required: false,
@@ -19762,18 +19824,23 @@ const SHARED_WEBHOOK_52 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_50 = {
+const SHARED_WEBHOOK_55 = {
     additionalProperties: false,
     description: "A earnings_call fire: its reason details follow EarningsCallFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_51,
-    fields: SHARED_WEBHOOK_52,
+    example: SHARED_WEBHOOK_56,
+    fields: SHARED_WEBHOOK_57,
     type: "object",
 };
 
-const SHARED_WEBHOOK_67 = {
+const SHARED_WEBHOOK_54 = {
+    schema: SHARED_WEBHOOK_55,
+    value: "earnings_call",
+};
+
+const SHARED_WEBHOOK_73 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: null,
@@ -19819,7 +19886,7 @@ const SHARED_WEBHOOK_67 = {
     },
 };
 
-const SHARED_WEBHOOK_78 = [
+const SHARED_WEBHOOK_84 = [
     {
         name: "keyword",
         required: true,
@@ -19864,25 +19931,25 @@ const SHARED_WEBHOOK_78 = [
     },
 ];
 
-const SHARED_WEBHOOK_77 = {
+const SHARED_WEBHOOK_83 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_78,
+    fields: SHARED_WEBHOOK_84,
     type: "object",
 };
 
-const SHARED_WEBHOOK_76 = {
+const SHARED_WEBHOOK_82 = {
     description: "Matched quotes and mention counts.",
-    items: SHARED_WEBHOOK_77,
+    items: SHARED_WEBHOOK_83,
     type: "array",
 };
 
-const SHARED_WEBHOOK_75 = {
+const SHARED_WEBHOOK_81 = {
     name: "quotes",
     required: true,
-    schema: SHARED_WEBHOOK_76,
+    schema: SHARED_WEBHOOK_82,
 };
 
-const SHARED_WEBHOOK_74 = [
+const SHARED_WEBHOOK_80 = [
     {
         name: "conference_date",
         required: true,
@@ -19972,23 +20039,23 @@ const SHARED_WEBHOOK_74 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_75,
+    SHARED_WEBHOOK_81,
 ];
 
-const SHARED_WEBHOOK_73 = {
+const SHARED_WEBHOOK_79 = {
     additionalProperties: false,
     description: "Facts emitted by earnings_call_keyword alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_74,
+    fields: SHARED_WEBHOOK_80,
     type: "object",
 };
 
-const SHARED_WEBHOOK_72 = {
+const SHARED_WEBHOOK_78 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_73,
+    schema: SHARED_WEBHOOK_79,
 };
 
-const SHARED_WEBHOOK_71 = [
+const SHARED_WEBHOOK_77 = [
     {
         name: "summary",
         required: true,
@@ -19996,22 +20063,22 @@ const SHARED_WEBHOOK_71 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_72,
+    SHARED_WEBHOOK_78,
 ];
 
-const SHARED_WEBHOOK_70 = {
+const SHARED_WEBHOOK_76 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_71,
+    fields: SHARED_WEBHOOK_77,
     type: "object",
 };
 
-const SHARED_WEBHOOK_69 = {
+const SHARED_WEBHOOK_75 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_70,
+    schema: SHARED_WEBHOOK_76,
 };
 
-const SHARED_WEBHOOK_68 = [
+const SHARED_WEBHOOK_74 = [
     {
         name: "event_id",
         required: true,
@@ -20030,7 +20097,7 @@ const SHARED_WEBHOOK_68 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -20039,7 +20106,7 @@ const SHARED_WEBHOOK_68 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_69,
+    SHARED_WEBHOOK_75,
     {
         name: "source",
         required: false,
@@ -20097,18 +20164,23 @@ const SHARED_WEBHOOK_68 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_66 = {
+const SHARED_WEBHOOK_72 = {
     additionalProperties: false,
     description: "A earnings_call_keyword fire: its reason details follow EarningsCallKeywordFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_67,
-    fields: SHARED_WEBHOOK_68,
+    example: SHARED_WEBHOOK_73,
+    fields: SHARED_WEBHOOK_74,
     type: "object",
 };
 
-const SHARED_WEBHOOK_80 = {
+const SHARED_WEBHOOK_71 = {
+    schema: SHARED_WEBHOOK_72,
+    value: "earnings_call_keyword",
+};
+
+const SHARED_WEBHOOK_87 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: null,
@@ -20145,7 +20217,7 @@ const SHARED_WEBHOOK_80 = {
     },
 };
 
-const SHARED_WEBHOOK_87 = [
+const SHARED_WEBHOOK_94 = [
     {
         name: "kind",
         required: true,
@@ -20262,20 +20334,20 @@ const SHARED_WEBHOOK_87 = [
     },
 ];
 
-const SHARED_WEBHOOK_86 = {
+const SHARED_WEBHOOK_93 = {
     additionalProperties: false,
     description: "Facts emitted by dividend alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_87,
+    fields: SHARED_WEBHOOK_94,
     type: "object",
 };
 
-const SHARED_WEBHOOK_85 = {
+const SHARED_WEBHOOK_92 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_86,
+    schema: SHARED_WEBHOOK_93,
 };
 
-const SHARED_WEBHOOK_84 = [
+const SHARED_WEBHOOK_91 = [
     {
         name: "summary",
         required: true,
@@ -20283,22 +20355,22 @@ const SHARED_WEBHOOK_84 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_85,
+    SHARED_WEBHOOK_92,
 ];
 
-const SHARED_WEBHOOK_83 = {
+const SHARED_WEBHOOK_90 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_84,
+    fields: SHARED_WEBHOOK_91,
     type: "object",
 };
 
-const SHARED_WEBHOOK_82 = {
+const SHARED_WEBHOOK_89 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_83,
+    schema: SHARED_WEBHOOK_90,
 };
 
-const SHARED_WEBHOOK_81 = [
+const SHARED_WEBHOOK_88 = [
     {
         name: "event_id",
         required: true,
@@ -20317,7 +20389,7 @@ const SHARED_WEBHOOK_81 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -20326,7 +20398,7 @@ const SHARED_WEBHOOK_81 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_82,
+    SHARED_WEBHOOK_89,
     {
         name: "source",
         required: false,
@@ -20384,18 +20456,23 @@ const SHARED_WEBHOOK_81 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_79 = {
+const SHARED_WEBHOOK_86 = {
     additionalProperties: false,
     description: "A dividend fire: its reason details follow DividendFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_80,
-    fields: SHARED_WEBHOOK_81,
+    example: SHARED_WEBHOOK_87,
+    fields: SHARED_WEBHOOK_88,
     type: "object",
 };
 
-const SHARED_WEBHOOK_89 = {
+const SHARED_WEBHOOK_85 = {
+    schema: SHARED_WEBHOOK_86,
+    value: "dividend",
+};
+
+const SHARED_WEBHOOK_97 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: null,
@@ -20428,7 +20505,7 @@ const SHARED_WEBHOOK_89 = {
     },
 };
 
-const SHARED_WEBHOOK_96 = [
+const SHARED_WEBHOOK_104 = [
     {
         name: "status",
         required: true,
@@ -20490,20 +20567,20 @@ const SHARED_WEBHOOK_96 = [
     },
 ];
 
-const SHARED_WEBHOOK_95 = {
+const SHARED_WEBHOOK_103 = {
     additionalProperties: false,
     description: "Facts emitted by halt alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_96,
+    fields: SHARED_WEBHOOK_104,
     type: "object",
 };
 
-const SHARED_WEBHOOK_94 = {
+const SHARED_WEBHOOK_102 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_95,
+    schema: SHARED_WEBHOOK_103,
 };
 
-const SHARED_WEBHOOK_93 = [
+const SHARED_WEBHOOK_101 = [
     {
         name: "summary",
         required: true,
@@ -20511,22 +20588,22 @@ const SHARED_WEBHOOK_93 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_94,
+    SHARED_WEBHOOK_102,
 ];
 
-const SHARED_WEBHOOK_92 = {
+const SHARED_WEBHOOK_100 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_93,
+    fields: SHARED_WEBHOOK_101,
     type: "object",
 };
 
-const SHARED_WEBHOOK_91 = {
+const SHARED_WEBHOOK_99 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_92,
+    schema: SHARED_WEBHOOK_100,
 };
 
-const SHARED_WEBHOOK_90 = [
+const SHARED_WEBHOOK_98 = [
     {
         name: "event_id",
         required: true,
@@ -20545,7 +20622,7 @@ const SHARED_WEBHOOK_90 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -20554,7 +20631,7 @@ const SHARED_WEBHOOK_90 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_91,
+    SHARED_WEBHOOK_99,
     {
         name: "source",
         required: false,
@@ -20612,18 +20689,23 @@ const SHARED_WEBHOOK_90 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_88 = {
+const SHARED_WEBHOOK_96 = {
     additionalProperties: false,
     description: "A halt fire: its reason details follow HaltFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_89,
-    fields: SHARED_WEBHOOK_90,
+    example: SHARED_WEBHOOK_97,
+    fields: SHARED_WEBHOOK_98,
     type: "object",
 };
 
-const SHARED_WEBHOOK_98 = {
+const SHARED_WEBHOOK_95 = {
+    schema: SHARED_WEBHOOK_96,
+    value: "halt",
+};
+
+const SHARED_WEBHOOK_107 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: null,
@@ -20660,7 +20742,7 @@ const SHARED_WEBHOOK_98 = {
     },
 };
 
-const SHARED_WEBHOOK_109 = [
+const SHARED_WEBHOOK_118 = [
     {
         name: "metric_id",
         required: true,
@@ -20713,25 +20795,25 @@ const SHARED_WEBHOOK_109 = [
     },
 ];
 
-const SHARED_WEBHOOK_108 = {
+const SHARED_WEBHOOK_117 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_109,
+    fields: SHARED_WEBHOOK_118,
     type: "object",
 };
 
-const SHARED_WEBHOOK_107 = {
+const SHARED_WEBHOOK_116 = {
     description: "Per-rule current, threshold and prior values.",
-    items: SHARED_WEBHOOK_108,
+    items: SHARED_WEBHOOK_117,
     type: "array",
 };
 
-const SHARED_WEBHOOK_106 = {
+const SHARED_WEBHOOK_115 = {
     name: "metrics",
     required: true,
-    schema: SHARED_WEBHOOK_107,
+    schema: SHARED_WEBHOOK_116,
 };
 
-const SHARED_WEBHOOK_105 = [
+const SHARED_WEBHOOK_114 = [
     {
         name: "period_key",
         required: true,
@@ -20740,23 +20822,23 @@ const SHARED_WEBHOOK_105 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_106,
+    SHARED_WEBHOOK_115,
 ];
 
-const SHARED_WEBHOOK_104 = {
+const SHARED_WEBHOOK_113 = {
     additionalProperties: false,
     description: "Facts emitted by fundamental_metric alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_105,
+    fields: SHARED_WEBHOOK_114,
     type: "object",
 };
 
-const SHARED_WEBHOOK_103 = {
+const SHARED_WEBHOOK_112 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_104,
+    schema: SHARED_WEBHOOK_113,
 };
 
-const SHARED_WEBHOOK_102 = [
+const SHARED_WEBHOOK_111 = [
     {
         name: "summary",
         required: true,
@@ -20764,22 +20846,22 @@ const SHARED_WEBHOOK_102 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_103,
+    SHARED_WEBHOOK_112,
 ];
 
-const SHARED_WEBHOOK_101 = {
+const SHARED_WEBHOOK_110 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_102,
+    fields: SHARED_WEBHOOK_111,
     type: "object",
 };
 
-const SHARED_WEBHOOK_100 = {
+const SHARED_WEBHOOK_109 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_101,
+    schema: SHARED_WEBHOOK_110,
 };
 
-const SHARED_WEBHOOK_99 = [
+const SHARED_WEBHOOK_108 = [
     {
         name: "event_id",
         required: true,
@@ -20798,7 +20880,7 @@ const SHARED_WEBHOOK_99 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -20807,7 +20889,7 @@ const SHARED_WEBHOOK_99 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_100,
+    SHARED_WEBHOOK_109,
     {
         name: "source",
         required: false,
@@ -20865,18 +20947,23 @@ const SHARED_WEBHOOK_99 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_97 = {
+const SHARED_WEBHOOK_106 = {
     additionalProperties: false,
     description: "A fundamental_metric fire: its reason details follow FundamentalMetricFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_98,
-    fields: SHARED_WEBHOOK_99,
+    example: SHARED_WEBHOOK_107,
+    fields: SHARED_WEBHOOK_108,
     type: "object",
 };
 
-const SHARED_WEBHOOK_111 = {
+const SHARED_WEBHOOK_105 = {
+    schema: SHARED_WEBHOOK_106,
+    value: "fundamental_metric",
+};
+
+const SHARED_WEBHOOK_121 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: null,
@@ -20912,7 +20999,7 @@ const SHARED_WEBHOOK_111 = {
     },
 };
 
-const SHARED_WEBHOOK_118 = [
+const SHARED_WEBHOOK_128 = [
     {
         name: "fiscal_year",
         required: true,
@@ -21003,20 +21090,20 @@ const SHARED_WEBHOOK_118 = [
     },
 ];
 
-const SHARED_WEBHOOK_117 = {
+const SHARED_WEBHOOK_127 = {
     additionalProperties: false,
     description: "Facts emitted by earnings_results alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_118,
+    fields: SHARED_WEBHOOK_128,
     type: "object",
 };
 
-const SHARED_WEBHOOK_116 = {
+const SHARED_WEBHOOK_126 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_117,
+    schema: SHARED_WEBHOOK_127,
 };
 
-const SHARED_WEBHOOK_115 = [
+const SHARED_WEBHOOK_125 = [
     {
         name: "summary",
         required: true,
@@ -21024,22 +21111,22 @@ const SHARED_WEBHOOK_115 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_116,
+    SHARED_WEBHOOK_126,
 ];
 
-const SHARED_WEBHOOK_114 = {
+const SHARED_WEBHOOK_124 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_115,
+    fields: SHARED_WEBHOOK_125,
     type: "object",
 };
 
-const SHARED_WEBHOOK_113 = {
+const SHARED_WEBHOOK_123 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_114,
+    schema: SHARED_WEBHOOK_124,
 };
 
-const SHARED_WEBHOOK_112 = [
+const SHARED_WEBHOOK_122 = [
     {
         name: "event_id",
         required: true,
@@ -21058,7 +21145,7 @@ const SHARED_WEBHOOK_112 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -21067,7 +21154,7 @@ const SHARED_WEBHOOK_112 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_113,
+    SHARED_WEBHOOK_123,
     {
         name: "source",
         required: false,
@@ -21125,18 +21212,23 @@ const SHARED_WEBHOOK_112 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_110 = {
+const SHARED_WEBHOOK_120 = {
     additionalProperties: false,
     description: "A earnings_results fire: its reason details follow EarningsResultsFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_111,
-    fields: SHARED_WEBHOOK_112,
+    example: SHARED_WEBHOOK_121,
+    fields: SHARED_WEBHOOK_122,
     type: "object",
 };
 
-const SHARED_WEBHOOK_120 = {
+const SHARED_WEBHOOK_119 = {
+    schema: SHARED_WEBHOOK_120,
+    value: "earnings_results",
+};
+
+const SHARED_WEBHOOK_131 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: null,
@@ -21168,7 +21260,7 @@ const SHARED_WEBHOOK_120 = {
     },
 };
 
-const SHARED_WEBHOOK_127 = [
+const SHARED_WEBHOOK_138 = [
     {
         name: "kind",
         required: true,
@@ -21233,20 +21325,20 @@ const SHARED_WEBHOOK_127 = [
     },
 ];
 
-const SHARED_WEBHOOK_126 = {
+const SHARED_WEBHOOK_137 = {
     additionalProperties: false,
     description: "Facts emitted by event_countdown alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_127,
+    fields: SHARED_WEBHOOK_138,
     type: "object",
 };
 
-const SHARED_WEBHOOK_125 = {
+const SHARED_WEBHOOK_136 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_126,
+    schema: SHARED_WEBHOOK_137,
 };
 
-const SHARED_WEBHOOK_124 = [
+const SHARED_WEBHOOK_135 = [
     {
         name: "summary",
         required: true,
@@ -21254,22 +21346,22 @@ const SHARED_WEBHOOK_124 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_125,
+    SHARED_WEBHOOK_136,
 ];
 
-const SHARED_WEBHOOK_123 = {
+const SHARED_WEBHOOK_134 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_124,
+    fields: SHARED_WEBHOOK_135,
     type: "object",
 };
 
-const SHARED_WEBHOOK_122 = {
+const SHARED_WEBHOOK_133 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_123,
+    schema: SHARED_WEBHOOK_134,
 };
 
-const SHARED_WEBHOOK_121 = [
+const SHARED_WEBHOOK_132 = [
     {
         name: "event_id",
         required: true,
@@ -21288,7 +21380,7 @@ const SHARED_WEBHOOK_121 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -21297,7 +21389,7 @@ const SHARED_WEBHOOK_121 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_122,
+    SHARED_WEBHOOK_133,
     {
         name: "source",
         required: false,
@@ -21355,18 +21447,23 @@ const SHARED_WEBHOOK_121 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_119 = {
+const SHARED_WEBHOOK_130 = {
     additionalProperties: false,
     description: "A event_countdown fire: its reason details follow EventCountdownFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_120,
-    fields: SHARED_WEBHOOK_121,
+    example: SHARED_WEBHOOK_131,
+    fields: SHARED_WEBHOOK_132,
     type: "object",
 };
 
 const SHARED_WEBHOOK_129 = {
+    schema: SHARED_WEBHOOK_130,
+    value: "event_countdown",
+};
+
+const SHARED_WEBHOOK_141 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: "example-user",
@@ -21397,7 +21494,7 @@ const SHARED_WEBHOOK_129 = {
     },
 };
 
-const SHARED_WEBHOOK_136 = [
+const SHARED_WEBHOOK_148 = [
     {
         name: "operator",
         required: true,
@@ -21460,20 +21557,20 @@ const SHARED_WEBHOOK_136 = [
     },
 ];
 
-const SHARED_WEBHOOK_135 = {
+const SHARED_WEBHOOK_147 = {
     additionalProperties: false,
     description: "Facts emitted by price alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_136,
+    fields: SHARED_WEBHOOK_148,
     type: "object",
 };
 
-const SHARED_WEBHOOK_134 = {
+const SHARED_WEBHOOK_146 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_135,
+    schema: SHARED_WEBHOOK_147,
 };
 
-const SHARED_WEBHOOK_133 = [
+const SHARED_WEBHOOK_145 = [
     {
         name: "summary",
         required: true,
@@ -21481,22 +21578,22 @@ const SHARED_WEBHOOK_133 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_134,
+    SHARED_WEBHOOK_146,
 ];
 
-const SHARED_WEBHOOK_132 = {
+const SHARED_WEBHOOK_144 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_133,
+    fields: SHARED_WEBHOOK_145,
     type: "object",
 };
 
-const SHARED_WEBHOOK_131 = {
+const SHARED_WEBHOOK_143 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_132,
+    schema: SHARED_WEBHOOK_144,
 };
 
-const SHARED_WEBHOOK_130 = [
+const SHARED_WEBHOOK_142 = [
     {
         name: "event_id",
         required: true,
@@ -21515,7 +21612,7 @@ const SHARED_WEBHOOK_130 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -21524,7 +21621,7 @@ const SHARED_WEBHOOK_130 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_131,
+    SHARED_WEBHOOK_143,
     {
         name: "source",
         required: false,
@@ -21582,18 +21679,23 @@ const SHARED_WEBHOOK_130 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_128 = {
+const SHARED_WEBHOOK_140 = {
     additionalProperties: false,
     description: "A price fire: its reason details follow PriceFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_129,
-    fields: SHARED_WEBHOOK_130,
+    example: SHARED_WEBHOOK_141,
+    fields: SHARED_WEBHOOK_142,
     type: "object",
 };
 
-const SHARED_WEBHOOK_138 = {
+const SHARED_WEBHOOK_139 = {
+    schema: SHARED_WEBHOOK_140,
+    value: "price",
+};
+
+const SHARED_WEBHOOK_151 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: null,
@@ -21629,7 +21731,7 @@ const SHARED_WEBHOOK_138 = {
     },
 };
 
-const SHARED_WEBHOOK_145 = [
+const SHARED_WEBHOOK_158 = [
     {
         name: "operator",
         required: true,
@@ -21735,20 +21837,20 @@ const SHARED_WEBHOOK_145 = [
     },
 ];
 
-const SHARED_WEBHOOK_144 = {
+const SHARED_WEBHOOK_157 = {
     additionalProperties: false,
     description: "Facts emitted by price_move alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_145,
+    fields: SHARED_WEBHOOK_158,
     type: "object",
 };
 
-const SHARED_WEBHOOK_143 = {
+const SHARED_WEBHOOK_156 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_144,
+    schema: SHARED_WEBHOOK_157,
 };
 
-const SHARED_WEBHOOK_142 = [
+const SHARED_WEBHOOK_155 = [
     {
         name: "summary",
         required: true,
@@ -21756,22 +21858,22 @@ const SHARED_WEBHOOK_142 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_143,
+    SHARED_WEBHOOK_156,
 ];
 
-const SHARED_WEBHOOK_141 = {
+const SHARED_WEBHOOK_154 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_142,
+    fields: SHARED_WEBHOOK_155,
     type: "object",
 };
 
-const SHARED_WEBHOOK_140 = {
+const SHARED_WEBHOOK_153 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_141,
+    schema: SHARED_WEBHOOK_154,
 };
 
-const SHARED_WEBHOOK_139 = [
+const SHARED_WEBHOOK_152 = [
     {
         name: "event_id",
         required: true,
@@ -21790,7 +21892,7 @@ const SHARED_WEBHOOK_139 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -21799,7 +21901,7 @@ const SHARED_WEBHOOK_139 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_140,
+    SHARED_WEBHOOK_153,
     {
         name: "source",
         required: false,
@@ -21857,18 +21959,23 @@ const SHARED_WEBHOOK_139 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_137 = {
+const SHARED_WEBHOOK_150 = {
     additionalProperties: false,
     description: "A price_move fire: its reason details follow PriceMoveFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_138,
-    fields: SHARED_WEBHOOK_139,
+    example: SHARED_WEBHOOK_151,
+    fields: SHARED_WEBHOOK_152,
     type: "object",
 };
 
-const SHARED_WEBHOOK_147 = {
+const SHARED_WEBHOOK_149 = {
+    schema: SHARED_WEBHOOK_150,
+    value: "price_move",
+};
+
+const SHARED_WEBHOOK_161 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: null,
@@ -21906,7 +22013,7 @@ const SHARED_WEBHOOK_147 = {
     },
 };
 
-const SHARED_WEBHOOK_154 = [
+const SHARED_WEBHOOK_168 = [
     {
         name: "operator",
         required: true,
@@ -22054,20 +22161,20 @@ const SHARED_WEBHOOK_154 = [
     },
 ];
 
-const SHARED_WEBHOOK_153 = {
+const SHARED_WEBHOOK_167 = {
     additionalProperties: false,
     description: "Facts emitted by volume_spike alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_154,
+    fields: SHARED_WEBHOOK_168,
     type: "object",
 };
 
-const SHARED_WEBHOOK_152 = {
+const SHARED_WEBHOOK_166 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_153,
+    schema: SHARED_WEBHOOK_167,
 };
 
-const SHARED_WEBHOOK_151 = [
+const SHARED_WEBHOOK_165 = [
     {
         name: "summary",
         required: true,
@@ -22075,22 +22182,22 @@ const SHARED_WEBHOOK_151 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_152,
+    SHARED_WEBHOOK_166,
 ];
 
-const SHARED_WEBHOOK_150 = {
+const SHARED_WEBHOOK_164 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_151,
+    fields: SHARED_WEBHOOK_165,
     type: "object",
 };
 
-const SHARED_WEBHOOK_149 = {
+const SHARED_WEBHOOK_163 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_150,
+    schema: SHARED_WEBHOOK_164,
 };
 
-const SHARED_WEBHOOK_148 = [
+const SHARED_WEBHOOK_162 = [
     {
         name: "event_id",
         required: true,
@@ -22109,7 +22216,7 @@ const SHARED_WEBHOOK_148 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -22118,7 +22225,7 @@ const SHARED_WEBHOOK_148 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_149,
+    SHARED_WEBHOOK_163,
     {
         name: "source",
         required: false,
@@ -22176,18 +22283,23 @@ const SHARED_WEBHOOK_148 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_146 = {
+const SHARED_WEBHOOK_160 = {
     additionalProperties: false,
     description: "A volume_spike fire: its reason details follow VolumeSpikeFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_147,
-    fields: SHARED_WEBHOOK_148,
+    example: SHARED_WEBHOOK_161,
+    fields: SHARED_WEBHOOK_162,
     type: "object",
 };
 
-const SHARED_WEBHOOK_156 = {
+const SHARED_WEBHOOK_159 = {
+    schema: SHARED_WEBHOOK_160,
+    value: "volume_spike",
+};
+
+const SHARED_WEBHOOK_171 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: "example-user",
@@ -22219,7 +22331,7 @@ const SHARED_WEBHOOK_156 = {
     },
 };
 
-const SHARED_WEBHOOK_163 = [
+const SHARED_WEBHOOK_178 = [
     {
         name: "frequency",
         required: true,
@@ -22266,20 +22378,20 @@ const SHARED_WEBHOOK_163 = [
     },
 ];
 
-const SHARED_WEBHOOK_162 = {
+const SHARED_WEBHOOK_177 = {
     additionalProperties: false,
     description: "Facts emitted by price_reminder alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_163,
+    fields: SHARED_WEBHOOK_178,
     type: "object",
 };
 
-const SHARED_WEBHOOK_161 = {
+const SHARED_WEBHOOK_176 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_162,
+    schema: SHARED_WEBHOOK_177,
 };
 
-const SHARED_WEBHOOK_160 = [
+const SHARED_WEBHOOK_175 = [
     {
         name: "summary",
         required: true,
@@ -22287,22 +22399,22 @@ const SHARED_WEBHOOK_160 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_161,
+    SHARED_WEBHOOK_176,
 ];
 
-const SHARED_WEBHOOK_159 = {
+const SHARED_WEBHOOK_174 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_160,
+    fields: SHARED_WEBHOOK_175,
     type: "object",
 };
 
-const SHARED_WEBHOOK_158 = {
+const SHARED_WEBHOOK_173 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_159,
+    schema: SHARED_WEBHOOK_174,
 };
 
-const SHARED_WEBHOOK_157 = [
+const SHARED_WEBHOOK_172 = [
     {
         name: "event_id",
         required: true,
@@ -22321,7 +22433,7 @@ const SHARED_WEBHOOK_157 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -22330,7 +22442,7 @@ const SHARED_WEBHOOK_157 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_158,
+    SHARED_WEBHOOK_173,
     {
         name: "source",
         required: false,
@@ -22388,18 +22500,23 @@ const SHARED_WEBHOOK_157 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_155 = {
+const SHARED_WEBHOOK_170 = {
     additionalProperties: false,
     description: "A price_reminder fire: its reason details follow PriceReminderFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_156,
-    fields: SHARED_WEBHOOK_157,
+    example: SHARED_WEBHOOK_171,
+    fields: SHARED_WEBHOOK_172,
     type: "object",
 };
 
-const SHARED_WEBHOOK_165 = {
+const SHARED_WEBHOOK_169 = {
+    schema: SHARED_WEBHOOK_170,
+    value: "price_reminder",
+};
+
+const SHARED_WEBHOOK_181 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: "example-user",
@@ -22433,7 +22550,7 @@ const SHARED_WEBHOOK_165 = {
     },
 };
 
-const SHARED_WEBHOOK_172 = [
+const SHARED_WEBHOOK_188 = [
     {
         name: "bar_time",
         required: true,
@@ -22576,20 +22693,20 @@ const SHARED_WEBHOOK_172 = [
     },
 ];
 
-const SHARED_WEBHOOK_171 = {
+const SHARED_WEBHOOK_187 = {
     additionalProperties: false,
     description: "Facts emitted by indicator alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_172,
+    fields: SHARED_WEBHOOK_188,
     type: "object",
 };
 
-const SHARED_WEBHOOK_170 = {
+const SHARED_WEBHOOK_186 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_171,
+    schema: SHARED_WEBHOOK_187,
 };
 
-const SHARED_WEBHOOK_169 = [
+const SHARED_WEBHOOK_185 = [
     {
         name: "summary",
         required: true,
@@ -22597,22 +22714,22 @@ const SHARED_WEBHOOK_169 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_170,
+    SHARED_WEBHOOK_186,
 ];
 
-const SHARED_WEBHOOK_168 = {
+const SHARED_WEBHOOK_184 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_169,
+    fields: SHARED_WEBHOOK_185,
     type: "object",
 };
 
-const SHARED_WEBHOOK_167 = {
+const SHARED_WEBHOOK_183 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_168,
+    schema: SHARED_WEBHOOK_184,
 };
 
-const SHARED_WEBHOOK_166 = [
+const SHARED_WEBHOOK_182 = [
     {
         name: "event_id",
         required: true,
@@ -22631,7 +22748,7 @@ const SHARED_WEBHOOK_166 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -22640,7 +22757,7 @@ const SHARED_WEBHOOK_166 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_167,
+    SHARED_WEBHOOK_183,
     {
         name: "source",
         required: false,
@@ -22698,18 +22815,23 @@ const SHARED_WEBHOOK_166 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_164 = {
+const SHARED_WEBHOOK_180 = {
     additionalProperties: false,
     description: "A indicator fire: its reason details follow IndicatorFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_165,
-    fields: SHARED_WEBHOOK_166,
+    example: SHARED_WEBHOOK_181,
+    fields: SHARED_WEBHOOK_182,
     type: "object",
 };
 
-const SHARED_WEBHOOK_174 = {
+const SHARED_WEBHOOK_179 = {
+    schema: SHARED_WEBHOOK_180,
+    value: "indicator",
+};
+
+const SHARED_WEBHOOK_191 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: "example-user",
@@ -22743,20 +22865,20 @@ const SHARED_WEBHOOK_174 = {
     },
 };
 
-const SHARED_WEBHOOK_180 = {
+const SHARED_WEBHOOK_197 = {
     additionalProperties: false,
     description: "Facts emitted by script alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_172,
+    fields: SHARED_WEBHOOK_188,
     type: "object",
 };
 
-const SHARED_WEBHOOK_179 = {
+const SHARED_WEBHOOK_196 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_180,
+    schema: SHARED_WEBHOOK_197,
 };
 
-const SHARED_WEBHOOK_178 = [
+const SHARED_WEBHOOK_195 = [
     {
         name: "summary",
         required: true,
@@ -22764,22 +22886,22 @@ const SHARED_WEBHOOK_178 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_179,
+    SHARED_WEBHOOK_196,
 ];
 
-const SHARED_WEBHOOK_177 = {
+const SHARED_WEBHOOK_194 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_178,
+    fields: SHARED_WEBHOOK_195,
     type: "object",
 };
 
-const SHARED_WEBHOOK_176 = {
+const SHARED_WEBHOOK_193 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_177,
+    schema: SHARED_WEBHOOK_194,
 };
 
-const SHARED_WEBHOOK_175 = [
+const SHARED_WEBHOOK_192 = [
     {
         name: "event_id",
         required: true,
@@ -22798,7 +22920,7 @@ const SHARED_WEBHOOK_175 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -22807,7 +22929,7 @@ const SHARED_WEBHOOK_175 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_176,
+    SHARED_WEBHOOK_193,
     {
         name: "source",
         required: false,
@@ -22865,18 +22987,23 @@ const SHARED_WEBHOOK_175 = [
             type: "boolean",
         },
     },
-    SHARED_WEBHOOK_20,
+    SHARED_WEBHOOK_21,
 ];
 
-const SHARED_WEBHOOK_173 = {
+const SHARED_WEBHOOK_190 = {
     additionalProperties: false,
     description: "A script fire: its reason details follow ScriptFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_174,
-    fields: SHARED_WEBHOOK_175,
+    example: SHARED_WEBHOOK_191,
+    fields: SHARED_WEBHOOK_192,
     type: "object",
 };
 
-const SHARED_WEBHOOK_182 = {
+const SHARED_WEBHOOK_189 = {
+    schema: SHARED_WEBHOOK_190,
+    value: "script",
+};
+
+const SHARED_WEBHOOK_200 = {
     alert: {
         client_reference_id: "example-alert",
         external_user_id: null,
@@ -22915,7 +23042,7 @@ const SHARED_WEBHOOK_182 = {
     },
 };
 
-const SHARED_WEBHOOK_196 = [
+const SHARED_WEBHOOK_214 = [
     "consumer_spending_contribution",
     "continued_claims_4_week_sa",
     "continued_claims_nsa",
@@ -22982,20 +23109,20 @@ const SHARED_WEBHOOK_196 = [
     "unemployment_rate_u6_sa",
 ];
 
-const SHARED_WEBHOOK_195 = {
+const SHARED_WEBHOOK_213 = {
     description: "Stable macro series id.",
-    enum: SHARED_WEBHOOK_196,
+    enum: SHARED_WEBHOOK_214,
     type: "string",
 };
 
-const SHARED_WEBHOOK_194 = {
+const SHARED_WEBHOOK_212 = {
     name: "series_id",
     required: true,
-    schema: SHARED_WEBHOOK_195,
+    schema: SHARED_WEBHOOK_213,
 };
 
-const SHARED_WEBHOOK_193 = [
-    SHARED_WEBHOOK_194,
+const SHARED_WEBHOOK_211 = [
+    SHARED_WEBHOOK_212,
     {
         name: "reference_date",
         required: true,
@@ -23062,25 +23189,25 @@ const SHARED_WEBHOOK_193 = [
     },
 ];
 
-const SHARED_WEBHOOK_192 = {
+const SHARED_WEBHOOK_210 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_193,
+    fields: SHARED_WEBHOOK_211,
     type: "object",
 };
 
-const SHARED_WEBHOOK_191 = {
+const SHARED_WEBHOOK_209 = {
     description: "Bounded matching observations.",
-    items: SHARED_WEBHOOK_192,
+    items: SHARED_WEBHOOK_210,
     type: "array",
 };
 
-const SHARED_WEBHOOK_190 = {
+const SHARED_WEBHOOK_208 = {
     name: "matches",
     required: true,
-    schema: SHARED_WEBHOOK_191,
+    schema: SHARED_WEBHOOK_209,
 };
 
-const SHARED_WEBHOOK_199 = {
+const SHARED_WEBHOOK_217 = {
     additionalProperties: false,
     fields: [
         {
@@ -23121,19 +23248,19 @@ const SHARED_WEBHOOK_199 = {
     type: "object",
 };
 
-const SHARED_WEBHOOK_198 = {
+const SHARED_WEBHOOK_216 = {
     description: "Affected spans and current REST history links.",
-    items: SHARED_WEBHOOK_199,
+    items: SHARED_WEBHOOK_217,
     type: "array",
 };
 
-const SHARED_WEBHOOK_197 = {
+const SHARED_WEBHOOK_215 = {
     name: "affected",
     required: true,
-    schema: SHARED_WEBHOOK_198,
+    schema: SHARED_WEBHOOK_216,
 };
 
-const SHARED_WEBHOOK_189 = [
+const SHARED_WEBHOOK_207 = [
     {
         name: "source_event_id",
         required: true,
@@ -23180,24 +23307,24 @@ const SHARED_WEBHOOK_189 = [
             type: "integer",
         },
     },
-    SHARED_WEBHOOK_190,
-    SHARED_WEBHOOK_197,
+    SHARED_WEBHOOK_208,
+    SHARED_WEBHOOK_215,
 ];
 
-const SHARED_WEBHOOK_188 = {
+const SHARED_WEBHOOK_206 = {
     additionalProperties: false,
     description: "Facts emitted by macro alerts, including historical optional fields.",
-    fields: SHARED_WEBHOOK_189,
+    fields: SHARED_WEBHOOK_207,
     type: "object",
 };
 
-const SHARED_WEBHOOK_187 = {
+const SHARED_WEBHOOK_205 = {
     name: "details",
     required: true,
-    schema: SHARED_WEBHOOK_188,
+    schema: SHARED_WEBHOOK_206,
 };
 
-const SHARED_WEBHOOK_186 = [
+const SHARED_WEBHOOK_204 = [
     {
         name: "summary",
         required: true,
@@ -23205,22 +23332,22 @@ const SHARED_WEBHOOK_186 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_187,
+    SHARED_WEBHOOK_205,
 ];
 
-const SHARED_WEBHOOK_185 = {
+const SHARED_WEBHOOK_203 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_186,
+    fields: SHARED_WEBHOOK_204,
     type: "object",
 };
 
-const SHARED_WEBHOOK_184 = {
+const SHARED_WEBHOOK_202 = {
     name: "reason",
     required: true,
-    schema: SHARED_WEBHOOK_185,
+    schema: SHARED_WEBHOOK_203,
 };
 
-const SHARED_WEBHOOK_183 = [
+const SHARED_WEBHOOK_201 = [
     {
         name: "event_id",
         required: true,
@@ -23239,7 +23366,7 @@ const SHARED_WEBHOOK_183 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "fired_at",
         required: true,
@@ -23248,7 +23375,7 @@ const SHARED_WEBHOOK_183 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_184,
+    SHARED_WEBHOOK_202,
     {
         name: "source",
         required: true,
@@ -23308,49 +23435,54 @@ const SHARED_WEBHOOK_183 = [
     },
 ];
 
-const SHARED_WEBHOOK_181 = {
+const SHARED_WEBHOOK_199 = {
     additionalProperties: false,
     description: "A macro fire: its reason details follow MacroFireDetails. Synthetic tests use representative example facts.",
-    example: SHARED_WEBHOOK_182,
-    fields: SHARED_WEBHOOK_183,
+    example: SHARED_WEBHOOK_200,
+    fields: SHARED_WEBHOOK_201,
     type: "object",
+};
+
+const SHARED_WEBHOOK_198 = {
+    schema: SHARED_WEBHOOK_199,
+    value: "macro",
 };
 
 const SHARED_WEBHOOK_7 = [
     SHARED_WEBHOOK_8,
-    SHARED_WEBHOOK_23,
-    SHARED_WEBHOOK_32,
-    SHARED_WEBHOOK_41,
-    SHARED_WEBHOOK_50,
-    SHARED_WEBHOOK_66,
-    SHARED_WEBHOOK_79,
-    SHARED_WEBHOOK_88,
-    SHARED_WEBHOOK_97,
-    SHARED_WEBHOOK_110,
+    SHARED_WEBHOOK_24,
+    SHARED_WEBHOOK_34,
+    SHARED_WEBHOOK_44,
+    SHARED_WEBHOOK_54,
+    SHARED_WEBHOOK_71,
+    SHARED_WEBHOOK_85,
+    SHARED_WEBHOOK_95,
+    SHARED_WEBHOOK_105,
     SHARED_WEBHOOK_119,
-    SHARED_WEBHOOK_128,
-    SHARED_WEBHOOK_137,
-    SHARED_WEBHOOK_146,
-    SHARED_WEBHOOK_155,
-    SHARED_WEBHOOK_164,
-    SHARED_WEBHOOK_173,
-    SHARED_WEBHOOK_181,
+    SHARED_WEBHOOK_129,
+    SHARED_WEBHOOK_139,
+    SHARED_WEBHOOK_149,
+    SHARED_WEBHOOK_159,
+    SHARED_WEBHOOK_169,
+    SHARED_WEBHOOK_179,
+    SHARED_WEBHOOK_189,
+    SHARED_WEBHOOK_198,
 ];
 
 const SHARED_WEBHOOK_0 = {
     discriminator: SHARED_WEBHOOK_1,
     fields: SHARED_WEBHOOK_3,
-    oneOf: SHARED_WEBHOOK_7,
     type: "object",
+    variants: SHARED_WEBHOOK_7,
 };
 
-const SHARED_WEBHOOK_208 = {
+const SHARED_WEBHOOK_227 = {
     name: "data",
     required: true,
     schema: SHARED_WEBHOOK_0,
 };
 
-const SHARED_WEBHOOK_207 = [
+const SHARED_WEBHOOK_226 = [
     {
         name: "type",
         required: true,
@@ -23369,16 +23501,21 @@ const SHARED_WEBHOOK_207 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_208,
+    SHARED_WEBHOOK_227,
 ];
 
-const SHARED_WEBHOOK_206 = {
+const SHARED_WEBHOOK_225 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_207,
+    fields: SHARED_WEBHOOK_226,
     type: "object",
 };
 
-const SHARED_WEBHOOK_213 = [
+const SHARED_WEBHOOK_224 = {
+    schema: SHARED_WEBHOOK_225,
+    value: "alert.fired",
+};
+
+const SHARED_WEBHOOK_233 = [
     {
         name: "event_id",
         required: true,
@@ -23387,7 +23524,7 @@ const SHARED_WEBHOOK_213 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_11,
+    SHARED_WEBHOOK_12,
     {
         name: "status",
         required: true,
@@ -23461,19 +23598,19 @@ const SHARED_WEBHOOK_213 = [
     },
 ];
 
-const SHARED_WEBHOOK_212 = {
+const SHARED_WEBHOOK_232 = {
     description: "An alert changed status on its own: it expired (`expires_at`), triggered and stopped (`once` / `max_fires`), became active (`activate_at` / the end of `pause_until`), or — a script / indicator alert — was disabled because its script failed 3 bars in a row (`script_error`, with `error_class` and `error`)",
-    fields: SHARED_WEBHOOK_213,
+    fields: SHARED_WEBHOOK_233,
     type: "object",
 };
 
-const SHARED_WEBHOOK_211 = {
+const SHARED_WEBHOOK_231 = {
     name: "data",
     required: true,
-    schema: SHARED_WEBHOOK_212,
+    schema: SHARED_WEBHOOK_232,
 };
 
-const SHARED_WEBHOOK_210 = [
+const SHARED_WEBHOOK_230 = [
     {
         name: "type",
         required: true,
@@ -23492,16 +23629,21 @@ const SHARED_WEBHOOK_210 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_211,
+    SHARED_WEBHOOK_231,
 ];
 
-const SHARED_WEBHOOK_209 = {
+const SHARED_WEBHOOK_229 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_210,
+    fields: SHARED_WEBHOOK_230,
     type: "object",
 };
 
-const SHARED_WEBHOOK_218 = [
+const SHARED_WEBHOOK_228 = {
+    schema: SHARED_WEBHOOK_229,
+    value: "alert.status_changed",
+};
+
+const SHARED_WEBHOOK_239 = [
     {
         name: "event_id",
         required: true,
@@ -23558,19 +23700,19 @@ const SHARED_WEBHOOK_218 = [
     },
 ];
 
-const SHARED_WEBHOOK_217 = {
+const SHARED_WEBHOOK_238 = {
     description: "A destination was disabled: it answered 410 (`gone`) or only failures for 72 h with at least 10 failed attempts in a row (`failing`). Its open deliveries are dead. Recorded on the pull feed (GET /v1/alert-events) and mailed to the account; never sent to a webhook (the destination is the one that failed)",
-    fields: SHARED_WEBHOOK_218,
+    fields: SHARED_WEBHOOK_239,
     type: "object",
 };
 
-const SHARED_WEBHOOK_216 = {
+const SHARED_WEBHOOK_237 = {
     name: "data",
     required: true,
-    schema: SHARED_WEBHOOK_217,
+    schema: SHARED_WEBHOOK_238,
 };
 
-const SHARED_WEBHOOK_215 = [
+const SHARED_WEBHOOK_236 = [
     {
         name: "type",
         required: true,
@@ -23589,16 +23731,21 @@ const SHARED_WEBHOOK_215 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_216,
+    SHARED_WEBHOOK_237,
 ];
 
-const SHARED_WEBHOOK_214 = {
+const SHARED_WEBHOOK_235 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_215,
+    fields: SHARED_WEBHOOK_236,
     type: "object",
 };
 
-const SHARED_WEBHOOK_223 = [
+const SHARED_WEBHOOK_234 = {
+    schema: SHARED_WEBHOOK_235,
+    value: "destination.disabled",
+};
+
+const SHARED_WEBHOOK_245 = [
     {
         name: "event_id",
         required: true,
@@ -23654,19 +23801,19 @@ const SHARED_WEBHOOK_223 = [
     },
 ];
 
-const SHARED_WEBHOOK_222 = {
+const SHARED_WEBHOOK_244 = {
     description: "`POST /v1/destinations/{id}:test`: one event to that destination only",
-    fields: SHARED_WEBHOOK_223,
+    fields: SHARED_WEBHOOK_245,
     type: "object",
 };
 
-const SHARED_WEBHOOK_221 = {
+const SHARED_WEBHOOK_243 = {
     name: "data",
     required: true,
-    schema: SHARED_WEBHOOK_222,
+    schema: SHARED_WEBHOOK_244,
 };
 
-const SHARED_WEBHOOK_220 = [
+const SHARED_WEBHOOK_242 = [
     {
         name: "type",
         required: true,
@@ -23685,16 +23832,21 @@ const SHARED_WEBHOOK_220 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_221,
+    SHARED_WEBHOOK_243,
 ];
 
-const SHARED_WEBHOOK_219 = {
+const SHARED_WEBHOOK_241 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_220,
+    fields: SHARED_WEBHOOK_242,
     type: "object",
 };
 
-const SHARED_WEBHOOK_228 = [
+const SHARED_WEBHOOK_240 = {
+    schema: SHARED_WEBHOOK_241,
+    value: "destination.test",
+};
+
+const SHARED_WEBHOOK_251 = [
     {
         name: "event_id",
         required: true,
@@ -23737,19 +23889,19 @@ const SHARED_WEBHOOK_228 = [
     },
 ];
 
-const SHARED_WEBHOOK_227 = {
+const SHARED_WEBHOOK_250 = {
     description: "The account reached the daily fire cap of its Enterprise deal (`fires_per_day`; no plan has a daily cap), once per UTC day, to every active destination. Further fires of the day stay on the pull feed with `delivery_skipped: fire_cap`; deliveries resume at 00:00 UTC. An end user's own cap has its own event, `alert_user.fire_cap_reached`",
-    fields: SHARED_WEBHOOK_228,
+    fields: SHARED_WEBHOOK_251,
     type: "object",
 };
 
-const SHARED_WEBHOOK_226 = {
+const SHARED_WEBHOOK_249 = {
     name: "data",
     required: true,
-    schema: SHARED_WEBHOOK_227,
+    schema: SHARED_WEBHOOK_250,
 };
 
-const SHARED_WEBHOOK_225 = [
+const SHARED_WEBHOOK_248 = [
     {
         name: "type",
         required: true,
@@ -23768,16 +23920,21 @@ const SHARED_WEBHOOK_225 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_226,
+    SHARED_WEBHOOK_249,
 ];
 
-const SHARED_WEBHOOK_224 = {
+const SHARED_WEBHOOK_247 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_225,
+    fields: SHARED_WEBHOOK_248,
     type: "object",
 };
 
-const SHARED_WEBHOOK_232 = {
+const SHARED_WEBHOOK_246 = {
+    schema: SHARED_WEBHOOK_247,
+    value: "account.fire_cap_reached",
+};
+
+const SHARED_WEBHOOK_256 = {
     description: "An end user reached its daily fire cap (`max_fires_per_day` of the user, else the account default; once per user and UTC day, to every active destination of the account). Its further fires of the day stay on the pull feed with `delivery_skipped: alert_user_fire_cap` and do not count against the account's cap; deliveries resume at 00:00 UTC",
     fields: [
         {
@@ -23817,13 +23974,13 @@ const SHARED_WEBHOOK_232 = {
     type: "object",
 };
 
-const SHARED_WEBHOOK_231 = {
+const SHARED_WEBHOOK_255 = {
     name: "data",
     required: true,
-    schema: SHARED_WEBHOOK_232,
+    schema: SHARED_WEBHOOK_256,
 };
 
-const SHARED_WEBHOOK_230 = [
+const SHARED_WEBHOOK_254 = [
     {
         name: "type",
         required: true,
@@ -23842,25 +23999,30 @@ const SHARED_WEBHOOK_230 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_231,
+    SHARED_WEBHOOK_255,
 ];
 
-const SHARED_WEBHOOK_229 = {
+const SHARED_WEBHOOK_253 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_230,
+    fields: SHARED_WEBHOOK_254,
     type: "object",
 };
 
-const SHARED_WEBHOOK_205 = [
-    SHARED_WEBHOOK_206,
-    SHARED_WEBHOOK_209,
-    SHARED_WEBHOOK_214,
-    SHARED_WEBHOOK_219,
+const SHARED_WEBHOOK_252 = {
+    schema: SHARED_WEBHOOK_253,
+    value: "alert_user.fire_cap_reached",
+};
+
+const SHARED_WEBHOOK_223 = [
     SHARED_WEBHOOK_224,
-    SHARED_WEBHOOK_229,
+    SHARED_WEBHOOK_228,
+    SHARED_WEBHOOK_234,
+    SHARED_WEBHOOK_240,
+    SHARED_WEBHOOK_246,
+    SHARED_WEBHOOK_252,
 ];
 
-const SHARED_WEBHOOK_204 = {
+const SHARED_WEBHOOK_222 = {
     discriminator: {
         mapping: {
             "account.fire_cap_reached": "#/components/schemas/AccountFireCapReachedWebhookEvent",
@@ -23913,24 +24075,24 @@ const SHARED_WEBHOOK_204 = {
             },
         },
     ],
-    oneOf: SHARED_WEBHOOK_205,
     type: "object",
+    variants: SHARED_WEBHOOK_223,
 };
 
-const SHARED_WEBHOOK_203 = {
-    items: SHARED_WEBHOOK_204,
+const SHARED_WEBHOOK_221 = {
+    items: SHARED_WEBHOOK_222,
     maxItems: 500,
     minItems: 1,
     type: "array",
 };
 
-const SHARED_WEBHOOK_202 = {
+const SHARED_WEBHOOK_220 = {
     name: "events",
     required: true,
-    schema: SHARED_WEBHOOK_203,
+    schema: SHARED_WEBHOOK_221,
 };
 
-const SHARED_WEBHOOK_201 = [
+const SHARED_WEBHOOK_219 = [
     {
         name: "batch_id",
         required: true,
@@ -23938,12 +24100,12 @@ const SHARED_WEBHOOK_201 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_202,
+    SHARED_WEBHOOK_220,
 ];
 
-const SHARED_WEBHOOK_200 = {
+const SHARED_WEBHOOK_218 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_201,
+    fields: SHARED_WEBHOOK_219,
     type: "object",
 };
 
@@ -23978,7 +24140,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
         acknowledgement: [
             "2XX: Acknowledged; anything else is retried (410 disables)",
         ],
-        data: SHARED_WEBHOOK_200,
+        data: SHARED_WEBHOOK_218,
         description: "alert.fired.batch",
         headers: [
             {
@@ -24004,7 +24166,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
         acknowledgement: [
             "2XX: Acknowledged; anything else is retried (410 disables)",
         ],
-        data: SHARED_WEBHOOK_212,
+        data: SHARED_WEBHOOK_232,
         description: "alert.status_changed",
         headers: [
             {
@@ -24030,7 +24192,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
         acknowledgement: [
             "2XX: Acknowledged; anything else is retried (410 disables)",
         ],
-        data: SHARED_WEBHOOK_217,
+        data: SHARED_WEBHOOK_238,
         description: "destination.disabled",
         headers: [
             {
@@ -24056,7 +24218,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
         acknowledgement: [
             "2XX: Acknowledged; anything else is retried (410 disables)",
         ],
-        data: SHARED_WEBHOOK_222,
+        data: SHARED_WEBHOOK_244,
         description: "destination.test",
         headers: [
             {
@@ -24082,7 +24244,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
         acknowledgement: [
             "2XX: Acknowledged; anything else is retried (410 disables)",
         ],
-        data: SHARED_WEBHOOK_227,
+        data: SHARED_WEBHOOK_250,
         description: "account.fire_cap_reached",
         headers: [
             {
@@ -24108,7 +24270,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
         acknowledgement: [
             "2XX: Acknowledged; anything else is retried (410 disables)",
         ],
-        data: SHARED_WEBHOOK_232,
+        data: SHARED_WEBHOOK_256,
         description: "alert_user.fire_cap_reached",
         headers: [
             {
@@ -24180,42 +24342,45 @@ export const WEBHOOK_ENVELOPE: WebhookSchema = {
             },
         },
     ],
-    oneOf: [
-        SHARED_WEBHOOK_206,
-        SHARED_WEBHOOK_209,
-        SHARED_WEBHOOK_214,
-        SHARED_WEBHOOK_219,
+    type: "object",
+    variants: [
         SHARED_WEBHOOK_224,
-        SHARED_WEBHOOK_229,
+        SHARED_WEBHOOK_228,
+        SHARED_WEBHOOK_234,
+        SHARED_WEBHOOK_240,
+        SHARED_WEBHOOK_246,
+        SHARED_WEBHOOK_252,
         {
-            additionalProperties: false,
-            fields: [
-                {
-                    name: "type",
-                    required: true,
-                    schema: {
-                        enum: [
-                            "alert.fired.batch",
-                        ],
-                        type: "string",
+            schema: {
+                additionalProperties: false,
+                fields: [
+                    {
+                        name: "type",
+                        required: true,
+                        schema: {
+                            enum: [
+                                "alert.fired.batch",
+                            ],
+                            type: "string",
+                        },
                     },
-                },
-                {
-                    name: "timestamp",
-                    required: true,
-                    schema: {
-                        format: "date-time",
-                        type: "string",
+                    {
+                        name: "timestamp",
+                        required: true,
+                        schema: {
+                            format: "date-time",
+                            type: "string",
+                        },
                     },
-                },
-                {
-                    name: "data",
-                    required: true,
-                    schema: SHARED_WEBHOOK_200,
-                },
-            ],
-            type: "object",
+                    {
+                        name: "data",
+                        required: true,
+                        schema: SHARED_WEBHOOK_218,
+                    },
+                ],
+                type: "object",
+            },
+            value: "alert.fired.batch",
         },
     ],
-    type: "object",
 };

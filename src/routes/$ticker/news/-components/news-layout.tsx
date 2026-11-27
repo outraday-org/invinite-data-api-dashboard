@@ -74,6 +74,7 @@ export function NewsLayout({
     hiddenByFilters = 0,
     isLoading,
     items,
+    kindLabel,
     liveIds,
     notice,
     pager,
@@ -104,6 +105,7 @@ export function NewsLayout({
     hiddenByFilters?: number;
     isLoading: boolean;
     items: ReadonlyArray<NewsItemPublic>;
+    kindLabel?: (value: string) => string;
     liveIds?: ReadonlySet<string>;
     notice?: React.ReactNode;
     /** The page shown and its neighbours (`KeysetPagerNav`, centred under the table). */
@@ -141,7 +143,7 @@ export function NewsLayout({
             {result ?? (error
                 ? (
                         <>
-                            {items.length > 0 && <NewsTable flashing={flashing} isLoading={false} items={items} liveIds={liveIds} />}
+                            {items.length > 0 && <NewsTable flashing={flashing} isLoading={false} items={items} kindLabel={kindLabel} liveIds={liveIds} />}
                             <ListError error={error} />
                         </>
                     )
@@ -164,7 +166,7 @@ export function NewsLayout({
                                     ? <div className="text-muted-foreground w-full p-6 text-center text-sm">{emptyText}</div>
                                     : !isLoading && items.length === 0
                                             ? <FilteredOut hidden={hiddenByFilters} pager={pager} shown={0} skippedPages={skippedPages} />
-                                            : <NewsTable flashing={flashing} isLoading={isLoading} items={items} liveIds={liveIds} />}
+                                            : <NewsTable flashing={flashing} isLoading={isLoading} items={items} kindLabel={kindLabel} liveIds={liveIds} />}
                                 {!isLoading && items.length > 0 && hiddenByFilters > 0 && (
                                     <FilteredOut hidden={hiddenByFilters} pager={pager} shown={items.length} skippedPages={skippedPages} />
                                 )}

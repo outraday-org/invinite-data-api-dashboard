@@ -154,6 +154,7 @@ export function DropdownSelect<T extends string>({
  */
 export function DropdownMultiSelect<T extends string>({
     "aria-label": ariaLabel,
+    "aria-required": ariaRequired,
     className,
     disabled,
     id,
@@ -163,6 +164,7 @@ export function DropdownMultiSelect<T extends string>({
     value,
 }: {
     "aria-label"?: string;
+    "aria-required"?: boolean;
     "className"?: string;
     "disabled"?: boolean;
     "id"?: string;
@@ -182,6 +184,7 @@ export function DropdownMultiSelect<T extends string>({
             <DropdownMenuTrigger
                 aria-describedby={valueId}
                 aria-label={ariaLabel}
+                aria-required={ariaRequired}
                 className={cn(DROPDOWN_SELECT_TRIGGER_CLASS, className)}
                 data-size="default"
                 data-slot="dropdown-select-trigger"

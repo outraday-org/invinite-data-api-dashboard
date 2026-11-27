@@ -42,6 +42,7 @@ import type {
     SecSearchMode,
     StatementType,
     V2ActiveFilter,
+    V2AlertTypeCatalogResponse,
     V2AnnouncementsResponse,
     V2AnnouncementsSort,
     V2ApiStatus,
@@ -60,6 +61,7 @@ import type {
     V2DisplaySign,
     V2DividendsResponse,
     V2DividendsSort,
+    V2DividendTypeCatalogResponse,
     V2DocumentFigureResponse,
     V2DocumentKindCatalogResponse,
     V2DocumentSectionsResponse,
@@ -108,6 +110,7 @@ import type {
     V2GuidanceBasis,
     V2GuidancePeriodKind,
     V2GuidanceResponse,
+    V2HaltReasonCatalogResponse,
     V2HolderChangesResponse,
     V2HolderChangeType,
     V2HoldersInstruments,
@@ -143,6 +146,7 @@ import type {
     V2Me,
     V2MetricCatalogResponse,
     V2NewsItem,
+    V2NewsKindCatalogResponse,
     V2NewsListResponse,
     V2NewsSearchField,
     V2NewsSearchResponse,
@@ -188,11 +192,13 @@ import type {
 
 import { ApiRequestError, errorDescription, isUnauthorized, rethrowApiError, retrySearchTimeoutOnce, retryUnlessApiError, SEARCH_RETRY_DELAY_MS } from "./errors";
 import {
+    getAlertTypeCatalog,
     getApiBaseUrl,
     getApiLicensing,
     getApiStatus,
     getCompanies,
     getCompanyFiscalPeriods,
+    getDividendTypeCatalog,
     getDocumentKindCatalog,
     getEventTypeCatalog,
     getExchangeCatalog,
@@ -204,6 +210,7 @@ import {
     getFundPositions,
     getFunds,
     getFundWeights,
+    getHaltReasonCatalog,
     getHolderChanges,
     getHolders,
     getInsiderTrade,
@@ -215,6 +222,7 @@ import {
     getMe,
     getMetricCatalog,
     getMyUsage,
+    getNewsKindCatalog,
     getOffering,
     getSectionCatalog,
     getSectorCatalog,
@@ -2464,6 +2472,46 @@ export function useKpiCatalogInfinite(input: { enabled: boolean }) {
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getKpiCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT } }),
         queryKey: ["v2", "catalog", "kpis"],
+        staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+export function useAlertTypeCatalogInfinite(input: { enabled: boolean }) {
+    return useEarningsInfinite<V2AlertTypeCatalogResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getAlertTypeCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT } }),
+        queryKey: ["v2", "catalog", "alert-types"],
+        staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+export function useNewsKindCatalogInfinite(input: { enabled: boolean }) {
+    return useEarningsInfinite<V2NewsKindCatalogResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getNewsKindCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT } }),
+        queryKey: ["v2", "catalog", "news-kinds"],
+        staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+export function useHaltReasonCatalogInfinite(input: { enabled: boolean }) {
+    return useEarningsInfinite<V2HaltReasonCatalogResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getHaltReasonCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT } }),
+        queryKey: ["v2", "catalog", "halt-reasons"],
+        staleTime: REFERENCE_STALE_MS,
+    });
+}
+
+export function useDividendTypeCatalogInfinite(input: { enabled: boolean }) {
+    return useEarningsInfinite<V2DividendTypeCatalogResponse>({
+        enabled: input.enabled,
+        errorMessage: null,
+        fetchPage: (cursor, apiKey) => getDividendTypeCatalog({ data: { apiKey, cursor: cursor ?? undefined, limit: CATALOG_PAGE_LIMIT } }),
+        queryKey: ["v2", "catalog", "dividend-types"],
         staleTime: REFERENCE_STALE_MS,
     });
 }

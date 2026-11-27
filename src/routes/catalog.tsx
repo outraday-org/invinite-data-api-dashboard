@@ -8,13 +8,17 @@ import { z } from "zod";
 import type { OperationId } from "@/lib/api/operations.gen";
 import type {
     StatementType,
+    V2AlertTypeCatalogEntry,
+    V2DividendTypeCatalogEntry,
     V2DocumentKindCatalogEntry,
     V2EventTypeCatalogEntry,
     V2ExchangeCatalogEntry,
     V2FormCatalogEntry,
+    V2HaltReasonCatalogEntry,
     V2KpiCatalogEntry,
     V2MappingRule,
     V2MetricCatalogEntry,
+    V2NewsKindCatalogEntry,
     V2SectionCatalogEntry,
     V2SectorCatalogEntry,
 } from "@/lib/api/types";
@@ -22,6 +26,7 @@ import type { CatalogTab } from "@/lib/reference/catalog";
 
 import { MacroCatalog } from "@/components/macro/macro-catalog";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
+import { ALERT_TYPE_CATALOG_COLUMNS, DIVIDEND_TYPE_CATALOG_COLUMNS, HALT_REASON_CATALOG_COLUMNS, NEWS_KIND_CATALOG_COLUMNS } from "@/components/reference/alert-catalog-columns";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,14 +36,19 @@ import { FilterSelect } from "@/components/ui/filter-select";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { NEWS_CATALOG_GROUPS } from "@/lib/api/operations.gen";
 import {
+    useAlertTypeCatalogInfinite,
+    useDividendTypeCatalogInfinite,
     useDocumentKindCatalogInfinite,
     useEventTypeCatalogInfinite,
     useExchangeCatalogInfinite,
     useFormCatalogInfinite,
+    useHaltReasonCatalogInfinite,
     useKpiCatalogInfinite,
     useMappingRulesInfinite,
     useMetricCatalogInfinite,
+    useNewsKindCatalogInfinite,
     useSectionCatalogInfinite,
     useSectorCatalogInfinite,
 } from "@/lib/api/queries";
@@ -65,8 +75,9 @@ const STATEMENTS = ["income-statement", "balance-sheet", "cash-flow"] as const s
  * `?form=` (sections), `?metric=` (mapping rules: one metric's rules) — those three are API parameters — and `?sector=`
  * (sectors: one sector's industries; KPIs: one KPI catalog sector — both filtered in the page).
  */
-const catalogSearchSchema = z.object({
+export const catalogSearchSchema = z.object({
     form: z.string().trim().regex(/^[A-Z0-9][A-Z0-9 /-]{0,19}$/i).optional().catch(undefined),
+    group: optionalEnum(NEWS_CATALOG_GROUPS),
     metric: z.string().trim().regex(/^[a-z0-9_]{1,120}$/).optional().catch(undefined),
     q: optionalText(120),
     sector: optionalText(120),
@@ -283,10 +294,13 @@ type TableSpec<TRow> = {
 
 /** The table of each tab: columns, the id a catalog link filters by, the texts the filter searches, the operation. */
 export const CATALOG_SPECS = {
+    "alert-types": { columns: ALERT_TYPE_CATALOG_COLUMNS, idOf: row => row.type, noun: "alert types", operationId: "listAlertTypeCatalog", textsOf: row => [row.name, row.description, row.family, row.coverage, ...row.required] } satisfies TableSpec<V2AlertTypeCatalogEntry>,
+    "dividend-types": { columns: DIVIDEND_TYPE_CATALOG_COLUMNS, idOf: row => row.code, noun: "dividend types", operationId: "listDividendTypeCatalog", textsOf: row => [row.name, row.description] } satisfies TableSpec<V2DividendTypeCatalogEntry>,
     "document-kinds": { columns: DOCUMENT_KIND_COLUMNS, idOf: row => row.kind, noun: "document kinds", operationId: "listDocumentKindCatalog", textsOf: row => [row.label, row.category] } satisfies TableSpec<V2DocumentKindCatalogEntry>,
     "event-types": { columns: EVENT_TYPE_COLUMNS, idOf: row => row.event_type, noun: "event types", operationId: "listEventTypeCatalog", textsOf: row => [row.label, row.description] } satisfies TableSpec<V2EventTypeCatalogEntry>,
     "exchanges": { columns: EXCHANGE_COLUMNS, idOf: row => row.mic, noun: "exchanges", operationId: "listExchangeCatalog", textsOf: row => [row.name] } satisfies TableSpec<V2ExchangeCatalogEntry>,
     "forms": { columns: FORM_COLUMNS, idOf: row => row.form, noun: "forms", operationId: "listFormCatalog", textsOf: row => [row.description, row.family] } satisfies TableSpec<V2FormCatalogEntry>,
+    "halt-reasons": { columns: HALT_REASON_CATALOG_COLUMNS, idOf: row => row.code, noun: "halt reasons", operationId: "listHaltReasonCatalog", textsOf: row => [row.name, row.description, ...row.markets] } satisfies TableSpec<V2HaltReasonCatalogEntry>,
     "kpis": { columns: KPI_COLUMNS, idOf: row => row.kpi_key, noun: "KPIs", operationId: "listKpiCatalog", textsOf: row => [row.label, row.sector, row.unit] } satisfies TableSpec<V2KpiCatalogEntry>,
     "mapping-rules": {
         columns: MAPPING_RULE_COLUMNS,
@@ -300,6 +314,7 @@ export const CATALOG_SPECS = {
         },
     } satisfies TableSpec<V2MappingRule>,
     "metrics": { columns: METRIC_COLUMNS, idOf: row => row.metric_id, noun: "metrics", operationId: "listMetricCatalog", textsOf: row => [row.name, row.description, row.unit] } satisfies TableSpec<V2MetricCatalogEntry>,
+    "news-kinds": { columns: NEWS_KIND_CATALOG_COLUMNS, idOf: row => `${row.group}:${row.value}`, noun: "news kinds", operationId: "listNewsKindCatalog", textsOf: row => [row.value, row.group, row.name, row.description] } satisfies TableSpec<V2NewsKindCatalogEntry>,
     "sections": { columns: SECTION_COLUMNS, idOf: row => row.section_id, noun: "sections", operationId: "listSectionCatalog", textsOf: row => [row.form, row.title] } satisfies TableSpec<V2SectionCatalogEntry>,
     "sectors": { columns: SECTOR_COLUMNS, idOf: row => row.industry, noun: "industries", operationId: "listSectorCatalog", textsOf: row => [row.sector] } satisfies TableSpec<SectorIndustryRow>,
 };
@@ -348,8 +363,8 @@ function useCatalogList<TRow>(query: {
     isFetchingNextPage: boolean;
     isFetchNextPageError: boolean;
     isLoading: boolean;
-}): CatalogList<TRow> {
-    useAutoLoadPages(query);
+}, enabled = true): CatalogList<TRow> {
+    useAutoLoadPages(query, { enabled });
 
     const rows = React.useMemo(() => query.data?.pages.flatMap(page => page.data) ?? [], [query.data]);
 
@@ -367,23 +382,33 @@ function useCatalogList<TRow>(query: {
 function CatalogTabBody({ search }: { search: CatalogSearch }) {
     const tab: CatalogTab = search.tab ?? "metrics";
 
+    const alertTypes = useCatalogList(useAlertTypeCatalogInfinite({ enabled: tab === "alert-types" }), tab === "alert-types");
+
+    const newsList = useCatalogList(useNewsKindCatalogInfinite({ enabled: tab === "news-kinds" }), tab === "news-kinds");
+
+    const newsKinds = { ...newsList, rows: search.group ? newsList.rows.filter(row => row.group === search.group) : newsList.rows };
+
+    const haltReasons = useCatalogList(useHaltReasonCatalogInfinite({ enabled: tab === "halt-reasons" }), tab === "halt-reasons");
+
+    const dividendTypes = useCatalogList(useDividendTypeCatalogInfinite({ enabled: tab === "dividend-types" }), tab === "dividend-types");
+
     const statement = search.statement ? [search.statement] : undefined;
 
-    const metrics = useCatalogList(useMetricCatalogInfinite({ enabled: tab === "metrics", statement }));
+    const metrics = useCatalogList(useMetricCatalogInfinite({ enabled: tab === "metrics", statement }), tab === "metrics");
 
-    const sections = useCatalogList(useSectionCatalogInfinite({ enabled: tab === "sections", form: search.form ? [search.form.toUpperCase()] : undefined }));
+    const sections = useCatalogList(useSectionCatalogInfinite({ enabled: tab === "sections", form: search.form ? [search.form.toUpperCase()] : undefined }), tab === "sections");
 
-    const forms = useCatalogList(useFormCatalogInfinite({ enabled: tab === "forms" }));
+    const forms = useCatalogList(useFormCatalogInfinite({ enabled: tab === "forms" }), tab === "forms");
 
-    const eventTypes = useCatalogList(useEventTypeCatalogInfinite({ enabled: tab === "event-types" }));
+    const eventTypes = useCatalogList(useEventTypeCatalogInfinite({ enabled: tab === "event-types" }), tab === "event-types");
 
-    const documentKinds = useCatalogList(useDocumentKindCatalogInfinite({ enabled: tab === "document-kinds" }));
+    const documentKinds = useCatalogList(useDocumentKindCatalogInfinite({ enabled: tab === "document-kinds" }), tab === "document-kinds");
 
-    const rules = useCatalogList(useMappingRulesInfinite({ enabled: tab === "mapping-rules", metricId: search.metric ? [search.metric] : undefined, statement }));
+    const rules = useCatalogList(useMappingRulesInfinite({ enabled: tab === "mapping-rules", metricId: search.metric ? [search.metric] : undefined, statement }), tab === "mapping-rules");
 
-    const exchanges = useCatalogList(useExchangeCatalogInfinite({ enabled: tab === "exchanges" }));
+    const exchanges = useCatalogList(useExchangeCatalogInfinite({ enabled: tab === "exchanges" }), tab === "exchanges");
 
-    const sectorList = useCatalogList(useSectorCatalogInfinite({ enabled: tab === "sectors" }));
+    const sectorList = useCatalogList(useSectorCatalogInfinite({ enabled: tab === "sectors" }), tab === "sectors");
 
     const sectors = React.useMemo(() => {
         const rows = sectorIndustryRows(sectorList.rows);
@@ -391,24 +416,28 @@ function CatalogTabBody({ search }: { search: CatalogSearch }) {
         return { ...sectorList, rows: search.sector ? rows.filter(row => row.sector === search.sector) : rows };
     }, [sectorList, search.sector]);
 
-    const kpiList = useCatalogList(useKpiCatalogInfinite({ enabled: tab === "kpis" }));
+    const kpiList = useCatalogList(useKpiCatalogInfinite({ enabled: tab === "kpis" }), tab === "kpis");
 
     const kpis = React.useMemo(
         () => ({ ...kpiList, rows: search.sector ? kpiList.rows.filter(row => row.sector === search.sector) : kpiList.rows }),
         [kpiList, search.sector],
     );
 
-    const scope = [search.statement, search.form, search.metric, search.sector].filter(Boolean).join("-") || "all";
+    const scope = [search.statement, search.form, search.metric, search.sector, search.group].filter(Boolean).join("-") || "all";
 
     switch (tab) {
+        case "alert-types": return <CatalogTable list={alertTypes} query={search.q} scope={scope} spec={CATALOG_SPECS["alert-types"]} />;
+        case "dividend-types": return <CatalogTable list={dividendTypes} query={search.q} scope={scope} spec={CATALOG_SPECS["dividend-types"]} />;
         case "document-kinds": return <CatalogTable list={documentKinds} query={search.q} scope={scope} spec={CATALOG_SPECS["document-kinds"]} />;
         case "event-types": return <CatalogTable list={eventTypes} query={search.q} scope={scope} spec={CATALOG_SPECS["event-types"]} />;
         case "exchanges": return <CatalogTable list={exchanges} query={search.q} scope={scope} spec={CATALOG_SPECS.exchanges} />;
         case "forms": return <CatalogTable list={forms} query={search.q} scope={scope} spec={CATALOG_SPECS.forms} />;
+        case "halt-reasons": return <CatalogTable list={haltReasons} query={search.q} scope={scope} spec={CATALOG_SPECS["halt-reasons"]} />;
         case "kpis": return <CatalogTable list={kpis} query={search.q} scope={scope} spec={CATALOG_SPECS.kpis} />;
         case "macro": return <MacroCatalog filter={search.q} />;
         case "mapping-rules": return <CatalogTable list={rules} query={search.q} scope={scope} spec={CATALOG_SPECS["mapping-rules"]} />;
         case "metrics": return <CatalogTable list={metrics} query={search.q} scope={scope} spec={CATALOG_SPECS.metrics} />;
+        case "news-kinds": return <CatalogTable list={newsKinds} query={search.q} scope={scope} spec={CATALOG_SPECS["news-kinds"]} />;
         case "sections": return <CatalogTable list={sections} query={search.q} scope={scope} spec={CATALOG_SPECS.sections} />;
         case "sectors": return <CatalogTable list={sectors} query={search.q} scope={scope} spec={CATALOG_SPECS.sectors} />;
     }
@@ -472,12 +501,12 @@ function CatalogPage() {
     return (
         <PageContainer>
             <PageHeader
-                description="The reference lists behind the Data API: what each standardized metric means and how it is mapped from filed concepts, the sections of each SEC form, the forms, event types, investor-document kinds, exchanges, sectors and the KPIs each sector's series follow."
+                description="The reference lists behind the Data API: what each standardized metric means and how it is mapped from filed concepts, the sections of each SEC form, the forms, event types, investor-document kinds, exchanges, sectors, KPIs, alert types, news vocabulary, halt reasons and dividend types."
                 title="Catalog"
             />
             <Tabs
                 // A tab change keeps the text filter but drops the other tab's API filters.
-                onValueChange={value => onChange({ form: undefined, metric: undefined, sector: undefined, statement: undefined, tab: value === "metrics" ? undefined : value as CatalogTab })}
+                onValueChange={value => onChange({ form: undefined, group: undefined, metric: undefined, sector: undefined, statement: undefined, tab: value === "metrics" ? undefined : value as CatalogTab })}
                 value={tab}
             >
                 <TabsList aria-label="Catalog" className={WRAPPING_TABS_LIST_CLASS} variant="line">
@@ -485,12 +514,13 @@ function CatalogPage() {
                 </TabsList>
             </Tabs>
             <FilterBar
-                activeCount={[search.q, search.statement, search.form, search.metric, search.sector].filter(value => value !== undefined).length}
-                onReset={() => onChange({ form: undefined, metric: undefined, q: undefined, sector: undefined, statement: undefined })}
+                activeCount={[search.q, search.statement, search.form, search.metric, search.sector, search.group].filter(value => value !== undefined).length}
+                onReset={() => onChange({ form: undefined, group: undefined, metric: undefined, q: undefined, sector: undefined, statement: undefined })}
             >
                 <FilterField label="Filter" span={2}>
                     {id => <DebouncedInput aria-label="Filter the catalog" className="w-full" id={id} onCommit={q => onChange({ q: q || undefined })} placeholder="Filter by name, id or text" value={search.q ?? ""} />}
                 </FilterField>
+                {tab === "news-kinds" && <FilterField label="Group">{id => <FilterSelect aria-label="News vocabulary group" className="w-full" id={id} onValueChange={group => onChange({ group: group === ALL ? undefined : group })} options={[{ label: "Every group", value: ALL }, ...NEWS_CATALOG_GROUPS.map(group => ({ label: group.replaceAll("_", " "), value: group }))]} value={search.group ?? ALL} />}</FilterField>}
                 {(tab === "metrics" || tab === "mapping-rules") && (
                     <FilterField label="Statement">
                         {id => <FilterSelect aria-label="Statement" className="w-full" id={id} onValueChange={value => onChange({ statement: value === ALL ? undefined : value })} options={STATEMENT_OPTIONS} value={search.statement ?? ALL} />}
