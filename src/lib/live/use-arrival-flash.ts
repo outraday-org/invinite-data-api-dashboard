@@ -18,59 +18,54 @@ export function useArrivalFlash<TRow>(rows: ReadonlyArray<TRow>, options: {
 }): ReadonlySet<string> {
     const { arrivedAt, enabled, idOf, ready } = options;
 
-    const [flashing, setFlashing] = useState<ReadonlySet<string>>(() => new Set());
+    // A null expiry records an arrival seen while paused or before the prefill settled.
+    const [expiries, setExpiries] = useState<ReadonlyMap<string, null | number>>(() => new Map());
 
-    // Arrivals already handled (flashed, or seen before `ready`): each flashes at most once.
-    const seen = useRef(new Set<string>());
+    const [now, setNow] = useState(() => Date.now());
 
-    const timers = useRef(new Set<ReturnType<typeof setTimeout>>());
+    const timers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+
+    let updated: Map<string, null | number> | undefined;
+
+    for (const row of rows) {
+        const at = arrivedAt(row);
+
+        const id = idOf(row);
+
+        if (at === null || expiries.has(id)) continue;
+
+        updated ??= new Map(expiries);
+
+        const expiry = Date.parse(at) + ARRIVAL_FLASH_MS;
+
+        updated.set(id, ready && enabled && expiry > Date.now() ? expiry : null);
+    }
+
+    if (updated) setExpiries(updated);
+
+    const flashing = new Set<string>();
+
+    for (const [id, expiry] of updated ?? expiries) {
+        if (expiry !== null && expiry > now) flashing.add(id);
+    }
 
     useEffect(() => {
-        const schedule = (delay: number, run: () => void) => {
-            const timer = setTimeout(() => {
-                timers.current.delete(timer);
+        for (const [id, expiry] of expiries) {
+            if (expiry === null || timers.current.has(id)) continue;
 
-                run();
-            }, delay);
-
-            timers.current.add(timer);
-        };
-
-        const now = Date.now();
-
-        for (const row of rows) {
-            const at = arrivedAt(row);
-
-            if (at === null) continue;
-
-            const id = idOf(row);
-
-            if (seen.current.has(id)) continue;
-
-            seen.current.add(id);
-
-            const left = ARRIVAL_FLASH_MS - (now - Date.parse(at));
-
-            if (!ready || !enabled || !(left > 0)) continue;
-
-            // Set from timer callbacks (never in the effect body): on, on the next tick; off, when its time is up.
-            schedule(0, () => setFlashing(current => new Set([id, ...current])));
-
-            schedule(left, () => setFlashing((current) => {
-                const next = new Set(current);
-
-                next.delete(id);
-
-                return next;
-            }));
+            timers.current.set(id, setTimeout(() => {
+                setNow(Date.now());
+            }, Math.max(0, expiry - Date.now())));
         }
-    }, [arrivedAt, enabled, idOf, ready, rows]);
+    }, [expiries]);
 
     useEffect(() => {
         const pending = timers.current;
 
         return () => {
-            for (const timer of pending) clearTimeout(timer);
+            for (const timer of pending.values()) clearTimeout(timer);
+
+            pending.clear();
         };
     }, []);
 
