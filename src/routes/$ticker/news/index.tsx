@@ -13,6 +13,7 @@ import { ExportMenu } from "@/components/api/export-menu";
 import { LIVE_NEWS_PLAN_NOTE, LiveStopNotice, LiveToggle } from "@/components/live/live-toggle";
 import { Button } from "@/components/ui/button";
 import { tierLabel } from "@/components/ui/credit-hint";
+import { KeysetPagerNav } from "@/components/ui/keyset-pager";
 import { PageHeader } from "@/components/ui/page-header";
 import { RequestErrorState } from "@/components/ui/request-error-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,10 +26,12 @@ import { AnnouncementsTab } from "./-components/announcements";
 import { NewsEventFilter } from "./-components/news-event-filter";
 import { NEWS_FILTER_RESET, NewsFilters as NewsFilterControls, newsFilterCount } from "./-components/news-filters";
 import { NewsItemPanel } from "./-components/news-item-panel";
-import { NewsPager } from "./-components/news-pager";
 import { NewsSearchBox } from "./-components/news-search";
 import { NewsTable } from "./-components/news-table";
 import { useNewsList } from "./-components/use-news-list";
+
+/** The pager control's state (its label is the page's). */
+type PagerProps = Omit<React.ComponentProps<typeof KeysetPagerNav>, "label">;
 
 export const Route = createFileRoute("/$ticker/news/")({
     component: NewsPage,
@@ -60,7 +63,7 @@ export const NEWS_EXPORT_COLUMNS: ReadonlyArray<ExportColumn<NewsItemPublic>> = 
  * follows. Every row hidden: the page asks the next pages by itself (≤ 10 per filter change, `useNewsList`); once that
  * stops with a next page left, a line saying so and a button to load it. Some hidden = a count under the table.
  */
-function FilteredOut({ hidden, pager, shown, skippedPages }: { hidden: number; pager: React.ComponentProps<typeof NewsPager>; shown: number; skippedPages: number }) {
+function FilteredOut({ hidden, pager, shown, skippedPages }: { hidden: number; pager: PagerProps; shown: number; skippedPages: number }) {
     if (shown > 0) {
         return (
             <div className="text-muted-foreground p-2 text-center text-xs" data-testid="news-filtered-out">
@@ -125,8 +128,8 @@ export function NewsPageView({
     items: ReadonlyArray<NewsItemPublic>;
     liveIds?: ReadonlySet<string>;
     notice?: React.ReactNode;
-    /** The page shown and its neighbours (`NewsPager`, centred under the table). */
-    pager: React.ComponentProps<typeof NewsPager>;
+    /** The page shown and its neighbours (`KeysetPagerNav`, centred under the table). */
+    pager: PagerProps;
     scopeLabel: string;
     /** The news search box (above the filters). */
     search?: React.ReactNode;
@@ -183,7 +186,7 @@ export function NewsPageView({
                                     <FilteredOut hidden={hiddenByFilters} pager={pager} shown={items.length} skippedPages={skippedPages} />
                                 )}
                             </div>
-                            <NewsPager {...pager} />
+                            <KeysetPagerNav {...pager} label="News pages" />
                         </>
                     )}
         </div>

@@ -1100,11 +1100,14 @@ const v2FilingsSchema = z.object({
     items: z.array(z.string().trim().min(1).max(10)).optional(),
     limit: pageLimitSchema,
     sort: z.enum(["filed_at", "-filed_at"] as const satisfies ReadonlyArray<V2FilingsSort>).optional(),
-    /** Ticker of any instrument, a fund key or a company CIK (its primary listing). */
-    symbol: symbolSchema,
+    /**
+     * Ticker of any instrument, a fund key, a company / filer CIK or a proposed ticker; absent = not sent: every filer's
+     * filings, newest first, in the last 7 New York days (Data API 12.3; `meta.form_facet` omitted then).
+     */
+    symbol: symbolSchema.optional(),
 });
 
-/** An instrument's filings by cursor (`meta.form_facet` = its forms with counts) (`sort`: `filed_at` only). */
+/** Filings by cursor: one subject's (`meta.form_facet` = its forms with counts) or, without `symbol`, every filer's. */
 export const getV2Filings = createServerFn({ method: "POST" })
     .inputValidator(v2FilingsSchema)
     .handler(async ({ data }): Promise<V2FilingsResponse> => {

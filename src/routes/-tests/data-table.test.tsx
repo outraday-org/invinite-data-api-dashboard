@@ -241,6 +241,34 @@ describe("DataTable: columns built again on a render", () => {
     });
 });
 
+describe("DataTable: getRowId", () => {
+    const NEW_YEAR: Row = { day: "Jan 1, 2027", name: "New Year" };
+
+    const rowOf = (name: string) => screen.getByText(name).closest("tr");
+
+    it("a row prepended on top keeps the rows below mounted (keyed by id, not index)", () => {
+        const { rerender } = render(table({ getRowId: row => row.name }));
+
+        const christmas = rowOf("Christmas");
+
+        rerender(table({ getRowId: row => row.name, rows: [NEW_YEAR, ...ROWS] }));
+
+        expect(rowOf("Christmas")).toBe(christmas);
+
+        expect(screen.getAllByRole("row")).toHaveLength(4);
+    });
+
+    it("without it rows stay keyed by index (every other table unchanged): a prepended row re-uses the first row's element", () => {
+        const { rerender } = render(table());
+
+        const first = rowOf("Thanksgiving");
+
+        rerender(table({ rows: [NEW_YEAR, ...ROWS] }));
+
+        expect(rowOf("New Year")).toBe(first);
+    });
+});
+
 describe("PageHeader", () => {
     it("an h1 title by default (a global page), the description, the meta line and the actions slot", () => {
         render(<PageHeader actions={<button type="button">Export</button>} description="Cash dividends." meta="31 10-K filings" title="Dividends" />);

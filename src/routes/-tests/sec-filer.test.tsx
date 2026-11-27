@@ -19,7 +19,7 @@ import {
     SecPrivateOfferingsView,
 } from "@/components/sec/sec-filer-views";
 import { ApiRequestError } from "@/lib/api/errors";
-import { V2_FILER_HOLDINGS, V2_FILERS, V2_FILINGS, V2_OFFERINGS } from "@/lib/sec/v2-fixtures";
+import { V2_FILER_HOLDINGS, V2_FILERS, V2_FILING_PRE_IPO, V2_FILINGS, V2_OFFERINGS } from "@/lib/sec/v2-fixtures";
 
 vi.mock("@tanstack/react-router", () => ({
     Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => (
@@ -281,6 +281,28 @@ describe("SecFundView (`expand=fund`)", () => {
 });
 
 describe("SecFilingsView", () => {
+    it("a pre-IPO filer's filings (Data API 12.3: 200 with symbol null) render like any other", () => {
+        render(
+            <SecFilingsView
+                error={null}
+                form={null}
+                hasNextPage={false}
+                isFetchingNextPage={false}
+                isLoading={false}
+                onFormChange={() => undefined}
+                onMore={() => undefined}
+                onOpen={() => undefined}
+                pages={[{ data: [V2_FILING_PRE_IPO, { ...V2_FILING_PRE_IPO, accession: "0002166611-26-000004", form: "S-1/A" }], has_more: false, meta: { coverage: { state: "complete" }, form_facet: [{ count: 2, form: "S-1", newest_filing_date: "2026-11-26" }] }, next_cursor: null }]}
+            />,
+        );
+
+        expect(screen.getAllByRole("row")).toHaveLength(3);
+
+        expect(screen.getByText("S-1/A")).toBeInTheDocument();
+
+        expect(screen.queryByText("null")).toBeNull();
+    });
+
     it("lists the cursor page, filters by the form facet and opens a filing's documents", () => {
         const onOpen = vi.fn();
 

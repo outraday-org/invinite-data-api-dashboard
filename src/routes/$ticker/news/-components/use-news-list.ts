@@ -7,9 +7,9 @@ import type { NewsFilters, NewsSearch } from "@/lib/news/labels";
 
 import { useApiBaseUrl, useNewsPage } from "@/lib/api/queries";
 import { shouldFillPage } from "@/lib/api/use-auto-load-pages";
+import { firstPage, nextPage, pageCursor, pageNumber, pagerFor, previousPage } from "@/lib/keyset-pager";
 import { useLiveNews } from "@/lib/live/use-live-news";
 import { matchesNewsFilters, mergeLiveItems } from "@/lib/news/labels";
-import { firstNewsPage, newsPageCursor, newsPageNumber, newsPagerFor, nextNewsPage, previousNewsPage } from "@/lib/news/pager";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 export const NEWS_PAGE_SIZE = 50;
@@ -58,13 +58,13 @@ export function useNewsList({
     // Previous / Next over the keyset cursor: the visited cursors stack up; any request change is page 1.
     const filterKey = JSON.stringify(listInput);
 
-    const [storedPager, setPager] = React.useState(() => firstNewsPage(filterKey));
+    const [storedPager, setPager] = React.useState(() => firstPage(filterKey));
 
-    const pager = newsPagerFor(storedPager, filterKey);
+    const pager = pagerFor(storedPager, filterKey);
 
-    const page = newsPageNumber(pager);
+    const page = pageNumber(pager);
 
-    const list = useNewsPage({ ...listInput, cursor: newsPageCursor(pager) });
+    const list = useNewsPage({ ...listInput, cursor: pageCursor(pager) });
 
     const fetched = React.useMemo(() => list.data?.data ?? [], [list.data]);
 
@@ -128,7 +128,7 @@ export function useNewsList({
 
         setFilled(state => ({ ...state, pages: state.pages + 1 }));
 
-        setPager(nextNewsPage(pager, nextCursor));
+        setPager(nextPage(pager, nextCursor));
     }, [fill, nextCursor, pager]);
 
     return {
@@ -148,12 +148,12 @@ export function useNewsList({
 
                 setFilled(state => ({ ...state, paused: false }));
 
-                setPager(nextNewsPage(pager, nextCursor));
+                setPager(nextPage(pager, nextCursor));
             },
             onPrevious: () => {
                 setFilled(state => ({ ...state, paused: true }));
 
-                setPager(previousNewsPage(pager));
+                setPager(previousPage(pager));
             },
             page,
         },

@@ -124,6 +124,7 @@ export function DataTable<TRow>({
     emptyText,
     errorState,
     exportConfig,
+    getRowId,
     groupHeading,
     groupOf,
     hasNextPage = false,
@@ -146,6 +147,11 @@ export function DataTable<TRow>({
     errorState?: React.ReactNode;
     /** The "Export" menu above the table (rows as given; columns default to every field, flattened). */
     exportConfig?: ExportConfig<TRow>;
+    /**
+     * A row's stable id (the React key of its row): a row added on top then never re-keys the rows below (their
+     * animation / state stays). Default: the row's index.
+     */
+    getRowId?: (row: TRow) => string;
     /** The heading row of a group (its key and its rows); rendered with `groupOf`. */
     groupHeading?: (group: string, rows: ReadonlyArray<TRow>) => React.ReactNode;
     /**
@@ -170,7 +176,7 @@ export function DataTable<TRow>({
     /** A meta / coverage line in the toolbar, after the count. */
     toolbarMeta?: React.ReactNode;
 }) {
-    const table = useReactTable({ columns, data: rows, getCoreRowModel: getCoreRowModel() });
+    const table = useReactTable({ columns, data: rows, getCoreRowModel: getCoreRowModel(), getRowId: getRowId ? row => getRowId(row) : undefined });
 
     const columnCount = Math.max(1, columns.length);
 

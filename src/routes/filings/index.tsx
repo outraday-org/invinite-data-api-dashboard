@@ -1,32 +1,37 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { createFileRoute, Link } from "@tanstack/react-router";
+import * as React from "react";
 import { z } from "zod";
 
 import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
-import type { ReceivedFiling } from "@/lib/live/live-filings";
-import type { LiveFilingsMode } from "@/lib/live/use-live-filings";
+import type { LatestFilingRow } from "@/lib/live/live-filings";
 
-import { LIVE_FILINGS_PLAN_NOTE, LIVE_NO_KEY_TEXT, LiveStopNotice, LiveToggle } from "@/components/live/live-toggle";
+import { LIVE_FILINGS_PLAN_NOTE, LiveStopNotice, LiveToggle } from "@/components/live/live-toggle";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { SecFilingSearch } from "@/components/sec/sec-filing-search";
+import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { filerCikParam } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
 import { FilterBar, FilterField } from "@/components/ui/filter-bar";
+import { KeysetPagerNav } from "@/components/ui/keyset-pager";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
 import { Section } from "@/components/ui/section";
+import { useLatestFilingsPage } from "@/lib/api/queries";
 import { DASH, formatDay, formatInstant } from "@/lib/format";
+import { firstPage, nextPage, pageCursor, pageNumber, pagerFor, previousPage } from "@/lib/keyset-pager";
 import { titleHead } from "@/lib/layout";
-import { commaList, hasLiveForm } from "@/lib/live/live-filings";
+import { commaList, hasLiveForm, mergeLatest } from "@/lib/live/live-filings";
+import { useArrivalFlash } from "@/lib/live/use-arrival-flash";
 import { IN_PLACE, optionalDay, optionalFlag, optionalText } from "@/lib/url-state";
 import { useLiveFilingsFeed } from "@/routes/$ticker/filings/-components/use-live-filings-feed";
 
 /**
- * `?paused=true` (the live feed off; on by default), `?form=` (the live list's forms, comma list, filtered in the
- * browser), the market-wide search's filters `?searchForm=&searchItem=&filedFrom=&filedTo=` (applied on Search) and
+ * `?paused=true` (the live feed off; on by default), `?form=` (the list's forms, comma list: sent to `/v1/filings` as
+ * `form` and applied to the live frames in the browser), the market-wide search's filters `?searchForm=&searchItem=&filedFrom=&filedTo=` (applied on Search) and
  * `?source=<version id>&block=<block id>` (a hit's cited passage).
  */
 /** `?searchItem=7`: the router reads a bare number as a number (JSON search values); a section id is text. */
@@ -51,40 +56,53 @@ export const Route = createFileRoute("/filings/")({
 
 const linkClass = "underline-offset-4 hover:underline";
 
-/** The filer of a live filing: its instrument's filings when it has a ticker, else its filer page. */
-function LiveFiler({ filing }: { filing: ReceivedFiling["filing"] }) {
-    if (filing.ticker) {
+/** The filer of a row: its instrument's filings when it has a ticker, else its filer page by name, else by CIK. */
+function LatestFiler({ row }: { row: LatestFilingRow }) {
+    const cik = filerCikParam(row.cik);
+
+    if (row.ticker) {
         return (
-            <Link className={linkClass} params={{ ticker: filing.ticker }} to="/$ticker/filings">
-                <Badge variant="secondary">{filing.ticker}</Badge>
-            </Link>
+            <span className="flex min-w-0 items-center gap-2">
+                <Link className={linkClass} params={{ ticker: row.ticker }} to="/$ticker/filings">
+                    <Badge variant="secondary">{row.ticker}</Badge>
+                </Link>
+                {row.filerName && <span className="text-muted-foreground truncate">{row.filerName}</span>}
+            </span>
         );
     }
 
-    const cik = filerCikParam(filing.cik);
+    if (!cik) return <span>{DASH}</span>;
 
-    return cik ? <Link className={linkClass} params={{ cik }} to="/sec/$cik">{`CIK ${cik}`}</Link> : <span>{filing.cik}</span>;
+    return <Link className={linkClass} params={{ cik }} to="/sec/$cik">{row.filerName ?? `CIK ${cik}`}</Link>;
 }
 
-const LIVE_COLUMNS: Array<ColumnDef<ReceivedFiling>> = [
-    { cell: ({ row }) => <span className="tabular-nums whitespace-nowrap">{formatInstant(row.original.receivedAt)}</span>, header: "Arrived", id: "received" },
-    { cell: ({ row }) => <span className="font-semibold">{row.original.filing.form_type}</span>, header: "Form", id: "form" },
-    { cell: ({ row }) => <LiveFiler filing={row.original.filing} />, header: "Filer", id: "filer" },
+const LATEST_COLUMNS: Array<ColumnDef<LatestFilingRow>> = [
+    {
+        // The acceptance instant when known: an after-hours filing carries the next business day as its filing date.
+        cell: ({ row }) => (
+            <span className="tabular-nums whitespace-nowrap" title={`Filing date ${formatDay(row.original.filedDay)}`}>
+                {row.original.filedAt ? formatInstant(row.original.filedAt) : formatDay(row.original.filedDay)}
+            </span>
+        ),
+        header: "Filed",
+        id: "filed",
+    },
+    { cell: ({ row }) => <span className="font-semibold">{row.original.form}</span>, header: "Form", id: "form" },
+    { cell: ({ row }) => <LatestFiler row={row.original} />, header: "Filer", id: "filer" },
     {
         cell: ({ row }) => {
-            const proposed = row.original.filing.proposed_symbols ?? [];
+            const proposed = row.original.proposedTickers;
 
-            return proposed.length > 0 ? <span title="Tickers the registration statement proposes">{proposed.map(symbol => symbol.symbol).join(", ")}</span> : DASH;
+            return proposed.length > 0 ? <span title="Tickers the registration statement proposes">{proposed.join(", ")}</span> : DASH;
         },
         header: "Proposed tickers",
         id: "proposed",
     },
-    { cell: ({ row }) => <span className="tabular-nums whitespace-nowrap">{formatDay(row.original.filing.filing_date)}</span>, header: "Filed", id: "filed" },
-    { cell: ({ row }) => <span className="text-muted-foreground tabular-nums">{formatDay(row.original.filing.period_end)}</span>, header: "Period", id: "period" },
+    { cell: ({ row }) => <span className="text-muted-foreground tabular-nums">{formatDay(row.original.periodEnd)}</span>, header: "Period", id: "period" },
     {
         cell: ({ row }) => (
-            <Link className="text-primary hover:underline" params={{ accession: row.original.filing.accession_number }} to="/filings/$accession">
-                {row.original.filing.accession_number}
+            <Link className="text-primary hover:underline" params={{ accession: row.original.accession }} to="/filings/$accession">
+                {row.original.accession}
             </Link>
         ),
         header: "Filing",
@@ -92,29 +110,62 @@ const LIVE_COLUMNS: Array<ColumnDef<ReceivedFiling>> = [
     },
 ];
 
-/** The live list (pure): what arrived since the page opened, the state of the socket, or why it stopped. */
-export function LiveFilingsView({ filings, mode, paused }: { filings: ReadonlyArray<ReceivedFiling>; mode: LiveFilingsMode; paused: boolean }) {
-    let emptyText = "Nothing has arrived since this page opened.";
+/** The text of an empty list (no REST row, no live row). */
+export function latestEmptyText(forms: ReadonlyArray<string>, paused: boolean) {
+    const none = forms.length > 0 ? `No ${forms.join(", ")} filings in the last 7 days.` : "No filings in the last 7 days.";
 
-    if (paused) emptyText = "The live feed is off.";
-    else if (mode === "no_key") emptyText = LIVE_NO_KEY_TEXT;
-    else if (mode !== "live") emptyText = "Connecting to the live feed…";
+    return paused ? `${none} The live feed is off.` : none;
+}
 
+const rowIdOf = (row: LatestFilingRow) => row.accession;
+
+/**
+ * The latest filings (pure): the REST page with the live rows merged on top (page 1), a flashing row marked
+ * `row-arrive`, the REST error above the table (live rows stay), skeleton rows while page 1 loads and nothing arrived,
+ * the keyset pager under it (hidden while there is one page).
+ */
+export function LatestFilingsView({
+    error,
+    flashing,
+    forms,
+    isLoading,
+    pager,
+    paused,
+    rows,
+}: {
+    error: unknown;
+    flashing: ReadonlySet<string>;
+    forms: ReadonlyArray<string>;
+    isLoading: boolean;
+    pager: Omit<React.ComponentProps<typeof KeysetPagerNav>, "label">;
+    paused: boolean;
+    rows: Array<LatestFilingRow>;
+}) {
     return (
-        <DataTable
-            columns={LIVE_COLUMNS}
-            emptyText={emptyText}
-            exportConfig={{ dataset: "live-filings", scope: "sec" }}
-            isLoading={false}
-            rows={[...filings]}
-        />
+        <div className="flex min-w-0 flex-col gap-2">
+            {error ? <SecReadinessNotice error={error} operationId="listFilings" title="Failed to load the latest filings" /> : null}
+            <DataTable
+                columns={LATEST_COLUMNS}
+                emptyIsGenuine={!error}
+                emptyText={latestEmptyText(forms, paused)}
+                exportConfig={{ dataset: "latest-filings", scope: "sec" }}
+                getRowId={rowIdOf}
+                isLoading={isLoading}
+                rowClassName={row => (flashing.has(row.accession) ? "row-arrive" : undefined)}
+                rows={rows}
+            />
+            <KeysetPagerNav {...pager} label="Filings pages" />
+        </div>
     );
 }
 
+const arrivedAtOf = (row: LatestFilingRow) => row.arrivedAt;
+
 /**
- * Every filer's SEC filings (`/filings`). The API lists filings per instrument only (`/v1/filings` needs `symbol`), so
- * this page has no REST list: it shows the filings that arrive over the stream's `filings` channel since it opened, and
- * a full-text search across every filer (`/v1/search/filings` without `symbol`; its cap is stated).
+ * Every filer's SEC filings (`/filings`): the newest filings of every filer (`/v1/filings` without `symbol`, Data API
+ * 12.3: the last 7 New York days, newest first, one page per keyset cursor), the filings arriving over the stream's
+ * `filings` channel on top of page 1 (once per accession; a row that arrives after the list loaded flashes), and a
+ * full-text search across every filer (`/v1/search/filings` without `symbol`; its cap is stated).
  */
 function FilingsPage() {
     const search = Route.useSearch();
@@ -125,11 +176,37 @@ function FilingsPage() {
 
     const paused = search.paused === true;
 
-    const live = useLiveFilingsFeed({ enabled: !paused, onStopped: () => onChange({ paused: true }) });
-
     const forms = commaList(search.form);
 
+    // A changed form filter starts a new list at page 1.
+    const filterKey = forms.join(",");
+
+    const [storedPager, setPager] = React.useState(() => firstPage(filterKey));
+
+    const pager = pagerFor(storedPager, filterKey);
+
+    const page = pageNumber(pager);
+
+    const list = useLatestFilingsPage({ cursor: pageCursor(pager), form: forms });
+
+    // The stream replays nothing: after a reconnect page 1 is read again.
+    const live = useLiveFilingsFeed({
+        enabled: !paused,
+        onReconnected: () => {
+            if (page === 1) void list.refetch();
+        },
+        onStopped: () => onChange({ paused: true }),
+    });
+
     const shown = live.filings.filter(({ filing }) => hasLiveForm(filing, forms));
+
+    const listed = list.data?.data;
+
+    const rows = mergeLatest(shown, listed ?? [], page);
+
+    const flashing = useArrivalFlash(rows, { arrivedAt: arrivedAtOf, enabled: !paused, idOf: rowIdOf, ready: list.data !== null || list.error !== null });
+
+    const nextCursor = list.data?.next_cursor ?? null;
 
     const secTarget: null | SecPanelTarget = search.source && search.block
         ? { blockId: search.block, kind: "citation", title: "SEC filing", versionId: search.source }
@@ -152,20 +229,17 @@ function FilingsPage() {
                         }}
                     />
                 )}
-                description="New SEC filings of every filer as they arrive, and a full-text search across every filer's documents."
+                description="The newest SEC filings of every filer, new ones live on top, and a full-text search across every filer's documents."
                 title="Filings"
             />
 
-            <Section
-                description="Only the filings that arrived since this page opened: the API lists filings per instrument, so there is no market-wide list to load. A filer's history is on its instrument or filer page."
-                title="Live filings"
-            >
+            <Section description="The newest filings of every filer, newest first; new ones arrive live on top." title="Latest filings">
                 <LiveStopNotice planNote={LIVE_FILINGS_PLAN_NOTE} stop={live.stop} />
                 <FilterBar activeCount={forms.length > 0 ? 1 : 0} onReset={() => onChange({ form: undefined })}>
                     <FilterField label="Forms">
                         {id => (
                             <DebouncedInput
-                                aria-label="Live filings by form"
+                                aria-label="Latest filings by form"
                                 className="w-full"
                                 id={id}
                                 onCommit={value => onChange({ form: value.trim() || undefined })}
@@ -175,12 +249,28 @@ function FilingsPage() {
                         )}
                     </FilterField>
                 </FilterBar>
-                {forms.length > 0 && (
+                {forms.length > 0 && live.filings.length > 0 && (
                     <div className="text-muted-foreground text-xs" role="status">
-                        {`Showing ${shown.length} of ${live.filings.length} arrived filings (forms ${forms.join(", ")}, filtered in the browser).`}
+                        {`Live: showing ${shown.length} of ${live.filings.length} arrived filings (forms ${forms.join(", ")}, filtered in the browser).`}
                     </div>
                 )}
-                <LiveFilingsView filings={shown} mode={live.mode} paused={paused} />
+                <LatestFilingsView
+                    error={list.error}
+                    flashing={flashing}
+                    forms={forms}
+                    isLoading={list.isLoading}
+                    pager={{
+                        hasNext: nextCursor !== null,
+                        isFetching: list.isFetching,
+                        onNext: () => {
+                            if (nextCursor) setPager(nextPage(pager, nextCursor));
+                        },
+                        onPrevious: () => setPager(previousPage(pager)),
+                        page,
+                    }}
+                    paused={paused}
+                    rows={rows}
+                />
             </Section>
 
             <Section

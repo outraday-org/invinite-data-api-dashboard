@@ -1276,6 +1276,35 @@ export function useV2FilingsInfinite(input: V2FilingsInput) {
     });
 }
 
+/** Rows of one page of the market-wide filings list (`/filings`). */
+export const LATEST_FILINGS_PAGE = 100;
+
+/** The API answers the market-wide list from a 30-s cache: a page is stale after that, so a tab shown again refetches it. */
+const LATEST_FILINGS_STALE_MS = 30 * 1000;
+
+/**
+ * One page of every filer's filings (`GET /v1/filings` without `symbol`, Data API 12.3), newest first, at the API's
+ * keyset cursor (`null` = page 1), like `useNewsPage`. No window is sent: the API's default (the last 7 New York days,
+ * open end) makes page 1 the newest filings. Status-aware (`errorMessage: null`): the page renders the error state.
+ * React Query's focus refetch re-reads a stale page when the tab is shown again; no polling.
+ */
+export function useLatestFilingsPage(input: { cursor: null | string; form: ReadonlyArray<string> }) {
+    return useEarningsQuery<V2FilingsResponse>({
+        enabled: true,
+        errorMessage: null,
+        load: apiKey => getV2Filings({
+            data: {
+                apiKey,
+                cursor: input.cursor ?? undefined,
+                form: input.form.length > 0 ? [...input.form] : undefined,
+                limit: LATEST_FILINGS_PAGE,
+            },
+        }),
+        queryKey: ["v2", "filings", "latest", key(input.form), input.cursor ?? ""],
+        staleTime: LATEST_FILINGS_STALE_MS,
+    });
+}
+
 /** One filing's manifest with its expansions; idle for a null accession (the dialog is closed). */
 export function useV2Filing(accession: null | string, expand: ReadonlyArray<V2FilingExpand> = []) {
     return useEarningsQuery<V2FilingDetailResponse>({

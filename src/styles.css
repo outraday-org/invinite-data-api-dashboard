@@ -223,6 +223,28 @@
     }
 }
 
+/* A row that just arrived over a live feed (`/filings`, `useArrivalFlash`): a quick flicker in the primary colour
+   (bright → dim → bright in the first ~0.6 s), then a fade to transparent by 2.5 s. No fill mode: the animated value
+   applies only while it runs, then the row's own classes (its hover fill included) apply again, even before the class
+   is removed. With reduced motion (the rule below cuts animations to 0.01 ms) a static tint for the same 2.5 s. */
+@keyframes filing-arrive {
+    0%   { background-color: color-mix(in oklch, var(--primary) 35%, transparent); }
+    12%  { background-color: color-mix(in oklch, var(--primary) 12%, transparent); }
+    24%  { background-color: color-mix(in oklch, var(--primary) 30%, transparent); }
+    100% { background-color: transparent; }
+}
+
+.row-arrive {
+    animation: filing-arrive 2.5s ease-out 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .row-arrive {
+        animation: none;
+        background-color: color-mix(in oklch, var(--primary) 15%, transparent);
+    }
+}
+
 /* Animations and transitions off for a reader who asks for less motion (tw-animate-css included). Near-zero rather
    than none, so Base UI's exit animations still end. */
 @media (prefers-reduced-motion: reduce) {
