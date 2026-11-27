@@ -1,25 +1,11 @@
 import type { SegmentedFinancialsSegmentId } from "@/lib/api/types";
 
 import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { SEGMENT_METRICS } from "@/lib/financials/segment-metrics";
 
 const segmentOptions: Array<{ label: string; value: "all" | SegmentedFinancialsSegmentId }> = [
     { label: "All Segments", value: "all" },
-    { label: "Revenue (Product)", value: "seg_revenue_product" },
-    { label: "Revenue (Geographic)", value: "seg_revenue_geographic" },
-    { label: "Revenue (Business Segment)", value: "seg_revenue_business_segment" },
-    { label: "Cost of Revenue (Business Segment)", value: "seg_cost_of_revenue_business_segment" },
-    {
-        label: "R&D Expenses (Business Segment)",
-        value: "seg_research_and_development_expenses_business_segment",
-    },
-    {
-        label: "Selling & Marketing Expenses (Business Segment)",
-        value: "seg_selling_and_marketing_expenses_business_segment",
-    },
-    {
-        label: "G&A Expenses (Business Segment)",
-        value: "seg_general_and_administrative_expenses_business_segment",
-    },
+    ...SEGMENT_METRICS,
 ];
 
 /** `?segment=` as a segment id of the picker ("all" for none or an unknown value). */

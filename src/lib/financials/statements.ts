@@ -217,11 +217,16 @@ export function hasStatement(rows: ReadonlyArray<V2StatementPeriod>, statement: 
 
 /** One line of a segments table. */
 export type SegmentLine = {
+    currency: null | string;
     /** The axis / member pairs in words ("Product · IPhone"). */
     details: string;
     key: string;
+    legacyChartKey: string | undefined;
     metricId: string;
     segmentId: string;
+    sourceMember: null | string;
+    sourceRows: Record<string, string | undefined>;
+    viaLink: boolean;
     values: Record<string, number | undefined>;
 };
 
@@ -239,31 +244,80 @@ export function dimensionsText(dimensions: V2Segment["dimensions"]) {
     return dimensions.map(d => xbrlNameText(d.member)).filter(Boolean).join(" · ");
 }
 
+/** Complete target scope, independent of dimension-array ordering; namespaces remain meaningful off follow mode. */
+export function segmentDimensionsKey(dimensions: V2Segment["dimensions"]) {
+    return JSON.stringify(dimensions.map(d => [d.axis, d.member]).sort((a, b) => JSON.stringify(a).localeCompare(JSON.stringify(b))));
+}
+
+/** A followed source row can appear under several targets; a repeated cursor-page row is still only one fact. */
+export function segmentFactKey(segment: V2Segment): string {
+    const target = segmentDimensionsKey(segment.dimensions);
+
+    if (segment.source_row_id) return JSON.stringify([segment.company.cik, segment.source_row_id, target]);
+
+    return JSON.stringify([
+        segment.company.cik, segment.metric_id, segment.segment_id, target, segment.period,
+        segment.fiscal_year, segment.fiscal_quarter, segment.period_start, segment.period_end,
+        segment.currency ?? null, segment.value,
+    ]);
+}
+
 /**
- * The segments table: one line per metric × segment × dimensions, one value per period label (equal keys of a period
- * add up, as v1's table did).
+ * One line per metric × target scope × source member × currency. Followed merge components never sum or overwrite
+ * each other. Repeated page facts are de-duplicated; any remaining same-period identity collision gets its own line.
  */
 export function segmentLines(segments: ReadonlyArray<V2Segment>): Array<SegmentLine> {
     const lines = new Map<string, SegmentLine>();
 
-    for (const segment of segments) {
-        const dims = segment.dimensions.map(d => `${d.axis}=${d.member}`).join("|");
+    const seen = new Set<string>();
 
-        const key = [segment.metric_id, segment.segment_id, dims].join("::");
+    for (const segment of segments) {
+        const identity = segmentFactKey(segment);
+
+        if (seen.has(identity)) continue;
+
+        seen.add(identity);
+
+        const label = periodLabel(segment);
+
+        const viaLink = segment.via_link === true;
+
+        const sourceMember = viaLink ? segment.source_member ?? null : null;
+
+        const baseKey = JSON.stringify([
+            segment.metric_id, segment.segment_id, segmentDimensionsKey(segment.dimensions),
+            viaLink, sourceMember, segment.currency ?? null,
+        ]);
+
+        const key = lines.get(baseKey)?.values[label] === undefined ? baseKey : JSON.stringify([baseKey, identity]);
 
         let line = lines.get(key);
 
         if (!line) {
-            line = { details: dimensionsText(segment.dimensions), key, metricId: segment.metric_id, segmentId: segment.segment_id, values: {} };
+            const legacyDimensions = segment.dimensions.map(d => `${d.axis}=${d.member}`).join("|");
+
+            line = {
+                currency: segment.currency ?? null,
+                details: dimensionsText(segment.dimensions),
+                key,
+                legacyChartKey: viaLink ? undefined : `${segment.metric_id}::${segment.segment_id}::${legacyDimensions}`,
+                metricId: segment.metric_id,
+                segmentId: segment.segment_id,
+                sourceMember,
+                sourceRows: {},
+                values: {},
+                viaLink,
+            };
 
             lines.set(key, line);
         }
 
-        const label = periodLabel(segment);
+        line.values[label] = segment.value;
 
-        line.values[label] = (line.values[label] ?? 0) + segment.value;
+        line.sourceRows[label] = segment.source_row_id;
     }
 
     return [...lines.values()].sort((a, b) =>
-        a.metricId.localeCompare(b.metricId) || a.segmentId.localeCompare(b.segmentId) || a.details.localeCompare(b.details));
+        a.metricId.localeCompare(b.metricId) || a.segmentId.localeCompare(b.segmentId) || a.details.localeCompare(b.details)
+        || Number(a.viaLink) - Number(b.viaLink) || (a.sourceMember ?? "").localeCompare(b.sourceMember ?? "") || a.key.localeCompare(b.key));
 }
