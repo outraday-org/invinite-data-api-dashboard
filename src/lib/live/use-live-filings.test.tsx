@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LIVE_FILING } from "@/lib/sec/filing-detail-fixtures";
 
+import { resetStreamConnections } from "./stream-socket";
 import { useLiveFilings } from "./use-live-filings";
 
 /** A socket the test drives: `open`, `message`, `close` by hand. */
@@ -38,6 +39,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+    resetStreamConnections();
+
     vi.unstubAllGlobals();
 });
 

@@ -7597,10 +7597,10 @@ export interface components {
             /** @description The registration: its Securities Act file number (333-…), else the accession of its first registration statement */
             track_key: string;
             /**
-             * @description S-1 (domestic) or F-1 (foreign issuer)
+             * @description Registration family: S-1 (including DRS), F-1, S-11, Form 10, S-4 (including F-4), or Regulation A
              * @enum {string}
              */
-            form_family: "F-1" | "S-1";
+            form_family: "1-A" | "10-12" | "F-1" | "S-1" | "S-4" | "S-11";
             /**
              * @description registered → price_range (an amendment states the range) → exchange_approved (8-A12B / exchange certification) → effective (SEC EFFECT) → priced (final prospectus 424B4 / 424B1) → trading (a listing appeared); withdrawn (RW) ends a track
              * @enum {string}
@@ -7751,8 +7751,8 @@ export interface components {
             primary_exchange: null | string;
             /** @description Security description; null when Massive has no value */
             security_description: null | string;
-            /** @description Security type */
-            security_type: string;
+            /** @description Security type; null when the listing calendar has no value */
+            security_type: null | string;
             /** @description Shares outstanding; null when Massive has no value */
             shares_outstanding: null | number;
             /** @description Ticker symbol */
@@ -33376,113 +33376,64 @@ export interface operations {
                      * @example {
                      *       "data": [
                      *         {
-                     *           "ipo_id": "r-0002130357-333-299633",
-                     *           "company": {
-                     *             "cik": "0002130357",
-                     *             "ticker": null
-                     *           },
-                     *           "issuer_name": "Anthropic, PBC",
-                     *           "stage": "price_range",
+                     *           "ipo_id": "l-EUEV",
+                     *           "company": null,
+                     *           "issuer_name": "Aiways Automobile Europe GmbH",
+                     *           "stage": "announced",
                      *           "is_spac": false,
-                     *           "exchange": "XNAS",
+                     *           "exchange": null,
                      *           "proposed_symbols": [
-                     *             "ANT"
+                     *             "EUEV"
                      *           ],
-                     *           "price_range_low": 70,
-                     *           "price_range_high": 78,
+                     *           "price_range_low": null,
+                     *           "price_range_high": null,
                      *           "final_price": null,
-                     *           "shares_offered": 825000000,
-                     *           "total_offer_size": 66000000000,
+                     *           "shares_offered": null,
+                     *           "total_offer_size": null,
                      *           "currency": "USD",
-                     *           "listing_date": "2026-11-19",
+                     *           "listing_date": "2026-11-24",
                      *           "sources": {
-                     *             "registration": {
-                     *               "cik": "0002130357",
-                     *               "company_name": "Anthropic, PBC",
-                     *               "track_key": "333-299633",
-                     *               "form_family": "S-1",
-                     *               "stage": "price_range",
-                     *               "is_spac": false,
-                     *               "proposed_symbols": [
-                     *                 {
-                     *                   "symbol": "ANT",
-                     *                   "exchange": "XNAS",
-                     *                   "security_class": "common",
-                     *                   "source": "regex",
-                     *                   "ipo_calendar_match": true
-                     *                 }
-                     *               ],
-                     *               "exchange": null,
-                     *               "price_range_low": "70.0000",
-                     *               "price_range_high": "78.0000",
-                     *               "shares_offered": 825000000,
-                     *               "final_offer_price": null,
-                     *               "final_shares_offered": null,
-                     *               "first_public_at": "2026-10-26T13:00:11.000Z",
-                     *               "price_range_at": "2026-11-10T11:29:24.000Z",
-                     *               "exchange_approved_at": null,
-                     *               "effective_at": null,
-                     *               "priced_at": null,
-                     *               "withdrawn_at": null,
-                     *               "first_trade_date": null,
-                     *               "filings": [
-                     *                 {
-                     *                   "accession_number": "0001628280-26-067168",
-                     *                   "form_type": "S-1",
-                     *                   "signal": "registration",
-                     *                   "filed_at": "2026-10-26T13:00:11.000Z",
-                     *                   "filing_date": "2026-10-26",
-                     *                   "html_url": "https://storage.invinite.com/filing_htmls/2130357_0001628280-26-067168_S-1_2026-10-26.html"
-                     *                 }
-                     *               ],
-                     *               "ipo_pending": {
-                     *                 "status": "open",
-                     *                 "open_reason": "ipo_calendar_match",
-                     *                 "opened_at": "2026-11-03T20:36:57.566Z",
-                     *                 "closed_at": null,
-                     *                 "close_reason": null,
-                     *                 "exchange": null
-                     *               }
-                     *             },
+                     *             "registration": null,
                      *             "listing": {
-                     *               "listing_date": "2026-11-19",
-                     *               "announced_date": "2026-10-26",
+                     *               "listing_date": "2026-11-24",
+                     *               "announced_date": "2026-11-10",
                      *               "currency_code": "USD",
                      *               "final_issue_price": null,
-                     *               "highest_offer_price": 80,
+                     *               "highest_offer_price": null,
                      *               "ipo_status": "pending",
-                     *               "isin": "US03703U1079",
+                     *               "isin": null,
                      *               "issue_end_date": null,
                      *               "issue_start_date": null,
-                     *               "issuer_name": "Anthropic PBC",
-                     *               "last_updated": "2026-11-12T00:00:00.000Z",
-                     *               "lot_size": 100,
-                     *               "lowest_offer_price": 70,
-                     *               "max_shares_offered": 825000000,
+                     *               "issuer_name": "Aiways Automobile Europe GmbH",
+                     *               "last_updated": "2026-11-24T11:06:00.896Z",
+                     *               "lot_size": null,
+                     *               "lowest_offer_price": null,
+                     *               "max_shares_offered": null,
                      *               "min_shares_offered": null,
-                     *               "primary_exchange": "XNAS",
-                     *               "security_description": "Ordinary Shares - Class A",
-                     *               "security_type": "CS",
-                     *               "shares_outstanding": 7427991791,
-                     *               "ticker": "ANT",
-                     *               "total_offer_size": 66000000000,
-                     *               "us_code": "03703U107"
+                     *               "primary_exchange": null,
+                     *               "security_description": null,
+                     *               "security_type": null,
+                     *               "shares_outstanding": null,
+                     *               "ticker": "EUEV",
+                     *               "total_offer_size": null,
+                     *               "us_code": null
                      *             }
                      *           }
                      *         }
                      *       ],
                      *       "has_more": true,
-                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTEwLTAxIiwibC1DSFdNIl0sImYiOiIxMzAzN2QwNGE4MTM0YTdkIn0",
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTEwLTE0Iiwici0wMDAyMTUzNTk4LTMzMy0yOTkxMDEiXSwiZiI6IjEzMDM3ZDA0YTgxMzRhN2QifQ",
                      *       "meta": {
                      *         "coverage": {
                      *           "state": "complete",
                      *           "through": null,
-                     *           "retry_after_s": null
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
                      *         },
                      *         "source": {
-                     *           "dataset_release": "2026q3",
+                     *           "dataset_release": null,
                      *           "version_id": null,
-                     *           "accession": "0000320193-26-000026",
+                     *           "accession": null,
                      *           "fetched_at": null
                      *         }
                      *       }

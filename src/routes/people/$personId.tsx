@@ -30,8 +30,6 @@ export const Route = createFileRoute("/people/$personId")({
     head: () => titleHead("Person"),
 });
 
-const NEW_YORK = "America/New_York";
-
 /** Calls per page of the person's list: each loaded call also asks its event (`GET /v1/events/{id}`, 1 credit). */
 export const PERSON_CALLS_PAGE = 25;
 
@@ -47,8 +45,8 @@ export function PersonProfileView({ error, isLoading, person }: { error: unknown
         <StatGrid>
             <Stat label="Role" value={<Badge variant="outline">{personRoleLabel(person)}</Badge>} />
             <Stat label="Calls" value={formatNumber(person.appearance_count)} />
-            <Stat label="First seen" value={formatDay(person.first_seen, NEW_YORK)} />
-            <Stat label="Last seen" value={formatDay(person.last_seen, NEW_YORK)} />
+            <Stat label="First seen" value={formatDay(person.first_seen)} />
+            <Stat label="Last seen" value={formatDay(person.last_seen)} />
             {isAnalyst && <Stat label="Questions asked" value={formatNumber(person.questions)} />}
             {isAnalyst && person.mean_difficulty !== null && (
                 <Stat
@@ -74,7 +72,7 @@ function callColumns(failed: ReadonlySet<string>): Array<ColumnDef<PersonCall>> 
     return [
         {
             cell: ({ row }) => (row.original.event
-                ? <span className="tabular-nums">{formatDay(row.original.event.scheduled_at, NEW_YORK)}</span>
+                ? <span className="tabular-nums">{formatDay(row.original.event.scheduled_at)}</span>
                 : pending(row.original)),
             header: "Date",
             id: "date",
@@ -173,8 +171,8 @@ export function RoleHistoryView({ hasMore, stretches, undated }: { hasMore: bool
                         {stretch.firm && <span className="text-muted-foreground">{stretch.firm}</span>}
                         <span className="text-muted-foreground tabular-nums">
                             {stretch.from === stretch.to
-                                ? formatDay(stretch.from, NEW_YORK)
-                                : `${formatDay(stretch.from, NEW_YORK)} – ${formatDay(stretch.to, NEW_YORK)}`}
+                                ? formatDay(stretch.from)
+                                : `${formatDay(stretch.from)} – ${formatDay(stretch.to)}`}
                         </span>
                         <span className="text-muted-foreground tabular-nums">{`${formatNumber(stretch.calls)} ${stretch.calls === 1 ? "call" : "calls"}`}</span>
                     </li>

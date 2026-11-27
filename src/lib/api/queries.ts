@@ -349,7 +349,7 @@ const EARNINGS_EVENT_STALE_MS = 10 * 60 * 1000;
 
 type EarningsQueryExtras<T> = Pick<
     UseQueryOptions<T, Error, T, ReadonlyArray<unknown>>,
-    "gcTime" | "placeholderData" | "refetchInterval" | "retry" | "retryDelay" | "retryOnMount"
+    "gcTime" | "placeholderData" | "refetchInterval" | "refetchOnReconnect" | "refetchOnWindowFocus" | "retry" | "retryDelay" | "retryOnMount"
 >;
 
 /**
@@ -483,6 +483,8 @@ export function useNewsPage(input: NewsListInput & { cursor: null | string; enab
 
     const bounds = market ? marketWindowBounds(input) : { gte: input.from ? dayStartInstant(input.from) : undefined, lt: input.to ? dayStartInstant(input.to, true) : undefined };
 
+    const anchor = marketWindowAnchor(input, market);
+
     return useEarningsQuery<V2NewsListResponse>({
         enabled: input.enabled !== false && (market ? !marketWindowProblem(input) : Boolean(input.company?.trim())),
         errorMessage: null,
@@ -506,7 +508,7 @@ export function useNewsPage(input: NewsListInput & { cursor: null | string; enab
             "v2",
             "list",
             market ? "market" : "companies",
-            marketWindowAnchor(input, market),
+            anchor,
             input.recovery ?? 0,
             input.company ?? "",
             input.from ?? "",
@@ -518,6 +520,10 @@ export function useNewsPage(input: NewsListInput & { cursor: null | string; enab
             input.event ?? "",
             input.sort ?? "",
         ],
+        // The route handles visibility after checking the current market day. A network reconnect
+        // may also recover page one while Live is off, provided the cached window is still valid.
+        refetchOnReconnect: () => input.cursor === null && (!market || (marketWindowAnchor(input, market) === anchor && !marketWindowProblem(input))),
+        refetchOnWindowFocus: false,
         staleTime: EARNINGS_LIST_STALE_MS,
     });
 }

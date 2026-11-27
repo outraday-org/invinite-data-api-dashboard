@@ -4,7 +4,7 @@ import * as React from "react";
 import type { SearchMode } from "@/lib/api/types";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { ClearableInput } from "@/components/ui/clearable-input";
 import { SEARCH_MODE_LABELS, SEARCH_MODES } from "@/lib/earnings/labels";
 
 /** The shortest query a search box sends (every search is billed: one or two characters are never worth a request). */
@@ -15,7 +15,8 @@ export const MIN_SEARCH_QUERY_LENGTH = 2;
  * the typed text is the caller's draft (`value` / `onValueChange`, never the URL); Search (or Enter) hands the trimmed
  * text to `onSubmit` once it has `MIN_SEARCH_QUERY_LENGTH` characters and `canSubmit` holds. The button is disabled
  * while `busy` and reads "Searching…" while `searching` (default `busy`; the news search keeps "Search" while it only
- * loads a next page). `trailing` follows the button (news: the clear ×); `children` are further fields inside the same
+ * loads a next page). The × inside the field (shown while the text is not blank) empties the draft and calls `onClear`
+ * (the caller drops the submitted search too). `trailing` follows the button; `children` are further fields inside the same
  * form (the SEC filters: Enter in a filter submits too), below the query row. `size="lg"` = a 40 px query row (the
  * page-level `/search`, ui-redesign task 11).
  */
@@ -24,6 +25,7 @@ export function SearchQueryForm({
     canSubmit = true,
     children,
     label,
+    onClear,
     onSubmit,
     onValueChange,
     placeholder,
@@ -38,6 +40,8 @@ export function SearchQueryForm({
     children?: React.ReactNode;
     /** The input's accessible name. */
     label: string;
+    /** After the × emptied the draft: reset the submitted search. */
+    onClear?: () => void;
     onSubmit: (query: string) => void;
     onValueChange: (value: string) => void;
     placeholder: string;
@@ -56,11 +60,16 @@ export function SearchQueryForm({
 
     const row = (
         <>
-            <Input
+            <ClearableInput
                 aria-label={label}
                 className={size === "lg" ? "h-10 text-sm" : undefined}
                 maxLength={500}
                 onChange={event => onValueChange(event.target.value)}
+                onClear={() => {
+                    onValueChange("");
+
+                    onClear?.();
+                }}
                 placeholder={placeholder}
                 value={value}
             />

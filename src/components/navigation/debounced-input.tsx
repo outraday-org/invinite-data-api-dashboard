@@ -1,6 +1,6 @@
 import * as React from "react";
 
-import { Input } from "@/components/ui/input";
+import { ClearableInput } from "@/components/ui/clearable-input";
 
 /**
  * A text filter that commits 300 ms after the last keystroke (a list page keeps its query in the URL; every change is
@@ -51,5 +51,16 @@ export function DebouncedInput({
         return () => window.clearTimeout(timer);
     }, [draft, onCommit, value]);
 
-    return <Input aria-label={ariaLabel} className={className} id={id} onChange={event => setDraft(event.target.value)} placeholder={placeholder} value={draft} />;
+    return (
+        <ClearableInput
+            aria-label={ariaLabel}
+            className={className}
+            clearLabel={`Clear ${ariaLabel.toLowerCase()}`}
+            id={id}
+            onChange={event => setDraft(event.target.value)}
+            onClear={() => setDraft("")}
+            placeholder={placeholder}
+            value={draft}
+        />
+    );
 }

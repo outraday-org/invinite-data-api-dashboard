@@ -108,13 +108,14 @@ export function TranscriptSearchView({
 }
 
 /** The query box: typed text stays local until Search (a search is billed), then becomes `?q=`. */
-function SearchBox({ initial, isFetching, onSubmit }: { initial: string; isFetching: boolean; onSubmit: (q: string) => void }) {
+function SearchBox({ initial, isFetching, onClear, onSubmit }: { initial: string; isFetching: boolean; onClear: () => void; onSubmit: (q: string) => void }) {
     const [draft, setDraft] = React.useState(initial);
 
     return (
         <SearchQueryForm
             busy={isFetching}
             label="Search every call"
+            onClear={onClear}
             onSubmit={onSubmit}
             onValueChange={setDraft}
             placeholder="e.g. gross margin, tariffs, &quot;free cash flow&quot;"
@@ -168,7 +169,7 @@ function SearchPage() {
             />
 
             {/* Keyed by the submitted query: Back / a link with another `?q=` refills the box. */}
-            <SearchBox initial={search.q ?? ""} isFetching={isFetching} key={search.q ?? ""} onSubmit={submit} />
+            <SearchBox initial={search.q ?? ""} isFetching={isFetching} key={search.q ?? ""} onClear={() => onChange({ q: undefined })} onSubmit={submit} />
 
             <FilterBar activeCount={activeCount} onReset={() => onChange({ company: undefined, from: undefined, mode: undefined, to: undefined, type: undefined })}>
                 <FilterField label="Match">

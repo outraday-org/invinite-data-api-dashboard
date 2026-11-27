@@ -4620,18 +4620,18 @@
   "provenance": {
     "repository": "https://github.com/outraday-org/invinite-data-api",
     "version": "1.0.0",
-    "specSha256": "09c499931a22f061f756ec8395e7f05f7bf7272c7160a74fda6f595d94eeb140",
+    "specSha256": "8af0b9a4450c58018372ee15567d9abecb4ceea9e2a1c00dceb1f553c2027559",
     "sourceHashes": {
-      "openapi.json": "09c499931a22f061f756ec8395e7f05f7bf7272c7160a74fda6f595d94eeb140",
+      "openapi.json": "8af0b9a4450c58018372ee15567d9abecb4ceea9e2a1c00dceb1f553c2027559",
       "openapitools.json": "0350a3db0a0a0adf49a7c7cdefe7eff466964480780e911b197763d202db1390",
       "package.json": "62dc9c98a97e546c4f2b86c7b579e545567de5ce5bab81cba28b3847e4574fc5",
       "scripts/check-data-sdk-names.ts": "b6a1d893085874a64f7b652c5c780add4d2adf503e63d4a851c2745159da9600",
-      "scripts/prepare-data-sdk-spec.mjs": "302abbffa65c7aedf61afac63bd20afcbd3266ca8e9bb24b0182b99eca6198e3",
+      "scripts/prepare-data-sdk-spec.mjs": "b707e49945bec96fd8b5d07b97eae88f80083352a42e3d99fa5a3a7d07ff5528",
       "scripts/reference-artifacts.ts": "0ef8e67cb5454a3f50f43de77b0be1aebb7897164ddf3f5288b58dc7d0f47255",
       "sdks/data/config/python.json": "8f90ab7c0fd25e125c0c6618ae6e09119ef0b5045818c098fd8b259d1888dd5f",
       "sdks/data/config/typescript.json": "69139143672ed147b18c217784cbed3bf609ebeb6b5fbd00617e09344b99c4f2",
-      "sdks/data/readme/python.md": "485c827546d7c85fb3fee9cfdf8cc2fe824e049fb7319d8bdeb6cbf9ba7b7c07",
-      "sdks/data/readme/typescript.md": "f9272dc6350899b5ab0421931cd59bccce95237dc25e3f59f38b995a949b23ab",
+      "sdks/data/readme/python.md": "6abdf93d073d72b3d16916a1bbc0011ee5b89c483d6d7f952548d9530a48dc9c",
+      "sdks/data/readme/typescript.md": "66a074d76ba53a8446c08cfe539ec6687c453f9fb278f3e0dcebd37518f11fc0",
       "sdks/data/sdk-naming.ts": "2738bc0f84f4c91aea3122b2ce4ea64d9bbe69f12790b6781b691f28e1c6df78",
       "sdks/data/templates/python/errors.mustache": "d5ec344532b707b5d4d7984af7cf80c0c16f04506b4e5771a1c31ab28d2ed576",
       "sdks/data/templates/python/model_generic.mustache": "be2335c0c154814341f3831212e7198ded9a365a551d3ed176f7b35c8b84a1c1",
@@ -4647,7 +4647,7 @@
       "sdks/data/templates/typescript/pagination.mustache": "190dc450794bc089117af5b5c2f7b2ff707dc2bf6175e49465c393cdba89b395",
       "sdks/data/templates/typescript/webhooks.mustache": "757001711eafe57e914c05cd6b2d86b5555c4d32d80bf3b1a94e4f570df0c20a"
     },
-    "revision": "7d75678f06ba72d56aaa11f9e8774dc4414f91f3",
-    "fingerprint": "79369e2da48fa886841972d4f7d66761b82cbdb994881c169f83609d6db92d2e"
+    "revision": "e964aabe1cff81aae4abc7fe8004a536cf57abe6",
+    "fingerprint": "553c0e68b12e303eec551d7b633d33670f05cd99782015f5d058122fbb50e48e"
   }
 }

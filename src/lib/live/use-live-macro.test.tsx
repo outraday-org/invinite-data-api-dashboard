@@ -10,6 +10,7 @@ import { useApiKeyStore } from "@/lib/stores/api-key-store";
 import type { MacroEdition } from "./use-live-macro";
 
 import vectors from "./fixtures/macro-releases-v1.json";
+import { resetStreamConnections } from "./stream-socket";
 import { affectsMacroQuery, refreshMacroQueries, useLiveMacro } from "./use-live-macro";
 
 const profile = vi.hoisted(() => ({ plan: "pro" }));
@@ -47,6 +48,8 @@ const history = ["v2", "macro", "gdp", "history", "real_gdp_growth", "2025-01-01
 const options = (client: QueryClient) => ({ apiKey: "test", apiKeyUpdatedAt: 1, baseUrl: "https://test.invalid", enabled: true, onStop: vi.fn(), queryClient: client, scope: "gdp" as const });
 
 afterEach(() => {
+    resetStreamConnections();
+
     vi.unstubAllGlobals();
 
     vi.useRealTimers();

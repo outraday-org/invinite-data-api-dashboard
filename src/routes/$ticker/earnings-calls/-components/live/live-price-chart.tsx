@@ -155,7 +155,7 @@ export function LivePriceChart({ buckets, callT0, cursorMs, prices }: LivePriceC
             </div>
             <div aria-label={chartLabel} role="img">
                 <ChartFrame
-                    description={offsetMs === null ? "New York time (the call clock is not known yet)" : "Call time, the live transcript's clock"}
+                    description={offsetMs === null ? "Your time zone (the call clock is not known yet)" : "Call time, the live transcript's clock"}
                     height={160}
                     title={yMode === "return" ? "Return since the call reference (bps)" : "Price"}
                 >

@@ -11,7 +11,7 @@ import { PageContainer } from "@/components/ui/page-container";
 import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2EventsInfinite, useV2IposInfinite, useV2LiveEvents, useV2MarketHolidaysInfinite } from "@/lib/api/queries";
-import { calendarPresetWindow } from "@/lib/earnings/calendar-groups";
+import { calendarPresetWindow, viewerTimeZone } from "@/lib/earnings/calendar-groups";
 import { callCalendarDate, eventLabel, formatStartedAgo, zonedDate } from "@/lib/earnings/format";
 import { formatDay, formatInstantShort } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
@@ -28,8 +28,6 @@ export const Route = createFileRoute("/")({
     head: () => titleHead(),
 });
 
-const NEW_YORK = "America/New_York";
-
 /** Rows per landing block: the first N in the API's order (an event carries no market cap or rank to order by). */
 export const LANDING_ROWS = 8;
 
@@ -37,6 +35,9 @@ export type LandingData = {
     holiday: LandingBlock<null | V2MarketHoliday>;
     ipos: LandingBlock<ReadonlyArray<V2Ipo>>;
     live: LandingBlock<ReadonlyArray<V2Event>> & { asOf: Date };
+    /** The viewer's time zone: "today" and the call days are read in it. */
+    timeZone: string;
+    /** Today in `timeZone`. */
     today: string;
     week: LandingBlock<ReadonlyArray<V2Event>>;
 };
@@ -278,10 +279,10 @@ function LandingIntro() {
  * and the rest of this week's earnings — the first N —, the next IPOs and market holiday), what the API covers (the
  * data families of `API_FAMILIES`), the recently opened subjects and the SEC filer lookup.
  */
-export function LandingView({ holiday, ipos, live, today, week }: LandingData) {
-    const todays = week.data.filter(event => callCalendarDate(event, NEW_YORK) === today);
+export function LandingView({ holiday, ipos, live, timeZone, today, week }: LandingData) {
+    const todays = week.data.filter(event => callCalendarDate(event, timeZone) === today);
 
-    const later = week.data.filter(event => callCalendarDate(event, NEW_YORK) > today);
+    const later = week.data.filter(event => callCalendarDate(event, timeZone) > today);
 
     const operationCount = Object.values(API_FAMILY_OPERATIONS).reduce((sum, ids) => sum + ids.length, 0);
 
@@ -322,17 +323,22 @@ export function LandingView({ holiday, ipos, live, today, week }: LandingData) {
 function IndexPage() {
     const [now] = React.useState(() => new Date());
 
-    const today = zonedDate(now, NEW_YORK);
+    const [timeZone] = React.useState(viewerTimeZone);
+
+    const today = zonedDate(now, timeZone);
+
+    /** The US market's day: IPOs and holidays are market days; the events start at the earlier of the two days. */
+    const marketDay = zonedDate(now, "America/New_York");
 
     const week = calendarPresetWindow("this-week", now);
 
     const live = useV2LiveEvents();
 
-    const events = useV2EventsInfinite({ limit: 100, scheduledAtGte: today, scheduledAtLte: week.to, sort: "scheduled_at", toastErrors: false });
+    const events = useV2EventsInfinite({ limit: 100, scheduledAtGte: today < marketDay ? today : marketDay, scheduledAtLte: week.to, sort: "scheduled_at", toastErrors: false });
 
-    const ipos = useV2IposInfinite({ limit: 5, listingDateGte: today, sort: "listing_date" });
+    const ipos = useV2IposInfinite({ limit: 5, listingDateGte: marketDay, sort: "listing_date" });
 
-    const holidays = useV2MarketHolidaysInfinite({ dateGte: today, limit: 1, sort: "date" });
+    const holidays = useV2MarketHolidaysInfinite({ dateGte: marketDay, limit: 1, sort: "date" });
 
     return (
         <PageContainer className="gap-8">
@@ -340,6 +346,7 @@ function IndexPage() {
                 holiday={{ data: holidays.data?.pages.at(0)?.data.at(0) ?? null, failed: Boolean(holidays.error), isLoading: holidays.isLoading }}
                 ipos={{ data: ipos.data?.pages.at(0)?.data ?? [], failed: Boolean(ipos.error), isLoading: ipos.isLoading }}
                 live={{ asOf: new Date(live.dataUpdatedAt), data: live.data?.data ?? [], failed: Boolean(live.error) && !live.data, isLoading: live.isLoading }}
+                timeZone={timeZone}
                 today={today}
                 week={{ data: events.data?.pages.flatMap(page => page.data) ?? [], failed: Boolean(events.error), isLoading: events.isLoading }}
             />

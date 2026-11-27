@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EVENT_TEST, fixtureEvent } from "@/lib/alerts/alerts-fixtures";
 
+import { resetStreamConnections } from "./stream-socket";
 import { useLiveAlerts } from "./use-live-alerts";
 import { ALERTS_CHANNEL } from "./ws-frames";
 
@@ -60,6 +61,8 @@ beforeEach(() => {
 
 afterEach(() => {
     vi.useRealTimers();
+
+    resetStreamConnections();
 
     vi.unstubAllGlobals();
 });

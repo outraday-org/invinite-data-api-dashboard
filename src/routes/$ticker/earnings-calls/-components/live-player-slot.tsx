@@ -163,7 +163,7 @@ function Diagnostics({ live, priceRows }: { live: LiveCall; priceRows: number })
                 <dt>Price ticks</dt>
                 <dd>
                     {transcript.prices.ticks.length}
-                    {lastTick !== null && ` (last at ${formatWallTime(Date.parse(lastTick.at))} ET, ${lastTick.source})`}
+                    {lastTick !== null && ` (last at ${formatWallTime(Date.parse(lastTick.at))}, ${lastTick.source})`}
                 </dd>
                 <dt>Minute rows</dt>
                 <dd>{priceRows}</dd>

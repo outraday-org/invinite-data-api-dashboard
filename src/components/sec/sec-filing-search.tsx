@@ -299,6 +299,7 @@ export function SecFilingSearch({
                 busy={result.isFetching}
                 canSubmit={scoped || marketWide}
                 label={label}
+                onClear={() => setSubmitted(prev => ({ ...prev, query: "" }))}
                 onSubmit={submit}
                 onValueChange={setDraft}
                 placeholder={`${label} — e.g. supply chain risk`}
