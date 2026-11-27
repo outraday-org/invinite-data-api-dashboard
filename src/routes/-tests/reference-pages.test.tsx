@@ -502,6 +502,29 @@ describe("SDK 13 catalog tabs", () => {
         expect(catalogSearchSchema.parse({ group: "unknown", tab: "news-kinds" }).group).toBeUndefined();
     });
 
+    it("invalid groups keep Every group and use an explicit default tab only when needed", () => {
+        expect(catalogSearchSchema.parse({})).toEqual({});
+
+        expect(catalogSearchSchema.parse({ group: undefined })).toEqual({ group: undefined });
+
+        expect(catalogSearchSchema.parse({ group: "topic" })).toEqual({ group: "topic" });
+
+        expect(catalogSearchSchema.parse({ group: "unknown" })).toMatchObject({ group: undefined, tab: "metrics" });
+
+        expect(catalogSearchSchema.parse({ group: "unknown", q: "keep" })).toMatchObject({ group: undefined, q: "keep", tab: "metrics" });
+
+        expect(catalogSearchSchema.parse({ group: "unknown", tab: "news-kinds" })).toMatchObject({ group: undefined, tab: "news-kinds" });
+
+        expect(catalogSearchSchema.parse({ group: "unknown", tab: "unknown" })).toMatchObject({ group: undefined, tab: "metrics" });
+
+        for (const group of [null, true, 42, ["topic"]]) {
+            expect(catalogSearchSchema.parse({ group })).toMatchObject({ group: undefined, tab: "metrics" });
+        }
+
+        // The older invalid-tab-only normalization is outside this group-specific change.
+        expect(catalogSearchSchema.parse({ tab: "unknown" })).toEqual({ tab: undefined });
+    });
+
     it("halt and dividend tables show catalog labels and descriptions with their codes", () => {
         const view = render(<CatalogTable list={{ ...list, rows: HALT_REASON_CATALOG_FIXTURE.data }} query="T1" scope="all" spec={CATALOG_SPECS["halt-reasons"]} />);
 
