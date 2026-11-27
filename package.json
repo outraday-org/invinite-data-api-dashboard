@@ -9,6 +9,7 @@
     "test": "vitest run",
     "lint": "eslint",
     "check": "eslint --fix && tsc --noEmit",
+    "test:ssr:webhooks": "node scripts/webhook-ssr-smoke.mjs",
     "generate:api": "openapi-typescript openapi.json --default-non-nullable false -o src/lib/api/schema.d.ts && node scripts/generate-operations.mjs"
   },
   "dependencies": {
