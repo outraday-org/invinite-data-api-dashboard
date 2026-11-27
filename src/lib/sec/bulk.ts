@@ -67,6 +67,9 @@ export const BULK_KINDS = ["parsed", "raw"] as const satisfies ReadonlyArray<Bul
 
 export const KIND_LABELS: Record<BulkFileKind, string> = { parsed: "Parsed", raw: "Raw SEC file" };
 
+/** Every format of `BulkFile.format` (the `?format=` values). */
+export const BULK_FILE_FORMATS = ["zip", "csv", "csv_gz", "parquet"] as const satisfies ReadonlyArray<BulkFileFormat>;
+
 export const FORMAT_LABELS: Record<BulkFileFormat, string> = { csv: "CSV", csv_gz: "CSV.gz", parquet: "Parquet", zip: "Zip" };
 
 /** The formats of a kind: parsed files are `csv_gz` / `parquet`, raw files the SEC's `zip` (`icsc`: a bare `csv`). */

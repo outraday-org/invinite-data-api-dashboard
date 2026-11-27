@@ -8,6 +8,7 @@ import { ApiRequestError } from "@/lib/api/errors";
 import {
     BULK_EXPORT_DATASETS,
     BULK_FILE_DATASETS,
+    BULK_FILE_FORMATS,
     bulkExportFieldKeyOf,
     bulkFilesQuery,
     bulkPlanGate,
@@ -38,6 +39,8 @@ describe("the words follow the contract's enums", () => {
         expect([...BULK_EXPORT_DATASETS].sort()).toEqual([...enumOf("BulkExport", "dataset")!].sort());
 
         expect([...FORMATS_BY_KIND.parsed, ...FORMATS_BY_KIND.raw].sort()).toEqual([...enumOf("BulkFile", "format")!].sort());
+
+        expect([...BULK_FILE_FORMATS].sort()).toEqual([...enumOf("BulkFile", "format")!].sort());
 
         expect(Object.keys(EXPORT_STATUS_INFO).sort()).toEqual([...enumOf("BulkExport", "status")!].sort());
 
