@@ -18,7 +18,8 @@ import { Notice } from "@/components/ui/notice";
 import { isTierError } from "@/lib/api/errors";
 import { useV2AnnouncementsInfinite } from "@/lib/api/queries";
 import { DASH, formatDay, formatDayTimeShort } from "@/lib/format";
-import { ANNOUNCEMENT_TOPICS, CLAIM_STATUS_LABELS, DATE_PRECISION_LABELS, NEWS_ORDER_LABELS, NEWS_TOPIC_LABELS } from "@/lib/news/labels";
+import { ANNOUNCEMENT_TOPICS, CLAIM_STATUS_LABELS, DATE_PRECISION_LABELS, NEWS_ORDER_LABELS } from "@/lib/news/labels";
+import { rawCatalogLabel, useNewsCatalogLabels } from "@/lib/reference/catalog-labels";
 import { IN_PLACE } from "@/lib/url-state";
 
 const PAGE_SIZE = 50;
@@ -41,7 +42,7 @@ export function effectiveLabel(row: Pick<NewsDevelopment, "date_precision" | "ef
     return precision === "day" ? range : `${range} · ${DATE_PRECISION_LABELS[precision]}`;
 }
 
-const COLUMNS: Array<ColumnDef<NewsDevelopment>> = [
+const columns = (topicLabel: (value: string) => string): Array<ColumnDef<NewsDevelopment>> => [
     { cell: ({ row }) => <span className="tabular-nums whitespace-nowrap">{formatDayTimeShort(row.original.announced_at)}</span>, header: "Announced", id: "announced_at" },
     {
         cell: ({ row }) => {
@@ -60,7 +61,7 @@ const COLUMNS: Array<ColumnDef<NewsDevelopment>> = [
         header: "Announcement",
         id: "title",
     },
-    { cell: ({ row }) => <Badge variant="outline">{NEWS_TOPIC_LABELS[row.original.topic]}</Badge>, header: "Topic", id: "topic" },
+    { cell: ({ row }) => <Badge variant="outline">{topicLabel(row.original.topic)}</Badge>, header: "Topic", id: "topic" },
     {
         cell: ({ row }) => (
             <Badge title={`Extraction confidence: ${row.original.confidence}`} variant={row.original.claim_status === "planned" ? "default" : "secondary"}>
@@ -129,6 +130,7 @@ export function AnnouncementsView({
     onLoadMore,
     pages,
     scope,
+    topicLabel = rawCatalogLabel,
 }: {
     error: unknown;
     /** A filter is set: the empty line names the filters, not the company. */
@@ -140,12 +142,13 @@ export function AnnouncementsView({
     pages: ReadonlyArray<V2AnnouncementsResponse>;
     /** The export file's scope (the ticker). */
     scope: string;
+    topicLabel?: (value: string) => string;
 }) {
     const rows = React.useMemo(() => pages.flatMap(page => page.data), [pages]);
 
     return (
         <DataTable
-            columns={COLUMNS}
+            columns={columns(topicLabel)}
             emptyText={filtered ? "No announcements match these filters." : "No announcements read from this company's news yet."}
             errorState={error ? <AnnouncementsError error={error} /> : null}
             exportConfig={{ columns: EXPORT_COLUMNS, dataset: "announcements", scope }}
@@ -168,7 +171,7 @@ const ANNOUNCEMENT_FILTER_RESET = { aFrom: undefined, aSort: undefined, aTo: und
  * The Announcements filters as one labelled `FilterBar` (ui-redesign task 11), controlled by the route's search (every
  * one is an API parameter); a day range counts once.
  */
-export function AnnouncementFilters({ onChange, search }: { onChange: (patch: Partial<AnnouncementSearch>) => void; search: AnnouncementSearch }) {
+export function AnnouncementFilters({ onChange, search, topicLabel = rawCatalogLabel }: { topicLabel?: (value: string) => string; onChange: (patch: Partial<AnnouncementSearch>) => void; search: AnnouncementSearch }) {
     const activeCount = [search.aTopic, search.aSort, search.aFrom ?? search.aTo, search.effFrom ?? search.effTo].filter(value => value !== undefined).length;
 
     return (
@@ -180,7 +183,7 @@ export function AnnouncementFilters({ onChange, search }: { onChange: (patch: Pa
                         className="w-full"
                         id={id}
                         onValueChange={value => onChange({ aTopic: value === ALL ? undefined : value })}
-                        options={[{ label: "All topics", value: ALL }, ...ANNOUNCEMENT_TOPICS.map(value => ({ label: NEWS_TOPIC_LABELS[value], value }))]}
+                        options={[{ label: "All topics", value: ALL }, ...ANNOUNCEMENT_TOPICS.map(value => ({ label: topicLabel(value), value }))]}
                         value={search.aTopic ?? ALL}
                     />
                 )}
@@ -224,6 +227,8 @@ export function AnnouncementFilters({ onChange, search }: { onChange: (patch: Pa
  * takes effect. Title and summary are model-derived (`derived: true`), never the publisher's words.
  */
 export function AnnouncementsTab({ onChange, search, ticker }: { onChange: (patch: Partial<AnnouncementSearch>) => void; search: AnnouncementSearch; ticker: string }) {
+    const { developmentTopicLabel } = useNewsCatalogLabels();
+
     const list = useV2AnnouncementsInfinite({
         company: ticker,
         effectiveFrom: search.effFrom,
@@ -241,7 +246,7 @@ export function AnnouncementsTab({ onChange, search, ticker }: { onChange: (patc
                 What the company&apos;s news announced, one row per development. Title and summary are written by a model from
                 the publication, not the publisher&apos;s words; the news item links the source.
             </p>
-            <AnnouncementFilters onChange={onChange} search={search} />
+            <AnnouncementFilters onChange={onChange} search={search} topicLabel={developmentTopicLabel} />
             <AnnouncementsView
                 error={list.error}
                 filtered={Boolean(search.aTopic || search.aFrom || search.aTo || search.effFrom || search.effTo)}
@@ -251,6 +256,7 @@ export function AnnouncementsTab({ onChange, search, ticker }: { onChange: (patc
                 onLoadMore={() => void list.fetchNextPage()}
                 pages={list.data?.pages ?? []}
                 scope={ticker}
+                topicLabel={developmentTopicLabel}
             />
         </div>
     );

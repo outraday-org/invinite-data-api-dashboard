@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ScriptOptions } from "@/components/alerts/alert-form-pickers";
 
-import { declaredInputsOf, destinationIdsOf, DestinationPicker, ScriptInputsFields, ScriptVersionPicker, withInput } from "@/components/alerts/alert-form-pickers";
+import { declaredInputsOf, destinationIdsOf, DestinationPicker, ReferenceCodePicker, ScriptInputsFields, ScriptVersionPicker, withInput } from "@/components/alerts/alert-form-pickers";
 import { AlertFormView } from "@/components/alerts/alert-form-view";
 import { emptyAlertForm, toCreateBody } from "@/lib/alerts/alert-form";
 import { SCRIPT_FIXTURE, SCRIPT_V1_ERROR, SCRIPT_V2_OK, TEMPLATES_FIXTURE } from "@/lib/alerts/alerts-fixtures";
@@ -130,5 +130,27 @@ describe("script version picker", () => {
         expect(screen.getByTestId("destination-picker")).toBeInTheDocument();
 
         expect(screen.queryByLabelText("Script version id")).toBeNull();
+    });
+});
+
+describe("catalog-labelled reference codes", () => {
+    it("named dividend/halt options still emit the exact schema code", async () => {
+        const onChange = vi.fn();
+
+        render(<ReferenceCodePicker codes={["CD", "SC"]} label="Dividend types" labelOf={code => code === "CD" ? "Regular cash" : "Special cash"} onChange={onChange} value={[]} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Dividend types" }));
+
+        fireEvent.click(await screen.findByRole("menuitemcheckbox", { name: "CD · Regular cash" }));
+
+        expect(onChange).toHaveBeenCalledWith(["CD"]);
+    });
+
+    it("without catalog labels, the code remains a usable option", async () => {
+        render(<ReferenceCodePicker codes={["T1"]} label="Reason codes" labelOf={code => code} onChange={vi.fn()} value={["T1"]} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Reason codes" }));
+
+        expect(await screen.findByRole("menuitemcheckbox", { name: "T1" })).toBeChecked();
     });
 });

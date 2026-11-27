@@ -6,6 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { ApiRequestError } from "@/lib/api/errors";
 import { announcementRow, newsroomItem } from "@/lib/news/news-fixtures";
+import { NEWS_KIND_CATALOG_FIXTURE } from "@/lib/reference/reference-fixtures";
 import { AnnouncementFilters, AnnouncementsView, effectiveLabel } from "@/routes/$ticker/news/-components/announcements";
 
 vi.mock("@tanstack/react-router", () => ({
@@ -38,7 +39,7 @@ describe("effectiveLabel", () => {
 
 describe("AnnouncementsView", () => {
     it("lists announced time, title + summary + names, topic, claim status, effective range and the news item link", () => {
-        render(<AnnouncementsView {...props} pages={[page()]} />);
+        render(<AnnouncementsView {...props} pages={[page()]} topicLabel={value => NEWS_KIND_CATALOG_FIXTURE.data.find(row => row.group === "development_topic" && row.value === value)?.name ?? value} />);
 
         const row = screen.getByText("Rubin availability").closest("tr") as HTMLElement;
 

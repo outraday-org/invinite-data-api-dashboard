@@ -4,8 +4,8 @@ import { describe, expect, it } from "vitest";
 
 import { ALERT_TYPE_FIELDS, WEBHOOK_ENVELOPE, WEBHOOKS } from "@/lib/api/operations.gen";
 
-import { webhookEntries, webhookEnvelope } from "../../../scripts/webhooks.mjs";
-import { EXAMPLE_INSTANT, exampleBody, exampleOf, fieldRows, typeText } from "./webhooks";
+import { simplifySchema, webhookEntries, webhookEnvelope } from "../../../scripts/webhooks.mjs";
+import { EXAMPLE_INSTANT, exampleBody, exampleOf, fieldRows, selectedSchema, selectedVariantValue, typeText } from "./webhooks";
 
 const spec = JSON.parse(readFileSync(resolve(__dirname, "../../../openapi.json"), "utf8")) as { "x-webhooks": Record<string, unknown> };
 
@@ -39,7 +39,7 @@ describe("WEBHOOKS (generated from the pinned spec's x-webhooks at build time)",
     });
 });
 
-describe("example bodies and field rows (the spec has no example: shapes built from the schema)", () => {
+describe("published examples, fallback shapes and field rows", () => {
     it("the envelope with this type, the required data fields in the spec's order, id prefixes from the descriptions", () => {
         const test = WEBHOOKS.find(entry => entry.type === "destination.test")!;
 
@@ -65,16 +65,54 @@ describe("example bodies and field rows (the spec has no example: shapes built f
 
         expect(batch.data.fields?.find(field => field.name === "events")?.schema.items?.discriminator?.propertyName).toBe("type");
 
-        expect(batch.data.fields?.find(field => field.name === "events")?.schema.items?.oneOf).toHaveLength(6);
+        expect(batch.data.fields?.find(field => field.name === "events")?.schema.items?.variants).toHaveLength(6);
 
         const fired = WEBHOOKS.find(entry => entry.type === "alert.fired")!;
 
         expect(fired.data.discriminator?.propertyName).toBe("alert_type");
 
-        expect(fired.data.oneOf).toHaveLength(18);
+        expect(fired.data.variants).toHaveLength(18);
 
-        expect(fired.data.oneOf?.map(branch => branch.example)).toEqual(expect.arrayContaining(Object.values(ALERT_TYPE_FIELDS).map(type => type.firedExample)));
+        expect(fired.data.variants?.map(branch => branch.schema.example)).toEqual(expect.arrayContaining(Object.values(ALERT_TYPE_FIELDS).map(type => type.firedExample)));
 
         expect(typeText({ nullable: true, type: "string" })).toBe("string or null");
+    });
+});
+
+describe("discriminator variants", () => {
+    it("retains mapping values and examples from a toy union", () => {
+        const a = { example: { category: "a" }, properties: { category: { enum: ["a"], type: "string" } }, required: ["category"], type: "object" };
+
+        const b = { ...a, example: { category: "b" }, properties: { category: { enum: ["b"], type: "string" } } };
+
+        const toy = { components: { schemas: { A: a, B: b, Union: { discriminator: { mapping: { a: "#/components/schemas/A", b: "#/components/schemas/B" }, propertyName: "category" }, oneOf: [{ $ref: "#/components/schemas/A" }, { $ref: "#/components/schemas/B" }] } } } };
+
+        const schema = simplifySchema(toy, { $ref: "#/components/schemas/Union" });
+
+        expect(schema.variants?.map(variant => variant.value)).toEqual(["a", "b"]);
+
+        expect(schema.variants?.map(variant => variant.schema.example)).toEqual([{ category: "a" }, { category: "b" }]);
+    });
+
+    it.each(Object.keys(ALERT_TYPE_FIELDS) as Array<keyof typeof ALERT_TYPE_FIELDS>)("%s: batch keeps the selected fire beneath exactly one event data property", (type) => {
+        const batch = WEBHOOKS.find(entry => entry.type === "alert.fired.batch")!;
+
+        expect(exampleBody(batch, type)).toEqual({ data: { batch_id: "…", events: [{ data: ALERT_TYPE_FIELDS[type].firedExample, timestamp: EXAMPLE_INSTANT, type: "alert.fired" }] }, timestamp: EXAMPLE_INSTANT, type: "alert.fired.batch" });
+
+        const fields = fieldRows(selectedSchema(batch.data, type)).map(row => row.path);
+
+        expect(fields).toContain("events[].data.alert_type");
+
+        expect(fields.some(path => path.includes("data.data"))).toBe(false);
+
+        expect(fields.some(path => path.includes("events[].data.events"))).toBe(false);
+    });
+
+    it("unknown fire selection falls back to the first published branch", () => {
+        const fired = WEBHOOKS.find(entry => entry.type === "alert.fired")!;
+
+        expect(selectedVariantValue(fired.data, "unknown")).toBe("filing");
+
+        expect(exampleBody(fired, "unknown")).toMatchObject({ data: ALERT_TYPE_FIELDS.filing.firedExample });
     });
 });

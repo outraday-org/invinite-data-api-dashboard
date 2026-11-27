@@ -7,12 +7,13 @@ import type { Destination, JsonValue, Script, ScriptVersion } from "@/lib/api/ty
 import { DestinationEditorDialog } from "@/components/alerts/destination-editor";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { DropdownMultiSelect, DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import { kindLabel, presetLabel } from "@/lib/alerts/destinations";
 import { defaultText, inputRangeText, manifestInputs, versionsNewestFirst } from "@/lib/alerts/scripts";
 import { useDestinationsInfinite, useScriptsInfinite, useScriptVersions } from "@/lib/api/queries";
 import { isRecord } from "@/lib/guards";
+import { useDividendTypeNames, useHaltReasonNames } from "@/lib/reference/catalog-labels";
 
 /**
  * The alert form's pickers (backend tasks/data-api-dashboard 2-alerts task 4; the second lane to hand over owns them):
@@ -295,4 +296,17 @@ export function useAlertFormPickers(state: AlertFormState, setState: React.Dispa
         dialog,
         scriptOptions: isScript ? scripts : undefined,
     };
+}
+
+/** Code values stay on the wire; catalog names are an optional presentation of those exact schema options. */
+export function ReferenceCodePicker({ codes, label, labelOf, onChange, required, value }: { codes: ReadonlyArray<string>; label: string; labelOf: (code: string) => string; onChange: (value: Array<string>) => void; required?: boolean; value: ReadonlyArray<string> }) {
+    return <DropdownMultiSelect aria-label={label} aria-required={required} className="w-full" onValueChange={onChange} options={codes.map(code => ({ label: labelOf(code) === code ? code : `${code} · ${labelOf(code)}`, value: code }))} placeholder="Any code" value={value} />;
+}
+
+export function CatalogConditionPicker({ field, ...props }: Omit<Parameters<typeof ReferenceCodePicker>[0], "labelOf"> & { field: "dividend_types" | "reason_codes" }) {
+    const dividendName = useDividendTypeNames(field === "dividend_types");
+
+    const haltName = useHaltReasonNames(field === "reason_codes");
+
+    return <ReferenceCodePicker {...props} labelOf={field === "dividend_types" ? dividendName : haltName} />;
 }

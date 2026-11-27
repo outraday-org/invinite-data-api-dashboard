@@ -1,22 +1,22 @@
 import type * as React from "react";
 
 import type { NewsSearch } from "@/lib/news/labels";
+import type { NewsCatalogLabels } from "@/lib/reference/catalog-labels";
 
 import { Button } from "@/components/ui/button";
 import { DayRange } from "@/components/ui/day-range";
 import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { FilterSelect } from "@/components/ui/filter-select";
 import {
-    NEWS_KIND_LABELS,
     NEWS_KINDS,
     NEWS_ORDER_LABELS,
     NEWS_PUBLICATION_TYPES,
     NEWS_SOURCE_LABELS,
     NEWS_SOURCES,
-    NEWS_TOPIC_LABELS,
     NEWS_TOPICS,
     publicationTypeLabel,
 } from "@/lib/news/labels";
+import { RAW_NEWS_CATALOG_LABELS } from "@/lib/reference/catalog-labels";
 
 const ALL = "all";
 
@@ -73,6 +73,7 @@ export function NewsFilters({
     categories,
     companyScope = true,
     eventFilter,
+    labels = RAW_NEWS_CATALOG_LABELS,
     onChange,
     onReset,
     search,
@@ -88,6 +89,7 @@ export function NewsFilters({
     companyScope?: boolean;
     /** The "news of one call" picker (company scope): gets the field's id. */
     eventFilter?: (id: string) => React.ReactNode;
+    labels?: NewsCatalogLabels;
     onChange: (patch: Partial<NewsFilterValues>) => void;
     /** "Reset filters" (default: `NEWS_FILTER_RESET`). */
     onReset?: () => void;
@@ -164,7 +166,7 @@ export function NewsFilters({
                         className="w-full"
                         id={id}
                         onValueChange={value => onChange({ kind: orNone(value) })}
-                        options={options("All kinds", NEWS_KINDS, value => NEWS_KIND_LABELS[value])}
+                        options={options("All kinds", NEWS_KINDS, labels.kindLabel)}
                         value={search.kind ?? ALL}
                     />
                 )}
@@ -176,7 +178,7 @@ export function NewsFilters({
                         className="w-full"
                         id={id}
                         onValueChange={value => onChange({ topic: orNone(value) })}
-                        options={options("All topics", NEWS_TOPICS, value => NEWS_TOPIC_LABELS[value])}
+                        options={options("All topics", NEWS_TOPICS, labels.topicLabel)}
                         value={search.topic ?? ALL}
                     />
                 )}

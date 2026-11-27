@@ -1,9 +1,16 @@
+import { Link } from "@tanstack/react-router";
+import * as React from "react";
+
 import type { WebhookEntry, WebhookSchema } from "@/lib/alerts/webhooks";
 
 import { JsonTree } from "@/components/api/json-tree";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
-import { exampleBody, fieldRows, typeText } from "@/lib/alerts/webhooks";
+import { DropdownSelect } from "@/components/ui/dropdown-select";
+import { alertTypeLabel } from "@/lib/alerts/labels";
+import { exampleBody, fieldRows, selectedSchema, selectedVariantValue, typeText } from "@/lib/alerts/webhooks";
+import { cn } from "@/lib/utils";
 
 /** A schema's fields as a table: path (indented by depth), type, required, the spec's description. */
 function FieldTable({ label, schema }: { label: string; schema: WebhookSchema }) {
@@ -38,30 +45,39 @@ function FieldTable({ label, schema }: { label: string; schema: WebhookSchema })
     );
 }
 
-function WebhookCard({ entry }: { entry: WebhookEntry }) {
-    const example = JSON.stringify(exampleBody(entry), null, 2);
+function WebhookCard({ entry, onTypeChange, selectedType }: { entry: WebhookEntry; onTypeChange: (type: string) => void; selectedType: string | undefined }) {
+    const schema = selectedSchema(entry.data, selectedType);
+
+    const body = exampleBody(entry, selectedType);
+
+    const example = JSON.stringify(body, null, 2);
+
+    const anchor = entry.data.variants ? `webhook-${entry.type}-${selectedType}` : `webhook-${entry.type}-section`;
 
     return (
-        <section aria-labelledby={`webhook-${entry.type}`} className="flex scroll-mt-24 flex-col gap-3 border-t pt-6" data-testid="webhook-entry" id={`webhook-${entry.type}-section`}>
+        <section aria-labelledby={`webhook-${entry.type}`} className="flex scroll-mt-24 flex-col gap-3 border-t pt-6" data-testid="webhook-entry" id={anchor}>
             <h3 className="text-section font-mono" id={`webhook-${entry.type}`}>{entry.type}</h3>
             <div className="flex flex-col gap-0.5">
                 <p className="text-muted-foreground text-xs font-medium">When it is sent</p>
                 <p className="text-sm">{entry.description}</p>
             </div>
+            {entry.data.variants && (
+                <DropdownSelect aria-label="Alert type" className="w-full sm:w-80" onValueChange={onTypeChange} options={entry.data.variants.map(variant => ({ label: `${alertTypeLabel(variant.value)} (${variant.value})`, value: variant.value }))} value={selectedType} />
+            )}
             <div className="flex flex-col gap-1">
                 <p className="text-muted-foreground text-xs font-medium">
                     <span className="font-mono">data</span>
                     {" fields (* required)"}
                 </p>
-                <FieldTable label={`${entry.type} data fields`} schema={entry.data} />
+                <FieldTable label={`${entry.type} data fields`} schema={schema} />
             </div>
             <div className="flex flex-col gap-1">
                 <div className="flex flex-wrap items-center gap-1">
                     <p className="text-muted-foreground text-xs font-medium">Example body</p>
-                    <Badge variant="outline">built from the schema: required fields</Badge>
+                    <Badge variant="outline">{schema.example === undefined ? "built from the schema: required fields" : "Published schema example"}</Badge>
                     <CopyButton label={`Copy the ${entry.type} example`} value={example} />
                 </div>
-                <JsonTree className="bg-muted/30 max-h-80 overflow-auto rounded-md border p-2" value={exampleBody(entry)} />
+                <JsonTree className="bg-muted/30 max-h-80 overflow-auto rounded-md border p-2" value={body} />
             </div>
         </section>
     );
@@ -95,21 +111,44 @@ function DeliveryRules({ entry }: { entry: WebhookEntry }) {
  * The webhook reference (pure; `/alerts/webhooks`; ui-redesign task 13: from `lg` the types are a sticky list of
  * in-page anchors on the left, the reference on the right; one column below): rendered from the pinned spec's `x-webhooks` (generated at build
  * time into `WEBHOOKS` / `WEBHOOK_ENVELOPE`). The envelope, the signature headers and the acknowledgement once, then per
- * type: when it is sent, its `data` fields and an example body BUILT FROM THE SCHEMA (the spec gives none) — nothing the
- * spec does not state.
+ * type: when it is sent, selected typed fields and a published example (or an explicitly labelled generated shape).
  */
-export function WebhookReferenceView({ envelope, webhooks }: { envelope: WebhookSchema; webhooks: ReadonlyArray<WebhookEntry> }) {
+export function WebhookReferenceView({ envelope, onTypeChange, selectedType, webhooks }: { envelope: WebhookSchema; onTypeChange?: (type: string) => void; selectedType?: string; webhooks: ReadonlyArray<WebhookEntry> }) {
+    const [navOpen, setNavOpen] = React.useState(false);
+
+    const [localType, setLocalType] = React.useState<string>();
+
+    const fired = webhooks.find(entry => entry.type === "alert.fired");
+
+    // A controlled route's undefined value means its default, rather than a previous local choice.
+    const requestedType = onTypeChange ? selectedType : selectedType ?? localType;
+
+    const type = fired ? selectedVariantValue(fired.data, requestedType) : undefined;
+
+    const changeType = (next: string) => {
+        if (onTypeChange) onTypeChange(next);
+        else setLocalType(next);
+    };
+
     if (webhooks.length === 0) return <p className="text-muted-foreground">The pinned spec lists no webhook payloads.</p>;
 
     return (
         <div className="grid gap-6 lg:grid-cols-[13rem_minmax(0,1fr)] lg:gap-8">
             <nav aria-label="Webhook types" className="lg:sticky lg:top-[calc(var(--app-topbar-height,0px)+1.5rem)] lg:self-start">
-                <ul className="flex flex-wrap gap-1 lg:flex-col lg:gap-0.5">
+                <Button aria-expanded={navOpen} className="lg:hidden" onClick={() => setNavOpen(!navOpen)} type="button" variant="outline">Jump to a payload</Button>
+                <ul className={cn("flex-wrap gap-1 lg:flex lg:flex-col lg:gap-0.5", navOpen ? "flex" : "hidden")}>
                     <li><a className="hover:bg-muted block rounded-md px-2 py-1 max-sm:py-2" href="#webhook-envelope-section">Envelope</a></li>
                     <li><a className="hover:bg-muted block rounded-md px-2 py-1 max-sm:py-2" href="#webhook-delivery-section">Signature and retries</a></li>
                     {webhooks.map(entry => (
                         <li key={entry.type}>
-                            <a className="hover:bg-muted block rounded-md px-2 py-1 font-mono max-sm:py-2" href={`#webhook-${entry.type}-section`}>{entry.type}</a>
+                            <a className="hover:bg-muted block rounded-md px-2 py-1 font-mono max-sm:py-2" href={entry.type === "alert.fired" ? `#webhook-${entry.type}-${type}` : `#webhook-${entry.type}-section`}>{entry.type}</a>
+                            {entry.data.variants && (
+                                <ul className="ml-3 flex flex-wrap lg:flex-col">
+                                    {entry.data.variants.map(variant => (
+                                        <li key={variant.value}><Link aria-current={variant.value === type ? "true" : undefined} className="text-muted-foreground hover:bg-muted block rounded-md px-2 py-1 text-xs max-sm:py-2" hash={`webhook-alert.fired-${variant.value}`} replace resetScroll={false} search={{ type: variant.value }} to="/alerts/webhooks">{alertTypeLabel(variant.value)}</Link></li>
+                                    ))}
+                                </ul>
+                            )}
                         </li>
                     ))}
                 </ul>
@@ -120,7 +159,7 @@ export function WebhookReferenceView({ envelope, webhooks }: { envelope: Webhook
                     <FieldTable label="Envelope fields" schema={envelope} />
                 </section>
                 <DeliveryRules entry={webhooks[0]} />
-                {webhooks.map(entry => <WebhookCard entry={entry} key={entry.type} />)}
+                {webhooks.map(entry => <WebhookCard entry={entry} key={entry.type} onTypeChange={changeType} selectedType={type} />)}
             </div>
         </div>
     );

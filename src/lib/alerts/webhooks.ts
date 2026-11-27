@@ -10,7 +10,7 @@ import type { WebhookEntry, WebhookSchema } from "../../../scripts/webhooks.mjs"
 
 export type { WebhookEntry, WebhookField, WebhookHeader, WebhookSchema } from "../../../scripts/webhooks.mjs";
 
-/** The instant every example uses (a placeholder; examples are shapes, not recorded deliveries). */
+/** A placeholder for the outer envelope and generated fallback fields; published data keeps its own instants. */
 export const EXAMPLE_INSTANT = "2026-11-21T14:30:00Z";
 
 /** An id prefix the description names (`` `evt_…` `` → `evt_`), else null. */
@@ -20,11 +20,32 @@ function idPrefixOf(description: string | undefined): null | string {
     return match ? match[1] : null;
 }
 
+/** The selected fire type also applies when the typed data sits inside a batch event envelope. */
+export function selectedSchema(schema: WebhookSchema, type: string | undefined): WebhookSchema {
+    if (schema.variants?.length) {
+        const wanted = schema.discriminator?.propertyName === "alert_type" ? type : "alert.fired";
+
+        const variant = schema.variants.find(item => item.value === wanted) ?? schema.variants[0];
+
+        return selectedSchema(variant.schema, type);
+    }
+
+    return {
+        ...schema,
+        ...(schema.fields ? { fields: schema.fields.map(field => ({ ...field, schema: selectedSchema(field.schema, type) })) } : {}),
+        ...(schema.items ? { items: selectedSchema(schema.items, type) } : {}),
+    };
+}
+
+export function selectedVariantValue(schema: WebhookSchema, type: string | undefined) {
+    return schema.variants?.find(variant => variant.value === type)?.value ?? schema.variants?.[0]?.value;
+}
+
 /** An example value of a schema (pure, deterministic): an object shows its required fields (all where none is required). */
 export function exampleOf(schema: WebhookSchema): JsonValue {
     if (schema.example !== undefined) return schema.example;
 
-    if (schema.oneOf?.length) return exampleOf(schema.oneOf[0]);
+    if (schema.variants?.length) return exampleOf(schema.variants[0].schema);
 
     if (schema.enum && schema.enum.length > 0) return schema.enum[0];
 
@@ -58,8 +79,8 @@ export function exampleOf(schema: WebhookSchema): JsonValue {
 }
 
 /** A webhook's whole example body: the envelope with this type, the example instant and the type's `data`. */
-export function exampleBody(entry: Pick<WebhookEntry, "data" | "type">): JsonValue {
-    return { data: exampleOf(entry.data), timestamp: EXAMPLE_INSTANT, type: entry.type };
+export function exampleBody(entry: Pick<WebhookEntry, "data" | "type">, selectedType?: string): JsonValue {
+    return { data: exampleOf(selectedSchema(entry.data, selectedType)), timestamp: EXAMPLE_INSTANT, type: entry.type };
 }
 
 /** A schema's type in words: `string (date-time)`, `array of object`, `"a" | "b"`, `… or null`. */

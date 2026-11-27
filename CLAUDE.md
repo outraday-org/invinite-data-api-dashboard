@@ -898,11 +898,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   notice says so), `/alerts/webhooks`. Every action confirms first (`destinationConfirmWords`: test, rotate — 24 h dual
   signature —, disable, re-enable, delete — `ConfirmAction` `details` lists the alerts from `listAlerts?destination_id=`,
   first page: "N" / "N+"). Destination chips of the alert pages link here.
-- **Webhook reference**: generated at build time — `scripts/webhooks.mjs` (`webhookEntries`, `webhookEnvelope`; pure,
-  types in `webhooks.d.mts`) feeds `WEBHOOKS` / `WEBHOOK_ENVELOPE` in `operations.gen.ts` (`pnpm generate:api`). The spec
-  has NO example bodies: the page builds an example shape from each schema (required fields; `exampleBody`) and labels
-  it. Signature / retry text = the spec's header and `2XX` descriptions only. `webhooks.test.ts` pins the export to the
-  spec; a type removed from the spec leaves the page (`webhook-reference.test.tsx`).
+- **Webhook reference (13.0)**: the one `scripts/webhooks.mjs` walker supplies keyed discriminator `variants`, field order/descriptions and published examples to `WEBHOOKS` / `WEBHOOK_ENVELOPE`; repeated projected schemas are emitted as shared constants. `/alerts/webhooks?type=halt` chooses a generated fire type (unknown = first), using `IN_PLACE` navigation, a type picker and per-type anchors. The selected schema supplies its required-marked fields, example and copy body. Only schemas without examples show the generated-shape badge. Batch examples retain the selected typed fire beneath one event envelope's `data`; their item union has six stored event types and never nests another batch. Signature and retries remain the spec's headers/responses.
 - Views (pure): `DestinationsListView`, `DestinationFormView`, `DestinationDetailView`, `DeliveriesView`
   (+ `TestDeliveryNotice`), `WebhookReferenceView`; wiring `destination-editor.tsx`, `use-destination-actions.tsx`.
   Fixtures `src/lib/alerts/destinations-fixtures.ts` (fake secrets). Tests `src/routes/-tests/destinations-{views,secret}.test.tsx`.
@@ -987,7 +983,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 ### Reference (O7 group 7: catalog, companies, status)
 
 - **`/catalog`** (`src/routes/catalog.tsx`, `BROWSE_NAV` "Catalog"): tabs Metrics | Sections | Forms | Event types |
-  Document kinds | Mapping rules | Exchanges | Sectors | KPIs (+ Macro series) = the `/v1/catalog/*` operations (Exchanges: name + MIC,
+  Document kinds | Mapping rules | Exchanges | Sectors | KPIs | Alert types | News kinds | Halt reasons | Dividend types (+ Macro series) = the `/v1/catalog/*` operations (Exchanges: name + MIC,
   company / instrument counts, links to `/instruments?exchange=`; Sectors: one row per industry — industry, its sector with
   the sector's count, the industry's company count (`sectorIndustryRows`) —, a Sector picker (`?sector=`, filtered in the page), the text
   filter searches industry and sector; both Data API 11.2; KPIs: `/v1/catalog/kpis` — sector, KPI + key, unit, period kinds — with a Sector picker of the KPI catalog's own sector keys, `?sector=` filtered in the page, Data API 12.1) (free, 1 credit a page; hooks
@@ -1001,6 +997,8 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   ("12 of 342 metrics", `catalog-count`) sits in the table toolbar (`toolbarMeta`); the Metrics description column is
   `min-w-[28rem]` (≤ 2 lines at 1440 px) and "Mapping rules" a quiet row action (`ROW_ACTION_REVEAL_CLASS`); the metric
   chip is the `FilterBar`'s trailing item.
+- **Alert reference catalogs (13.0)**: the four status-aware POST server functions call the matching `/v1/catalog/{alert-types,news-kinds,halt-reasons,dividend-types}` GETs. `use*CatalogInfinite` uses the same one-hour reference query cache for pages, labels and alert pickers; each consumer follows every cursor page while enabled and stops on a failed page. The four `/catalog` tabs support the common q filter/export; news vocabulary adds schema-validated `?group=kind|topic|development_topic`, filtered locally over the complete cache. Alert rows show subject kinds/assets/ETF support, coverage, required fields, minimum plan and per-event plans, linking the form and selected webhook payload. Captured complete fixtures pin 18 alert types, 30 news rows, 35 halt reasons and 4 dividend types; the ETF entry-point test compares the runtime catalog's `subjects.etf`.
+- **Catalog labels**: `src/lib/reference/catalog-labels.ts` provides the news kind/topic/development-topic names, dividend type names and halt reason names. News identities include both group and value (`other` occurs twice). Code values stay synchronous in URL validation through generated `NEWS_FILTER_VALUES`; asynchronous catalog loading/failure always leaves raw codes visible. News/dividend pure views receive optional label functions from connected containers. The alert form's dividend-type/halt-reason pickers name schema enum codes through the same cache. No covered hand-written news/dividend label map remains.
 - **Metric catalog links**: `MetricCatalogLink` (`src/components/reference/metric-catalog-link.tsx`, a book icon,
   click never opens the row chart) beside every financial metric label → `/catalog?q=<metric_id>`; only for ids of the
   catalog's families (`isCatalogMetricId`: `is_ | bs_ | cfs_ | ratio_ | growth_ | cagr_ | seg_`), so an as-reported
@@ -1027,8 +1025,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   has the `fiscal_periods` dataset — `useCompanyFiscalPeriods` (the filings list's request, every page), newest 8 +
   "Show all" (Export = the shown rows), the latest fiscal year end = the newest Q4's period end.
 - **Dividends** (`?from=&to=&sort=`): the ex-date range as `ex_date.gte` / `.lte` (a swapped range is ordered), sort
-  ex-date / pay date either way, a Type column (`dividend_type` codes in words: CD regular cash, SC special cash, LT /
-  ST capital gains; another code as itself). **Market holidays** (`?from=&to=`): a day range inside the Upcoming / Past
+  ex-date / pay date either way, a Type column (`dividend_type` codes named through the cached dividend catalog, raw code while loading/on failure or for an unknown code). **Market holidays** (`?from=&to=`): a day range inside the Upcoming / Past
   tab (`holidaysRequest`: it narrows the tab, never leaves it).
 - Tests: `src/routes/-tests/reference-pages.test.tsx`, `src/lib/reference/catalog.test.ts`; fixtures
   `src/lib/reference/reference-fixtures.ts` (tests only).
@@ -1233,10 +1230,10 @@ missing, duplicate or unknown id: a new operation of the spec needs its row (pag
 | `listDocumentKindCatalog` | `GET /v1/catalog/document-kinds` | `/catalog?tab=document-kinds` (O7 group 7) |
 | `listMappingRules` | `GET /v1/catalog/mapping-rules` | `/catalog?tab=mapping-rules` (`statement`, `metric_id` from a metric row; O7 group 7) |
 | `listExchangeCatalog` | `GET /v1/catalog/exchanges` | `/catalog?tab=exchanges` (counts; links `/instruments?exchange=`; Data API 11.2) |
-| `listAlertTypeCatalog` | `GET /v1/catalog/alert-types` | Planned task 11: `/catalog?tab=alert-types`; runtime labels and ETF support. No catalog page yet in task 10. |
-| `listNewsKindCatalog` | `GET /v1/catalog/news-kinds` | Planned task 11: `/catalog?tab=news-kinds`; news kind and topic labels. No catalog page yet in task 10. |
-| `listHaltReasonCatalog` | `GET /v1/catalog/halt-reasons` | Planned task 11: `/catalog?tab=halt-reasons`; halt reason labels. No catalog page yet in task 10. |
-| `listDividendTypeCatalog` | `GET /v1/catalog/dividend-types` | Planned task 11: `/catalog?tab=dividend-types`; dividend type labels. No catalog page yet in task 10. |
+| `listAlertTypeCatalog` | `GET /v1/catalog/alert-types` | `/catalog?tab=alert-types` (18 types, scopes, required fields, tier/event plans, form and selected webhook links; ETF entry-point fixture) |
+| `listNewsKindCatalog` | `GET /v1/catalog/news-kinds` | `/catalog?tab=news-kinds` (`group`, `q`); shared news kind/topic/development-topic labels |
+| `listHaltReasonCatalog` | `GET /v1/catalog/halt-reasons` | `/catalog?tab=halt-reasons`; shared alert-form halt-reason picker names |
+| `listDividendTypeCatalog` | `GET /v1/catalog/dividend-types` | `/catalog?tab=dividend-types`; shared dividends Type column and alert-form dividend-type picker names |
 | `listKpiCatalog` | `GET /v1/catalog/kpis` | `/catalog?tab=kpis` (sector, KPI, unit, period kinds; `?sector=` picker filtered in the page; Data API 12.1) |
 | `listSectorCatalog` | `GET /v1/catalog/sectors` | `/catalog?tab=sectors` (industries per sector); `/instruments?view=companies` (the sector picker's choices and the `?sector=` check; Data API 11.2) |
 | `listCompanies` | `GET /v1/companies` | `/instruments?view=companies` (Companies tab: `q`, `exchange`, `sector` (only one `/v1/catalog/sectors` names), `sort`; O7 group 7) |

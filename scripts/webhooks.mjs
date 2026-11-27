@@ -2,8 +2,8 @@
 // tasks/data-api-dashboard 2-alerts task 3). Pure: `generate-operations.mjs` writes its result into `operations.gen.ts`
 // (`WEBHOOKS`, `WEBHOOK_ENVELOPE`), and a test runs it on a changed spec. Only what the spec states is carried: each
 // type's summary and description, its request headers with their descriptions, the acknowledgement (its responses), and
-// the `data` schema (refs resolved, `allOf` merged) — the spec has no example bodies; the page builds an example shape
-// from the schema and says so. Object properties become an ordered `fields` list (the generated file is key-sorted by
+// the `data` schema (refs resolved, `allOf` merged), discriminator variants and published examples. Object properties
+// become an ordered `fields` list (the generated file is key-sorted by
 // eslint; the spec's field order must survive it).
 
 /** The schema keys the page reads; every other key is dropped. */
@@ -69,9 +69,15 @@ function sharedSchema(branches) {
 export function simplifySchema(spec, schema) {
     const current = merged(spec, schema);
 
-    const branches = current.oneOf?.map(branch => simplifySchema(spec, branch));
+    const union = current.oneOf ?? current.anyOf;
 
-    const out = branches ? { ...sharedSchema(branches), oneOf: branches, ...(current.discriminator ? { discriminator: current.discriminator } : {}) } : {};
+    const mapping = current.discriminator?.mapping;
+
+    const variants = mapping
+        ? Object.entries(mapping).map(([value, ref]) => ({ value, schema: simplifySchema(spec, { $ref: ref }) }))
+        : union?.map((branch, index) => ({ value: String(index), schema: simplifySchema(spec, branch) }));
+
+    const out = variants ? { ...sharedSchema(variants.map(variant => variant.schema)), variants, ...(current.discriminator ? { discriminator: current.discriminator } : {}) } : {};
 
     for (const key of KEPT) {
         if (current[key] !== undefined) out[key] = current[key];

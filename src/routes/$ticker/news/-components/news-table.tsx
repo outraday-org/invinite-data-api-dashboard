@@ -6,7 +6,8 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDayTimeShort } from "@/lib/format";
-import { NEWS_KIND_LABELS, publishedBy, sourceLabel } from "@/lib/news/labels";
+import { publishedBy, sourceLabel } from "@/lib/news/labels";
+import { rawCatalogLabel } from "@/lib/reference/catalog-labels";
 import { IN_PLACE } from "@/lib/url-state";
 
 const SKELETON_ROWS = 8;
@@ -23,11 +24,13 @@ export function NewsTable({
     flashing,
     isLoading,
     items,
+    kindLabel = rawCatalogLabel,
     liveIds,
 }: {
     flashing?: ReadonlySet<string>;
     isLoading: boolean;
     items: ReadonlyArray<NewsItemPublic>;
+    kindLabel?: (value: string) => string;
     /** Items that arrived over the live feed (marked "New"). */
     liveIds?: ReadonlySet<string>;
 }) {
@@ -75,7 +78,7 @@ export function NewsTable({
                                     </TableCell>
                                     <TableCell className="py-2 align-top">
                                         <div className="flex flex-wrap gap-1">
-                                            <Badge variant="outline">{NEWS_KIND_LABELS[item.kind]}</Badge>
+                                            <Badge variant="outline">{kindLabel(item.kind)}</Badge>
                                             {item.is_earnings_news && <Badge variant="secondary">Earnings</Badge>}
                                         </div>
                                     </TableCell>

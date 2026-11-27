@@ -13,6 +13,7 @@ import { titleHead } from "@/lib/layout";
 import { liveOn, liveParam, useLiveDefault } from "@/lib/live/live-default";
 import { validateNewsFeedSearch } from "@/lib/news/labels";
 import { useWatchlist, WATCHLIST_MAX } from "@/lib/news/watchlist";
+import { useNewsCatalogLabels } from "@/lib/reference/catalog-labels";
 import { IN_PLACE } from "@/lib/url-state";
 import { NewsFilters as NewsFilterControls } from "@/routes/$ticker/news/-components/news-filters";
 import { NewsItemPanel } from "@/routes/$ticker/news/-components/news-item-panel";
@@ -49,6 +50,8 @@ function NewsFeedPage() {
 }
 
 function ReadyNewsFeed({ list, set}: { list: Array<string>; set: (next: Array<string>) => void }) {
+    const labels = useNewsCatalogLabels();
+
     const search = Route.useSearch();
 
     const navigate = Route.useNavigate();
@@ -84,6 +87,7 @@ function ReadyNewsFeed({ list, set}: { list: Array<string>; set: (next: Array<st
         <NewsFilterControls
             categories={[]}
             companyScope={false}
+            labels={labels}
             onChange={onChange}
             search={search}
             tags={[]}
@@ -115,6 +119,7 @@ function ReadyNewsFeed({ list, set}: { list: Array<string>; set: (next: Array<st
                 emptyText={feedEmptyText({ hasWindow: Boolean(search.from || search.to), live, market })}
                 exportScope={company ?? "all-companies"}
                 headerActions={liveToggle}
+                labels={labels}
                 list={news}
                 notice={stop && <LiveStopNotice planNote={LIVE_NEWS_PLAN_NOTE} stop={stop} />}
                 patch={onChange}

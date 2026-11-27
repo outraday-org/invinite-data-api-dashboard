@@ -266,6 +266,11 @@ export const OPERATIONS = ${JSON.stringify(sortedEntries(operations), null, 4)} 
 
 export type OperationId = keyof typeof OPERATIONS;
 
+/** Synchronous URL vocabulary from the pinned schemas; names come from the runtime catalogs. */
+export const NEWS_FILTER_VALUES = ${JSON.stringify({ kinds: spec.components.schemas.NewsItem.properties.kind.enum, topics: spec.components.schemas.NewsItem.properties.topics.items.enum, developmentTopics: spec.components.schemas.Announcement.properties.topic.enum }, null, 4)} as const;
+
+export const NEWS_CATALOG_GROUPS = ${JSON.stringify(spec.components.schemas.NewsKindCatalogEntry.properties.group.enum)} as const;
+
 export const MACRO_ALERT_SERIES = ${JSON.stringify(spec.paths["/v1/macro/series"].get["x-macro-alert-series"], null, 4)} as const;
 
 /** \`"GET /v1/funds/{fund}"\` → operationId. */

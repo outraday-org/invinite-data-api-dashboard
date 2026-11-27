@@ -6,6 +6,7 @@ import { useState } from "react";
 import type { V2NewsSearchField, V2NewsSearchHit } from "@/lib/api/types";
 import type { ExportColumn } from "@/lib/export";
 import type { NewsSearch } from "@/lib/news/labels";
+import type { NewsCatalogLabels } from "@/lib/reference/catalog-labels";
 
 import { ExportMenu } from "@/components/api/export-menu";
 import { SearchModeChips, SearchQueryForm } from "@/components/search/search-box";
@@ -18,6 +19,7 @@ import { Notice } from "@/components/ui/notice";
 import { ApiRequestError, isSearchTimeout } from "@/lib/api/errors";
 import { useV2NewsSearchInfinite } from "@/lib/api/queries";
 import { newsSearchWindowProblem } from "@/lib/news/market-window";
+import { RAW_NEWS_CATALOG_LABELS } from "@/lib/reference/catalog-labels";
 
 import type { useNewsList } from "./use-news-list";
 
@@ -108,7 +110,8 @@ function SearchFilters({ patch, problem, query}: { query: Query; patch: (patch: 
     );
 }
 
-export function NewsView({ company, controls, description, emptyText, exportScope, headerActions, list, notice, patch, placeholder, query, scope, scopeText, search, submit, title}: {
+export function NewsView({ company, controls, description, emptyText, exportScope, headerActions, labels = RAW_NEWS_CATALOG_LABELS, list, notice, patch, placeholder, query, scope, scopeText, search, submit, title}: {
+    labels?: NewsCatalogLabels;
     title: string; description: ReactNode; headerActions: ReactNode; scope: ReactNode; scopeText: string; placeholder: string; exportScope: string; query: Query; company?: string; submit: (q: string) => void; patch: (patch: Partial<Query>) => void;
     list: ReturnType<typeof useNewsList>; controls: ReactNode; emptyText?: string; notice?: ReactNode; search: ReturnType<typeof useNewsSearchView>;
 }) {
@@ -151,6 +154,7 @@ export function NewsView({ company, controls, description, emptyText, exportScop
             hiddenByFilters={list.hidden}
             isLoading={list.isLoading}
             items={list.items}
+            kindLabel={labels.kindLabel}
             liveIds={list.liveIds}
             notice={notice}
             pager={list.pager}
