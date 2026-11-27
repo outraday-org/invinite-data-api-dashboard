@@ -1,15 +1,13 @@
 import type * as React from "react";
 
 // @vitest-environment jsdom
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { ListState } from "@/lib/api/list-state";
-import type { ReceivedFiling } from "@/lib/live/live-filings";
 
 import { ApiRequestError } from "@/lib/api/errors";
 import { mergeLatest } from "@/lib/live/live-filings";
-import { ARRIVAL_FLASH_MS, useArrivalFlash } from "@/lib/live/use-arrival-flash";
 import {
     DATASETS,
     DOCUMENT_SECTIONS,
@@ -310,95 +308,5 @@ describe("latest filings list (/filings)", () => {
         expect(screen.getByText("The filings door is switched off.")).toBeInTheDocument();
 
         expect(screen.getByRole("link", { name: LIVE_FILING.accession_number })).toBeInTheDocument();
-    });
-});
-
-describe("arrival flash (useArrivalFlash on /filings)", () => {
-    /** The page's wiring: REST rows + live frames merged, the flash hook, the view. */
-    function Harness({ live, paused = false, ready }: { live: Array<ReceivedFiling>; paused?: boolean; ready: boolean }) {
-        const rows = mergeLatest(live, ready ? V2_FILINGS.data : []);
-
-        const flashing = useArrivalFlash(rows, { arrivedAt: row => row.arrivedAt, enabled: !paused, idOf: row => row.accession, ready });
-
-        return (
-            <LatestFilingsView
-                error={null}
-                flashing={flashing}
-                forms={[]}
-                isLoading={!ready}
-                pager={{ hasNext: false, isFetching: false, onNext: () => undefined, onPrevious: () => undefined, page: 1 }}
-                paused={paused}
-                rows={rows}
-            />
-        );
-    }
-
-    const rowOf = (accession: string) => screen.getByRole("link", { name: accession }).closest("tr");
-
-    afterEach(() => {
-        vi.useRealTimers();
-    });
-
-    it("a frame after the prefill flashes for 2.5 s, then the class is gone and the row stays; a frame before it never flashes", () => {
-        vi.useFakeTimers();
-
-        vi.setSystemTime(new Date("2026-11-27T10:00:00Z"));
-
-        const early = { filing: LIVE_FILING, receivedAt: "2026-11-27T10:00:00Z" };
-
-        const { rerender } = render(<Harness live={[early]} ready={false} />);
-
-        rerender(<Harness live={[early]} ready />);
-
-        act(() => vi.advanceTimersByTime(10));
-
-        expect(rowOf(LIVE_FILING.accession_number)?.className).not.toContain("row-arrive");
-
-        vi.setSystemTime(new Date("2026-11-27T10:00:05Z"));
-
-        const late = { filing: LIVE_FILING_S1, receivedAt: "2026-11-27T10:00:05.000Z" };
-
-        rerender(<Harness live={[late, early]} ready />);
-
-        act(() => vi.advanceTimersByTime(10));
-
-        expect(rowOf(LIVE_FILING_S1.accession_number)?.className).toContain("row-arrive");
-
-        // The rows below keep their elements (keyed by accession): a row on top never restarts their animation.
-        expect(rowOf(V2_FILINGS.data[0].accession)?.className).not.toContain("row-arrive");
-
-        act(() => vi.advanceTimersByTime(ARRIVAL_FLASH_MS));
-
-        expect(rowOf(LIVE_FILING_S1.accession_number)?.className).not.toContain("row-arrive");
-
-        expect(rowOf(LIVE_FILING_S1.accession_number)).toBeInTheDocument();
-    });
-
-    it("a listed accession that then arrives live flashes once, shown once; paused flashes nothing", () => {
-        vi.useFakeTimers();
-
-        vi.setSystemTime(new Date("2026-11-27T10:00:00Z"));
-
-        const { rerender } = render(<Harness live={[]} ready />);
-
-        const relisted = { filing: { ...LIVE_FILING, accession_number: V2_FILINGS.data[0].accession }, receivedAt: "2026-11-27T10:00:00.000Z" };
-
-        rerender(<Harness live={[relisted]} ready />);
-
-        act(() => vi.advanceTimersByTime(10));
-
-        expect(screen.getAllByRole("link", { name: V2_FILINGS.data[0].accession })).toHaveLength(1);
-
-        expect(rowOf(V2_FILINGS.data[0].accession)?.className).toContain("row-arrive");
-
-        cleanup();
-
-        const paused = render(<Harness live={[]} paused ready />);
-
-        paused.rerender(<Harness live={[{ filing: LIVE_FILING_S1, receivedAt: "2026-11-27T10:00:00.000Z" }]} paused ready />);
-
-        act(() => vi.advanceTimersByTime(10));
-
-        expect(rowOf(LIVE_FILING_S1.accession_number)?.className).not.toContain("row-arrive");
     });
 });

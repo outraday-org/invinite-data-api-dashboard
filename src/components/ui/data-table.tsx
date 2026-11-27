@@ -135,6 +135,7 @@ export function DataTable<TRow>({
     operationId,
     rowClassName,
     rows,
+    skeletonBelowRows = false,
     stickyFirstColumn = false,
     toolbarMeta,
 }: {
@@ -172,6 +173,7 @@ export function DataTable<TRow>({
     operationId?: OperationId;
     rowClassName?: (row: TRow) => string | undefined;
     rows: Array<TRow>;
+    skeletonBelowRows?: boolean;
     stickyFirstColumn?: boolean;
     /** A meta / coverage line in the toolbar, after the count. */
     toolbarMeta?: React.ReactNode;
@@ -208,7 +210,7 @@ export function DataTable<TRow>({
         return phoneSticky ? "max-sm:sticky max-sm:left-0 max-sm:z-10 max-sm:bg-background max-sm:group-hover/row:bg-[color-mix(in_oklch,var(--muted)_50%,var(--background))]" : undefined;
     };
 
-    const showSkeleton = isLoading && rows.length === 0 && !errorState;
+    const showSkeleton = isLoading && (skeletonBelowRows || rows.length === 0) && !errorState;
 
     const showEmpty = !isLoading && rows.length === 0 && emptyIsGenuine && !errorState;
 

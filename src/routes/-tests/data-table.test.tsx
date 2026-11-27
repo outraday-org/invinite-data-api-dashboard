@@ -303,3 +303,21 @@ describe("PageHeader", () => {
         expect(document.querySelector("[data-slot=page-header]")?.children).toHaveLength(1);
     });
 });
+
+it("opts in to five skeleton rows below data, with errors taking precedence", () => {
+    const { rerender } = render(table({ isLoading: true }));
+
+    expect(screen.queryAllByTestId("data-table-skeleton")).toHaveLength(0);
+
+    rerender(table({ isLoading: true, skeletonBelowRows: true }));
+
+    expect(screen.getAllByTestId("data-table-skeleton")).toHaveLength(5);
+
+    expect(screen.getAllByRole("row")[1]).toHaveTextContent("Thanksgiving");
+
+    expect(screen.getAllByRole("row")[3]).toHaveAttribute("data-testid", "data-table-skeleton");
+
+    rerender(table({ errorState: <span>Failed</span>, isLoading: true, skeletonBelowRows: true }));
+
+    expect(screen.queryAllByTestId("data-table-skeleton")).toHaveLength(0);
+});

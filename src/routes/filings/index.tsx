@@ -126,7 +126,7 @@ const rowIdOf = (row: LatestFilingRow) => row.accession;
 
 /**
  * The latest filings (pure): the REST page with the live rows merged on top (page 1), a flashing row marked
- * `row-arrive`, the REST error above the table (live rows stay), skeleton rows while page 1 loads and nothing arrived,
+ * `row-arrive`, the REST error above the table (live rows stay), skeleton rows while page 1 loads, under any live rows,
  * the keyset pager under it (hidden while there is one page).
  */
 export function LatestFilingsView({
@@ -158,6 +158,7 @@ export function LatestFilingsView({
                 isLoading={isLoading}
                 rowClassName={row => (flashing.has(row.accession) ? "row-arrive" : undefined)}
                 rows={rows}
+                skeletonBelowRows
             />
             <KeysetPagerNav {...pager} label="Filings pages" />
         </div>
