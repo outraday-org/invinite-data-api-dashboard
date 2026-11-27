@@ -1,4 +1,4 @@
-import type { V2AsReportedPresentationNode, V2StandardizedPresentationNode } from "@/lib/api/types";
+import type { V2AsReportedPresentationNode, V2StandardizedPresentationNode, V2StatementPeriod } from "@/lib/api/types";
 
 /** A standardized presentation node of `/v1/financials/standardized/presentation` (`metric_id`, `value`, `children?`). */
 export type StandardizedPresentationFactRaw = V2StandardizedPresentationNode;
@@ -21,16 +21,22 @@ export type PresentationPeriod = {
     label: string;
     /** `source.is_preliminary`: the period's values come from the earnings release before the 10-Q / 10-K. */
     preliminary?: boolean;
+    reportedPeriod?: V2StatementPeriod;
     /** The column header's tooltip (the filing the period was rendered from). */
     title?: string;
 };
 
 export type TreeRow = {
+    chartId?: string;
     depth: number;
+    id?: string;
     hasChildren: boolean;
     isTotal: boolean;
     label: string;
     metricId: string;
+    nodes?: ReadonlyMap<number, V2AsReportedPresentationNode>;
     parentId: null | string;
+    preserve?: boolean;
+    title?: string;
     values: Record<string, null | number | undefined>;
 };

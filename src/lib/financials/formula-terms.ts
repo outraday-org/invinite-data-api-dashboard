@@ -5,7 +5,7 @@
  */
 import type { ValueRef } from "./value-ref";
 
-import { localConcept, refOfFactId } from "./value-ref";
+import { localConcept, refOfFactId, sameDimensions } from "./value-ref";
 
 export type FormulaTerm
     = | { kind: "operand"; member: null | number; ref: null | ValueRef; text: string }
@@ -19,7 +19,8 @@ const OPERATOR_TEXT: Record<string, string> = { "*": "×", "+": "+", "-": "−",
 const OPERATOR_SPLIT = /(\s+[-+*/×−]\s+)/u;
 
 export const sameRef = (a: ValueRef, b: ValueRef) =>
-    localConcept(a.concept) === localConcept(b.concept) && a.start === b.start && a.end === b.end && a.instant === b.instant;
+    (a.dimensions || b.dimensions ? a.concept === b.concept : localConcept(a.concept) === localConcept(b.concept))
+    && a.start === b.start && a.end === b.end && a.instant === b.instant && sameDimensions(a.dimensions, b.dimensions);
 
 /** One operand piece with its leading "(" and trailing ")" split off. */
 function operandPieces(piece: string): Array<FormulaTerm> {
@@ -53,7 +54,7 @@ function operandPieces(piece: string): Array<FormulaTerm> {
  * filed value, e.g. a standardized metric). An operand matches the member with the same concept and period; when no
  * operand is a raw fact id ("FY - Q1 - Q2 - Q3") and the counts agree, the n-th operand is the n-th member.
  */
-export function formulaTerms(formula: string, members: ReadonlyArray<null | ValueRef>): Array<FormulaTerm> {
+export function formulaTerms(formula: string, members: ReadonlyArray<null | ValueRef>, strict = false): Array<FormulaTerm> {
     const terms = formula
         .split(OPERATOR_SPLIT)
         .flatMap<FormulaTerm>((piece) => {
@@ -71,9 +72,14 @@ export function formulaTerms(formula: string, members: ReadonlyArray<null | Valu
     const used = new Set<number>();
 
     for (const operand of operands) {
-        if (!operand.ref) continue;
+        const ref = operand.ref;
 
-        const index = members.findIndex((member, position) => member !== null && !used.has(position) && sameRef(member, operand.ref!));
+        let index = members.findIndex((member, position) => member?.factId === operand.text && !used.has(position));
+
+        if (index < 0 && ref) {
+            index = members.findIndex((member, position) => member !== null && !used.has(position)
+                && (!strict || !member.factId) && sameRef(member, ref));
+        }
 
         if (index >= 0) {
             used.add(index);
@@ -82,9 +88,9 @@ export function formulaTerms(formula: string, members: ReadonlyArray<null | Valu
         }
     }
 
-    if (used.size === 0 && operands.length === members.length) {
+    if (operands.length === members.length && ((!strict && used.size === 0) || operands.every((operand, index) => operand.member === index || (operand.member === null && operand.ref === null && !operand.text.includes("|") && !members[index]?.factId)))) {
         operands.forEach((operand, index) => {
-            operand.member = index;
+            operand.member ??= index;
         });
     }
 

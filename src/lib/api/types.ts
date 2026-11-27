@@ -292,6 +292,8 @@ export type V2StandardizedPresentationNode = NonNullable<V2StandardizedPresentat
 export type V2AsReportedFacts = NonNullable<V2AsReportedResponse["data"][number]["statements"]["income_statement"]>["facts"];
 export type V2AsReportedDetailedFacts = NonNullable<V2AsReportedDetailedResponse["data"][number]["statements"]["income_statement"]>["facts"];
 export type V2AsReportedDetailedFact = V2AsReportedDetailedFacts[string];
+export type V2AsReportedMemberFact = NonNullable<V2AsReportedResponse["data"][number]["statements"]["income_statement"]>["member_facts"][number];
+export type V2AsReportedDetailedMemberFact = NonNullable<V2AsReportedDetailedResponse["data"][number]["statements"]["income_statement"]>["member_facts"][number];
 export type V2AsReportedPresentationNode = NonNullable<V2AsReportedPresentationResponse["data"][number]["statements"]["income_statement"]>["facts"][number];
 /** Every filing that stated a value for one as-reported concept and period, oldest first (Data API 11.2). */
 export type V2FinancialVintagesResponse = ApiResponse<"/v1/financials/vintages", "get">;

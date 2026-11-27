@@ -8,6 +8,7 @@ import type { AssetGroupCategory } from "@/lib/earnings/documents";
 import type { ValueLookup } from "@/lib/financials/value-ref";
 
 import { withoutReplayCaptures } from "@/lib/earnings/capture-mode";
+import { sourceInScope } from "@/lib/financials/value-ref";
 import { isSymbolParam } from "@/lib/instruments";
 import { marketWindowAnchor, marketWindowBounds, marketWindowProblem, newsSearchWindowProblem } from "@/lib/news/market-window";
 import { isOpenExport } from "@/lib/sec/bulk";
@@ -191,6 +192,7 @@ import type {
 } from "./types";
 
 import { ApiRequestError, errorDescription, isUnauthorized, rethrowApiError, retrySearchTimeoutOnce, retryUnlessApiError, SEARCH_RETRY_DELAY_MS } from "./errors";
+import { fileRequests, requestsOf } from "./request-meta";
 import {
     getAlertTypeCatalog,
     getApiBaseUrl,
@@ -1775,7 +1777,15 @@ export function useV2FinancialsInfinite(input: V2FinancialsInput) {
     return useEarningsInfinite<V2StatementsResponse>({
         enabled: input.company.trim().length > 0,
         errorMessage: null,
-        fetchPage: (cursor, apiKey) => fetchStatementsPage(input, cursor, apiKey),
+        fetchPage: async (cursor, apiKey) => {
+            const response = await fetchStatementsPage(input, cursor, apiKey);
+
+            if (asReported && (input.filing || input.asOf) && !matchesReportedScope(response, input)) {
+                rejectReportedResponse(response, "The statement response did not identify the selected filing or date.");
+            }
+
+            return response;
+        },
         queryKey: [
             "v2",
             "financials",
@@ -1876,7 +1886,7 @@ export function useV2Fact(factId: null | string) {
 }
 
 /** One as-reported concept and period of a company: the "Filed values" panel's request. */
-export type FinancialVintagesTarget = { company: string; concept: string; periodEnd: string; periodStart?: null | string };
+export type FinancialVintagesTarget = { company: string; concept: string; member?: string; periodEnd: string; periodStart?: null | string };
 
 /**
  * Every filing that stated a value for the concept and period, oldest first (`GET /v1/financials/vintages`, one page of
@@ -1892,11 +1902,87 @@ export function useFinancialVintages(target: FinancialVintagesTarget | null) {
                 company: target?.company ?? "",
                 concept: target?.concept ?? "",
                 limit: 200,
+                member: target?.member,
                 periodEnd: target?.periodEnd ?? "",
                 periodStart: target?.periodStart ?? undefined,
             },
         }),
-        queryKey: ["v2", "financial-vintages", target?.company ?? "", target?.concept ?? "", target?.periodEnd ?? "", target?.periodStart ?? ""],
+        queryKey: ["v2", "financial-vintages", target?.company ?? "", target?.concept ?? "", target?.member ?? "", target?.periodEnd ?? "", target?.periodStart ?? ""],
+        refetchOnReconnect: false,
+        refetchOnWindowFocus: false,
+        staleTime: FINANCIALS_STALE_MS,
+    });
+}
+
+export type ReportedLookupScope = Pick<V2FinancialsInput, "asOf" | "displaySign" | "filing" | "reportedOnly">;
+
+export type AsReportedPageScope = Pick<V2FinancialsInput, "company" | "period"> & ReportedLookupScope & { statement: StatementType };
+
+export type AsReportedDetailedPeriodTarget = AsReportedPageScope & {
+    accession: string;
+    cik: string;
+    filedAt: string;
+    fiscalQuarter: number;
+    fiscalYear: number;
+    periodEnd: string;
+    periodStart: null | string;
+};
+
+/** `meta.point_in_time` identifies the rendering. `row.source` identifies the filing carrying the statement. */
+function matchesReportedScope(response: V2StatementsResponse, scope: ReportedLookupScope | undefined) {
+    const actual = response.meta.point_in_time;
+
+    return (actual?.as_of ?? undefined) === scope?.asOf && (actual?.filing ?? undefined) === scope?.filing
+        && response.data.every(row => sourceInScope(row.source, scope));
+}
+
+function rejectReportedResponse(response: V2StatementsResponse, message: string): never {
+    const error = new ApiRequestError(502, { error: "statement_rendition_mismatch", message });
+
+    fileRequests(error, requestsOf(response));
+    throw error;
+}
+
+/** Formula data is shared by the explained cells of one exact rendition. */
+export function useAsReportedDetailedPeriod(target: AsReportedDetailedPeriodTarget | null) {
+    return useEarningsQuery({
+        enabled: target !== null,
+        errorMessage: null,
+        load: async (apiKey) => {
+            if (!target) throw new Error("No period selected.");
+
+            const response = await getV2AsReportedDetailed({
+                data: {
+                    apiKey,
+                    asOf: target.asOf,
+                    company: target.company,
+                    displaySign: target.displaySign,
+                    filing: target.filing,
+                    fiscalQuarter: target.period === "annual" ? undefined : target.fiscalQuarter,
+                    fiscalYear: target.fiscalYear,
+                    limit: 1,
+                    period: target.period,
+                    reportedOnly: target.reportedOnly,
+                    statement: [target.statement],
+                },
+            });
+
+            const row = response.data[0];
+
+            if (!matchesReportedScope(response, target) || response.data.length !== 1
+                || row.company.cik !== target.cik || row.period !== target.period
+                || row.fiscal_year !== target.fiscalYear || row.fiscal_quarter !== target.fiscalQuarter
+                || row.period_start !== target.periodStart || row.period_end !== target.periodEnd
+                || row.source.accession !== target.accession || row.source.filed_at !== target.filedAt) {
+                rejectReportedResponse(response, "The detailed response did not identify the selected period and filing.");
+            }
+
+            return response;
+        },
+        queryKey: ["v2", "financials-detailed-period", target],
+        refetchOnReconnect: false,
+        refetchOnWindowFocus: false,
+        retry: false,
         staleTime: FINANCIALS_STALE_MS,
     });
 }
@@ -1906,14 +1992,34 @@ export function useFinancialVintages(target: FinancialVintagesTarget | null) {
  * one request of the member's period type over the fiscal years around its end, every statement — the member's own
  * filing and inline-XBRL element are read from them (`findValueSource`).
  */
-export function useReportedValueLookup(company: null | string, lookup: null | ValueLookup) {
+export function useReportedValueLookup(company: null | string, lookup: null | ValueLookup, scope?: ReportedLookupScope) {
     return useEarningsQuery<V2AsReportedDetailedResponse>({
         enabled: Boolean(company) && lookup !== null,
         errorMessage: null,
-        load: apiKey => getV2AsReportedDetailed({
-            data: { apiKey, company: company ?? "", fiscalYearGte: lookup?.fiscalYearGte, fiscalYearLte: lookup?.fiscalYearLte, limit: 20, period: lookup?.period ?? "annual" },
-        }),
-        queryKey: ["v2", "financials-value-lookup", company ?? "", lookup?.period ?? "", lookup?.fiscalYearGte ?? "", lookup?.fiscalYearLte ?? ""],
+        load: async (apiKey) => {
+            const response = await getV2AsReportedDetailed({
+                data: {
+                    apiKey,
+                    asOf: scope?.asOf,
+                    company: company ?? "",
+                    displaySign: scope?.displaySign,
+                    filing: scope?.filing,
+                    fiscalYearGte: lookup?.fiscalYearGte,
+                    fiscalYearLte: lookup?.fiscalYearLte,
+                    limit: 20,
+                    period: lookup?.period ?? "annual",
+                    reportedOnly: scope?.reportedOnly,
+                },
+            });
+
+            if (!matchesReportedScope(response, scope)) {
+                rejectReportedResponse(response, "The response did not identify the selected filing or date.");
+            }
+
+            return response;
+        },
+        queryKey: ["v2", "financials-value-lookup", company ?? "", lookup?.period ?? "", lookup?.fiscalYearGte ?? "", lookup?.fiscalYearLte ?? "", scope?.asOf ?? "", scope?.filing ?? "", scope?.displaySign ?? "", scope?.reportedOnly ?? false],
+        retry: false,
         staleTime: FINANCIALS_STALE_MS,
     });
 }

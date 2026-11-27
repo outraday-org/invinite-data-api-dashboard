@@ -3685,11 +3685,19 @@
                 "type": "object",
                 "description": "One statement of the period",
                 "required": [
-                  "facts"
+                  "facts",
+                  "member_facts"
                 ],
                 "properties": {
                   "facts": {
                     "$ref": "#/components/schemas/AsReportedFacts"
+                  },
+                  "member_facts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/AsReportedMemberFact"
+                    },
+                    "description": "Printed member rows in filing order; empty when no supported member rows are stored."
                   }
                 }
               },
@@ -3697,11 +3705,19 @@
                 "type": "object",
                 "description": "One statement of the period",
                 "required": [
-                  "facts"
+                  "facts",
+                  "member_facts"
                 ],
                 "properties": {
                   "facts": {
                     "$ref": "#/components/schemas/AsReportedFacts"
+                  },
+                  "member_facts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/AsReportedMemberFact"
+                    },
+                    "description": "Printed member rows in filing order; empty when no supported member rows are stored."
                   }
                 }
               },
@@ -3709,11 +3725,19 @@
                 "type": "object",
                 "description": "One statement of the period",
                 "required": [
-                  "facts"
+                  "facts",
+                  "member_facts"
                 ],
                 "properties": {
                   "facts": {
                     "$ref": "#/components/schemas/AsReportedFacts"
+                  },
+                  "member_facts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/AsReportedMemberFact"
+                    },
+                    "description": "Printed member rows in filing order; empty when no supported member rows are stored."
                   }
                 }
               }
@@ -3747,6 +3771,76 @@
           }
         },
         "title": "AsReportedFact"
+      },
+      "AsReportedMemberFact": {
+        "type": "object",
+        "description": "A breakdown value printed on the statement, with its complete explicit dimensions and stable line key.",
+        "required": [
+          "key",
+          "concept",
+          "dimensions",
+          "value",
+          "derived",
+          "label",
+          "company_label"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Stable line identity across periods: concept for a plain line, concept#group for a header, concept|axis=member;... for a printed member."
+          },
+          "concept": {
+            "type": "string",
+            "description": "The financial concept of this printed breakdown."
+          },
+          "dimensions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Dimension"
+            }
+          },
+          "value": {
+            "type": "number",
+            "nullable": true,
+            "description": "Member value, with the same display-sign policy as consolidated values."
+          },
+          "derived": {
+            "type": "boolean",
+            "description": "true when Invinite computed the value (a Q4, TTM or YTD derivation; `formula` on the detailed route names its members); false = the company reported it"
+          },
+          "label": {
+            "type": "string",
+            "description": "Taxonomy label of the concept."
+          },
+          "company_label": {
+            "type": "string",
+            "nullable": true,
+            "description": "The member caption printed on the statement row."
+          }
+        },
+        "title": "AsReportedMemberFact"
+      },
+      "Dimension": {
+        "type": "object",
+        "description": "One axis / member pair",
+        "required": [
+          "axis",
+          "member"
+        ],
+        "properties": {
+          "axis": {
+            "type": "string",
+            "description": "XBRL axis",
+            "example": "srt:ProductOrServiceAxis"
+          },
+          "member": {
+            "type": "string",
+            "description": "XBRL member",
+            "example": "us-gaap:ProductMember"
+          }
+        },
+        "title": "Dimension"
       },
       "AsReportedDetailedPeriod": {
         "type": "object",
@@ -3829,11 +3923,19 @@
                 "type": "object",
                 "description": "One statement of the period",
                 "required": [
-                  "facts"
+                  "facts",
+                  "member_facts"
                 ],
                 "properties": {
                   "facts": {
                     "$ref": "#/components/schemas/AsReportedDetailedFacts"
+                  },
+                  "member_facts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/AsReportedDetailedMemberFact"
+                    },
+                    "description": "Printed member rows in filing order; empty when no supported member rows are stored."
                   }
                 }
               },
@@ -3841,11 +3943,19 @@
                 "type": "object",
                 "description": "One statement of the period",
                 "required": [
-                  "facts"
+                  "facts",
+                  "member_facts"
                 ],
                 "properties": {
                   "facts": {
                     "$ref": "#/components/schemas/AsReportedDetailedFacts"
+                  },
+                  "member_facts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/AsReportedDetailedMemberFact"
+                    },
+                    "description": "Printed member rows in filing order; empty when no supported member rows are stored."
                   }
                 }
               },
@@ -3853,11 +3963,19 @@
                 "type": "object",
                 "description": "One statement of the period",
                 "required": [
-                  "facts"
+                  "facts",
+                  "member_facts"
                 ],
                 "properties": {
                   "facts": {
                     "$ref": "#/components/schemas/AsReportedDetailedFacts"
+                  },
+                  "member_facts": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/AsReportedDetailedMemberFact"
+                    },
+                    "description": "Printed member rows in filing order; empty when no supported member rows are stored."
                   }
                 }
               }
@@ -3982,6 +4100,213 @@
           }
         },
         "title": "AsReportedDetailedLineItem"
+      },
+      "AsReportedDetailedMemberFact": {
+        "type": "object",
+        "description": "A printed breakdown value with formula, split basis and exact source lineage.",
+        "required": [
+          "key",
+          "concept",
+          "dimensions",
+          "value",
+          "derived",
+          "label",
+          "company_label",
+          "decimals",
+          "formula",
+          "accession",
+          "html_tag_id"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "description": "Stable line identity across periods: concept for a plain line, concept#group for a header, concept|axis=member;... for a printed member."
+          },
+          "concept": {
+            "type": "string",
+            "description": "The financial concept of this printed breakdown."
+          },
+          "dimensions": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Dimension"
+            }
+          },
+          "value": {
+            "type": "number",
+            "nullable": true,
+            "description": "Member value, with the same display-sign policy as consolidated values."
+          },
+          "derived": {
+            "type": "boolean",
+            "description": "true when Invinite computed the value (a Q4, TTM or YTD derivation; `formula` on the detailed route names its members); false = the company reported it"
+          },
+          "label": {
+            "type": "string",
+            "description": "Taxonomy label of the concept."
+          },
+          "company_label": {
+            "type": "string",
+            "nullable": true,
+            "description": "The member caption printed on the statement row."
+          },
+          "decimals": {
+            "type": "integer",
+            "nullable": true,
+            "description": "XBRL decimals of the reported fact (-6 = rounded to millions); null = exact (INF) or not stated. A derived fact carries its source fact's"
+          },
+          "formula": {
+            "$ref": "#/components/schemas/AsReportedMemberFormula"
+          },
+          "accession": {
+            "type": "string",
+            "nullable": true,
+            "description": "Accession number of the filing that holds the value"
+          },
+          "html_tag_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The exact numeric element of the member cell in the original source filing; null for a derived value or a cell without a unique native id."
+          },
+          "value_as_reported": {
+            "type": "number",
+            "nullable": true,
+            "description": "The number as filed when `value` differs from it: `value` is on today's split basis for per-share and weighted share counts, this is the filer's figure on the basis of its own filing; null when they are equal"
+          },
+          "split_factor": {
+            "type": "number",
+            "nullable": true,
+            "description": "The stock-split factor applied to the filed number to reach `value` (0.25 = a 4-for-1 split since the filing for a per-share value); null when no split applies"
+          }
+        },
+        "title": "AsReportedDetailedMemberFact"
+      },
+      "AsReportedMemberFormula": {
+        "type": "object",
+        "description": "How a derived value was computed; null for a reported value",
+        "required": [
+          "formula_str",
+          "members"
+        ],
+        "properties": {
+          "formula_str": {
+            "type": "string",
+            "description": "Readable formula",
+            "example": "is_revenue_q1 + is_revenue_q2 + is_revenue_q3"
+          },
+          "members": {
+            "type": "array",
+            "description": "The formula's operands",
+            "items": {
+              "$ref": "#/components/schemas/AsReportedMemberFormulaOperand"
+            }
+          }
+        },
+        "nullable": true,
+        "title": "AsReportedMemberFormula"
+      },
+      "AsReportedMemberFormulaOperand": {
+        "type": "object",
+        "description": "An operand of a printed member calculation. Original source segment JSON is retained without changing filed values or dimension spelling.",
+        "required": [
+          "type",
+          "value"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "reported = an XBRL fact of the filing; standardized = another standardized metric; split_factor = a multiplier that puts a reported operand on the split-adjusted basis",
+            "enum": [
+              "reported",
+              "standardized",
+              "split_factor"
+            ]
+          },
+          "value": {
+            "type": "number",
+            "description": "Value of the member"
+          },
+          "split_execution_dates": {
+            "type": "array",
+            "description": "Execution dates of the splits combined in a split-factor operand. Present only for split_factor.",
+            "items": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          "fact_id": {
+            "type": "string",
+            "description": "The original reported operand ID, including any source qualifier, when the statement writer identified its exact filing."
+          },
+          "accession": {
+            "type": "string",
+            "description": "The filing that supplied this reported operand. Present when the source filing was identified."
+          },
+          "html_tag_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "The proved native inline-XBRL element in the operand's own filing. Null when the source filing is known and its element could not be proved; absent when the filing was not identified."
+          },
+          "concept": {
+            "type": "string",
+            "description": "Financial concept",
+            "nullable": true
+          },
+          "start_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Start date (YYYY-MM-DD)"
+          },
+          "end_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "End date (YYYY-MM-DD)"
+          },
+          "instant_date": {
+            "type": "string",
+            "format": "date",
+            "nullable": true,
+            "description": "Instant date (YYYY-MM-DD)"
+          },
+          "segment": {
+            "nullable": true,
+            "description": "Original source segment JSON: an object, an array of axis/member entries, or null. Free JSON retains both supported historical encodings without a response union.",
+            "example": [
+              {
+                "dimension": "srt:ProductOrServiceAxis",
+                "value": "us-gaap:ProductMember"
+              },
+              {
+                "dimension": "ext:RegionAxis",
+                "value": "ext:US"
+              }
+            ]
+          },
+          "fiscal_period_type": {
+            "type": "string",
+            "nullable": true,
+            "description": "Fiscal period type"
+          },
+          "metric_id": {
+            "type": "string",
+            "description": "Standardized metric ID",
+            "nullable": true
+          },
+          "fiscal_year": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Fiscal year"
+          },
+          "fiscal_quarter": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Fiscal quarter"
+          }
+        },
+        "title": "AsReportedMemberFormulaOperand"
       },
       "AsReportedPresentationPeriod": {
         "type": "object",
@@ -4149,14 +4474,37 @@
               "$ref": "#/components/schemas/AsReportedPresentationNode"
             },
             "description": "Nested child facts with facts schema (only present if there are children)"
+          },
+          "key": {
+            "type": "string",
+            "description": "Stable line identity across periods: concept for a plain line, concept#group for a header, concept|axis=member;... for a printed member."
+          },
+          "dimensions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Dimension"
+            },
+            "description": "Present only on a printed member line; all explicit axis/member pairs."
+          },
+          "accession": {
+            "type": "string",
+            "nullable": true,
+            "description": "On valued nodes, the accession of the fact supplying this displayed value; absent on headers."
+          },
+          "html_tag_id": {
+            "type": "string",
+            "nullable": true,
+            "description": "On valued nodes, the exact source element for a reported member or the existing anchor for a consolidated value. Null for derived values; absent on headers."
           }
         },
         "required": [
           "concept",
           "label",
-          "depth"
+          "depth",
+          "key"
         ],
-        "title": "AsReportedPresentationNode"
+        "title": "AsReportedPresentationNode",
+        "description": "A statement line. A group header has no value; its child with is_total is the line total. Member lines have dimensions and their own stable key."
       },
       "FinancialVintage": {
         "type": "object",
@@ -4552,27 +4900,6 @@
           }
         },
         "title": "Segment"
-      },
-      "Dimension": {
-        "type": "object",
-        "description": "One axis / member pair",
-        "required": [
-          "axis",
-          "member"
-        ],
-        "properties": {
-          "axis": {
-            "type": "string",
-            "description": "XBRL axis",
-            "example": "srt:ProductOrServiceAxis"
-          },
-          "member": {
-            "type": "string",
-            "description": "XBRL member",
-            "example": "us-gaap:ProductMember"
-          }
-        },
-        "title": "Dimension"
       },
       "SegmentDetailed": {
         "type": "object",
@@ -8357,7 +8684,8 @@
           },
           "security_type": {
             "type": "string",
-            "description": "Security type"
+            "nullable": true,
+            "description": "Security type; null when the listing calendar has no value"
           },
           "shares_outstanding": {
             "type": "number",
@@ -51204,7 +51532,7 @@
         "tags": [
           "Financials"
         ],
-        "description": "Get statement values under the filer's own concept names.\n\nChoose an annual, quarterly, year-to-date or trailing twelve-month `period`. Each concept carries its value and indicates whether it was derived. Set `reported_only=true` to omit derived values.\n\nUse `as_of` to see the figures available on a date, or `filing` to select one filing.",
+        "description": "Get statement values under the filer's own concept names.\n\nChoose an annual, quarterly, year-to-date or trailing twelve-month `period`. Each concept carries its value and indicates whether it was derived. Set `reported_only=true` to omit derived values.\n\nUse `as_of` to see the figures available on a date, or `filing` to select one filing.\n\nIncludes the breakdown rows printed on the statement (for example Products / Services). A member key identifies the same line across periods; presentation uses key on every node and summary/detailed use member_facts. Point-in-time requests (as_of or filing) return the members of the selected version; an older version not yet replayed returns none.",
         "parameters": [
           {
             "schema": {
@@ -51628,7 +51956,8 @@
                               "value": 159237000000,
                               "derived": true
                             }
-                          }
+                          },
+                          "member_facts": []
                         },
                         "balance_sheet": {
                           "facts": {
@@ -51680,7 +52009,8 @@
                               "value": 230691000000,
                               "derived": false
                             }
-                          }
+                          },
+                          "member_facts": []
                         },
                         "cash_flow": {
                           "facts": {
@@ -51732,7 +52062,8 @@
                               "value": 145097000000,
                               "derived": false
                             }
-                          }
+                          },
+                          "member_facts": []
                         }
                       }
                     }
@@ -51826,7 +52157,7 @@
         "tags": [
           "Financials"
         ],
-        "description": "Get the filing sources for the filer's own statement values.\n\nChoose an annual, quarterly, year-to-date or trailing twelve-month `period`. Use `as_of` to read the figures available on a date or `filing` to pin one accession.\n\nWhere available, `accession` and `html_tag_id` locate the value in the filing. A changed value or caption can also carry the original figure or label and the filing that first reported it.",
+        "description": "Get the filing sources for the filer's own statement values.\n\nChoose an annual, quarterly, year-to-date or trailing twelve-month `period`. Use `as_of` to read the figures available on a date or `filing` to pin one accession.\n\nWhere available, `accession` and `html_tag_id` locate the value in the filing. A changed value or caption can also carry the original figure or label and the filing that first reported it.\n\nIncludes the breakdown rows printed on the statement (for example Products / Services). A member key identifies the same line across periods; presentation uses key on every node and summary/detailed use member_facts. Point-in-time requests (as_of or filing) return the members of the selected version; an older version not yet replayed returns none.",
         "parameters": [
           {
             "schema": {
@@ -52459,7 +52790,8 @@
                               "original_filing_date": null,
                               "original_accession": null
                             }
-                          }
+                          },
+                          "member_facts": []
                         },
                         "balance_sheet": {
                           "facts": {
@@ -52655,7 +52987,8 @@
                               "original_filing_date": null,
                               "original_accession": null
                             }
-                          }
+                          },
+                          "member_facts": []
                         },
                         "cash_flow": {
                           "facts": {
@@ -52851,7 +53184,8 @@
                               "original_filing_date": null,
                               "original_accession": null
                             }
-                          }
+                          },
+                          "member_facts": []
                         }
                       }
                     }
@@ -52945,7 +53279,7 @@
         "tags": [
           "Financials"
         ],
-        "description": "Get a statement tree in the filer's own presentation order.\n\nSelect `annual`, `quarterly`, `ytd` or `ttm` with `period`. The tree follows the filer's grouping and labels, with child concepts nested beneath their headings.\n\nSet `as_of` for the presentation available on a date, or `filing` to render the statements from one accession.",
+        "description": "Get a statement tree in the filer's own presentation order.\n\nSelect `annual`, `quarterly`, `ytd` or `ttm` with `period`. The tree follows the filer's grouping and labels, with child concepts nested beneath their headings.\n\nSet `as_of` for the presentation available on a date, or `filing` to render the statements from one accession.\n\nIncludes the breakdown rows printed on the statement (for example Products / Services). A member key identifies the same line across periods; presentation uses key on every node and summary/detailed use member_facts. Point-in-time requests (as_of or filing) return the members of the selected version; an older version not yet replayed returns none.",
         "parameters": [
           {
             "schema": {
@@ -53313,7 +53647,8 @@
                               "company_label": "Total net sales",
                               "depth": 0,
                               "is_total": false,
-                              "children": []
+                              "children": [],
+                              "key": "RevenueFromContractWithCustomerExcludingAssessedTax"
                             }
                           ]
                         },
@@ -53337,19 +53672,22 @@
                                       "company_label": "Cash and cash equivalents",
                                       "depth": 2,
                                       "is_total": false,
-                                      "children": []
+                                      "children": [],
+                                      "key": "CashAndCashEquivalentsAtCarryingValue"
                                     }
                                   ],
                                   "value": null,
                                   "derived": false,
                                   "company_label": null,
-                                  "is_total": false
+                                  "is_total": false,
+                                  "key": "AssetsCurrentAbstract"
                                 }
                               ],
                               "value": null,
                               "derived": false,
                               "company_label": null,
-                              "is_total": false
+                              "is_total": false,
+                              "key": "AssetsAbstract"
                             }
                           ]
                         },
@@ -53368,13 +53706,15 @@
                                   "company_label": "Net income",
                                   "depth": 1,
                                   "is_total": false,
-                                  "children": []
+                                  "children": [],
+                                  "key": "NetIncomeLoss"
                                 }
                               ],
                               "value": null,
                               "derived": false,
                               "company_label": null,
-                              "is_total": false
+                              "is_total": false,
+                              "key": "NetCashProvidedByUsedInOperatingActivitiesContinuingOperationsAbstract"
                             }
                           ]
                         }

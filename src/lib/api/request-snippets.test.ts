@@ -111,6 +111,22 @@ describe("snippetOf", () => {
         }
     });
 
+    it("names the published SDK operations for an exact as-reported period", () => {
+        const request = meta({
+            operationId: "getAsReportedFinancialsDetailed",
+            path: "/v1/financials/as-reported/detailed",
+            query: { company: "AAPL", fiscal_quarter: "3", fiscal_year: "2026", limit: "1", period: "quarterly" },
+        });
+
+        expect(pythonOf(BASE, [request])).toContain("FinancialsApi(client).get_as_reported_financials_detailed(");
+
+        expect(typescriptOf(BASE, [request])).toContain("new FinancialsApi(configuration).getAsReportedFinancialsDetailed({");
+
+        expect(pythonOf(BASE, [request])).toContain("fiscal_quarter=3");
+
+        expect(typescriptOf(BASE, [request])).toContain("fiscalQuarter: 3");
+    });
+
     it("an operation outside the SDK / CLI is a comment", () => {
         const status = meta({ operationId: "statusGet", path: "/status", query: {} });
 

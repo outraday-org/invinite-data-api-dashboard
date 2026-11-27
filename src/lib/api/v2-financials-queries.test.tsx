@@ -10,6 +10,7 @@ import {
     V2_AS_REPORTED_DETAILED,
     V2_CAGR,
     V2_FACT_PLACES,
+    V2_FINANCIAL_VINTAGES,
     V2_GROWTH,
     V2_RATIOS,
     V2_SEGMENTS,
@@ -20,9 +21,14 @@ import {
 } from "@/lib/financials/v2-fixtures";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
+import type { AsReportedDetailedPeriodTarget } from "./queries";
+
 import { ApiRequestError } from "./errors";
 import {
     refetchWhileCoveragePending,
+    useAsReportedDetailedPeriod,
+    useFinancialVintages,
+    useReportedValueLookup,
     useV2CagrInfinite,
     useV2FactPlaces,
     useV2FinancialsInfinite,
@@ -31,7 +37,9 @@ import {
     useV2SegmentsDetailedInfinite,
     useV2SegmentsInfinite,
 } from "./queries";
+import { fileRequests, requestsOf } from "./request-meta";
 import {
+    getFinancialVintages,
     getV2AsReported,
     getV2AsReportedDetailed,
     getV2AsReportedPresentation,
@@ -47,6 +55,7 @@ import {
 } from "./server-functions";
 
 vi.mock("./server-functions", () => ({
+    getFinancialVintages: vi.fn(),
     getV2AsReported: vi.fn(),
     getV2AsReportedDetailed: vi.fn(),
     getV2AsReportedPresentation: vi.fn(),
@@ -277,5 +286,212 @@ describe("O7 group 4: point in time, fiscal years, detailed segments, fact place
         expect(getV2FactPlaces).toHaveBeenCalledTimes(1);
 
         expect(vi.mocked(getV2FactPlaces).mock.lastCall?.[0]?.data).toMatchObject({ apiKey: "test-key", fact: "320193|is_total_revenue|quarterly|2026|3" });
+    });
+});
+
+describe("as-reported cell queries", () => {
+    const row = V2_AS_REPORTED_DETAILED.data[0];
+
+    // A comparative statement can be carried by an earlier filing than the pin used to select its rendering.
+    const renderingAccession = "0000320193-27-000017";
+
+    const pinnedResponse = { ...V2_AS_REPORTED_DETAILED, meta: { ...V2_AS_REPORTED_DETAILED.meta, point_in_time: { as_of: null, filing: renderingAccession } } };
+
+    const period: AsReportedDetailedPeriodTarget = {
+        accession: row.source.accession,
+        cik: row.company.cik,
+        company: "AAPL",
+        filedAt: row.source.filed_at,
+        fiscalQuarter: row.fiscal_quarter,
+        fiscalYear: row.fiscal_year,
+        period: row.period,
+        periodEnd: row.period_end,
+        periodStart: row.period_start,
+        statement: "income-statement",
+    };
+
+    it("waits for a computed cell, then caches the exact selected period and rendition across member explanations", async () => {
+        const asOf = { ...period, asOf: "2026-09-01", displaySign: "cash_flow_direction", reportedOnly: false } satisfies AsReportedDetailedPeriodTarget;
+
+        const response = { ...V2_AS_REPORTED_DETAILED, meta: { ...V2_AS_REPORTED_DETAILED.meta, point_in_time: { as_of: asOf.asOf, filing: null } } };
+
+        fileRequests(response, [{
+            credits: 1,
+            method: "GET",
+            operationId: "getAsReportedFinancialsDetailed",
+            path: "/v1/financials/as-reported/detailed",
+            query: { company: "AAPL", limit: "1" },
+            requestId: "test-detail",
+            status: 200,
+        }]);
+
+        vi.mocked(getV2AsReportedDetailed)
+            .mockResolvedValueOnce(response)
+            .mockResolvedValueOnce(pinnedResponse)
+            .mockResolvedValueOnce(V2_AS_REPORTED_DETAILED);
+
+        const initialProps: { target: AsReportedDetailedPeriodTarget | null } = { target: null };
+
+        const { rerender, result } = renderHook(({ target }) => useAsReportedDetailedPeriod(target), { initialProps, wrapper });
+
+        expect(getV2AsReportedDetailed).not.toHaveBeenCalled();
+
+        rerender({ target: asOf });
+
+        await waitFor(() => expect(result.current.data?.data[0]).toEqual(row));
+
+        expect(requestsOf(result.current.data).map(request => request.requestId)).toEqual(["test-detail"]);
+
+        expect(getV2AsReportedDetailed).toHaveBeenLastCalledWith({
+            data: {
+                apiKey: "test-key",
+                asOf: asOf.asOf,
+                company: "AAPL",
+                displaySign: "cash_flow_direction",
+                filing: undefined,
+                fiscalQuarter: 3,
+                fiscalYear: 2026,
+                limit: 1,
+                period: "quarterly",
+                reportedOnly: false,
+                statement: ["income-statement"],
+            },
+        });
+
+        rerender({ target: null });
+
+        rerender({ target: { ...asOf } });
+
+        expect(getV2AsReportedDetailed).toHaveBeenCalledTimes(1);
+
+        rerender({ target: { ...period, filing: renderingAccession } });
+
+        await waitFor(() => expect(result.current.data?.data[0]).toEqual(row));
+
+        expect(getV2AsReportedDetailed).toHaveBeenCalledTimes(2);
+
+        rerender({ target: { ...period, reportedOnly: true } });
+
+        await waitFor(() => expect(result.current.data?.data[0]).toEqual(row));
+
+        expect(getV2AsReportedDetailed).toHaveBeenCalledTimes(3);
+    });
+
+    it.each([
+        { ...row, period_end: "2026-03-28" },
+        { ...row, source: { ...row.source, accession: "0000320193-26-000010" } },
+        { ...row, source: { ...row.source, filed_at: "2026-08-02T20:30:00Z" } },
+    ])("rejects the wrong period or rendition", async (received) => {
+        vi.mocked(getV2AsReportedDetailed).mockResolvedValue({ ...V2_AS_REPORTED_DETAILED, data: [received] });
+
+        const { result } = renderHook(() => useAsReportedDetailedPeriod(period), { wrapper });
+
+        await waitFor(() => expect(result.current.error?.message).toMatch(/selected period and filing/));
+
+        expect(result.current.data).toBeNull();
+
+        expect(getV2AsReportedDetailed).toHaveBeenCalledTimes(1);
+    });
+
+    it("accepts an older statement source under the pinned rendering on both page and operand reads", async () => {
+        vi.mocked(getV2AsReportedDetailed).mockResolvedValue(pinnedResponse);
+
+        const page = renderHook(() => useV2FinancialsInfinite({
+            basis: "as-reported", company: "AAPL", filing: renderingAccession, period: "quarterly", view: "detailed",
+        }), { wrapper });
+
+        const fallback = renderHook(() => useReportedValueLookup("AAPL", { fiscalYearGte: 2025, fiscalYearLte: 2027, period: "quarterly" }, {
+            filing: renderingAccession,
+        }), { wrapper });
+
+        await waitFor(() => expect(page.result.current.data?.pages[0].data[0].source.accession).toBe(row.source.accession));
+
+        await waitFor(() => expect(fallback.result.current.data?.data[0].source.accession).toBe(row.source.accession));
+
+        expect(row.source.accession).not.toBe(renderingAccession);
+    });
+
+    it("rejects a current response on the pinned page and exact-period read, even with matching row identity", async () => {
+        vi.mocked(getV2AsReportedDetailed).mockResolvedValue(V2_AS_REPORTED_DETAILED);
+
+        const page = renderHook(() => useV2FinancialsInfinite({
+            basis: "as-reported", company: "AAPL", filing: renderingAccession, period: "quarterly", view: "detailed",
+        }), { wrapper });
+
+        const details = renderHook(() => useAsReportedDetailedPeriod({ ...period, filing: renderingAccession }), { wrapper });
+
+        await waitFor(() => expect(page.result.current.error?.message).toMatch(/selected filing or date/));
+
+        await waitFor(() => expect(details.result.current.error?.message).toMatch(/selected period and filing/));
+
+        expect(page.result.current.data).toBeNull();
+
+        expect(details.result.current.data).toBeNull();
+    });
+
+    it("rejects source filings after the as-of New York date, even with matching metadata", async () => {
+        const asOf = "2026-07-31";
+
+        vi.mocked(getV2AsReportedDetailed).mockResolvedValue({
+            ...V2_AS_REPORTED_DETAILED,
+            meta: { ...V2_AS_REPORTED_DETAILED.meta, point_in_time: { as_of: asOf, filing: null } },
+        });
+
+        const { result } = renderHook(() => useAsReportedDetailedPeriod({ ...period, asOf }), { wrapper });
+
+        await waitFor(() => expect(result.current.error?.message).toMatch(/selected period and filing/));
+
+        expect(result.current.data).toBeNull();
+    });
+
+    it("never accepts a current fallback operand page for a historical request", async () => {
+        vi.mocked(getV2AsReportedDetailed).mockResolvedValue(V2_AS_REPORTED_DETAILED);
+
+        const { result } = renderHook(() => useReportedValueLookup("AAPL", { fiscalYearGte: 2025, fiscalYearLte: 2027, period: "quarterly" }, {
+            asOf: "2026-08-15", displaySign: "cash_flow_direction", reportedOnly: true,
+        }), { wrapper });
+
+        await waitFor(() => expect(result.current.error?.message).toMatch(/selected filing or date/));
+
+        expect(result.current.data).toBeNull();
+
+        expect(getV2AsReportedDetailed).toHaveBeenCalledWith({
+            data: {
+                apiKey: "test-key",
+                asOf: "2026-08-15",
+                company: "AAPL",
+                displaySign: "cash_flow_direction",
+                filing: undefined,
+                fiscalYearGte: 2025,
+                fiscalYearLte: 2027,
+                limit: 20,
+                period: "quarterly",
+                reportedOnly: true,
+            },
+        });
+    });
+
+    it("isolates consolidated, Products and Services vintage caches for the same period", async () => {
+        vi.mocked(getFinancialVintages).mockResolvedValue(V2_FINANCIAL_VINTAGES);
+
+        const target = { company: "AAPL", concept: "Revenue", periodEnd: "2026-06-27", periodStart: "2026-03-29" };
+
+        const { rerender, result } = renderHook(({ member }: { member?: string }) => useFinancialVintages({ ...target, member }), { initialProps: {}, wrapper });
+
+        await waitFor(() => expect(result.current.data).toBeTruthy());
+
+        rerender({ member: "us-gaap:ProductMember" });
+
+        await waitFor(() => expect(result.current.data).toBeTruthy());
+
+        rerender({ member: "us-gaap:ServiceMember" });
+
+        await waitFor(() => expect(result.current.data).toBeTruthy());
+
+        rerender({ member: "us-gaap:ProductMember" });
+
+        expect(vi.mocked(getFinancialVintages).mock.calls.map(([input]) => input.data.member)).toEqual([
+            undefined, "us-gaap:ProductMember", "us-gaap:ServiceMember",
+        ]);
     });
 });

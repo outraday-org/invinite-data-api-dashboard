@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { MetricsListState } from "@/components/financial-metrics/metrics-list-body";
 import type { OperationId } from "@/lib/api/operations.gen";
+import type { AsReportedPageScope } from "@/lib/api/queries";
 import type { StatementType, V2FinancialsBasis, V2FinancialsView, V2StatementPeriod, V2StatementsResponse } from "@/lib/api/types";
 
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
@@ -41,7 +42,7 @@ export function ViewButtons({ badges, onValueChange, value }: {
 const EXPLAIN_HINTS: Record<V2FinancialsBasis, Record<V2FinancialsView, string>> = {
     "as-reported": {
         detailed: "Click a value to explain it: formula and operands of a computed value, source filing and its place in the filing.",
-        presentation: "The Detailed view explains each value.",
+        presentation: "Click a value to see how it came about and where it was filed.",
         summary: "Click a filed value to see every filing that stated it; the Detailed view explains each value.",
     },
     "standardized": {
@@ -61,12 +62,14 @@ export const STATEMENTS_PENDING_TITLE = "Statements are being prepared — asked
 export function FinancialsStatementsView({
     basis,
     pages,
+    reportedScope,
     statement,
     view,
     ...state
 }: MetricsListState & {
     basis: V2FinancialsBasis;
     pages: ReadonlyArray<V2StatementsResponse>;
+    reportedScope?: AsReportedPageScope;
     statement: StatementType;
     view: V2FinancialsView;
 }) {
@@ -79,9 +82,11 @@ export function FinancialsStatementsView({
         [basis, rows, statement, view],
     );
 
-    const trees = React.useMemo(() => (view === "presentation" ? presentationPeriods(rows, statement) : []), [rows, statement, view]);
+    const trees = React.useMemo(() => (view === "presentation" ? presentationPeriods(rows, statement, basis === "as-reported") : []), [basis, rows, statement, view]);
 
     const meta = pages.at(0)?.meta;
+
+    const scopeKey = basis === "as-reported" ? JSON.stringify([statement, view, reportedScope]) : undefined;
 
     // The line above the table: the currency and where "Explain this number" lives (the tree adds Expand / Collapse).
     const toolbar = (
@@ -103,8 +108,8 @@ export function FinancialsStatementsView({
             toolbar={view === "presentation" ? undefined : toolbar}
         >
             {view === "presentation"
-                ? <FinancialsPresentationTable isCollapsible={basis === "standardized"} periods={trees} toolbar={toolbar} />
-                : <FinancialsFlatTable cik={rows.at(0)?.company.cik ?? null} columns={columns} filedValues={basis === "as-reported"} lines={lines} rows={rows} />}
+                ? <FinancialsPresentationTable asReported={basis === "as-reported"} key={scopeKey} periods={trees} reportedScope={reportedScope} statement={statement} toolbar={toolbar} />
+                : <FinancialsFlatTable cik={rows.at(0)?.company.cik ?? null} columns={columns} filedValues={basis === "as-reported"} key={scopeKey} lines={lines} reportedScope={reportedScope} rows={rows} />}
         </MetricsListBody>
     );
 }

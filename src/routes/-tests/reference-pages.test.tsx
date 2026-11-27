@@ -45,6 +45,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 // Keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
+    useAsReportedDetailedPeriod: () => ({ data: null, error: null, isLoading: false }),
     // The flat statement table's "Explain this number" dialog: idle (no value clicked).
     useFinancialVintages: () => ({ data: null, error: null, isLoading: false }),
     useReportedValueLookup: () => ({ data: null, error: null, isLoading: false }),

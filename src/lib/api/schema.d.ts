@@ -1860,6 +1860,8 @@ export interface paths {
          *     Choose an annual, quarterly, year-to-date or trailing twelve-month `period`. Each concept carries its value and indicates whether it was derived. Set `reported_only=true` to omit derived values.
          *
          *     Use `as_of` to see the figures available on a date, or `filing` to select one filing.
+         *
+         *     Includes the breakdown rows printed on the statement (for example Products / Services). A member key identifies the same line across periods; presentation uses key on every node and summary/detailed use member_facts. Point-in-time requests (as_of or filing) return the members of the selected version; an older version not yet replayed returns none.
          */
         get: operations["getAsReportedFinancials"];
         put?: never;
@@ -1884,6 +1886,8 @@ export interface paths {
          *     Choose an annual, quarterly, year-to-date or trailing twelve-month `period`. Use `as_of` to read the figures available on a date or `filing` to pin one accession.
          *
          *     Where available, `accession` and `html_tag_id` locate the value in the filing. A changed value or caption can also carry the original figure or label and the filing that first reported it.
+         *
+         *     Includes the breakdown rows printed on the statement (for example Products / Services). A member key identifies the same line across periods; presentation uses key on every node and summary/detailed use member_facts. Point-in-time requests (as_of or filing) return the members of the selected version; an older version not yet replayed returns none.
          */
         get: operations["getAsReportedFinancialsDetailed"];
         put?: never;
@@ -1908,6 +1912,8 @@ export interface paths {
          *     Select `annual`, `quarterly`, `ytd` or `ttm` with `period`. The tree follows the filer's grouping and labels, with child concepts nested beneath their headings.
          *
          *     Set `as_of` for the presentation available on a date, or `filing` to render the statements from one accession.
+         *
+         *     Includes the breakdown rows printed on the statement (for example Products / Services). A member key identifies the same line across periods; presentation uses key on every node and summary/detailed use member_facts. Point-in-time requests (as_of or filing) return the members of the selected version; an older version not yet replayed returns none.
          */
         get: operations["getAsReportedFinancialsPresentation"];
         put?: never;
@@ -5206,14 +5212,20 @@ export interface components {
                 /** @description One statement of the period */
                 income_statement?: {
                     facts: components["schemas"]["AsReportedFacts"];
+                    /** @description Printed member rows in filing order; empty when no supported member rows are stored. */
+                    member_facts: Array<components["schemas"]["AsReportedMemberFact"]>;
                 };
                 /** @description One statement of the period */
                 balance_sheet?: {
                     facts: components["schemas"]["AsReportedFacts"];
+                    /** @description Printed member rows in filing order; empty when no supported member rows are stored. */
+                    member_facts: Array<components["schemas"]["AsReportedMemberFact"]>;
                 };
                 /** @description One statement of the period */
                 cash_flow?: {
                     facts: components["schemas"]["AsReportedFacts"];
+                    /** @description Printed member rows in filing order; empty when no supported member rows are stored. */
+                    member_facts: Array<components["schemas"]["AsReportedMemberFact"]>;
                 };
             };
         };
@@ -5230,6 +5242,41 @@ export interface components {
             value: number;
             /** @description true when Invinite computed the value (a Q4, TTM or YTD derivation; `formula` on the detailed route names its members); false = the company reported it */
             derived: boolean;
+        };
+        /**
+         * AsReportedMemberFact
+         * @description A breakdown value printed on the statement, with its complete explicit dimensions and stable line key.
+         */
+        AsReportedMemberFact: {
+            /** @description Stable line identity across periods: concept for a plain line, concept#group for a header, concept|axis=member;... for a printed member. */
+            key: string;
+            /** @description The financial concept of this printed breakdown. */
+            concept: string;
+            dimensions: Array<components["schemas"]["Dimension"]>;
+            /** @description Member value, with the same display-sign policy as consolidated values. */
+            value: null | number;
+            /** @description true when Invinite computed the value (a Q4, TTM or YTD derivation; `formula` on the detailed route names its members); false = the company reported it */
+            derived: boolean;
+            /** @description Taxonomy label of the concept. */
+            label: string;
+            /** @description The member caption printed on the statement row. */
+            company_label: null | string;
+        };
+        /**
+         * Dimension
+         * @description One axis / member pair
+         */
+        Dimension: {
+            /**
+             * @description XBRL axis
+             * @example srt:ProductOrServiceAxis
+             */
+            axis: string;
+            /**
+             * @description XBRL member
+             * @example us-gaap:ProductMember
+             */
+            member: string;
         };
         /**
          * AsReportedDetailedPeriod
@@ -5278,14 +5325,20 @@ export interface components {
                 /** @description One statement of the period */
                 income_statement?: {
                     facts: components["schemas"]["AsReportedDetailedFacts"];
+                    /** @description Printed member rows in filing order; empty when no supported member rows are stored. */
+                    member_facts: Array<components["schemas"]["AsReportedDetailedMemberFact"]>;
                 };
                 /** @description One statement of the period */
                 balance_sheet?: {
                     facts: components["schemas"]["AsReportedDetailedFacts"];
+                    /** @description Printed member rows in filing order; empty when no supported member rows are stored. */
+                    member_facts: Array<components["schemas"]["AsReportedDetailedMemberFact"]>;
                 };
                 /** @description One statement of the period */
                 cash_flow?: {
                     facts: components["schemas"]["AsReportedDetailedFacts"];
+                    /** @description Printed member rows in filing order; empty when no supported member rows are stored. */
+                    member_facts: Array<components["schemas"]["AsReportedDetailedMemberFact"]>;
                 };
             };
         };
@@ -5337,6 +5390,109 @@ export interface components {
             value_as_reported: null | number;
             /** @description The stock-split factor applied to the filed number to reach `value` (0.25 = a 4-for-1 split since the filing for a per-share value); null when no split applies */
             split_factor: null | number;
+        };
+        /**
+         * AsReportedDetailedMemberFact
+         * @description A printed breakdown value with formula, split basis and exact source lineage.
+         */
+        AsReportedDetailedMemberFact: {
+            /** @description Stable line identity across periods: concept for a plain line, concept#group for a header, concept|axis=member;... for a printed member. */
+            key: string;
+            /** @description The financial concept of this printed breakdown. */
+            concept: string;
+            dimensions: Array<components["schemas"]["Dimension"]>;
+            /** @description Member value, with the same display-sign policy as consolidated values. */
+            value: null | number;
+            /** @description true when Invinite computed the value (a Q4, TTM or YTD derivation; `formula` on the detailed route names its members); false = the company reported it */
+            derived: boolean;
+            /** @description Taxonomy label of the concept. */
+            label: string;
+            /** @description The member caption printed on the statement row. */
+            company_label: null | string;
+            /** @description XBRL decimals of the reported fact (-6 = rounded to millions); null = exact (INF) or not stated. A derived fact carries its source fact's */
+            decimals: null | number;
+            formula: components["schemas"]["AsReportedMemberFormula"];
+            /** @description Accession number of the filing that holds the value */
+            accession: null | string;
+            /** @description The exact numeric element of the member cell in the original source filing; null for a derived value or a cell without a unique native id. */
+            html_tag_id: null | string;
+            /** @description The number as filed when `value` differs from it: `value` is on today's split basis for per-share and weighted share counts, this is the filer's figure on the basis of its own filing; null when they are equal */
+            value_as_reported?: null | number;
+            /** @description The stock-split factor applied to the filed number to reach `value` (0.25 = a 4-for-1 split since the filing for a per-share value); null when no split applies */
+            split_factor?: null | number;
+        };
+        /**
+         * AsReportedMemberFormula
+         * @description How a derived value was computed; null for a reported value
+         */
+        AsReportedMemberFormula: null | {
+            /**
+             * @description Readable formula
+             * @example is_revenue_q1 + is_revenue_q2 + is_revenue_q3
+             */
+            formula_str: string;
+            /** @description The formula's operands */
+            members: Array<components["schemas"]["AsReportedMemberFormulaOperand"]>;
+        };
+        /**
+         * AsReportedMemberFormulaOperand
+         * @description An operand of a printed member calculation. Original source segment JSON is retained without changing filed values or dimension spelling.
+         */
+        AsReportedMemberFormulaOperand: {
+            /**
+             * @description reported = an XBRL fact of the filing; standardized = another standardized metric; split_factor = a multiplier that puts a reported operand on the split-adjusted basis
+             * @enum {string}
+             */
+            type: "reported" | "split_factor" | "standardized";
+            /** @description Value of the member */
+            value: number;
+            /** @description Execution dates of the splits combined in a split-factor operand. Present only for split_factor. */
+            split_execution_dates?: Array<string>;
+            /** @description The original reported operand ID, including any source qualifier, when the statement writer identified its exact filing. */
+            fact_id?: string;
+            /** @description The filing that supplied this reported operand. Present when the source filing was identified. */
+            accession?: string;
+            /** @description The proved native inline-XBRL element in the operand's own filing. Null when the source filing is known and its element could not be proved; absent when the filing was not identified. */
+            html_tag_id?: null | string;
+            /** @description Financial concept */
+            concept?: null | string;
+            /**
+             * Format: date
+             * @description Start date (YYYY-MM-DD)
+             */
+            start_date?: null | string;
+            /**
+             * Format: date
+             * @description End date (YYYY-MM-DD)
+             */
+            end_date?: null | string;
+            /**
+             * Format: date
+             * @description Instant date (YYYY-MM-DD)
+             */
+            instant_date?: null | string;
+            /**
+             * @description Original source segment JSON: an object, an array of axis/member entries, or null. Free JSON retains both supported historical encodings without a response union.
+             * @example [
+             *       {
+             *         "dimension": "srt:ProductOrServiceAxis",
+             *         "value": "us-gaap:ProductMember"
+             *       },
+             *       {
+             *         "dimension": "ext:RegionAxis",
+             *         "value": "ext:US"
+             *       }
+             *     ]
+             */
+            segment?: unknown;
+            /** @description Fiscal period type */
+            fiscal_period_type?: null | string;
+            /** @description Standardized metric ID */
+            metric_id?: null | string;
+            /** @description Fiscal year */
+            fiscal_year?: null | number;
+            /** @description Fiscal quarter */
+            fiscal_quarter?: null | number;
         };
         /**
          * AsReportedPresentationPeriod
@@ -5396,7 +5552,10 @@ export interface components {
                 };
             };
         };
-        /** AsReportedPresentationNode */
+        /**
+         * AsReportedPresentationNode
+         * @description A statement line. A group header has no value; its child with is_total is the line total. Member lines have dimensions and their own stable key.
+         */
         AsReportedPresentationNode: {
             /** @description Financial concept ID */
             concept: string;
@@ -5414,6 +5573,14 @@ export interface components {
             is_total?: boolean;
             /** @description Nested child facts with facts schema (only present if there are children) */
             children?: Array<components["schemas"]["AsReportedPresentationNode"]>;
+            /** @description Stable line identity across periods: concept for a plain line, concept#group for a header, concept|axis=member;... for a printed member. */
+            key: string;
+            /** @description Present only on a printed member line; all explicit axis/member pairs. */
+            dimensions?: Array<components["schemas"]["Dimension"]>;
+            /** @description On valued nodes, the accession of the fact supplying this displayed value; absent on headers. */
+            accession?: null | string;
+            /** @description On valued nodes, the exact source element for a reported member or the existing anchor for a consolidated value. Null for derived values; absent on headers. */
+            html_tag_id?: null | string;
         };
         /**
          * FinancialVintage
@@ -5643,22 +5810,6 @@ export interface components {
             value: number;
             /** @description The segment's axis / member pairs (normalised; v1 `segment`) */
             dimensions: Array<components["schemas"]["Dimension"]>;
-        };
-        /**
-         * Dimension
-         * @description One axis / member pair
-         */
-        Dimension: {
-            /**
-             * @description XBRL axis
-             * @example srt:ProductOrServiceAxis
-             */
-            axis: string;
-            /**
-             * @description XBRL member
-             * @example us-gaap:ProductMember
-             */
-            member: string;
         };
         /**
          * SegmentDetailed
@@ -7653,8 +7804,8 @@ export interface components {
             primary_exchange: null | string;
             /** @description Security description; null when Massive has no value */
             security_description: null | string;
-            /** @description Security type */
-            security_type: string;
+            /** @description Security type; null when the listing calendar has no value */
+            security_type: null | string;
             /** @description Shares outstanding; null when Massive has no value */
             shares_outstanding: null | number;
             /** @description Ticker symbol */
@@ -20794,7 +20945,8 @@ export interface operations {
                      *                   "value": 159237000000,
                      *                   "derived": true
                      *                 }
-                     *               }
+                     *               },
+                     *               "member_facts": []
                      *             },
                      *             "balance_sheet": {
                      *               "facts": {
@@ -20846,7 +20998,8 @@ export interface operations {
                      *                   "value": 230691000000,
                      *                   "derived": false
                      *                 }
-                     *               }
+                     *               },
+                     *               "member_facts": []
                      *             },
                      *             "cash_flow": {
                      *               "facts": {
@@ -20898,7 +21051,8 @@ export interface operations {
                      *                   "value": 145097000000,
                      *                   "derived": false
                      *                 }
-                     *               }
+                     *               },
+                     *               "member_facts": []
                      *             }
                      *           }
                      *         }
@@ -21384,7 +21538,8 @@ export interface operations {
                      *                   "original_filing_date": null,
                      *                   "original_accession": null
                      *                 }
-                     *               }
+                     *               },
+                     *               "member_facts": []
                      *             },
                      *             "balance_sheet": {
                      *               "facts": {
@@ -21580,7 +21735,8 @@ export interface operations {
                      *                   "original_filing_date": null,
                      *                   "original_accession": null
                      *                 }
-                     *               }
+                     *               },
+                     *               "member_facts": []
                      *             },
                      *             "cash_flow": {
                      *               "facts": {
@@ -21776,7 +21932,8 @@ export interface operations {
                      *                   "original_filing_date": null,
                      *                   "original_accession": null
                      *                 }
-                     *               }
+                     *               },
+                     *               "member_facts": []
                      *             }
                      *           }
                      *         }
@@ -21997,7 +22154,8 @@ export interface operations {
                      *                   "company_label": "Total net sales",
                      *                   "depth": 0,
                      *                   "is_total": false,
-                     *                   "children": []
+                     *                   "children": [],
+                     *                   "key": "RevenueFromContractWithCustomerExcludingAssessedTax"
                      *                 }
                      *               ]
                      *             },
@@ -22021,19 +22179,22 @@ export interface operations {
                      *                           "company_label": "Cash and cash equivalents",
                      *                           "depth": 2,
                      *                           "is_total": false,
-                     *                           "children": []
+                     *                           "children": [],
+                     *                           "key": "CashAndCashEquivalentsAtCarryingValue"
                      *                         }
                      *                       ],
                      *                       "value": null,
                      *                       "derived": false,
                      *                       "company_label": null,
-                     *                       "is_total": false
+                     *                       "is_total": false,
+                     *                       "key": "AssetsCurrentAbstract"
                      *                     }
                      *                   ],
                      *                   "value": null,
                      *                   "derived": false,
                      *                   "company_label": null,
-                     *                   "is_total": false
+                     *                   "is_total": false,
+                     *                   "key": "AssetsAbstract"
                      *                 }
                      *               ]
                      *             },
@@ -22052,13 +22213,15 @@ export interface operations {
                      *                       "company_label": "Net income",
                      *                       "depth": 1,
                      *                       "is_total": false,
-                     *                       "children": []
+                     *                       "children": [],
+                     *                       "key": "NetIncomeLoss"
                      *                     }
                      *                   ],
                      *                   "value": null,
                      *                   "derived": false,
                      *                   "company_label": null,
-                     *                   "is_total": false
+                     *                   "is_total": false,
+                     *                   "key": "NetCashProvidedByUsedInOperatingActivitiesContinuingOperationsAbstract"
                      *                 }
                      *               ]
                      *             }

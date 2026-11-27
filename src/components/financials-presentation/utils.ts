@@ -68,8 +68,10 @@ export function addFactTypes(
     });
 }
 
+export const asReportedNodeKey = (fact: { concept: string; key?: string }) => fact.key ?? fact.concept;
+
 export function getFactId(fact: PresentationFact) {
-    return fact.type === "standardized" ? fact.metric_id : fact.concept;
+    return fact.type === "standardized" ? fact.metric_id : asReportedNodeKey(fact);
 }
 
 export function getFactLabel(fact: PresentationFact) {

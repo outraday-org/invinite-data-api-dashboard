@@ -1,6 +1,7 @@
 import { ExternalLink, FileSearch } from "lucide-react";
 import * as React from "react";
 
+import type { ReportedLookupScope } from "@/lib/api/queries";
 import type { V2StatementPeriod } from "@/lib/api/types";
 import type { FormulaTerm } from "@/lib/financials/formula-terms";
 import type { ValueRef } from "@/lib/financials/value-ref";
@@ -8,7 +9,7 @@ import type { ValueRef } from "@/lib/financials/value-ref";
 import { FilingDocumentDialog } from "@/components/sec/filing-document-dialog";
 import { useReportedValueLookup } from "@/lib/api/queries";
 import { edgarFolderUrl } from "@/lib/earnings/edgar";
-import { findValueSource, refMonths, valueLookupOf } from "@/lib/financials/value-ref";
+import { findValueSource, refMonths, sourceInScope, valueLookupOf } from "@/lib/financials/value-ref";
 import { cn, formatNumberEn } from "@/lib/utils";
 
 /** A value at full magnitude ("—" when absent). */
@@ -110,7 +111,7 @@ export type OperandChipModel = { concept: null | string; months: null | number; 
 
 const CHIP_CLASS = "bg-background inline-flex min-w-0 flex-col items-start gap-0.5 rounded-md border px-2.5 py-1.5 text-left";
 
-export function OperandChip({ chip, onOpen }: { chip: OperandChipModel; onOpen?: () => void }) {
+export function OperandChip({ chip, onOpen, sourceTitle }: { chip: OperandChipModel; onOpen?: () => void; sourceTitle?: string }) {
     const body = (
         <>
             {chip.concept && <Mono className="text-[0.6875rem] font-medium">{chip.concept}</Mono>}
@@ -126,13 +127,13 @@ export function OperandChip({ chip, onOpen }: { chip: OperandChipModel; onOpen?:
         </>
     );
 
-    if (!onOpen) return <span className={CHIP_CLASS}>{body}</span>;
+    if (!onOpen) return <span className={CHIP_CLASS} title={sourceTitle}>{body}</span>;
 
     return (
         <button
             className={cn(CHIP_CLASS, "group/chip hover:border-primary/60 hover:bg-primary/5 focus-visible:outline-ring transition-colors focus-visible:outline-2")}
             onClick={onOpen}
-            title="Show this value in its filing"
+            title={sourceTitle ?? "Show this value in its filing"}
             type="button"
         >
             {body}
@@ -191,15 +192,18 @@ export type ValueFilingTarget = { ref: ValueRef; title: string };
  * A formula member's filing, framed at the value: found in the loaded as-reported detailed rows (`rows`), else in one
  * as-reported detailed request of the member's period type (`cik` = the company; null = none can be asked).
  */
-export function ValueFilingDialog({ cik, onClose, rows = [], target }: {
+export function ValueFilingDialog({ cik, onClose, rows = [], scope, target }: {
     cik: null | string;
     onClose: () => void;
     rows?: ReadonlyArray<V2StatementPeriod>;
+    scope?: ReportedLookupScope;
     target: null | ValueFilingTarget;
 }) {
-    const local = React.useMemo(() => (target ? findValueSource(rows, target.ref) : null), [rows, target]);
+    const local = React.useMemo(() => (target ? findValueSource(rows.filter(row => sourceInScope(row.source, scope)), target.ref) : null), [rows, scope, target]);
 
-    const lookup = useReportedValueLookup(target && !local ? cik : null, target && !local ? valueLookupOf(target.ref) : null);
+    const selector = target && !local ? valueLookupOf(target.ref) : null;
+
+    const lookup = useReportedValueLookup(selector ? cik : null, selector, scope);
 
     const found = local ?? (target && lookup.data ? findValueSource(lookup.data.data, target.ref) : null);
 
@@ -226,27 +230,34 @@ function longestRef(refs: ReadonlyArray<ValueRef>) {
  * as-reported detailed request for the longest operand — names the table; it is outlined, no cell marked. No such
  * operand = the filing's top.
  */
-export function PeriodFilingDialog({ cik, onClose, rows = [], target }: {
+export function PeriodFilingDialog({ cik, onClose, rows = [], scope, target }: {
     cik: null | string;
     onClose: () => void;
     rows?: ReadonlyArray<V2StatementPeriod>;
+    scope?: ReportedLookupScope;
     target: null | PeriodFilingTarget;
 }) {
     const local = React.useMemo(() => {
         if (!target) return null;
 
-        for (const ref of target.refs) {
-            const found = findValueSource(rows, ref);
+        const sorted = [...target.refs].sort((a, b) => (refMonths(b) ?? 0) - (refMonths(a) ?? 0));
+
+        const scopedRows = rows.filter(row => sourceInScope(row.source, scope));
+
+        for (const ref of sorted) {
+            const found = findValueSource(scopedRows, ref);
 
             if (found?.accession === target.accession && found.elementId) return found.elementId;
         }
 
         return null;
-    }, [rows, target]);
+    }, [rows, scope, target]);
 
-    const ref = target && !local ? longestRef(target.refs) : null;
+    const ref = target && !local ? longestRef(target.refs.filter(candidate => candidate.source === undefined)) : null;
 
-    const lookup = useReportedValueLookup(ref ? cik : null, ref ? valueLookupOf(ref) : null);
+    const selector = ref ? valueLookupOf(ref) : null;
+
+    const lookup = useReportedValueLookup(selector ? cik : null, selector, scope);
 
     const remote = ref && lookup.data ? findValueSource(lookup.data.data, ref) : null;
 

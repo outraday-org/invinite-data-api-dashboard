@@ -168,7 +168,7 @@ function operandModel(operand: JsonValue): FactOperandModel {
 
     const nested = Object.values(object).find(Array.isArray);
 
-    const ref = id ? refOfFactId(id) : null;
+    const ref = id ? refOfFactId(id, false) : null;
 
     const value = numeric(object.value) ?? numeric(object.weighted_value) ?? numeric(object.stored_value);
 

@@ -1745,6 +1745,7 @@ export const getFinancialVintages = createServerFn({ method: "POST" })
         concept: z.string().trim().regex(/^(?:[A-Z][\w.-]{0,60}:)?[A-Z_][\w.-]{0,200}$/i),
         cursor: cursorSchema,
         limit: pageLimitSchema,
+        member: z.string().trim().min(1).optional(),
         periodEnd: z.iso.date(),
         /** Omitted = every duration ending on `periodEnd`, and instants. */
         periodStart: z.iso.date().optional(),
@@ -1757,6 +1758,7 @@ export const getFinancialVintages = createServerFn({ method: "POST" })
                     concept: data.concept,
                     cursor: data.cursor,
                     limit: data.limit,
+                    member: data.member,
                     period_end: data.periodEnd,
                     period_start: periodStart,
                 }),

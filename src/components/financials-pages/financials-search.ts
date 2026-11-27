@@ -22,7 +22,8 @@ export const financialsSearchSchema = z.object({
     axis: optionalText(200),
     basis: optionalEnum(["yoy", "qoq"] as const satisfies ReadonlyArray<V2GrowthBasis>),
     category: optionalEnum(V2_RATIO_CATEGORIES),
-    chart: optionalText(300),
+    // A published member key contains the complete qualified dimension set, with no producer length bound.
+    chart: z.string().min(1).optional().catch(undefined),
     filing: optionalAccession(),
     fyFrom: optionalInt(1900, 2200),
     fyTo: optionalInt(1900, 2200),

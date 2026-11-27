@@ -2,6 +2,8 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { V2AsReportedDetailedResponse } from "@/lib/api/types";
+
 import { cagrRows, CagrView } from "@/components/financials-pages/cagr";
 import { financialsSearchSchema, tabSearch } from "@/components/financials-pages/financials-search";
 import { parseFiscalYear } from "@/components/financials-pages/fiscal-year-range";
@@ -15,8 +17,16 @@ import { FinancialsStatementsView } from "@/components/financials-presentation/f
 import { addFactTypes, buildTreeRows } from "@/components/financials-presentation/utils";
 import { highlightStyle } from "@/hooks/use-html-document-processing";
 import { ApiRequestError } from "@/lib/api/errors";
-import { useFinancialVintages, useReportedValueLookup } from "@/lib/api/queries";
+import { useAsReportedDetailedPeriod, useFinancialVintages, useReportedValueLookup } from "@/lib/api/queries";
 import { factExplanationModel, factIdText, factPlaceTargets, readableFormula } from "@/lib/financials/fact-explanation";
+import {
+    AAPL_MEMBER_DETAILED,
+    AAPL_MEMBER_PRESENTATION,
+    AAPL_MEMBER_SUMMARY,
+    SYNTHETIC_Q4_MEMBER_DETAILED,
+    SYNTHETIC_Q4_MEMBER_PRESENTATION,
+    SYNTHETIC_TWO_AXIS_MEMBER_DETAILED,
+} from "@/lib/financials/member-fixtures";
 import { completePeriodsOnly, periodLabel, segmentLines, statementLines } from "@/lib/financials/statements";
 import {
     V2_AS_REPORTED_BALANCE_SHEET,
@@ -46,11 +56,18 @@ vi.mock("@tanstack/react-router", () => ({
 
 // Keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", async () => {
+    const { SYNTHETIC_Q4_MEMBER_DETAILED: detailedQuarter } = await import("@/lib/financials/member-fixtures");
+
     const { V2_AS_REPORTED_ANNUAL_LOOKUP, V2_FINANCIAL_VINTAGES } = await import("@/lib/financials/v2-fixtures");
 
     return {
         // "Filed values" (`/v1/financials/vintages`): idle until asked, then answered at once.
-        useFinancialVintages: vi.fn((target: unknown) => ({ data: target ? V2_FINANCIAL_VINTAGES : null, error: null, isLoading: false })),
+        useAsReportedDetailedPeriod: vi.fn((target: unknown) => ({
+            data: target && !requestStates.detailError && !requestStates.detailLoading ? { ...detailedQuarter, data: [requestStates.detailRow ?? detailedQuarter.data[0]] } : null,
+            error: target ? requestStates.detailError : null,
+            isLoading: Boolean(target && requestStates.detailLoading),
+        })),
+        useFinancialVintages: vi.fn((target: unknown) => ({ data: target && !requestStates.vintagesError ? V2_FINANCIAL_VINTAGES : null, error: target ? requestStates.vintagesError : null, isLoading: false })),
         // A formula member's filing outside the loaded rows: one as-reported detailed request (answered at once here).
         useReportedValueLookup: vi.fn((company: null | string, lookup: unknown) => ({
             data: company && lookup ? V2_AS_REPORTED_ANNUAL_LOOKUP : null,
@@ -91,7 +108,22 @@ vi.mock("@/components/ui/credit-hint", async importOriginal => ({
     usePlanAllows: () => null,
 }));
 
-afterEach(cleanup);
+const requestStates = vi.hoisted((): { detailError: Error | null; detailLoading: boolean; detailRow: null | V2AsReportedDetailedResponse["data"][number]; vintagesError: Error | null } => ({
+    detailError: null,
+    detailLoading: false,
+    detailRow: null,
+    vintagesError: null,
+}));
+
+afterEach(() => {
+    cleanup();
+
+    requestStates.detailError = null;
+
+    requestStates.detailLoading = false;
+
+    requestStates.vintagesError = null;
+});
 
 const list = { error: null, hasNextPage: false, isFetchingNextPage: false, isLoading: false, onLoadMore: () => undefined };
 
@@ -230,7 +262,7 @@ describe("Statements (`/v1/financials/*`)", () => {
         // The fiscal year is no loaded column: one annual request around its end, then the 10-K at its element.
         fireEvent.click(within(screen.getByTestId("formula-expression")).getAllByRole("button")[0]);
 
-        expect(vi.mocked(useReportedValueLookup)).toHaveBeenCalledWith("0000320193", { fiscalYearGte: 2025, fiscalYearLte: 2027, period: "annual" });
+        expect(vi.mocked(useReportedValueLookup)).toHaveBeenCalledWith("0000320193", { fiscalYearGte: 2025, fiscalYearLte: 2027, period: "annual" }, undefined);
 
         expect(screen.getByTestId("html-viewer")).toHaveAttribute("data-highlight", "f-210");
     });
@@ -783,7 +815,7 @@ describe("Explain this number (`/v1/facts/{fact_id}`, `/v1/fact-places`)", () =>
             { label: "RevenueFromContractWithCustomerExcludingAssessedTax · Sep 28, 2025 – Dec 27, 2025", months: 3, nested: 0, stored: 143_756_000_000, value: -143_756_000_000 },
         ]);
 
-        expect(model.operands[0]?.ref).toEqual({ concept: "RevenueFromContractWithCustomerExcludingAssessedTax", end: "2026-09-26", instant: null, start: "2025-09-28" });
+        expect(model.operands[0]?.ref).toMatchObject({ concept: "RevenueFromContractWithCustomerExcludingAssessedTax", end: "2026-09-26", instant: null, start: "2025-09-28" });
 
         expect(model.sources[0]?.value).toBe(114_477_000_000);
 
@@ -916,5 +948,265 @@ describe("Detailed segments (`/v1/segments/detailed`) and the metric / axis filt
 
         expect(segmentFilterOptions([row("srt:StatementGeographicalAxis"), row("us-gaap:StatementGeographicalAxis")], {}).axes.map(axis => axis.label))
             .toEqual(["Statement Geographical (srt)", "Statement Geographical (us-gaap)"]);
+    });
+});
+
+describe("printed statement members", () => {
+    const accession = "0000320193-26-000020";
+
+    function click(label: string) {
+        fireEvent.click(screen.getByRole("button", { name: label }));
+    }
+
+    function closeDialog() {
+        fireEvent.click(screen.getByRole("button", { name: "Close" }));
+    }
+
+    it("renders AAPL group, member and total rows once, with separate values and collapse controls", () => {
+        const consoleError = vi.spyOn(console, "error").mockImplementation(() => undefined);
+
+        try {
+            const page = structuredClone(AAPL_MEMBER_PRESENTATION);
+
+            const older = structuredClone(page.data[0]);
+
+            older.fiscal_quarter = 2;
+
+            older.statements.income_statement?.facts.forEach((group) => {
+                group.children = group.children?.filter(child => child.company_label !== "Services");
+            });
+
+            page.data.push(older);
+
+            render(<FinancialsStatementsView {...list} basis="as-reported" pages={[page]} statement="income-statement" view="presentation" />);
+
+            const table = screen.getByRole("table");
+
+            const rows = within(table).getAllByRole("row").slice(1);
+
+            expect(rows.map(row => within(row).getAllByRole("cell")[0].textContent.trim())).toEqual([
+                "Net sales", "Products", "Services", "Total net sales", "Cost of sales", "Products", "Services", "Total cost of sales",
+            ]);
+
+            expect(within(rows[0]).queryByRole("button", { name: /^Explain/ })).toBeNull();
+
+            expect(within(rows[1]).getByRole("button", { name: "Explain Products, Q3 2026" })).toHaveTextContent("78.68 B");
+
+            expect(within(rows[2]).getAllByRole("cell")[2]).toHaveTextContent("—");
+
+            expect(within(rows[3]).getByRole("button", { name: "Explain Total net sales, Q3 2026" })).toHaveTextContent("109.42 B");
+
+            click("Collapse Net sales");
+
+            expect(screen.queryByRole("button", { name: "Explain Total net sales, Q3 2026" })).toBeNull();
+
+            click("Expand Net sales");
+
+            expect(screen.getByRole("button", { name: "Explain Total net sales, Q3 2026" })).toBeInTheDocument();
+
+            expect(consoleError.mock.calls.flat().join(" ")).not.toMatch(/same key|unique "key"/i);
+        }
+        finally {
+            consoleError.mockRestore();
+        }
+    });
+
+    it.each([
+        ["presentation", "Products", AAPL_MEMBER_PRESENTATION, "f-48", "78.68"],
+        ["presentation", "Total net sales", AAPL_MEMBER_PRESENTATION, "f-56", "109.42"],
+        ["detailed", "Products", AAPL_MEMBER_DETAILED, "f-48", "78.68"],
+    ] as const)("opens the %s %s cell's own filing from both actions without a detailed-period query", (view, caption, page, id, value) => {
+        vi.mocked(useAsReportedDetailedPeriod).mockClear();
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[page]} statement="income-statement" view={view} />);
+
+        const matches = screen.getAllByRole("button", { name: `Explain ${caption}, Q3 2026` });
+
+        fireEvent.click(matches.find(button => button.textContent.includes(value)) ?? matches[0]);
+
+        const explanation = screen.getByTestId("as-reported-explanation");
+
+        if (caption === "Products") expect(within(explanation).getByText("Product")).toBeInTheDocument();
+
+        click("Show the value in the filing");
+
+        expect(screen.getByTestId("html-viewer")).toHaveAttribute("data-highlight", id);
+
+        closeDialog();
+
+        click(accession);
+
+        expect(screen.getByTestId("html-viewer")).toHaveAttribute("data-highlight", id);
+
+        expect(vi.mocked(useAsReportedDetailedPeriod).mock.calls.every(([target]) => target === null)).toBe(true);
+    });
+
+    it("opens one exact computed period and links its older operand to its own producer-proved filing", () => {
+        vi.mocked(useReportedValueLookup).mockClear();
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[SYNTHETIC_Q4_MEMBER_PRESENTATION]} reportedScope={{ company: "SYN", filing: "0000000001-26-000002", period: "quarterly", statement: "income-statement" }} statement="income-statement" view="presentation" />);
+
+        click("Explain Products, Q4 2026");
+
+        expect(useAsReportedDetailedPeriod).toHaveBeenCalledWith(expect.objectContaining({
+            accession: "0000000001-26-000002",
+            company: "SYN",
+            filing: "0000000001-26-000002",
+            fiscalQuarter: 4,
+            fiscalYear: 2026,
+        }));
+
+        const formula = screen.getByTestId("formula-expression");
+
+        const buttons = within(formula).getAllByRole("button");
+
+        expect(buttons).toHaveLength(2);
+
+        expect(buttons[0]).toHaveAttribute("title", "Open the filing");
+
+        expect(formula).toHaveTextContent("10");
+
+        fireEvent.click(buttons[1]);
+
+        expect(screen.getByText(/10-Q · 0000000001-26-000001/)).toBeInTheDocument();
+
+        expect(screen.getByTestId("html-viewer")).toHaveAttribute("data-highlight", "quarter-cell");
+
+        expect(vi.mocked(useReportedValueLookup).mock.calls.every(([company]) => company === null)).toBe(true);
+
+        closeDialog();
+
+        click("0000000001-26-000002");
+
+        expect(screen.getByTestId("html-viewer")).not.toHaveAttribute("data-highlight");
+
+        expect(screen.getByTestId("html-viewer")).not.toHaveAttribute("data-anchor");
+    });
+
+    it("opens the exact computed member table from its longest proved operand and shows split metadata without a filing link", () => {
+        const row = structuredClone(SYNTHETIC_Q4_MEMBER_DETAILED.data[0]);
+
+        const fact = row.statements.income_statement?.member_facts[0];
+
+        if (!fact?.formula) throw new Error("Missing computed member fixture");
+
+        fact.formula.members[0].html_tag_id = "fiscal-year-native-cell";
+
+        fact.formula.members.splice(1, 0, { split_execution_dates: ["2020-08-31"], type: "split_factor", value: 4 });
+
+        requestStates.detailRow = row;
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[SYNTHETIC_Q4_MEMBER_PRESENTATION]} statement="income-statement" view="presentation" />);
+
+        click("Explain Products, Q4 2026");
+
+        expect(screen.getByText(/Split factor · Aug 31, 2020/)).toBeInTheDocument();
+
+        expect(screen.queryByRole("button", { name: /Split factor/ })).toBeNull();
+
+        expect(screen.getByTitle("Filing source unavailable")).toHaveTextContent("10");
+
+        click("Show the table in the filing");
+
+        expect(screen.getByTestId("html-viewer")).toHaveAttribute("data-anchor", "fiscal-year-native-cell");
+
+        expect(screen.getByTestId("html-viewer")).not.toHaveAttribute("data-highlight");
+    });
+
+    it("keeps the hero and period filing available if the formula is loading or refused", () => {
+        requestStates.detailLoading = true;
+
+        const content = <FinancialsStatementsView {...list} basis="as-reported" pages={[SYNTHETIC_Q4_MEMBER_PRESENTATION]} statement="income-statement" view="presentation" />;
+
+        const { rerender } = render(content);
+
+        click("Explain Products, Q4 2026");
+
+        expect(screen.getByRole("status", { name: "Loading formula" })).toBeInTheDocument();
+
+        expect(screen.getByRole("button", { name: "Open the filing" })).toBeInTheDocument();
+
+        requestStates.detailLoading = false;
+
+        requestStates.detailError = problem(403, "plan_required", "This request requires PRO");
+
+        rerender(<FinancialsStatementsView {...list} basis="as-reported" pages={[SYNTHETIC_Q4_MEMBER_PRESENTATION]} statement="income-statement" view="presentation" />);
+
+        expect(screen.getByTestId("as-reported-explanation")).toHaveTextContent("Products");
+
+        expect(screen.getByTestId("as-reported-explanation")).toHaveTextContent("Your plan does not include formula details");
+
+        click("Open the filing");
+
+        expect(screen.getByTestId("html-viewer")).not.toHaveAttribute("data-highlight");
+    });
+
+    it("renders an honest top-of-filing action for a filed member with no element and omits multi-axis vintages", () => {
+        const page = structuredClone(SYNTHETIC_TWO_AXIS_MEMBER_DETAILED);
+
+        const member = page.data[0].statements.income_statement?.member_facts[0];
+
+        if (!member) throw new Error("Missing synthetic two-axis member");
+
+        member.html_tag_id = null;
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[page]} statement="income-statement" view="detailed" />);
+
+        click("Explain Products, Q3 2026");
+
+        expect(screen.queryByRole("button", { name: "Show filed values" })).toBeNull();
+
+        click("Open the filing");
+
+        expect(screen.getByTestId("html-viewer")).not.toHaveAttribute("data-highlight");
+
+        expect(screen.getByTestId("html-viewer")).toHaveAttribute("data-url");
+    });
+
+    it("opens member vintages across axes, suppresses restatement claims and retains the PRO refusal", () => {
+        const page = structuredClone(AAPL_MEMBER_SUMMARY);
+
+        const block = page.data[0].statements.income_statement;
+
+        if (!block) throw new Error("Missing real fixture statement");
+
+        const product = block.member_facts[0];
+
+        block.member_facts.push({
+            ...product,
+            company_label: "Products (another axis)",
+            dimensions: [{ axis: "ext:AlternateAxis", member: "us-gaap:ProductMember" }],
+            key: `${product.concept}|ext:AlternateAxis=us-gaap:ProductMember`,
+        });
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[page]} statement="income-statement" view="summary" />);
+
+        expect(screen.getByRole("button", { name: "Export" })).toBeInTheDocument();
+
+        click("Filed values of Products (another axis), Q3 2026");
+
+        expect(screen.getByRole("heading", { name: "Filed values for us-gaap:ProductMember (all axes)" })).toBeInTheDocument();
+
+        expect(useFinancialVintages).toHaveBeenLastCalledWith(expect.objectContaining({ member: "us-gaap:ProductMember" }));
+
+        expect(screen.queryByText("Restated")).toBeNull();
+
+        closeDialog();
+
+        requestStates.vintagesError = problem(403, "plan_required", "This request requires PRO");
+
+        click("Filed values of RevenueFromContractWithCustomerExcludingAssessedTax, Q3 2026");
+
+        expect(screen.getByRole("dialog")).toHaveTextContent("Your plan does not include filed values");
+    });
+
+    it("round-trips opaque composite chart keys longer than 300 characters", () => {
+        for (const key of ["us-gaap:Revenues", `Revenue#group|ext:${"axis".repeat(90)}=ext:One;tax:Other=tax:Two`]) {
+            const encoded = new URLSearchParams({ chart: key }).toString();
+
+            const parsed = Object.fromEntries(new URLSearchParams(encoded));
+
+            expect(financialsSearchSchema.parse(parsed).chart).toBe(key);
+        }
     });
 });

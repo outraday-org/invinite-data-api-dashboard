@@ -1,18 +1,25 @@
 import * as React from "react";
 
 import type { FilingDocumentTarget } from "@/components/sec/filing-document-dialog";
-import type { FinancialVintagesTarget } from "@/lib/api/queries";
-import type { V2AsReportedDetailedFact, V2StatementPeriod } from "@/lib/api/types";
-import type { AsReportedExplanationModel, AsReportedMemberModel } from "@/lib/financials/as-reported-explanation";
+import type { AsReportedDetailedPeriodTarget, FinancialVintagesTarget, ReportedLookupScope } from "@/lib/api/queries";
+import type { V2AsReportedMemberFact, V2StatementPeriod } from "@/lib/api/types";
+import type { AsReportedExplanationFact, AsReportedExplanationModel, AsReportedMemberModel } from "@/lib/financials/as-reported-explanation";
 import type { ValueRef } from "@/lib/financials/value-ref";
 
 import { FilingDocumentDialog } from "@/components/sec/filing-document-dialog";
+import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
+import { useAsReportedDetailedPeriod, useFinancialVintages } from "@/lib/api/queries";
+import { V2_STATEMENT_KEYS } from "@/lib/api/v2";
 import { asReportedExplanation } from "@/lib/financials/as-reported-explanation";
+import { dimensionsText } from "@/lib/financials/statements";
+import { sameDimensions } from "@/lib/financials/value-ref";
 
 import type { PeriodFilingTarget, ValueFilingTarget } from "./explain-parts";
+import type { FiledValuesRequest } from "./filed-values";
 
 import {
     ExplainField,
@@ -29,7 +36,7 @@ import {
     ValueFilingDialog,
     ValueHero,
 } from "./explain-parts";
-import { FiledValuesPanel } from "./filed-values";
+import { FiledValuesPanel, filedValuesTitle } from "./filed-values";
 
 /**
  * The as-reported value a reader clicked: its concept (the line id), the fact as answered, its cell's name, the
@@ -39,9 +46,13 @@ import { FiledValuesPanel } from "./filed-values";
 export type AsReportedExplainTarget = {
     cik: null | string;
     concept: string;
-    fact: V2AsReportedDetailedFact;
+    detailedPeriod?: AsReportedDetailedPeriodTarget;
+    dimensions?: V2AsReportedMemberFact["dimensions"];
+    fact: AsReportedExplanationFact;
+    memberKey?: string;
     period: string;
     rows?: ReadonlyArray<V2StatementPeriod>;
+    scope?: ReportedLookupScope;
     vintages?: FinancialVintagesTarget | null;
 };
 
@@ -51,7 +62,8 @@ function MemberChip({ member, mixedConcepts, onOpenValue }: { member: AsReported
     return (
         <OperandChip
             chip={{ concept: mixedConcepts ? member.label : null, months: member.months, period: member.period ?? (mixedConcepts ? null : member.label), value: member.value }}
-            onOpen={ref && onOpenValue ? () => onOpenValue(ref, [member.label, member.period].filter(Boolean).join(" · ")) : undefined}
+            onOpen={ref && ref.source !== null && onOpenValue ? () => onOpenValue(ref, [member.label, member.period].filter(Boolean).join(" · ")) : undefined}
+            sourceTitle={ref?.source === null ? "Filing source unavailable" : ref?.source && !ref.source.elementId ? "Open the filing" : undefined}
         />
     );
 }
@@ -63,14 +75,17 @@ function MemberChip({ member, mixedConcepts, onOpenValue }: { member: AsReported
  * document — at the value, marked, when its element is known; `onOpenValue` a member's filing. A filed value with a
  * known period offers its "Filed values" (`vintages`: every filing that stated it, on a click).
  */
-export function AsReportedExplanationView({ cik, model, onOpenDocument, onOpenFiling, onOpenPeriodFiling, onOpenValue, vintages = null }: {
+export function AsReportedExplanationView({ cik, formulaState, model, onOpenDocument, onOpenFiling, onOpenPeriodFiling, onOpenValue, onShowVintages, vintageRequest, vintages = null }: {
     cik: null | string;
+    formulaState?: { error: unknown; isLoading: boolean };
     model: AsReportedExplanationModel;
     onOpenDocument: (accession: string, elementId: null | string) => void;
     onOpenFiling: (accession: string) => void;
     /** A computed value's period filing, opened at its table (`PeriodFilingDialog`); absent = the filing's top. */
     onOpenPeriodFiling?: (accession: string, refs: ReadonlyArray<ValueRef>) => void;
     onOpenValue?: (ref: ValueRef, title: string) => void;
+    onShowVintages: () => void;
+    vintageRequest: FiledValuesRequest | null;
     vintages?: FinancialVintagesTarget | null;
 }) {
     const chip = (member: AsReportedMemberModel, index: number) => (
@@ -78,28 +93,43 @@ export function AsReportedExplanationView({ cik, model, onOpenDocument, onOpenFi
         <MemberChip key={index} member={member} mixedConcepts={model.mixedConcepts} onOpenValue={onOpenValue} />
     );
 
+    // A split multiplier may appear only in the operand list, without a term in the formula text.
+    const boundMembers = new Set(model.formulaTerms.flatMap(term => term.kind === "operand" && term.member !== null ? [term.member] : []));
+
+    const splitFactors = model.members.flatMap((member, index) => member.splitFactor && !boundMembers.has(index) ? [chip(member, index)] : []);
+
     const refs = model.members.flatMap(member => (member.ref ? [member.ref] : []));
+
+    const hasTableSource = model.derived && refs.some(ref => ref.source === undefined
+        || Boolean(ref.source?.elementId && ref.source.accession === model.accession));
 
     // A filed value opens at its place, marked; a computed one at the table of its operands in the period's filing.
     const openSource = (accession: string) => {
         if (!model.derived && model.htmlTagId) onOpenDocument(accession, model.htmlTagId);
-        else if (model.derived && refs.length > 0 && onOpenPeriodFiling) onOpenPeriodFiling(accession, refs);
+        else if (hasTableSource && onOpenPeriodFiling) onOpenPeriodFiling(accession, refs);
         else onOpenFiling(accession);
     };
 
-    const openable = model.members.some(member => member.ref !== null) && onOpenValue !== undefined;
+    const openable = model.members.some(member => member.ref && member.ref.source !== null) && onOpenValue !== undefined;
 
     return (
         <div className="flex min-w-0 flex-col gap-5 [overflow-wrap:anywhere]" data-testid="as-reported-explanation">
             <ValueHero
                 action={model.accession && !model.derived && model.htmlTagId
                     ? <ShowInFilingButton elementId={model.htmlTagId} onOpen={() => onOpenDocument(model.accession!, model.htmlTagId)} />
-                    : model.accession && model.derived && refs.length > 0 && onOpenPeriodFiling
+                    : model.accession && hasTableSource && onOpenPeriodFiling
                         ? <ShowInFilingButton elementId={null} label="Show the table in the filing" onOpen={() => openSource(model.accession!)} />
-                        : null}
+                        : model.accession
+                            ? <ShowInFilingButton elementId={null} onOpen={() => openSource(model.accession!)} />
+                            : null}
                 badge={<Badge variant={model.derived ? "secondary" : "outline"}>{model.derived ? "Computed" : "Filed"}</Badge>}
                 caption={model.caption}
-                sub={<Mono>{model.concept}</Mono>}
+                sub={(
+                    <>
+                        <Mono>{model.concept}</Mono>
+                        {model.dimensions?.length ? <div>{dimensionsText(model.dimensions)}</div> : null}
+                    </>
+                )}
                 value={model.value}
             />
 
@@ -115,18 +145,25 @@ export function AsReportedExplanationView({ cik, model, onOpenDocument, onOpenFi
             {model.derived
                 ? (
                         <ExplainSection aside={openable ? <span className="text-muted-foreground text-xs">Click an operand to see it in its filing</span> : null} title="Computed by Invinite">
-                            <p className="text-muted-foreground">The company did not file this period on its own (a Q4, TTM or YTD value): Invinite computed it from the filed values below.</p>
-                            {model.formulaTerms.length > 0
-                                ? (
-                                        <FormulaExpression
-                                            renderOperand={index => chip(model.members[index], index)}
-                                            result={<ResultChip value={model.value} />}
-                                            terms={model.formulaTerms}
-                                        />
-                                    )
-                                : model.members.length > 0
-                                    ? <div className="flex flex-wrap gap-1.5">{model.members.map(chip)}</div>
-                                    : <span className="text-muted-foreground">Formula not stated.</span>}
+                            <p className="text-muted-foreground">Invinite computed this value from other periods in the filings.</p>
+                            {formulaState?.isLoading
+                                ? <Skeleton aria-label="Loading formula" className="h-12 w-full" role="status" />
+                                : formulaState?.error
+                                    ? <SecReadinessNotice error={formulaState.error} operationId="getAsReportedFinancialsDetailed" tierTitle="Your plan does not include formula details" title="Failed to load the formula" />
+                                    : model.formulaTerms.length > 0
+                                        ? (
+                                                <>
+                                                    <FormulaExpression
+                                                        renderOperand={index => chip(model.members[index], index)}
+                                                        result={<ResultChip value={model.value} />}
+                                                        terms={model.formulaTerms}
+                                                    />
+                                                    {splitFactors.length > 0 && <div className="flex flex-wrap gap-1.5">{splitFactors}</div>}
+                                                </>
+                                            )
+                                        : model.members.length > 0
+                                            ? <div className="flex flex-wrap gap-1.5">{model.members.map(chip)}</div>
+                                            : <span className="text-muted-foreground">Formula not stated.</span>}
                         </ExplainSection>
                     )
                 : (
@@ -178,8 +215,8 @@ export function AsReportedExplanationView({ cik, model, onOpenDocument, onOpenFi
 
             {/* A computed value (Q4, TTM, YTD) was filed by no one: nothing to list. */}
             {!model.derived && vintages && (
-                <ExplainSection title="Filed values">
-                    <FiledValuesPanel key={`${vintages.concept}|${vintages.periodEnd}|${vintages.periodStart ?? ""}`} target={vintages} />
+                <ExplainSection title={filedValuesTitle(vintages.member)}>
+                    <FiledValuesPanel onShow={onShowVintages} request={vintageRequest} target={vintages} />
                 </ExplainSection>
             )}
         </div>
@@ -190,8 +227,38 @@ export function AsReportedExplanationView({ cik, model, onOpenDocument, onOpenFi
  * The dialog around `AsReportedExplanationView`: a filing opens framed (`FilingDocumentDialog`), a formula member's own
  * filing at its value (`ValueFilingDialog`: the loaded rows, else one as-reported detailed request).
  */
-export function AsReportedExplainDialog({ onClose, target }: { onClose: () => void; target: AsReportedExplainTarget | null }) {
-    const model = React.useMemo(() => (target ? asReportedExplanation(target.concept, target.fact) : null), [target]);
+export function AsReportedExplainDialog({ onClose, retainedPeriod = null, target }: { onClose: () => void; retainedPeriod?: AsReportedDetailedPeriodTarget | null; target: AsReportedExplainTarget | null }) {
+    // Keep the latest on-demand reads visible in the inspector after their dialog closes.
+    const details = useAsReportedDetailedPeriod(retainedPeriod);
+
+    const [vintageTarget, setVintageTarget] = React.useState<FinancialVintagesTarget | null>(null);
+
+    const vintageRequest = useFinancialVintages(vintageTarget);
+
+    const detailRow = target?.detailedPeriod ? details.data?.data[0] : undefined;
+
+    const detail = detailRow && target?.detailedPeriod ? detailRow.statements[V2_STATEMENT_KEYS[target.detailedPeriod.statement]] : undefined;
+
+    const exact = !detail || !target
+        ? undefined
+        : target.memberKey
+            ? detail.member_facts.find(member => member.key === target.memberKey)
+            : detail.facts[target.concept];
+
+    const matching = exact && "formula" in exact && target && typeof exact.value === "number"
+        && Object.is(exact.value, target.fact.value) && exact.derived === target.fact.derived
+        && sameDimensions("dimensions" in exact ? exact.dimensions : null, target.dimensions ?? null)
+        && (target.fact.accession ?? null) === exact.accession
+        ? { ...exact, value: exact.value }
+        : undefined;
+
+    const error = target?.detailedPeriod ? details.error ?? (detailRow && !matching ? new Error("No formula was found for the selected value.") : null) : null;
+
+    const model = target ? asReportedExplanation(target.concept, matching ?? target.fact) : null;
+
+    const scope = target?.scope;
+
+    const rows = detailRow && matching ? [detailRow, ...(target?.rows ?? [])] : target?.rows;
 
     const [document, setDocument] = React.useState<FilingDocumentTarget | null>(null);
 
@@ -212,11 +279,14 @@ export function AsReportedExplainDialog({ onClose, target }: { onClose: () => vo
                             {model && target && (
                                 <AsReportedExplanationView
                                     cik={target.cik}
+                                    formulaState={{ error, isLoading: Boolean(target.detailedPeriod) && details.isLoading }}
                                     model={model}
                                     onOpenDocument={(accession, elementId) => setDocument({ accession, elementId, title: target.period })}
                                     onOpenFiling={accession => setDocument({ accession, elementId: null, title: target.period })}
                                     onOpenPeriodFiling={(accession, refs) => setPeriod({ accession, refs, title: target.period })}
                                     onOpenValue={(ref, title) => setValue({ ref, title: `${model.caption} · ${title}` })}
+                                    onShowVintages={() => setVintageTarget(target.vintages ?? null)}
+                                    vintageRequest={JSON.stringify(vintageTarget) === JSON.stringify(target.vintages) ? vintageRequest : null}
                                     vintages={target.vintages}
                                 />
                             )}
@@ -225,8 +295,8 @@ export function AsReportedExplainDialog({ onClose, target }: { onClose: () => vo
                 </DialogContent>
             </Dialog>
             <FilingDocumentDialog onClose={() => setDocument(null)} target={document} />
-            <ValueFilingDialog cik={target?.cik ?? null} onClose={() => setValue(null)} rows={target?.rows} target={value} />
-            <PeriodFilingDialog cik={target?.cik ?? null} onClose={() => setPeriod(null)} rows={target?.rows} target={period} />
+            <ValueFilingDialog cik={target?.cik ?? null} onClose={() => setValue(null)} rows={rows} scope={scope} target={value} />
+            <PeriodFilingDialog cik={target?.cik ?? null} onClose={() => setPeriod(null)} rows={rows} scope={scope} target={period} />
         </>
     );
 }

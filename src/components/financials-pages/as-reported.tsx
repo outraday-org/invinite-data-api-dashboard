@@ -63,19 +63,23 @@ export function AsReportedFinancials({ tabs, ticker }: FinancialsTabProps) {
 
     const displaySign: V2DisplaySign = search.sign ?? "as_filed";
 
-    // `/v1/financials/as-reported[/detailed|/presentation]`; `reported_only` / `display_sign` sent only when changed
-    // from the API defaults (false / as_filed), so the default view keeps one cache key.
-    const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2FinancialsInfinite({
+    const scope = {
         asOf: search.asOf,
-        basis: "as-reported",
         company: ticker,
         displaySign: displaySign === "as_filed" ? undefined : displaySign,
         filing: search.filing,
+        period: periodType,
+        reportedOnly: reportedOnly || undefined,
+    };
+
+    // `/v1/financials/as-reported[/detailed|/presentation]`; `reported_only` / `display_sign` sent only when changed
+    // from the API defaults (false / as_filed), so the default view keeps one cache key.
+    const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2FinancialsInfinite({
+        ...scope,
+        basis: "as-reported",
         fiscalYearGte: search.fyFrom,
         fiscalYearLte: search.fyTo,
         limit: STATEMENT_PAGE,
-        period: periodType,
-        reportedOnly: reportedOnly || undefined,
         statement: [statement],
         view,
     });
@@ -133,6 +137,7 @@ export function AsReportedFinancials({ tabs, ticker }: FinancialsTabProps) {
                 isLoading={isLoading}
                 onLoadMore={() => fetchNextPage()}
                 pages={pages}
+                reportedScope={{ ...scope, statement }}
                 statement={statement}
                 view={view}
             />

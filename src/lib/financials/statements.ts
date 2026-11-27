@@ -5,12 +5,12 @@
 import type {
     StatementType,
     V2AsReportedDetailedFact,
+    V2AsReportedDetailedMemberFact,
     V2AsReportedFacts,
-    V2AsReportedPresentationNode,
+    V2AsReportedMemberFact,
     V2FilingSource,
     V2Segment,
     V2StandardizedDetailedFact,
-    V2StandardizedPresentationNode,
     V2StatementPeriod,
 } from "@/lib/api/types";
 
@@ -72,13 +72,15 @@ export type StatementCell = {
     /** The value's inline-XBRL element in its filing (the detailed views; null = a computed value or none stated). */
     htmlTagId?: null | string;
     /** The as-reported detailed fact (its own formula, filing and element): "Explain this number" reads it, no request. */
-    reported?: V2AsReportedDetailedFact;
+    reported?: NumericDetailedFact;
     unit?: null | string;
     value: number;
 };
 
 /** One line of a flat statement table (summary / detailed views). */
 export type StatementLine = {
+    concept?: string;
+    dimensions?: V2AsReportedMemberFact["dimensions"];
     id: string;
     label: string;
     /** The concept / metric id when the label is a caption. */
@@ -97,16 +99,17 @@ export type StatementColumn = {
     title: string;
 };
 
-type FlatFact = number | V2AsReportedDetailedFact | V2AsReportedFacts[string] | V2StandardizedDetailedFact;
+type NumericDetailedFact = V2AsReportedDetailedFact | (V2AsReportedDetailedMemberFact & { value: number });
+type FlatFact = number | NumericDetailedFact | V2AsReportedFacts[string] | V2StandardizedDetailedFact;
 
-const isDetailedAsReported = (fact: FlatFact): fact is V2AsReportedDetailedFact => typeof fact === "object" && "company_label" in fact;
+const isDetailedAsReported = (fact: FlatFact): fact is NumericDetailedFact => typeof fact === "object" && "company_label" in fact;
 
 const isDetailedStandardized = (fact: FlatFact): fact is V2StandardizedDetailedFact => typeof fact === "object" && "fact_id" in fact;
 
 /** A fact of a summary / detailed statement: a number, or an object with a numeric `value` (anything else is skipped). */
 const isFlatFact = (fact: unknown): fact is FlatFact =>
     typeof fact === "number"
-    || (typeof fact === "object" && fact !== null && typeof (fact as { value?: unknown }).value === "number");
+    || (typeof fact === "object" && fact !== null && "value" in fact && typeof fact.value === "number");
 
 function toCell(fact: FlatFact): StatementCell {
     if (typeof fact === "number") return { value: fact };
@@ -132,10 +135,18 @@ function lineLabel(id: string, fact: FlatFact, standardized: boolean) {
 }
 
 /** The facts of one statement of a period row, as the operation answered them. */
-export function statementFacts(row: V2StatementPeriod, statement: StatementType): unknown {
-    const statements: Partial<Record<string, { facts: unknown }>> = row.statements;
+function statementBlock(row: V2StatementPeriod, statement: StatementType) {
+    return row.statements[V2_STATEMENT_KEYS[statement]];
+}
 
-    return statements[V2_STATEMENT_KEYS[statement]]?.facts;
+function statementFacts(row: V2StatementPeriod, statement: StatementType) {
+    return statementBlock(row, statement)?.facts;
+}
+
+function statementMembers(row: V2StatementPeriod, statement: StatementType) {
+    const block = statementBlock(row, statement);
+
+    return block && "member_facts" in block ? block.member_facts : [];
 }
 
 /**
@@ -167,10 +178,38 @@ export function statementLines(
 ): Array<StatementLine> {
     const lines = new Map<string, StatementLine>();
 
+    const groups = new Map<string, Map<string, StatementLine>>();
+
     rows.forEach((row, index) => {
         const facts = statementFacts(row, statement);
 
-        if (!facts || typeof facts !== "object" || Array.isArray(facts)) return;
+        if (!standardized) {
+            for (const member of statementMembers(row, statement)) {
+                let group = groups.get(member.concept);
+
+                if (!group) {
+                    group = new Map();
+
+                    groups.set(member.concept, group);
+                }
+
+                let line = group.get(member.key);
+
+                if (!line) {
+                    line = { concept: member.concept, dimensions: member.dimensions, id: member.key, label: member.company_label ?? dimensionsText(member.dimensions), title: [member.company_label, dimensionsText(member.dimensions)].filter(Boolean).join(" · "), values: rows.map(() => undefined) };
+
+                    group.set(member.key, line);
+                }
+
+                if (typeof member.value === "number") {
+                    const cell = { derived: member.derived, value: member.value };
+
+                    line.values[index] = "formula" in member ? toCell({ ...member, value: member.value }) : cell;
+                }
+            }
+        }
+
+        if (!facts || Array.isArray(facts)) return;
 
         for (const [id, fact] of Object.entries(facts)) {
             if (!isFlatFact(fact)) continue;
@@ -189,18 +228,22 @@ export function statementLines(
         }
     });
 
-    return [...lines.values()];
+    return [
+        ...[...lines.values()].flatMap(line => [...(groups.get(line.id)?.values() ?? []), line]),
+        ...[...groups.entries()].flatMap(([concept, group]) => lines.has(concept) ? [] : [...group.values()]),
+    ];
 }
 
 /** The presentation trees of a statement page, one column per period (empty tree = the statement is absent). */
-export function presentationPeriods(rows: ReadonlyArray<V2StatementPeriod>, statement: StatementType) {
+export function presentationPeriods(rows: ReadonlyArray<V2StatementPeriod>, statement: StatementType, asReported = false) {
     return rows.map((row) => {
         const facts = statementFacts(row, statement);
 
         return {
-            facts: (Array.isArray(facts) ? facts : []) as Array<V2AsReportedPresentationNode> | Array<V2StandardizedPresentationNode>,
+            facts: Array.isArray(facts) ? facts : [],
             label: periodLabel(row),
             preliminary: row.source.is_preliminary,
+            reportedPeriod: asReported ? row : undefined,
             title: filingSourceText(row.source),
         };
     });
@@ -211,7 +254,7 @@ export function hasStatement(rows: ReadonlyArray<V2StatementPeriod>, statement: 
     return rows.some((row) => {
         const facts = statementFacts(row, statement);
 
-        return Array.isArray(facts) ? facts.length > 0 : Boolean(facts) && Object.keys(facts as object).length > 0;
+        return (Array.isArray(facts) ? facts.length > 0 : Object.keys(facts ?? {}).length > 0) || statementMembers(row, statement).length > 0;
     });
 }
 
@@ -235,7 +278,7 @@ export function xbrlNameText(name: string) {
 }
 
 /** The segment's dimensions in words: the members, joined ("Americas · IPhone"); none = "". */
-export function dimensionsText(dimensions: V2Segment["dimensions"]) {
+export function dimensionsText(dimensions: ReadonlyArray<V2Segment["dimensions"][number]>) {
     return dimensions.map(d => xbrlNameText(d.member)).filter(Boolean).join(" · ");
 }
 
@@ -266,4 +309,14 @@ export function segmentLines(segments: ReadonlyArray<V2Segment>): Array<SegmentL
 
     return [...lines.values()].sort((a, b) =>
         a.metricId.localeCompare(b.metricId) || a.segmentId.localeCompare(b.segmentId) || a.details.localeCompare(b.details));
+}
+
+/** Export the visible table with the full row identity and the unformatted values. */
+export function statementExportRows(lines: ReadonlyArray<StatementLine>, columns: ReadonlyArray<StatementColumn>) {
+    return lines.map(line => ({
+        dimensions: line.dimensions?.map(({ axis, member }) => `${axis}=${member}`).join("; ") ?? "",
+        key: line.id,
+        label: line.label,
+        ...Object.fromEntries(columns.map((column, index) => [column.label, line.values[index]?.value ?? null])),
+    }));
 }

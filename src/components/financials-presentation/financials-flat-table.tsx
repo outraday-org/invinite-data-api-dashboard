@@ -1,13 +1,16 @@
 import * as React from "react";
 
+import type { AsReportedPageScope } from "@/lib/api/queries";
 import type { V2StatementPeriod } from "@/lib/api/types";
 import type { StatementColumn, StatementLine } from "@/lib/financials/statements";
 
+import { ExportMenu } from "@/components/api/export-menu";
 import { PeriodTableFrame } from "@/components/financial-metrics/metrics-list-body";
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
 import { useChartSelection } from "@/components/metric-chart/use-chart-selection";
 import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { statementExportRows } from "@/lib/financials/statements";
 import { PERIOD_CELL, STATEMENT_LABEL_CELL, STICKY_FIRST_CELL } from "@/lib/layout";
 import { cn, formatNumberEnCompact, formatPercentCompact } from "@/lib/utils";
 
@@ -17,7 +20,7 @@ import type { FiledValuesDialogTarget } from "./filed-values";
 
 import { AsReportedExplainDialog } from "./as-reported-explain-dialog";
 import { FactExplainDialog } from "./fact-explain-dialog";
-import { FiledValuesDialog } from "./filed-values";
+import { FiledValuesDialog, filedValuesTarget } from "./filed-values";
 import { PeriodHeadLabel } from "./period-head";
 
 const formatterOf = (id: string) => (id === "is_effective_tax_rate" ? formatPercentCompact : formatNumberEnCompact);
@@ -43,11 +46,12 @@ function cellTitle(cell: NonNullable<StatementLine["values"][number]>) {
  * whose lines are filed concepts): a filed value is a button that opens its "Filed values" (`/v1/financials/vintages`
  * for the concept and the column's period); a period whose values are preliminary carries its badge.
  */
-export function FinancialsFlatTable({ cik = null, columns, filedValues = false, lines, rows }: {
+export function FinancialsFlatTable({ cik = null, columns, filedValues = false, lines, reportedScope, rows }: {
     cik?: null | string;
     columns: Array<StatementColumn>;
     filedValues?: boolean;
     lines: Array<StatementLine>;
+    reportedScope?: AsReportedPageScope;
     rows?: ReadonlyArray<V2StatementPeriod>;
 }) {
     const [selected, setSelected] = useChartSelection(lines, line => line.id);
@@ -56,16 +60,16 @@ export function FinancialsFlatTable({ cik = null, columns, filedValues = false, 
 
     const [explainingReported, setExplainingReported] = React.useState<AsReportedExplainTarget | null>(null);
 
-    const [filed, setFiled] = React.useState<FiledValuesDialogTarget | null>(null);
+    const [filed, setFiled] = React.useState<null | { open: boolean; target: FiledValuesDialogTarget }>(null);
 
-    // The "Filed values" request of a concept in a column: a company (CIK) and the period's end are needed.
-    const vintagesOf = (concept: string, column: StatementColumn) => (cik && column.periodEnd
-        ? { company: cik, concept, periodEnd: column.periodEnd, periodStart: column.periodStart ?? null }
-        : null);
+    const exportRows = React.useMemo(() => filedValues ? statementExportRows(lines, columns) : [], [columns, filedValues, lines]);
 
     return (
         <>
-            <PeriodTableFrame>
+            <PeriodTableFrame actions={filedValues && (
+                <ExportMenu config={{ dataset: reportedScope?.statement ?? "as-reported", scope: reportedScope?.company ?? cik ?? "financials" }} failed={false} hasNextPage={false} isFetchingNextPage={false} rows={exportRows} />
+            )}
+            >
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -83,15 +87,17 @@ export function FinancialsFlatTable({ cik = null, columns, filedValues = false, 
                                 <TableCell className={cn(STICKY_FIRST_CELL, STATEMENT_LABEL_CELL)}>
                                     <div className="flex min-w-0 items-center gap-1">
                                         <div className="min-w-0 flex-1 truncate" title={line.title ?? line.label}>{line.label}</div>
-                                        <MetricCatalogLink label={line.label} metricId={line.id} />
+                                        {!filedValues && <MetricCatalogLink label={line.label} metricId={line.id} />}
                                         <ChartRowButton label={line.label} onOpen={() => setSelected(line)} />
                                     </div>
                                 </TableCell>
                                 {columns.map((column, index) => {
                                     const cell = line.values[index];
 
+                                    const concept = line.concept ?? line.id;
+
                                     // A filed (not derived) as-reported summary value opens its filed values.
-                                    const vintages = filedValues && cell && !cell.derived && !cell.factId && !cell.reported ? vintagesOf(line.id, column) : null;
+                                    const vintages = filedValues && cell && !cell.derived && !cell.factId && !cell.reported ? filedValuesTarget(cik, concept, column.periodEnd, column.periodStart ?? null, line.dimensions) : null;
 
                                     return (
                                         <TableCell className={PERIOD_CELL} key={`${line.id}:${column.label}`}>
@@ -106,7 +112,7 @@ export function FinancialsFlatTable({ cik = null, columns, filedValues = false, 
                                                                 const period = `${line.label} · ${column.label}`;
 
                                                                 if (cell.factId) setExplaining({ accession: cell.accession ?? null, factId: cell.factId, formula: cell.formula, htmlTagId: cell.htmlTagId ?? null, period });
-                                                                else if (cell.reported) setExplainingReported({ cik, concept: line.id, fact: cell.reported, period, rows, vintages: vintagesOf(line.id, column) });
+                                                                else if (cell.reported) setExplainingReported({ cik, concept, dimensions: line.dimensions, fact: cell.reported, memberKey: line.dimensions ? line.id : undefined, period, rows, scope: reportedScope, vintages: filedValuesTarget(cik, concept, column.periodEnd, column.periodStart ?? null, line.dimensions) });
                                                             }}
                                                             title={[cellTitle(cell), "Click: explain this number"].filter(Boolean).join("\n")}
                                                             type="button"
@@ -122,7 +128,7 @@ export function FinancialsFlatTable({ cik = null, columns, filedValues = false, 
                                                                 onClick={(event) => {
                                                                     event.stopPropagation();
 
-                                                                    setFiled({ ...vintages, title: `${line.label} · ${column.label}` });
+                                                                    setFiled({ open: true, target: { ...vintages, title: `${line.label} · ${column.label}` } });
                                                                 }}
                                                                 title={[cellTitle(cell), "Click: every filing that stated this value"].filter(Boolean).join("\n")}
                                                                 type="button"
@@ -155,8 +161,8 @@ export function FinancialsFlatTable({ cik = null, columns, filedValues = false, 
                 open={Boolean(selected)}
             />
             <FactExplainDialog onClose={() => setExplaining(null)} target={explaining} />
-            <AsReportedExplainDialog onClose={() => setExplainingReported(null)} target={explainingReported} />
-            <FiledValuesDialog onClose={() => setFiled(null)} target={filed} />
+            {filedValues && <AsReportedExplainDialog onClose={() => setExplainingReported(null)} target={explainingReported} />}
+            <FiledValuesDialog onClose={() => setFiled(current => current && { ...current, open: false })} open={filed?.open ?? false} target={filed?.target ?? null} />
         </>
     );
 }
