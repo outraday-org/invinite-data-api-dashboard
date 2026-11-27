@@ -413,11 +413,11 @@ export function toUpdateBody(state: AlertFormState, version: number, templates: 
         body: {
             client_reference_id: state.clientReferenceId.trim() || null,
             condition,
-            type: state.type,
             destination_ids: destinationIds,
             external_user_id: state.externalUserId.trim() || null,
             metadata,
             trigger,
+            type: state.type,
             version,
         },
         errors,
