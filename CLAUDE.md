@@ -63,7 +63,7 @@ This is a TanStack Start (React SSR) dashboard for the Invinite financial data A
   `useLiveDefault` of `src/lib/live/live-default.ts`, also the macro pages' gate). The URL writes only a departure from
   that default (`liveParam`: `?live=false` / `?live=true`); a stop writes off (never a reconnect loop); oldest-first
   pauses news Live without rewriting it. Market-wide REST prefill: invinite-data-api `tasks/market-wide-filings-list/`
-  task 7 and backend `tasks/market-wide-news-and-search/` task 9 (one keyset pager for both).
+  task 7 and backend `tasks/old/X-market-wide-news-and-search/X-9-dashboard-data-layer-and-search.md` (one keyset pager for both).
 - **No stored key** (2026-11-26): the REST lists fall back to the server's `INVINITE_DATA_API_KEY`, the sockets never (it
   never reaches the browser). A feed switched on without a key in this browser opens nothing and reports `no_key`
   (`feedMode` in `stream-socket.ts`; filings, news, macro, alerts): the pill says "API key needed", `/filings` says
