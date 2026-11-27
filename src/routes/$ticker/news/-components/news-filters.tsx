@@ -78,6 +78,7 @@ export function NewsFilters({
     search,
     tags,
     windowFilters = true,
+    windowProblem,
 }: {
     /** The filters set (default: `newsFilterCount`). */
     activeCount?: number;
@@ -94,6 +95,7 @@ export function NewsFilters({
     tags: ReadonlyArray<string>;
     /** The day window and the order (off for the live-only market scope: nothing is listed). */
     windowFilters?: boolean;
+    windowProblem?: null | string;
 }) {
     return (
         <FilterBar activeCount={activeCount ?? newsFilterCount(search)} onReset={onReset ?? (() => onChange(NEWS_FILTER_RESET))}>
@@ -209,7 +211,10 @@ export function NewsFilters({
             </FilterField>
             {windowFilters && (
                 <FilterField label="Published" span={2}>
-                    <DayRange from={search.from} labels={{ from: "From", to: "To" }} onChange={onChange} to={search.to} />
+                    <div>
+                        <DayRange from={search.from} labels={{ from: "From", to: "To" }} onChange={onChange} to={search.to} />
+                        {windowProblem && <p className="text-muted-foreground text-xs" role="status">{windowProblem}</p>}
+                    </div>
                 </FilterField>
             )}
             {windowFilters && (

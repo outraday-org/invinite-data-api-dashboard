@@ -107,6 +107,28 @@ describe("useLiveNews", () => {
         expect(result.current.items.map(item => item.id)).toEqual(["n2", "n1"]);
     });
 
+    it("clears items and arrival timestamps when switching credential or origin", () => {
+        const { rerender, result } = renderHook(props => useLiveNews(props), { initialProps: input() });
+
+        act(() => FakeSocket.last.frame({ item: newsroomItem({ id: "old" }), type: "news_item" }));
+
+        expect(result.current.items).toHaveLength(1);
+
+        rerender(input({ apiKey: "new", apiKeyUpdatedAt: 2 }));
+
+        expect(result.current.items).toEqual([]);
+
+        expect(result.current.arrivals.size).toBe(0);
+
+        act(() => FakeSocket.last.frame({ item: newsroomItem({ id: "new" }), type: "news_item" }));
+
+        rerender(input({ apiKey: "new", apiKeyUpdatedAt: 2, baseUrl: "https://different.example.com" }));
+
+        expect(result.current.items).toEqual([]);
+
+        expect(result.current.arrivals.size).toBe(0);
+    });
+
     it("a dropped socket reconnects after 1 s and the next subscribed calls onResubscribed", () => {
         const onResubscribed = vi.fn();
 

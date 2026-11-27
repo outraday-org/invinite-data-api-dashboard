@@ -19,6 +19,7 @@ import { isTierError } from "@/lib/api/errors";
 import { useV2AnnouncementsInfinite } from "@/lib/api/queries";
 import { DASH, formatDay, formatDayTimeShort } from "@/lib/format";
 import { ANNOUNCEMENT_TOPICS, CLAIM_STATUS_LABELS, DATE_PRECISION_LABELS, NEWS_ORDER_LABELS, NEWS_TOPIC_LABELS } from "@/lib/news/labels";
+import { IN_PLACE } from "@/lib/url-state";
 
 const PAGE_SIZE = 50;
 
@@ -84,7 +85,7 @@ const COLUMNS: Array<ColumnDef<NewsDevelopment>> = [
     {
         cell: ({ row }) => (
             // The news item it was read from opens in the item panel (`?item=`), as a headline of the news list does.
-            <Link className="line-clamp-2 max-w-[240px] whitespace-normal hover:underline" resetScroll={false} search={prev => ({ ...prev, item: row.original.item_id })} to=".">
+            <Link className="line-clamp-2 max-w-[240px] whitespace-normal hover:underline" {...IN_PLACE} search={prev => ({ ...prev, item: row.original.item_id })} to=".">
                 {row.original.item.title}
             </Link>
         ),

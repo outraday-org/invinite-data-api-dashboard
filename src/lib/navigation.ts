@@ -98,7 +98,7 @@ const OWNERSHIP_FILINGS_NAV: NavPage = { description: "Schedule 13D / 13G filing
 
 const PEOPLE_NAV: NavPage = { description: "Executives and analysts who speak on calls, with every call of each.", icon: ContactIcon, keywords: ["people", "persons", "executives", "analysts", "speakers", "participants"], label: "People", to: "/people" };
 
-const NEWS_FEED_NAV: NavPage = { description: "Your watchlist's news in one list, and every company's new items live.", icon: RssIcon, keywords: ["news", "feed", "watchlist", "live", "press releases"], label: "News feed", to: "/news-feed" };
+const NEWS_FEED_NAV: NavPage = { description: "The latest news from every company or the companies you pick, with live updates.", icon: RssIcon, keywords: ["news", "feed", "watchlist", "live", "press releases"], label: "News feed", to: "/news-feed" };
 
 const FILINGS_NAV: NavPage = { description: "New SEC filings as they arrive, and full-text search across every filer.", icon: ScrollTextIcon, keywords: ["filings", "sec", "edgar", "8-k", "10-k", "live", "search"], label: "Filings", to: "/filings" };
 

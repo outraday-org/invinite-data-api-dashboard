@@ -7,6 +7,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDayTimeShort } from "@/lib/format";
 import { NEWS_KIND_LABELS, publishedBy, sourceLabel } from "@/lib/news/labels";
+import { IN_PLACE } from "@/lib/url-state";
 
 const SKELETON_ROWS = 8;
 
@@ -19,10 +20,12 @@ const COLUMNS = 3;
  * the publisher's, shown with its publisher and source.
  */
 export function NewsTable({
+    flashing,
     isLoading,
     items,
     liveIds,
 }: {
+    flashing?: ReadonlySet<string>;
     isLoading: boolean;
     items: ReadonlyArray<NewsItemPublic>;
     /** Items that arrived over the live feed (marked "New"). */
@@ -52,13 +55,13 @@ export function NewsTable({
                             const publishers = publishedBy(item);
 
                             return (
-                                <TableRow data-testid="news-row" key={item.id}>
+                                <TableRow className={flashing?.has(item.id) ? "row-arrive" : undefined} data-testid="news-row" key={item.id}>
                                     <TableCell className="max-w-[640px] min-w-[240px] py-2 align-top whitespace-normal">
                                         <div className="flex items-baseline gap-2">
                                             {liveIds?.has(item.id) && <Badge variant="default">New</Badge>}
                                             {/* A link (`?item=`): opens the item panel, and in a new tab with the panel open. The page keeps its
                                                 scroll position behind the panel (the document scrolls, so a reset would jump to the top). */}
-                                            <Link className="text-left font-medium hover:underline" resetScroll={false} search={prev => ({ ...prev, item: item.id })} to=".">
+                                            <Link className="text-left font-medium hover:underline" {...IN_PLACE} search={prev => ({ ...prev, item: item.id })} to=".">
                                                 {item.title}
                                             </Link>
                                         </div>

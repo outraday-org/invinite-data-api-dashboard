@@ -88,7 +88,7 @@ export function zonedDate(at: Date, tz: string) {
 }
 
 /** `YYYY-MM-DD` plus `days` (calendar arithmetic, no timezone). */
-function addDays(date: string, days: number) {
+export function addDays(date: string, days: number) {
     const at = new Date(`${date}T00:00:00Z`);
 
     at.setUTCDate(at.getUTCDate() + days);

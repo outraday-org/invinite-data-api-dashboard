@@ -491,6 +491,7 @@ export function parseNewsFrame(data: unknown): ParsedNewsFrame {
 }
 
 export type NewsSubscribeOptions = {
+    ciks?: ReadonlyArray<string>;
     earningsOnly?: boolean;
     kinds?: ReadonlyArray<string>;
     sources?: ReadonlyArray<string>;
@@ -499,11 +500,12 @@ export type NewsSubscribeOptions = {
 };
 
 /** The `news` subscribe frame; an empty filter is left out (no filter = every item). */
-export function newsSubscribeFrame({ earningsOnly, kinds, sources, tickers }: NewsSubscribeOptions = {}) {
+export function newsSubscribeFrame({ ciks, earningsOnly, kinds, sources, tickers }: NewsSubscribeOptions = {}) {
     return {
         channel: NEWS_LIVE_CHANNEL,
         type: "subscribe",
         ...(tickers?.length ? { tickers: [...tickers] } : {}),
+        ...(ciks?.length ? { ciks: [...ciks] } : {}),
         ...(earningsOnly ? { earnings_only: true } : {}),
         ...(kinds?.length ? { kinds: [...kinds] } : {}),
         ...(sources?.length ? { sources: [...sources] } : {}),

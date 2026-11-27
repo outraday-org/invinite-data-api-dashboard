@@ -336,6 +336,10 @@ describe("news frames (mirrors IDA types/newsMessages.ts)", () => {
     });
 
     it("builds the subscribe frame without empty filters (no filter = the whole market)", () => {
+        expect(newsSubscribeFrame({ ciks: ["320193"] })).toEqual({ channel: NEWS_LIVE_CHANNEL, ciks: ["320193"], type: "subscribe" });
+
+        expect(newsSubscribeFrame({ ciks: ["320193"], tickers: ["MSFT"] })).toEqual({ channel: NEWS_LIVE_CHANNEL, ciks: ["320193"], tickers: ["MSFT"], type: "subscribe" });
+
         expect(newsSubscribeFrame()).toStrictEqual({ channel: NEWS_LIVE_CHANNEL, type: "subscribe" });
 
         expect(newsSubscribeFrame({ earningsOnly: true, kinds: ["guidance"], sources: [], tickers: ["NVDA"] })).toStrictEqual({
