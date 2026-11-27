@@ -82,7 +82,7 @@ describe("LivePriceChart", () => {
     it("falls back to wall time before the call clock is known", () => {
         render(<LivePriceChart buckets={[]} callT0={null} cursorMs={5_000} prices={pricesOf(tick(30, { callMs: null }))} />);
 
-        expect(screen.getByText("New York time (the call clock is not known yet)")).toBeInTheDocument();
+        expect(screen.getByText("Your time zone (the call clock is not known yet)")).toBeInTheDocument();
 
         expect(screen.queryByText(/Audio at/)).not.toBeInTheDocument();
     });

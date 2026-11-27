@@ -35,12 +35,12 @@ export const Route = createFileRoute("/market-holidays")({
     validateSearch: holidaysSearchSchema,
 });
 
-/** The US exchanges' clock: a partial day's open / close reads in New York time ("1:00 PM EST"), not the viewer's zone. */
+/** The US exchanges' clock: which day is "today" for the Upcoming / Past split. Times are shown in the viewer's zone. */
 const EXCHANGE_TIME_ZONE = "America/New_York";
 
 /** A partial day's open / close; a day closed all day has neither ("Closed"). */
 const sessionTime = (holiday: V2MarketHoliday, value: null | string) => {
-    if (value) return formatInstant(value, EXCHANGE_TIME_ZONE);
+    if (value) return formatInstant(value);
 
     return holiday.start_time || holiday.end_time ? DASH : "Closed";
 };
@@ -139,7 +139,7 @@ function MarketHolidaysPage() {
     return (
         <PageContainer>
             <PageHeader
-                description="US market holidays. The answer names no exchange: one calendar for the US exchanges. A partial day shows its open and close in New York time; any other day is closed all day."
+                description="US market holidays. The answer names no exchange: one calendar for the US exchanges. A partial day shows its open and close in your time zone; any other day is closed all day."
                 title="Market holidays"
             />
             <Tabs

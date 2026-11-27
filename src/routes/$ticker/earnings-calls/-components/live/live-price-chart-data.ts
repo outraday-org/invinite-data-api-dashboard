@@ -182,10 +182,9 @@ const wallTimeFormat = new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
     second: "2-digit",
-    timeZone: "America/New_York",
 });
 
-/** Wall time in New York ("4:31:05 PM"). */
+/** Wall time in the viewer's time zone ("4:31:05 PM"). */
 export function formatWallTime(ms: number) {
     return wallTimeFormat.format(new Date(ms));
 }

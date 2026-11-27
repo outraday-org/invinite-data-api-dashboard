@@ -56,6 +56,35 @@ describe("useNewsPage (O7 group 2)", () => {
     });
 });
 
+it.each([
+    { calls: 1, cursor: "page-two", event: "onFocus" },
+    { calls: 1, cursor: "page-two", event: "onOnline" },
+    { calls: 2, cursor: null, event: "onOnline" },
+] as const)("uses $calls requests for a stale market page with cursor $cursor after $event", async ({ calls, cursor, event }) => {
+    vi.useFakeTimers({ toFake: ["Date"] });
+
+    try {
+        vi.setSystemTime(new Date("2026-11-27T16:00:00Z"));
+
+        const client = new QueryClient();
+
+        const provider = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+
+        const { result } = renderHook(() => useNewsPage({ cursor, limit: 50, market: true }), { wrapper: provider });
+
+        await waitFor(() => expect(result.current.isSuccess).toBe(true));
+
+        vi.setSystemTime(Date.now() + 61_000);
+
+        act(() => client.getQueryCache()[event]());
+
+        expect(getV2News).toHaveBeenCalledTimes(calls);
+    }
+    finally {
+        vi.useRealTimers();
+    }
+});
+
 it("requests market news without a company and converts historic New York days", async () => {
     const { result } = renderHook(() => useNewsPage({ cursor: null, from: "2026-11-01", limit: 50, market: true, to: "2026-11-03" }), { wrapper });
 

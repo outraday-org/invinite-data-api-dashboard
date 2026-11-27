@@ -1,6 +1,5 @@
 import type { ReactNode } from "react";
 
-import { X } from "lucide-react";
 import { useState } from "react";
 
 import type { V2NewsSearchField, V2NewsSearchHit } from "@/lib/api/types";
@@ -68,25 +67,11 @@ function NewsQueryForm({ busy, clear, company, placeholder, query, submit}: { qu
                 busy={busy}
                 canSubmit={!blocked}
                 label="Search the news"
+                onClear={clear}
                 onSubmit={submit}
                 onValueChange={setDraft}
                 placeholder={placeholder}
                 size="lg"
-                trailing={(draft || query.q) && (
-                    <Button
-                        aria-label="Clear the search"
-                        onClick={() => {
-                            setDraft("");
-
-                            clear();
-                        }}
-                        size="icon"
-                        type="button"
-                        variant="ghost"
-                    >
-                        <X />
-                    </Button>
-                )}
                 value={draft}
             />
             {blocked && <p className="text-muted-foreground text-sm" role="status">Exact search needs at least 3 characters or a company.</p>}

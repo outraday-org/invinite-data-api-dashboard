@@ -11,8 +11,8 @@ import type { RecentSubject } from "@/lib/stores/ticker-store";
 import { TabStrip } from "@/components/navigation/tab-strip";
 import { filerCikParam } from "@/components/sec/security-link";
 import { Badge } from "@/components/ui/badge";
+import { ClearableInput } from "@/components/ui/clearable-input";
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { useInstrumentSearch, useKeyReady, useV2Filers, useV2PeopleSearch } from "@/lib/api/queries";
 import { INSTRUMENT_TYPE_PLURALS, instrumentBadges, servedDatasets, servesSection } from "@/lib/instruments";
 import { filesThirteenF, searchPages } from "@/lib/navigation";
@@ -404,7 +404,7 @@ export function TickerSearch() {
                 className="top-2 flex max-h-[min(36rem,calc(100svh-2rem))] w-[calc(100vw-2rem)] max-w-none translate-y-0 flex-col gap-2 overflow-hidden rounded-xl p-3 sm:max-w-[640px]"
                 showCloseButton={false}
             >
-                <Input
+                <ClearableInput
                     aria-activedescendant={options.length > 0 ? optionId(activeIndex) : undefined}
                     aria-autocomplete="list"
                     aria-controls={listboxId}
@@ -414,6 +414,11 @@ export function TickerSearch() {
                     className="h-9 rounded-lg"
                     onChange={(event) => {
                         setInput(event.target.value);
+
+                        setActive(0);
+                    }}
+                    onClear={() => {
+                        setInput("");
 
                         setActive(0);
                     }}

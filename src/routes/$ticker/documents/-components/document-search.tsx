@@ -140,6 +140,7 @@ export function DocumentSearch({ identifier }: { identifier: string }) {
             <SearchQueryForm
                 busy={isFetching}
                 label="Search this company's documents"
+                onClear={() => setQuery("")}
                 onSubmit={setQuery}
                 onValueChange={setDraft}
                 placeholder="Search this company's documents — e.g. capital allocation"

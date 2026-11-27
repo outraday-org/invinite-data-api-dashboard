@@ -59,10 +59,9 @@ const MARKET_SESSION_LABELS: Record<MarketSession, string> = {
 const minuteFormat = new Intl.DateTimeFormat("en-US", {
     hour: "numeric",
     minute: "2-digit",
-    timeZone: "America/New_York",
 });
 
-/** A bucket's minute in New York time ("4:31 PM"). */
+/** A bucket's minute in the viewer's time zone ("4:31 PM"). */
 function formatMinute(iso: string) {
     return minuteFormat.format(new Date(iso));
 }
@@ -164,7 +163,7 @@ function CumulativeChart({ data }: { data: V2PriceAttributionResponse }) {
     }));
 
     return (
-        <ChartFrame description="Cumulative return since the call started, New York time" title="Cumulative return (bps)">
+        <ChartFrame description="Cumulative return since the call started, your time zone" title="Cumulative return (bps)">
             <LineChart data={rows} margin={CHART_MARGIN}>
                 <CartesianGrid stroke={GRID_STROKE} vertical={false} />
                 <XAxis axisLine={{ stroke: GRID_STROKE }} dataKey="minute" minTickGap={24} tick={AXIS_TICK} tickLine={false} />

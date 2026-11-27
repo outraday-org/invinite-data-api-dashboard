@@ -2,6 +2,7 @@ import * as React from "react";
 
 import type { DocumentsSearch } from "@/lib/earnings/documents";
 
+import { ClearableInput } from "@/components/ui/clearable-input";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { Input } from "@/components/ui/input";
@@ -41,11 +42,12 @@ function TextFilter({ id, onChange, value }: { id: string; onChange: (q: string 
     }, [text, value]);
 
     return (
-        <Input
+        <ClearableInput
             aria-label="Filter documents"
-            className="w-full"
+            clearLabel="Clear the filter"
             id={id}
             onChange={event => setText(event.target.value)}
+            onClear={() => setText("")}
             placeholder="Filter: title, kind, folder, year…"
             type="search"
             value={text}

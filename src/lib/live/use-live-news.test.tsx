@@ -4,6 +4,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { newsroomItem } from "@/lib/news/news-fixtures";
 
+import { LINGER_MS, resetStreamConnections } from "./stream-socket";
 import { useLiveNews } from "./use-live-news";
 import { NEWS_LIVE_CHANNEL } from "./ws-frames";
 
@@ -66,6 +67,8 @@ beforeEach(() => {
 
 afterEach(() => {
     vi.useRealTimers();
+
+    resetStreamConnections();
 
     vi.unstubAllGlobals();
 });
@@ -192,6 +195,11 @@ describe("useLiveNews", () => {
 
         expect(FakeSocket.last.sent.at(-1)).toEqual({ channel: NEWS_LIVE_CHANNEL, type: "unsubscribe" });
 
+        // The tab's shared socket lingers for another feed, then closes (no feed is left).
+        expect(FakeSocket.last.closedWith).toBeNull();
+
+        act(() => vi.advanceTimersByTime(LINGER_MS));
+
         expect(FakeSocket.last.closedWith).toBe(1000);
     });
 
@@ -237,7 +245,7 @@ describe("useLiveNews", () => {
         expect(FakeSocket.all).toHaveLength(11);
     });
 
-    it("unmount unsubscribes and closes; a disabled hook opens nothing", () => {
+    it("unmount unsubscribes and closes after the linger; a disabled hook opens nothing", () => {
         const { unmount } = renderHook(props => useLiveNews(props), { initialProps: input() });
 
         act(() => FakeSocket.last.emit("open"));
@@ -247,6 +255,8 @@ describe("useLiveNews", () => {
         unmount();
 
         expect(socket.sent.at(-1)).toEqual({ channel: NEWS_LIVE_CHANNEL, type: "unsubscribe" });
+
+        act(() => vi.advanceTimersByTime(LINGER_MS));
 
         expect(socket.closedWith).toBe(1000);
 

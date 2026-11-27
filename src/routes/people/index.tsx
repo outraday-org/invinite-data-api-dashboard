@@ -50,8 +50,6 @@ export const Route = createFileRoute("/people/")({
     validateSearch: peopleSearchSchema,
 });
 
-const NEW_YORK = "America/New_York";
-
 /** The table's columns; `scoped` (a company or a call is set) adds the per-scope counts the API answers then. */
 export function peopleColumns(scoped: boolean): Array<ColumnDef<V2Person>> {
     const columns: Array<ColumnDef<V2Person>> = [
@@ -86,7 +84,7 @@ export function peopleColumns(scoped: boolean): Array<ColumnDef<V2Person>> {
     }
 
     columns.push({
-        cell: ({ row }) => <span className="tabular-nums">{formatDay(row.original.last_seen, NEW_YORK)}</span>,
+        cell: ({ row }) => <span className="tabular-nums">{formatDay(row.original.last_seen)}</span>,
         header: "Last seen",
         id: "last_seen",
     });

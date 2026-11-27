@@ -2,8 +2,8 @@ import { Check, Search, X } from "lucide-react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
+import { ClearableInput } from "@/components/ui/clearable-input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInstrumentSearch } from "@/lib/api/queries";
 import { isCompanyToken, MAX_COMPANIES } from "@/lib/company-list";
@@ -165,10 +165,11 @@ export function CompanyPickerDialog({
                 </DialogHeader>
                 <div className="relative">
                     <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
-                    <Input
+                    <ClearableInput
                         aria-label="Search companies"
                         className="pl-8"
                         onChange={event => setQuery(event.target.value)}
+                        onClear={() => setQuery("")}
                         onKeyDown={(event) => {
                             // Enter toggles the first row (the exact ticker when one matches).
                             if (event.key === "Enter" && rows.length > 0) {

@@ -434,6 +434,7 @@ export function AskThisCall({ scope }: { scope: Exclude<AskScope, { kind: "marke
             <SearchQueryForm
                 busy={isFetching}
                 label={scope.kind === "event" ? "Search this call" : "Search this company's calls"}
+                onClear={clear}
                 onSubmit={submit}
                 onValueChange={setDraft}
                 placeholder={scope.kind === "event" ? "e.g. gross margin, data center revenue, \"free cash flow\"" : "Search this company's calls"}
