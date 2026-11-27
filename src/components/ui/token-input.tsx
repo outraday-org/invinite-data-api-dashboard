@@ -32,6 +32,7 @@ export function TokenInput({
     "aria-describedby": describedBy,
     "aria-invalid": invalid,
     "aria-label": ariaLabel,
+    "aria-required": ariaRequired,
     className,
     id,
     joiner = ", ",
@@ -43,6 +44,7 @@ export function TokenInput({
     "aria-describedby"?: string;
     "aria-invalid"?: boolean;
     "aria-label"?: string;
+    "aria-required"?: boolean;
     "className"?: string;
     "id"?: string;
     "joiner"?: string;
@@ -120,6 +122,7 @@ export function TokenInput({
                 aria-describedby={describedBy}
                 aria-invalid={invalid || undefined}
                 aria-label={ariaLabel}
+                aria-required={ariaRequired}
                 autoComplete="off"
                 className="placeholder:text-muted-foreground h-6 min-w-24 flex-1 bg-transparent px-1 outline-none"
                 data-slot="input-group-control"

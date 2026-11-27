@@ -3,6 +3,7 @@ import type {
     AlertBatchResponse,
     AlertEvent,
     AlertEventsResponse,
+    AlertEventType,
     AlertsListResponse,
     AlertTemplate,
     AlertTemplatesResponse,
@@ -18,10 +19,12 @@ import type {
     ScriptVersionsResponse,
 } from "@/lib/api/types";
 
+import { isCreateAlertRequest } from "@/lib/alerts/alert-contract";
+import { ALERT_TYPE_FIELDS } from "@/lib/api/operations.gen";
+
 /**
- * Alerts fixtures (tests only; backend tasks/data-api-dashboard 2-alerts task 2). The spec gives no response examples
- * for the alert operations: these follow the schemas, with the spec's own example ids and the `createAlert` request
- * example (`watchlist-aapl-8k`); one alert per type group.
+ * Alerts fixtures (tests only): required conditions and per-type fire details come from the published 13.0 schema
+ * examples. Representative delivery/status fields keep the existing view scenarios; patches retain their type.
  */
 
 export const FIXTURE_ALERT_ID = "alt_01JD2Q5Z8K3M7N9P4R6T1V0W2X";
@@ -45,8 +48,13 @@ const base = {
     version: 1,
 } satisfies Partial<Alert>;
 
+export function fixtureAlert<T extends AlertType>(type: T, patch?: Partial<Extract<Alert, { type: T }>>): Extract<Alert, { type: T }>;
 export function fixtureAlert(type: AlertType, patch: Partial<Alert> = {}): Alert {
-    return { ...base, condition: {}, id: `alt_${type}`, type, ...patch };
+    const example: unknown = structuredClone(ALERT_TYPE_FIELDS[type].example);
+
+    if (!isCreateAlertRequest(example)) throw new Error(`Invalid ${type} fixture example`);
+
+    return { ...base, ...example, id: `alt_${type}`, ...patch } as Alert;
 }
 
 /** The spec's `createAlert` example, as stored. */
@@ -103,6 +111,7 @@ export const ALERTS_PAGE_FIXTURE: AlertsListResponse = {
     next_cursor: "cur_2",
 };
 
+export function fixtureEvent<T extends AlertEventType = "alert.fired">(id: string, patch?: Partial<Extract<AlertEvent, { type: T }>>): Extract<AlertEvent, { type: T }>;
 export function fixtureEvent(id: string, patch: Partial<AlertEvent> = {}): AlertEvent {
     return {
         alert_id: FIXTURE_ALERT_ID,
@@ -110,32 +119,40 @@ export function fixtureEvent(id: string, patch: Partial<AlertEvent> = {}): Alert
         id,
         occurred_at: "2026-11-21T13:05:00Z",
         payload: {
+            ...ALERT_TYPE_FIELDS.filing.firedExample,
             alert: { client_reference_id: "watchlist-aapl-8k", external_user_id: "user_8812", id: FIXTURE_ALERT_ID, metadata: { list: "tech" }, type: "filing" },
             event_id: id,
             fired_at: "2026-11-21T13:05:00Z",
-            reason: { details: { accession_number: "0000320193-26-000101", form_type: "8-K" }, summary: "AAPL filed an 8-K" },
+            reason: { details: { ...ALERT_TYPE_FIELDS.filing.firedExample.reason.details, accession_number: "0000320193-26-000101", form_type: "8-K" }, summary: "AAPL filed an 8-K" },
             subject: { cik: "0000320193", symbol: "AAPL" },
         },
         type: "alert.fired",
         ...patch,
-    };
+    } as AlertEvent;
 }
 
 export const EVENT_OLD = fixtureEvent("evt_01", { occurred_at: "2026-11-20T15:00:00Z" });
 
-export const EVENT_STATUS = fixtureEvent("evt_02", {
+export const EVENT_STATUS = fixtureEvent<"alert.status_changed">("evt_02", {
     occurred_at: "2026-11-20T16:00:00Z",
-    payload: { alert_id: FIXTURE_ALERT_ID, from: "active", reason: "paused by request", to: "paused" },
+    payload: {
+        alert: EVENT_OLD.payload.alert,
+        changed_at: "2026-11-20T16:00:00Z",
+        event_id: "evt_02",
+        previous_status: "active",
+        reason: "max_fires",
+        status: "triggered",
+    },
     type: "alert.status_changed",
 });
 
 export const EVENT_TEST = fixtureEvent("evt_03", {
     occurred_at: "2026-11-21T09:00:00Z",
     payload: {
-        alert: { client_reference_id: null, external_user_id: null, id: FIXTURE_ALERT_ID, metadata: null, type: "filing" },
+        ...ALERT_TYPE_FIELDS.filing.firedExample,
         event_id: "evt_03",
         fired_at: "2026-11-21T09:00:00Z",
-        reason: { details: {}, summary: "Test event" },
+        reason: { ...ALERT_TYPE_FIELDS.filing.firedExample.reason, summary: "Test event" },
         test: true,
     },
 });

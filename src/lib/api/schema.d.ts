@@ -285,9 +285,11 @@ export interface paths {
          * Create an alert
          * @description Create an alert that fires when its condition is met.
          *
-         *     Retry the same request with the same `Idempotency-Key` to replay its response. A live alert with the same `client_reference_id` returns unchanged with `200`. Set `validate_only=true` to check the rule and receive `204` without saving it. Returns `503` when the alerts platform is switched off.
+         *     Retry with the same `Idempotency-Key` to replay the response. A live `client_reference_id` returns unchanged with `200`. Set `validate_only=true` for validation without saving (`204`). The platform switch returns `503` when off.
          *
-         *     A macro rule can select releases, revisions, families or series. Use macro_threshold to compare one published value or change in its documented unit.
+         *     Companies use `ciks` / `symbols` (100 combined), or `cik` / `symbol` for single-company types. Instrument types watch one `symbol` with optional `asset_class`. Filing keyword, fundamental metric and earnings results require processed coverage; transcript keywords follow captured calls.
+         *
+         *     ETFs support filing, filing keyword, dividends and dividend countdowns, plus instrument alerts; company earnings, fundamentals and news refuse ETFs. See each typed condition schema for required fields. Macro rules select releases, revisions, families, series or a threshold in the published unit.
          */
         post: operations["createAlert"];
         delete?: never;
@@ -326,6 +328,8 @@ export interface paths {
          * @description Update the rule or delivery settings of one alert.
          *
          *     A supplied `condition`, `trigger` or `destination_ids` replaces that part of the rule. The alert keeps its type. Send the `version` from your last read to reject a concurrent edit with `409`. Returns `503` when the alerts platform is switched off.
+         *
+         *     Send type with condition. An alert's type cannot change; create a new alert of another type. Settings-only changes may omit type; trigger-only edits are validated against the stored type.
          */
         patch: operations["updateAlert"];
         trace?: never;
@@ -628,6 +632,50 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/catalog/alert-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List alert types
+         * @description List the alert types with their condition fields, trigger fields, plan gates and typed payload examples.
+         *
+         *     Use the schema names to locate the exact request and event models. Cross-field rules and ETF restrictions are described beside each type.
+         */
+        get: operations["listAlertTypeCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/catalog/dividend-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List dividend types
+         * @description List the dividend type codes accepted by dividend alert filters.
+         *
+         *     Incoming dividend facts retain their source value, including null or a newer type outside this catalog.
+         */
+        get: operations["listDividendTypeCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/catalog/document-kinds": {
         parameters: {
             query?: never;
@@ -716,6 +764,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/catalog/halt-reasons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List halt reasons
+         * @description List the exchange halt and resumption codes accepted by halt alert filters.
+         *
+         *     Incoming events can contain a newer code or an exchange reason outside this catalog. Those facts are delivered unchanged.
+         */
+        get: operations["listHaltReasonCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/catalog/kpis": {
         parameters: {
             query?: never;
@@ -774,6 +844,28 @@ export interface paths {
          *     Use `statement` to narrow the catalog to a financial statement. Without that filter the catalog also includes ratios, growth rates and segment metrics. Use a segment metric's ID in the `metric` filter on `GET /v1/segments`.
          */
         get: operations["listMetricCatalog"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/catalog/news-kinds": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List news kinds and topics
+         * @description List the news kinds, topics and development topics accepted by the news filters and alert conditions.
+         *
+         *     Filter by `group` to read one vocabulary. A value can belong to more than one group.
+         */
+        get: operations["listNewsKindCatalog"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4142,9 +4234,7 @@ export interface components {
                 /** @description Succession kind */
                 kind: null | string;
             }> | null;
-            /** @description With `expand=fund`: the registered investment company's fund series (SEC N-CEN census, risk/return prospectus data, N-PORT net assets); null for a filer without fund series and while fund data is not served */
             fund?: components["schemas"]["FilerFund"] | null;
-            /** @description With `expand=private_offerings`: summary of the filer's Form D private offerings (GET /v1/offerings?company=); null for a filer without Form D offerings and while Form D data is not served. Only for filers the SEC registry knows */
             private_offerings?: components["schemas"]["FilerPrivateOfferings"] | null;
             /** @description With `expand=former_tickers`: tickers used before, newest first; the current tickers are left out */
             former_tickers?: Array<components["schemas"]["FormerTicker"]> | null;
@@ -4481,9 +4571,7 @@ export interface components {
              * @example AAPL
              */
             symbol: string;
-            /** @description For a stock: its company; null for a fund or an ETN */
             company: components["schemas"]["CompanyRef"] | null;
-            /** @description For a fund (ETF, closed-end fund): the fund; null for a stock or an ETN */
             fund: components["schemas"]["FundRef"] | null;
             /**
              * Format: date
@@ -4535,9 +4623,7 @@ export interface components {
              * @example AAPL
              */
             symbol: string;
-            /** @description For a stock: its company; null for a fund or an ETN */
             company: components["schemas"]["CompanyRef"] | null;
-            /** @description For a fund (ETF, closed-end fund): the fund; null for a stock or an ETN */
             fund: components["schemas"]["FundRef"] | null;
             /**
              * Format: date
@@ -5677,11 +5763,8 @@ export interface components {
              * @example AAPL
              */
             symbol: null | string;
-            /** @description For a stock: its company; null for a fund or an ETN; `{cik, ticker: null}` for a filer without a listing */
             company: components["schemas"]["CompanyRef"] | null;
-            /** @description For a fund (ETF, closed-end fund): the fund; null for a stock or an ETN */
             fund: components["schemas"]["FundRef"] | null;
-            /** @description The filer this row is listed under: on a symbol-scoped list the resolved registrant, on the market-wide list the filing's lead party. Null when the filing names no party */
             filer: components["schemas"]["FilingFiler"] | null;
             /**
              * @description Form
@@ -6377,7 +6460,6 @@ export interface components {
             schema_version: null | string;
             /** @description Why a failed export failed (`scratch_full`, `internal`) */
             error_code: null | string;
-            /** @description What a ready export covers; null before it is ready */
             coverage: components["schemas"]["BulkExportCoverage"] | null;
         };
         /**
@@ -9961,21 +10043,22 @@ export interface components {
                 };
             };
         };
+        Alert: components["schemas"]["DividendAlert"] | components["schemas"]["EarningsCallAlert"] | components["schemas"]["EarningsCallKeywordAlert"] | components["schemas"]["EarningsResultsAlert"] | components["schemas"]["EventCountdownAlert"] | components["schemas"]["FilingAlert"] | components["schemas"]["FilingKeywordAlert"] | components["schemas"]["FundamentalMetricAlert"] | components["schemas"]["HaltAlert"] | components["schemas"]["IndicatorAlert"] | components["schemas"]["MacroAlert"] | components["schemas"]["NewsAlert"] | components["schemas"]["NewsKeywordAlert"] | components["schemas"]["PriceAlert"] | components["schemas"]["PriceMoveAlert"] | components["schemas"]["PriceReminderAlert"] | components["schemas"]["ScriptAlert"] | components["schemas"]["VolumeSpikeAlert"];
         /** Alert */
-        Alert: {
+        FilingAlert: {
             /** @description Alert id (`alt_…`) */
             id: string;
             /**
-             * @description The alert type
+             * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
-            type: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+            type: "filing";
             /** @enum {string} */
             status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
             /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
             disabled_reason: null | string;
-            condition: components["schemas"]["AlertCondition"];
-            trigger: components["schemas"]["AlertTrigger"];
+            condition: components["schemas"]["FilingAlertCondition"];
+            trigger: components["schemas"]["FilingAlertTrigger"];
             /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
             destination_ids: Array<string>;
             /** @description Your id of the alert (unique per account) */
@@ -10002,273 +10085,2004 @@ export interface components {
             updated_at: string;
         };
         /**
-         * AlertCondition
-         * @description What the alert watches; the fields depend on `type` (each field names the types that take it; any other field is refused). Companies: `ciks` / `symbols` (at most 100 in all) or, for single-company types, `cik` / `symbol`. A symbol is resolved to its CIK at create. Price types (`price`, `price_move`, `volume_spike`, `price_reminder`) and `script` watch ONE instrument: `symbol` + `asset_class`. A `script` alert runs a script version (`/v1/scripts`) at each close of `interval`; alerts with the same version, instrument, interval, inputs and frequency share one evaluation. An `indicator` alert takes a built-in `template` (`GET /v1/alert-templates`) or a structured `condition` (+ optional `filters`) on `symbol` / `interval`; alerts crossing a constant on the same indicator, instrument and interval share one evaluation whatever the threshold. Coverage: `filing_keyword`, `fundamental_metric` and `earnings_results` work only for companies whose filings and financials Invinite processes (any other company answers 404 `not_covered`); `earnings_call_keyword` takes any company with captured calls. US ETFs: `dividend`, `event_countdown` (`ex_dividend` / `dividend_payment`), `filing` and `filing_keyword` take an ETF ticker (SPY or a trust series such as TQQQ; a series ETF is stored by symbol and fires only on events that name it, never on another series' filing of its trust); `earnings_call`, `earnings_call_keyword`, `earnings_results`, `fundamental_metric`, `news`, `news_keyword` and an `earnings_call` countdown refuse an ETF of either identity (its ticker or a fund registrant's CIK) by name (400 `invalid_parameter`).
+         * FilingAlertCondition
+         * @description At most 100 of symbols + ciks in all. Name at least one of ciks, symbols, form_types or form_categories.
          */
-        AlertCondition: {
-            /** @description Companies by CIK. filing, filing_keyword, news, news_keyword, earnings_call, earnings_call_keyword, dividend, halt */
+        FilingAlertCondition: {
+            /** @description Companies by CIK. */
             ciks?: Array<string>;
-            /** @description Companies by ticker. Same types as `ciks`; a US ETF ticker for the types that take ETFs */
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
             symbols?: Array<string>;
-            /** @description The company by CIK. fundamental_metric, earnings_results, event_countdown (1–10 digits) */
-            cik?: string;
-            /** @description The company (or, for the types that take ETFs, the US ETF) by ticker. Same types as `cik`; price types, script and indicator: the instrument (a US stock / ETF ticker, a crypto slug / ticker, or a commodity `XAUUSD` / `XAGUSD`) */
-            symbol?: string;
-            /** @description Raw SEC form types (`8-K`, `S-1`). filing, filing_keyword */
+            /** @description Raw SEC form types (`8-K`, `S-1`). */
             form_types?: Array<string>;
-            /** @description Form categories. filing */
+            /** @description Form categories. */
             form_categories?: Array<"annual_report" | "current_report" | "insider_trade" | "other" | "quarterly_report" | "registration">;
-            /** @description Also amendments (`/A`). filing */
+            /** @description Also amendments (`/A`). */
             include_amendments?: boolean;
             /**
-             * @description `detected` = the moment the SEC publishes it (every filer); `processed` = after our processing. filing
+             * @description `detected` = the moment the SEC publishes it (every filer); `processed` = after our processing.
              * @enum {string}
              */
             stage?: "detected" | "processed";
-            /** @description Whole-word, case-insensitive keywords (2–50 characters). filing_keyword, news_keyword, earnings_call (keyword_hit), earnings_call_keyword */
-            keywords?: Array<string>;
+        };
+        /**
+         * FilingAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        FilingAlertTrigger: {
             /**
-             * @description Any or all keywords. Keyword types (default any)
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        FilingKeywordAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "filing_keyword";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["FilingKeywordAlertCondition"];
+            trigger: components["schemas"]["FilingKeywordAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * FilingKeywordAlertCondition
+         * @description Name companies with ciks or symbols; at most 100 in all.
+         */
+        FilingKeywordAlertCondition: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @description Raw SEC form types (`8-K`, `S-1`). */
+            form_types?: Array<string>;
+            /** @description Whole-word, case-insensitive keywords (2–50 characters). */
+            keywords: Array<string>;
+            /**
+             * @description Any or all keywords (default any).
+             * @default any
              * @enum {string}
              */
             match?: "all" | "any";
             /**
-             * @description Where keywords are searched: filing_keyword full / risk_factors / mdna / legal_proceedings; news_keyword headline / headline_and_description; earnings_call_keyword full / prepared / qna
+             * @description Where keywords are searched.
+             * @default full
              * @enum {string}
              */
-            scope?: "full" | "headline" | "headline_and_description" | "legal_proceedings" | "mdna" | "prepared" | "qna" | "risk_factors";
-            /** @description News sources. news, news_keyword */
+            scope?: "full" | "legal_proceedings" | "mdna" | "risk_factors";
+        };
+        /**
+         * FilingKeywordAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        FilingKeywordAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        NewsAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "news";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["NewsAlertCondition"];
+            trigger: components["schemas"]["NewsAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * NewsAlertCondition
+         * @description At most 100 of symbols + ciks in all.
+         */
+        NewsAlertCondition: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @description News sources. */
             sources?: Array<string>;
-            /** @description news: news kinds; dividend: declared / ex_date / payment */
-            kinds?: Array<"call_announcement" | "capital_markets" | "declared" | "dividend" | "earnings_results" | "event_announcement" | "ex_date" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "payment" | "promo" | "results_date">;
-            /** @description Only earnings news. news, news_keyword */
+            /** @description News kinds. */
+            kinds?: Array<"call_announcement" | "capital_markets" | "dividend" | "earnings_results" | "event_announcement" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "promo" | "results_date">;
+            /** @description Only earnings news. */
             earnings_only?: boolean;
-            /** @description Call lifecycle events. earnings_call (transcript_provisional, transcript_corrected, documents_updated, guidance_flash, keyword_hit need PRO) */
-            events?: Array<"assets_ready" | "documents_updated" | "ended" | "guidance_flash" | "keyword_hit" | "rescheduled" | "scheduled" | "started" | "transcript_corrected" | "transcript_provisional" | "transcript_ready">;
-            /** @description Only these speakers. earnings_call_keyword */
+        };
+        /**
+         * NewsAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        NewsAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        NewsKeywordAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "news_keyword";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["NewsKeywordAlertCondition"];
+            trigger: components["schemas"]["NewsKeywordAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * NewsKeywordAlertCondition
+         * @description At most 100 of symbols + ciks in all. Name at least one keyword or set earnings_only to true.
+         */
+        NewsKeywordAlertCondition: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /**
+             * @description Whole-word, case-insensitive keywords (2–50 characters).
+             * @default []
+             */
+            keywords?: Array<string>;
+            /**
+             * @description Any or all keywords (default any).
+             * @default any
+             * @enum {string}
+             */
+            match?: "all" | "any";
+            /**
+             * @description Where keywords are searched.
+             * @default headline
+             * @enum {string}
+             */
+            scope?: "headline" | "headline_and_description";
+            /** @description Only earnings news. */
+            earnings_only?: boolean;
+            /** @description News sources. */
+            sources?: Array<string>;
+        };
+        /**
+         * NewsKeywordAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        NewsKeywordAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        EarningsCallAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "earnings_call";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["EarningsCallAlertCondition"];
+            trigger: components["schemas"]["EarningsCallAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * EarningsCallAlertCondition
+         * @description At most 100 of symbols + ciks in all. guidance_flash and keyword_hit require named companies. keyword_hit requires keywords.
+         */
+        EarningsCallAlertCondition: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @description Call lifecycle events. */
+            events: Array<"assets_ready" | "documents_updated" | "ended" | "guidance_flash" | "keyword_hit" | "rescheduled" | "scheduled" | "started" | "transcript_corrected" | "transcript_provisional" | "transcript_ready">;
+            /** @description Whole-word, case-insensitive keywords (2–50 characters). */
+            keywords?: Array<string>;
+        };
+        /**
+         * EarningsCallAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        EarningsCallAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        EarningsCallKeywordAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "earnings_call_keyword";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["EarningsCallKeywordAlertCondition"];
+            trigger: components["schemas"]["EarningsCallKeywordAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * EarningsCallKeywordAlertCondition
+         * @description At most 100 of symbols + ciks in all.
+         */
+        EarningsCallKeywordAlertCondition: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @description Whole-word, case-insensitive keywords (2–50 characters). */
+            keywords: Array<string>;
+            /**
+             * @description Any or all keywords (default any).
+             * @default any
+             * @enum {string}
+             */
+            match?: "all" | "any";
+            /**
+             * @description Where keywords are searched.
+             * @default full
+             * @enum {string}
+             */
+            scope?: "full" | "prepared" | "qna";
+            /** @description Only these speakers. */
             speaker_roles?: Array<"analyst" | "management">;
-            /** @description Fire at this many mentions. earnings_call_keyword */
+            /** @description Fire at this many mentions. */
             min_mentions?: number;
-            /** @description Mentions moved against the previous call. earnings_call_keyword */
+            /** @description Mentions moved against the previous call. */
             mention_delta_rule?: {
-                /** @enum {string} */
+                /**
+                 * @description The direction of the change.
+                 * @enum {string}
+                 */
                 direction: "down" | "either" | "up";
+                /** @description Minimum change in mentions. */
                 min_delta: number;
             };
-            /** @description Only a dividend whose amount moved by at least `min_pct` percent. dividend */
+        };
+        /**
+         * EarningsCallKeywordAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        EarningsCallKeywordAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        DividendAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "dividend";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["DividendAlertCondition"];
+            trigger: components["schemas"]["DividendAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * DividendAlertCondition
+         * @description At most 100 of symbols + ciks in all.
+         */
+        DividendAlertCondition: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @description Dividend events: declaration, ex-date or payment. */
+            kinds: Array<"declared" | "ex_date" | "payment">;
+            /** @description Only a dividend whose amount moved by at least `min_pct` percent. */
             amount_change?: {
-                /** @enum {string} */
+                /**
+                 * @description The direction of the change.
+                 * @enum {string}
+                 */
                 direction: "any" | "cut" | "raise";
+                /** @description Minimum percentage change. */
                 min_pct: number;
             };
-            /** @description Only these dividend types. dividend */
+            /** @description Codes of GET /v1/catalog/dividend-types. */
             dividend_types?: Array<string>;
-            /** @description Only when the yield (percent) is above / below. dividend */
+            /** @description Only when the yield (percent) is above / below. */
             yield_rule?: {
-                /** @enum {string} */
+                /**
+                 * @description The yield comparison.
+                 * @enum {string}
+                 */
                 comparator: "above" | "below";
+                /** @description Yield threshold in percent. */
                 pct: number;
             };
-            /** @description Halt or resumption (empty = both). halt */
+        };
+        /**
+         * DividendAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        DividendAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        HaltAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "halt";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["HaltAlertCondition"];
+            trigger: components["schemas"]["HaltAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * HaltAlertCondition
+         * @description At most 100 of symbols + ciks in all.
+         */
+        HaltAlertCondition: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @description Halt or resumption (empty = both). */
             statuses?: Array<"halted" | "resumed">;
-            /** @description Only these halt reason codes. halt */
+            /** @description Codes of GET /v1/catalog/halt-reasons. */
             reason_codes?: Array<string>;
-            /** @description AND-combined metric thresholds. fundamental_metric */
-            rules?: Array<{
+        };
+        /**
+         * HaltAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        HaltAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        FundamentalMetricAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "fundamental_metric";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["FundamentalMetricAlertCondition"];
+            trigger: components["schemas"]["FundamentalMetricAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * FundamentalMetricAlertCondition
+         * @description Name exactly one company with cik or symbol. CAGR metric ids are not supported. Each metric_id + period_type pair can appear only once.
+         */
+        FundamentalMetricAlertCondition: {
+            /** @description The company by CIK. */
+            cik?: string;
+            /** @description The company by ticker. */
+            symbol?: string;
+            /** @description AND-combined metric thresholds. */
+            rules: Array<{
                 /** @description A metric id of GET /v1/catalog/metrics */
                 metric_id: string;
-                /** @enum {string} */
+                /**
+                 * @description The annual or quarterly period.
+                 * @enum {string}
+                 */
                 period_type: "annual" | "quarterly";
-                /** @enum {string} */
+                /**
+                 * @description The comparison operator.
+                 * @enum {string}
+                 */
                 operator: "equals" | "gt" | "lt" | "not_equals";
                 /** @description Decimal string (a decimal string) */
                 value: string;
             }>;
-            /** @description Results reports to fire on. earnings_results */
-            report_kinds?: Array<"final" | "preliminary">;
-            /** @description Year-over-year growth gates (signed percent). earnings_results */
-            yoy_rules?: Array<{
-                /** @enum {string} */
-                metric: "eps" | "revenue";
-                /** @enum {string} */
-                comparator: "above" | "below";
-                pct: number;
-            }>;
+        };
+        /**
+         * FundamentalMetricAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        FundamentalMetricAlertTrigger: {
             /**
-             * @description The event counted down to. event_countdown
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
              * @enum {string}
              */
-            event?: "dividend_payment" | "earnings_call" | "ex_dividend";
-            /** @description Days before (0 = on the day). event_countdown */
-            days_before?: number;
-            /** @description A ladder of days before. event_countdown */
-            offsets_days?: Array<number>;
-            /** @description Minutes before the call starts (event earnings_call only). event_countdown */
-            minutes_before?: number;
-            /** @description Local minute of the day the reminder fires (event_countdown: default 540 = 09:00). event_countdown, price_reminder */
-            time_of_day_minutes?: number;
-            /** @description IANA time zone (default America/New_York). event_countdown, price_reminder */
-            timezone?: string;
-            /** @description Tell when the event date moves (default true). event_countdown */
-            notify_on_date_change?: boolean;
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
             /**
-             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved. price, price_move, volume_spike, price_reminder, script, indicator
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        EarningsResultsAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "earnings_results";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["EarningsResultsAlertCondition"];
+            trigger: components["schemas"]["EarningsResultsAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * EarningsResultsAlertCondition
+         * @description Name exactly one company with cik or symbol. Only one growth rule per metric.
+         */
+        EarningsResultsAlertCondition: {
+            /** @description The company by CIK. */
+            cik?: string;
+            /** @description The company by ticker. */
+            symbol?: string;
+            /** @description Results reports to fire on. */
+            report_kinds: Array<"final" | "preliminary">;
+            /** @description Year-over-year growth gates (signed percent). */
+            yoy_rules?: Array<{
+                /**
+                 * @description The measured metric.
+                 * @enum {string}
+                 */
+                metric: "eps" | "revenue";
+                /**
+                 * @description The growth comparison.
+                 * @enum {string}
+                 */
+                comparator: "above" | "below";
+                /** @description Year-over-year growth threshold in percent. */
+                pct: number;
+            }>;
+        };
+        /**
+         * EarningsResultsAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        EarningsResultsAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        EventCountdownAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "event_countdown";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["EventCountdownAlertCondition"];
+            trigger: components["schemas"]["EventCountdownAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * EventCountdownAlertCondition
+         * @description Name exactly one company with cik or symbol. minutes_before works with earnings_call only. minutes_before cannot combine with a multi-entry offsets_days ladder. days_before must be one of offsets_days.
+         */
+        EventCountdownAlertCondition: {
+            /** @description The company by CIK. */
+            cik?: string;
+            /** @description The company by ticker. */
+            symbol?: string;
+            /**
+             * @description The event counted down to.
+             * @enum {string}
+             */
+            event: "dividend_payment" | "earnings_call" | "ex_dividend";
+            /** @description Days before (0 = on the day). */
+            days_before: number;
+            /** @description A ladder of days before. */
+            offsets_days?: Array<number>;
+            /** @description Minutes before the call starts (event earnings_call only). */
+            minutes_before?: number;
+            /**
+             * @description Local minute of the day the reminder fires (event_countdown: default 540 = 09:00).
+             * @default 540
+             */
+            time_of_day_minutes?: number;
+            /**
+             * @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime.
+             * @default America/New_York
+             */
+            timezone?: string;
+            /** @description Tell when the event date moves (default true). */
+            notify_on_date_change?: boolean;
+        };
+        /**
+         * EventCountdownAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        EventCountdownAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        PriceAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "price";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["PriceAlertCondition"];
+            trigger: components["schemas"]["PriceAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * PriceAlertCondition
+         * @description The price alert condition.
+         */
+        PriceAlertCondition: {
+            /** @description Instrument: a US stock or ETF ticker, crypto slug or ticker, or commodity XAUUSD / XAGUSD. */
+            symbol: string;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved.
              * @enum {string}
              */
             asset_class?: "commodity" | "crypto" | "us_stock";
             /**
-             * @description `crosses_*` fire when the price crosses `level`; `above` / `below` also fire at once when the price is already on that side. price
+             * @description `crosses_*` fire when the price crosses `level`; `above` / `below` also fire at once when the price is already on that side.
              * @enum {string}
              */
-            operator?: "above" | "below" | "crosses" | "crosses_above" | "crosses_below";
-            /** @description The price level (> 0). price */
-            level?: number;
+            operator: "above" | "below" | "crosses" | "crosses_above" | "crosses_below";
+            /** @description The price level (> 0). */
+            level: number;
+        };
+        /**
+         * PriceAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        PriceAlertTrigger: {
             /**
-             * @description Which move fires. price_move
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
              * @enum {string}
              */
-            direction?: "both" | "down" | "up";
-            /** @description The move in percent of the baseline. price_move */
-            pct?: number;
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
             /**
-             * @description What the move is measured from (ignored with window_minutes); gap_open = the session open against the prior close, once per session. price_move
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+            /**
+             * @description When a crossed level arms again.
              * @enum {string}
              */
-            baseline?: "gap_open" | "intraday_open" | "prior_close" | "session_high" | "session_low";
-            /** @description Measure the move against the price this many minutes ago instead of the baseline. price_move */
+            rearm?: "auto" | "cross_back";
+            /** @description Hysteresis in percent. */
+            rearm_distance_pct?: number;
+        };
+        /** Alert */
+        PriceMoveAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "price_move";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["PriceMoveAlertCondition"];
+            trigger: components["schemas"]["PriceMoveAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * PriceMoveAlertCondition
+         * @description gap_open does not take window_minutes.
+         */
+        PriceMoveAlertCondition: {
+            /** @description Instrument: a US stock or ETF ticker, crypto slug or ticker, or commodity XAUUSD / XAGUSD. */
+            symbol: string;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved.
+             * @enum {string}
+             */
+            asset_class?: "commodity" | "crypto" | "us_stock";
+            /**
+             * @description Which move fires.
+             * @enum {string}
+             */
+            direction: "both" | "down" | "up";
+            /** @description The move in percent of the baseline. */
+            pct: number;
+            /**
+             * @description What the move is measured from (ignored with window_minutes); gap_open = the session open against the prior close, once per session.
+             * @enum {string}
+             */
+            baseline: "gap_open" | "intraday_open" | "prior_close" | "session_high" | "session_low";
+            /** @description Measure the move against the price this many minutes ago instead of the baseline. */
             window_minutes?: number;
+        };
+        /**
+         * PriceMoveAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        PriceMoveAlertTrigger: {
             /**
-             * @description `relative` = a closed bar's volume ≥ multiple × its baseline; `absolute` = ≥ threshold; `session` = today's cumulative volume ≥ multiple × the 20-session average daily volume (US stocks). volume_spike
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
              * @enum {string}
              */
-            mode?: "absolute" | "relative" | "session";
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
             /**
-             * @description The bar evaluated at its close. volume_spike (1m, 5m, 15m, 30m, 1h, 1d, 1w, 1mo; every closed bar); script and indicator (1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w, 1mo; the plan's shortest: LITE 1h, STANDARD 5m, PRO 1m)
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+            /**
+             * @description When a crossed level arms again.
              * @enum {string}
              */
-            interval?: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
-            /** @description Volume multiple of the baseline (relative / session). volume_spike */
+            rearm?: "auto" | "cross_back";
+            /** @description Hysteresis in percent. */
+            rearm_distance_pct?: number;
+        };
+        /** Alert */
+        VolumeSpikeAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "volume_spike";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["VolumeSpikeAlertCondition"];
+            trigger: components["schemas"]["VolumeSpikeAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * VolumeSpikeAlertCondition
+         * @description Absolute mode requires threshold and refuses multiple; other modes require multiple and refuse threshold. Session mode requires a US stock and refuses interval, lookback_bars, baseline_mode and price_direction. Non-session modes require interval and lookback_bars. rvol_slot uses 2–20 sessions; other baselines use 5–200 bars.
+         */
+        VolumeSpikeAlertCondition: {
+            /** @description Instrument: a US stock or ETF ticker, crypto slug or ticker, or commodity XAUUSD / XAGUSD. */
+            symbol: string;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved.
+             * @enum {string}
+             */
+            asset_class?: "commodity" | "crypto" | "us_stock";
+            /**
+             * @description `relative` = a closed bar's volume ≥ multiple × its baseline; `absolute` = ≥ threshold; `session` = today's cumulative volume ≥ multiple × the 20-session average daily volume (US stocks).
+             * @enum {string}
+             */
+            mode: "absolute" | "relative" | "session";
+            /**
+             * @description The bar interval evaluated at its close.
+             * @enum {string}
+             */
+            interval?: "1d" | "1h" | "1m" | "1mo" | "1w" | "5m" | "15m" | "30m";
+            /** @description Volume multiple of the baseline (relative / session). */
             multiple?: number;
-            /** @description Bar volume threshold, > 0 (absolute). volume_spike */
+            /** @description Bar volume threshold, > 0 (absolute). */
             threshold?: number;
-            /** @description Bars in the baseline, 5–200 (rvol_slot: sessions, 2–20). volume_spike */
+            /** @description Bars in the baseline, 5–200 (rvol_slot: sessions, 2–20). */
             lookback_bars?: number;
             /**
-             * @description The volume baseline: the mean or the median of the previous bars, or `rvol_slot` = the mean of the same time-of-day bar of earlier sessions (default flat_mean). volume_spike
+             * @description The volume baseline: the mean or the median of the previous bars, or `rvol_slot` = the mean of the same time-of-day bar of earlier sessions (default flat_mean).
              * @enum {string}
              */
             baseline_mode?: "flat_mean" | "median" | "rvol_slot";
             /**
-             * @description Only bars that closed up / down (default any). volume_spike
+             * @description Only bars that closed up / down (default any).
              * @enum {string}
              */
             price_direction?: "any" | "down" | "up";
+        };
+        /**
+         * VolumeSpikeAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        VolumeSpikeAlertTrigger: {
             /**
-             * @description price_reminder: when the reminder fires — once at `at`, on the hour, daily or weekly at `time_of_day_minutes`. script: when the script's alerts deliver — `once_per_bar_close` (default) at most once per alert id and closed bar, `once_per_bar` the same, `every_time` every evaluation, `once` the first evaluation only. indicator: the same (`once` = this alert's first fire only). With `evaluation` pre_close: one delivery per alert id and session (`every_time`: every signal of the pass; `once`: the first only). price_reminder, script, indicator
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
              * @enum {string}
              */
-            frequency?: "daily" | "every_time" | "hourly" | "once" | "once_per_bar" | "once_per_bar_close" | "weekly";
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
             /**
              * Format: date-time
-             * @description The instant of a `once` reminder (ISO 8601 date-time with offset, e.g. 2026-12-01T14:30:00Z). price_reminder
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+            /**
+             * @description When a crossed level arms again.
+             * @enum {string}
+             */
+            rearm?: "auto" | "cross_back";
+            /** @description Hysteresis in percent. */
+            rearm_distance_pct?: number;
+        };
+        /** Alert */
+        PriceReminderAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "price_reminder";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["PriceReminderAlertCondition"];
+            trigger: components["schemas"]["PriceReminderAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * PriceReminderAlertCondition
+         * @description Once frequency requires at and refuses time_of_day_minutes, weekday and days. at works with once only. Daily and weekly frequencies require time_of_day_minutes; weekly also requires weekday or days.
+         */
+        PriceReminderAlertCondition: {
+            /** @description Instrument: a US stock or ETF ticker, crypto slug or ticker, or commodity XAUUSD / XAGUSD. */
+            symbol: string;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved.
+             * @enum {string}
+             */
+            asset_class?: "commodity" | "crypto" | "us_stock";
+            /**
+             * @description When the reminder fires: once at at, on the hour, daily or weekly.
+             * @enum {string}
+             */
+            frequency: "daily" | "hourly" | "once" | "weekly";
+            /**
+             * Format: date-time
+             * @description The instant of a `once` reminder (ISO 8601 date-time with offset, e.g. 2026-12-01T14:30:00Z).
              */
             at?: string;
-            /** @description Day of a weekly reminder, 0 = Sunday. price_reminder */
+            /** @description Local minute of the day the reminder fires. */
+            time_of_day_minutes?: number;
+            /** @description Day of a weekly reminder, 0 = Sunday. */
             weekday?: number;
-            /** @description Several weekdays (0 = Sunday) of a daily / weekly reminder. price_reminder */
+            /** @description Several weekdays (0 = Sunday) of a daily / weekly reminder. */
             days?: Array<number>;
-            /** @description The script version evaluated (`scv_…`, status ok, of a script of this account). script */
-            script_version_id?: string;
-            /** @description Values for the script's declared inputs (checked against its manifest; absent = the defaults). script */
-            inputs?: {
+            /**
+             * @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime.
+             * @default America/New_York
+             */
+            timezone?: string;
+        };
+        /**
+         * PriceReminderAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        PriceReminderAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        IndicatorAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "indicator";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["IndicatorAlertCondition"];
+            trigger: components["schemas"]["IndicatorAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
                 [key: string]: unknown;
             };
-            /** @description A script chain: what feeds each of the script's `input.externalSeries` inputs, by its input key (every such input must be bound; ≤ 4 `builtin_indicator`, ≤ 16 in the plan). script */
-            series_inputs?: {
-                [key: string]: components["schemas"]["ScriptSeriesInput"];
-            };
-            /** @description The producer scripts `script_output` series inputs read, producers before the nodes that read them (≤ 8 dependencies, ≤ 16,384 bytes with series_inputs). script */
-            nodes?: Array<components["schemas"]["ScriptNode"]>;
-            /** @description Only these of the script's alerts (its version's `alert_ids`); empty = all. script */
-            alert_ids?: Array<string>;
-            evaluation?: components["schemas"]["ScriptEvaluation"];
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * IndicatorAlertCondition
+         * @description Give exactly one of template or condition. filters require condition.
+         */
+        IndicatorAlertCondition: {
+            /** @description Instrument: a US stock or ETF ticker, crypto slug or ticker, or commodity XAUUSD / XAGUSD. */
+            symbol: string;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved.
+             * @enum {string}
+             */
+            asset_class?: "commodity" | "crypto" | "us_stock";
+            /**
+             * @description The bar interval evaluated at its close (the plan's shortest: LITE 1h, STANDARD 5m, PRO 1m).
+             * @enum {string}
+             */
+            interval: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
+            /** @description A built-in template and its inputs. */
             template?: components["schemas"]["IndicatorTemplateRef"];
+            /** @description A structured trigger comparison. */
             condition?: components["schemas"]["IndicatorCondition"];
+            /** @description State comparisons that must hold when the trigger fires. */
             filters?: components["schemas"]["IndicatorFilters"];
+            /**
+             * @description When signals deliver; once, once per bar or close, or every evaluation. Pre-close evaluates once per session.
+             * @default once_per_bar_close
+             * @enum {string}
+             */
+            frequency?: "every_time" | "once" | "once_per_bar" | "once_per_bar_close";
+            /** @description Evaluate at bar close or before the session close. */
+            evaluation?: components["schemas"]["ScriptEvaluation"];
             resolved?: components["schemas"]["IndicatorResolved"];
-            /** @description Required release kinds for a macro alert */
-            macro_events?: Array<"macro.released" | "macro.revised">;
-            /** @description Optional economic dataset families */
-            macro_families?: Array<"gdp" | "inflation" | "labor" | "yield_curve">;
-            /** @description Optional public macro series identifiers */
-            macro_series_ids?: Array<"consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa">;
-            macro_threshold?: components["schemas"]["MacroThreshold"];
-        };
-        /**
-         * ScriptSeriesInput
-         * @description What feeds one `input.externalSeries` input of a script (a script chain), one value per bar on the alert's symbol, interval and bars; a value the producer does not give that bar reads NaN.
-         */
-        ScriptSeriesInput: {
-            /**
-             * @description What feeds the input every bar: `ohlc` a bar field, `builtin_indicator` a built-in indicator's series, `script_output` a plot of a node of `nodes`
-             * @enum {string}
-             */
-            kind: "builtin_indicator" | "ohlc" | "script_output";
-            /**
-             * @description ohlc: the bar field (`hl2` = (high + low) / 2, `hlc3`, `ohlc4`, `hlcc4` = (high + low + 2 × close) / 4; no volume)
-             * @enum {string}
-             */
-            field?: "close" | "high" | "hl2" | "hlc3" | "hlcc4" | "low" | "ohlc4" | "open";
-            /** @description builtin_indicator: the built-in indicator (`rsi`, `sma`, `ema`, `macd`, `bb`, …; the indicator condition's ids) */
-            indicator_id?: string;
-            /** @description builtin_indicator: which output series (`rsi`, `macd` / `signal` / `histogram`, `upper` / `basis` / `lower`, …) */
-            series_key?: string;
-            /** @description builtin_indicator: the indicator's parameters (`length`, `source`, …; absent = its defaults) */
-            params?: {
-                [key: string]: unknown;
-            };
-            /** @description builtin_indicator, set by the platform (read-only: a value sent in a request is ignored): the system script version the series was compiled to */
-            resolved_script_version_id?: string;
-            /** @description script_output: the `node_key` of the producing node */
-            node_key?: string;
-            /** @description script_output: the plot slot of the node's script version (its `manifest.plots[].slotId`) */
-            slot_id?: string;
-        };
-        /**
-         * ScriptNode
-         * @description A producer script of a chain: evaluated on the alert's symbol, interval and bars before the scripts that read its plots.
-         */
-        ScriptNode: {
-            /** @description The node's name in this plan (unique, not `root`), named by `script_output` series inputs */
-            node_key: string;
-            /** @description The producer's script version (`scv_…`, status ok, of a script of this account) */
-            script_version_id: string;
-            /** @description Values for the producer's declared inputs (absent = the defaults) */
-            inputs?: {
-                [key: string]: unknown;
-            };
-            /** @description The producer's own `input.externalSeries` inputs (a built-in series, a bar field, or an earlier node's plot) */
-            series_inputs?: {
-                [key: string]: components["schemas"]["ScriptSeriesInput"];
-            };
-        };
-        /**
-         * ScriptEvaluation
-         * @description When a script / indicator alert evaluates: `bar_close` (default) at each close of its interval, or `pre_close` — `offset_minutes` before the US session close (16:00 New York, 13:00 on a half day, never on a weekend or market holiday) on the still-forming bar of its interval. A pre_close alert delivers ONLY its pre-close evaluations (its closed bars still advance the script; their events are not delivered), at most once per session; the fire's `reason.details` carry `phase: "pre_close"`, `offset_minutes` and `session_close`.
-         */
-        ScriptEvaluation: {
-            /**
-             * @description `bar_close` at each bar close, `pre_close` before the session close
-             * @enum {string}
-             */
-            kind: "bar_close" | "pre_close";
-            /** @description pre_close: minutes before the session close (1–720; any interval) */
-            offset_minutes?: number;
-            /**
-             * @description pre_close: the venue whose close anchors the evaluation (every US venue shares the 16:00 New York close and the US holiday calendar); optional for a US stock, required for crypto and commodities
-             * @enum {string}
-             */
-            exchange?: "AMEX" | "BATS" | "CBOE" | "NASDAQ" | "NYSE" | "NYSEARCA" | "NYSEMKT";
         };
         /**
          * IndicatorTemplateRef
@@ -10277,9 +12091,9 @@ export interface components {
         IndicatorTemplateRef: {
             /** @description The template key (`rsi-cross`, `macd-signal-cross`, `price-sma-cross`, `ema-cross`) */
             key: string;
-            /** @description The template version (absent = the current one) */
+            /** @description The template version; absent selects the current version. */
             version?: number;
-            /** @description Values of the template's inputs (absent = the defaults) */
+            /** @description Values for the template inputs; at most 100; absent selects defaults. */
             inputs?: {
                 [key: string]: unknown;
             };
@@ -10289,12 +12103,14 @@ export interface components {
          * @description A structured trigger `lhs <comparator> rhs`, evaluated at each bar close. The crossings take any right side but a zone; `entering` / `exiting` only a rectangle zone (`indicator_id: rectangle`, `series_key: band`).
          */
         IndicatorCondition: {
+            /** @description The left operand. */
             lhs: components["schemas"]["IndicatorOperand"];
             /**
              * @description The transition that fires
              * @enum {string}
              */
             comparator: "crossing" | "crossing_down" | "crossing_up" | "entering" | "exiting";
+            /** @description The right operand. */
             rhs: components["schemas"]["IndicatorOperand"];
         };
         /**
@@ -10311,18 +12127,18 @@ export interface components {
             indicator_id?: string;
             /** @description indicator: which output series (`rsi`, `macd` / `signal` / `histogram`, `upper` / `basis` / `lower`, …) */
             series_key?: string;
-            /** @description indicator: the indicator's parameters (`length`, `source`, …; absent = its defaults) */
+            /** @description indicator: the indicator's parameters (`length`, `source`, …; absent = its defaults) At most 50 parameters; parameter names are 1–100 characters. */
             params?: {
                 [key: string]: unknown;
             };
             /** @description indicator: the name used in the fire summary (default: id and parameters) */
             label?: string;
             /**
-             * @description price: the bar field (`last` = the close at bar close)
+             * @description The price field; last means close at bar close.
              * @enum {string}
              */
             source?: "close" | "high" | "last" | "low" | "open";
-            /** @description value: the constant (right side only) */
+            /** @description The constant value (right operand only). */
             value?: number;
         };
         /**
@@ -10331,23 +12147,24 @@ export interface components {
          */
         IndicatorFilters: {
             /**
-             * @description How the children combine
+             * @description group: how its leaves combine
              * @enum {string}
              */
             op: "and" | "or";
-            /** @description Leaves and groups */
+            /** @description group: its leaves */
             children: Array<components["schemas"]["IndicatorFilterChild"]>;
         };
         /**
          * IndicatorFilterChild
-         * @description A filter leaf (`kind: condition` + `condition`) or one nested group (`kind: group` + `op` + `children` of leaves).
+         * @description A filter leaf or one nested group of leaves.
          */
         IndicatorFilterChild: {
             /**
-             * @description A leaf or a group
+             * @description What the operand reads
              * @enum {string}
              */
             kind: "condition" | "group";
+            /** @description The state comparison. */
             condition?: components["schemas"]["IndicatorFilterCondition"];
             /**
              * @description group: how its leaves combine
@@ -10362,15 +12179,17 @@ export interface components {
          * @description A state comparison that must hold on the trigger bar.
          */
         IndicatorFilterCondition: {
+            /** @description The left operand. */
             lhs: components["schemas"]["IndicatorOperand"];
             /**
              * @description The state comparison
              * @enum {string}
              */
             comparator: "greater_than" | "greater_than_or_equal" | "less_than" | "less_than_or_equal";
+            /** @description The right operand. */
             rhs: components["schemas"]["IndicatorOperand"];
             /**
-             * @description Read on another timeframe of the same symbol (absent = the alert's interval)
+             * @description The bar interval evaluated at its close.
              * @enum {string}
              */
             interval?: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
@@ -10381,11 +12200,30 @@ export interface components {
          */
         IndicatorFilterLeaf: {
             /**
-             * @description Always `condition`
+             * @description What the operand reads
              * @enum {string}
              */
             kind: "condition";
+            /** @description The state comparison. */
             condition: components["schemas"]["IndicatorFilterCondition"];
+        };
+        /**
+         * ScriptEvaluation
+         * @description When a script / indicator alert evaluates: `bar_close` (default) at each close of its interval, or `pre_close` — `offset_minutes` before the US session close (16:00 New York, 13:00 on a half day, never on a weekend or market holiday) on the still-forming bar of its interval. A pre_close alert delivers ONLY its pre-close evaluations (its closed bars still advance the script; their events are not delivered), at most once per session; the fire's `reason.details` carry `phase: "pre_close"`, `offset_minutes` and `session_close`.
+         */
+        ScriptEvaluation: {
+            /**
+             * @description When the alert evaluates.
+             * @enum {string}
+             */
+            kind: "bar_close" | "pre_close";
+            /** @description pre_close: minutes before the session close (1–720; any interval) */
+            offset_minutes?: number;
+            /**
+             * @description pre_close: the venue whose close anchors the evaluation (every US venue shares the 16:00 New York close and the US holiday calendar); optional for a US stock, required for crypto and commodities
+             * @enum {string}
+             */
+            exchange?: "AMEX" | "BATS" | "CBOE" | "NASDAQ" | "NYSE" | "NYSEARCA" | "NYSEMKT";
         };
         /**
          * IndicatorResolved
@@ -10417,42 +12255,18 @@ export interface components {
             };
         };
         /**
-         * MacroThreshold
-         * @description Numeric comparison on one published economic series and period.
+         * IndicatorAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
          */
-        MacroThreshold: {
+        IndicatorAlertTrigger: {
             /**
-             * @description Public macro series identifier
-             * @enum {string}
-             */
-            series_id: "consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa";
-            /**
-             * @description Numeric field supported by the selected series
-             * @enum {string}
-             */
-            field: "change_1m_pct" | "change_12m_pct" | "change_prior" | "change_year" | "change_year_pct" | "value";
-            /**
-             * @description Comparison operator
-             * @enum {string}
-             */
-            operator: "gt" | "gte" | "lt" | "lte";
-            /** @description Finite threshold in the selected field’s published unit */
-            value: number;
-        };
-        /**
-         * AlertTrigger
-         * @description When the alert may fire
-         */
-        AlertTrigger: {
-            /**
-             * @description `once` = the alert becomes `triggered` after its first fire (default every_time)
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
              * @enum {string}
              */
             mode?: "every_time" | "once";
             /** @description Minimum seconds between fires (at most 366 days) */
             cooldown_seconds?: number;
-            /** @description Minimum bars between fires (script / indicator types), counted like chartlang: the bar of a fire must start at least cooldown_bars × the interval after the bar of the last fire, so a night or a weekend counts as time (half a bar of slack: a calendar `1mo` / `1w` / `1d` bar shorter than the nominal interval, a February or a DST day, still counts as a whole bar) */
-            cooldown_bars?: number;
             /** @description The alert becomes `triggered` after this many fires */
             max_fires?: number;
             /**
@@ -10472,12 +12286,16 @@ export interface components {
              * @description No fires until then
              */
             pause_until?: string;
-            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) */
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
             active_window?: {
-                /** @enum {string} */
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
                 type: "every" | "weekly";
-                /** @description IANA time zone (weekly) */
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
                 timezone?: string;
+                /** @description Weekdays of a weekly window. */
                 days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
                 /** @description HH:MM (weekly) (HH:MM, 24 h) */
                 from?: string;
@@ -10488,20 +12306,351 @@ export interface components {
                  * @description Start of the first window (every)
                  */
                 anchor_at?: string;
-                /** @description Windows repeat every N units (every) */
+                /** @description Number of units between recurring windows. */
                 interval?: number;
-                /** @enum {string} */
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
                 unit?: "days" | "hours" | "weeks";
                 /** @description Window length (every) */
                 active_duration_seconds?: number;
             };
+            /** @description Minimum bars between fires, counted like chartlang: the bar of a fire must start at least cooldown_bars × the interval after the bar of the last fire, so a night or a weekend counts as time (half a bar of slack: a calendar `1mo` / `1w` / `1d` bar shorter than the nominal interval still counts as a whole bar). */
+            cooldown_bars?: number;
+        };
+        /** Alert */
+        ScriptAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
             /**
-             * @description Price types: when a crossed level arms again
+             * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
-            rearm?: "auto" | "cross_back";
-            /** @description Price types: hysteresis in percent */
-            rearm_distance_pct?: number;
+            type: "script";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["ScriptAlertCondition"];
+            trigger: components["schemas"]["ScriptAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * ScriptAlertCondition
+         * @description The script alert condition.
+         */
+        ScriptAlertCondition: {
+            /** @description The script version evaluated (`scv_…`, status ok, of a script of this account). */
+            script_version_id: string;
+            /** @description Instrument: a US stock or ETF ticker, crypto slug or ticker, or commodity XAUUSD / XAGUSD. */
+            symbol: string;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved.
+             * @enum {string}
+             */
+            asset_class?: "commodity" | "crypto" | "us_stock";
+            /**
+             * @description The bar interval evaluated at its close (the plan's shortest: LITE 1h, STANDARD 5m, PRO 1m).
+             * @enum {string}
+             */
+            interval: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
+            /** @description Values for the script's declared inputs (checked against its manifest; absent = the defaults). At most 100 inputs. */
+            inputs?: {
+                [key: string]: unknown;
+            };
+            /** @description A script chain: what feeds each of the script's `input.externalSeries` inputs, by its input key (every such input must be bound; ≤ 4 `builtin_indicator`, ≤ 16 in the plan). At most 100 external series bindings. */
+            series_inputs?: {
+                [key: string]: components["schemas"]["ScriptSeriesInput"];
+            };
+            /** @description The producer scripts `script_output` series inputs read, producers before the nodes that read them (≤ 8 dependencies, ≤ 16,384 bytes with series_inputs). */
+            nodes?: Array<components["schemas"]["ScriptNode"]>;
+            /** @description Only these of the script's alerts (its version's `alert_ids`); empty = all. */
+            alert_ids?: Array<string>;
+            /**
+             * @description When signals deliver; once, once per bar or close, or every evaluation. Pre-close evaluates once per session.
+             * @default once_per_bar_close
+             * @enum {string}
+             */
+            frequency?: "every_time" | "once" | "once_per_bar" | "once_per_bar_close";
+            /** @description Evaluate at bar close or before the session close. */
+            evaluation?: components["schemas"]["ScriptEvaluation"];
+        };
+        /**
+         * ScriptSeriesInput
+         * @description What feeds one `input.externalSeries` input of a script (a script chain), one value per bar on the alert's symbol, interval and bars; a value the producer does not give that bar reads NaN.
+         */
+        ScriptSeriesInput: {
+            /**
+             * @description What the operand reads
+             * @enum {string}
+             */
+            kind: "builtin_indicator" | "ohlc" | "script_output";
+            /**
+             * @description ohlc: the bar field (`hl2` = (high + low) / 2, `hlc3`, `ohlc4`, `hlcc4` = (high + low + 2 × close) / 4; no volume)
+             * @enum {string}
+             */
+            field?: "close" | "high" | "hl2" | "hlc3" | "hlcc4" | "low" | "ohlc4" | "open";
+            /** @description indicator: the built-in indicator (`rsi`, `sma`, `ema`, `macd`, `bb`, …; the chart's indicator ids) */
+            indicator_id?: string;
+            /** @description indicator: which output series (`rsi`, `macd` / `signal` / `histogram`, `upper` / `basis` / `lower`, …) */
+            series_key?: string;
+            /** @description indicator: the indicator's parameters (`length`, `source`, …; absent = its defaults) At most 50 parameters; parameter names are 1–100 characters. */
+            params?: {
+                [key: string]: unknown;
+            };
+            /** @description The system script version resolved by the platform. */
+            resolved_script_version_id?: string;
+            /** @description script_output: the `node_key` of the producing node */
+            node_key?: string;
+            /** @description script_output: the plot slot of the node's script version (its `manifest.plots[].slotId`) */
+            slot_id?: string;
+        };
+        /**
+         * ScriptNode
+         * @description A producer script of a chain: evaluated on the alert's symbol, interval and bars before the scripts that read its plots.
+         */
+        ScriptNode: {
+            /** @description script_output: the `node_key` of the producing node */
+            node_key: string;
+            /** @description The script version evaluated (`scv_…`, status ok, of a script of this account). */
+            script_version_id: string;
+            /** @description Values for the script's declared inputs (checked against its manifest; absent = the defaults). At most 100 inputs. */
+            inputs?: {
+                [key: string]: unknown;
+            };
+            /** @description A script chain: what feeds each of the script's `input.externalSeries` inputs, by its input key (every such input must be bound; ≤ 4 `builtin_indicator`, ≤ 16 in the plan). At most 100 external series bindings. */
+            series_inputs?: {
+                [key: string]: components["schemas"]["ScriptSeriesInput"];
+            };
+        };
+        /**
+         * ScriptAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        ScriptAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+            /** @description Minimum bars between fires, counted like chartlang: the bar of a fire must start at least cooldown_bars × the interval after the bar of the last fire, so a night or a weekend counts as time (half a bar of slack: a calendar `1mo` / `1w` / `1d` bar shorter than the nominal interval still counts as a whole bar). */
+            cooldown_bars?: number;
+        };
+        /** Alert */
+        MacroAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "macro";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["MacroAlertCondition"];
+            trigger: components["schemas"]["MacroAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * MacroAlertCondition
+         * @description Selected series must be within the selected families. The threshold series must be admitted by every filter. The threshold field must be supported by the selected series.
+         */
+        MacroAlertCondition: {
+            /** @description Required release kinds for a macro alert */
+            macro_events: Array<"macro.released" | "macro.revised">;
+            /** @description Optional economic dataset families */
+            macro_families?: Array<"gdp" | "inflation" | "labor" | "yield_curve">;
+            /** @description Optional public macro series identifiers */
+            macro_series_ids?: Array<"consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa">;
+            /** @description Numeric comparison on one published economic series and period. */
+            macro_threshold?: components["schemas"]["MacroThreshold"];
+        };
+        /**
+         * MacroThreshold
+         * @description Numeric comparison on one published economic series and period.
+         */
+        MacroThreshold: {
+            /**
+             * @description Public macro series identifier
+             * @enum {string}
+             */
+            series_id: "consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa";
+            /**
+             * @description Numeric field supported by the selected series.
+             * @enum {string}
+             */
+            field: "change_1m_pct" | "change_12m_pct" | "change_prior" | "change_year" | "change_year_pct" | "value";
+            /**
+             * @description The comparison operator.
+             * @enum {string}
+             */
+            operator: "gt" | "gte" | "lt" | "lte";
+            /** @description Finite threshold in the selected field’s published unit. */
+            value: number;
+        };
+        /**
+         * MacroAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        MacroAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
         };
         /**
          * AlertQuotaUsage
@@ -10520,257 +12669,1942 @@ export interface components {
             fires_per_day_limit: null | number;
         };
         /**
-         * AlertConditionInput
-         * @description What the alert watches; the fields depend on `type` (each field names the types that take it; any other field is refused). Companies: `ciks` / `symbols` (at most 100 in all) or, for single-company types, `cik` / `symbol`. A symbol is resolved to its CIK at create. Price types (`price`, `price_move`, `volume_spike`, `price_reminder`), `script` and `indicator` watch ONE instrument: `symbol` + `asset_class`. An `indicator` alert takes a built-in `template` (`GET /v1/alert-templates`) or a structured `condition` (+ optional `filters`) on `symbol` / `interval`; alerts crossing a constant on the same indicator, instrument and interval share one evaluation whatever the threshold. Coverage: `filing_keyword`, `fundamental_metric` and `earnings_results` work only for companies whose filings and financials Invinite processes (any other company answers 404 `not_covered`); `earnings_call_keyword` takes any company with captured calls. (request form) US ETFs: `dividend`, `event_countdown` (`ex_dividend` / `dividend_payment`), `filing` and `filing_keyword` take an ETF ticker (SPY or a trust series such as TQQQ; a series ETF is stored by symbol and fires only on events that name it, never on another series' filing of its trust); `earnings_call`, `earnings_call_keyword`, `earnings_results`, `fundamental_metric`, `news`, `news_keyword` and an `earnings_call` countdown refuse an ETF of either identity (its ticker or a fund registrant's CIK) by name (400 `invalid_parameter`).
+         * @description filing: see FilingAlertConditionInput for the condition and cross-field rules. US ETF tickers are accepted, including trust series; series alerts match only their own events.
+         * @example {
+         *       "type": "filing",
+         *       "condition": {
+         *         "symbols": [
+         *           "AAPL"
+         *         ],
+         *         "form_types": [
+         *           "8-K"
+         *         ],
+         *         "stage": "detected"
+         *       }
+         *     }
          */
-        AlertConditionInput: {
-            /** @description Companies by CIK. filing, filing_keyword, news, news_keyword, earnings_call, earnings_call_keyword, dividend, halt */
+        CreateFilingAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "filing";
+            condition: components["schemas"]["FilingAlertConditionInput"];
+            trigger?: components["schemas"]["FilingAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * FilingAlertConditionInput
+         * @description At most 100 of symbols + ciks in all. Name at least one of ciks, symbols, form_types or form_categories.
+         */
+        FilingAlertConditionInput: {
+            /** @description Companies by CIK. */
             ciks?: Array<string>;
-            /** @description Companies by ticker. Same types as `ciks`; a US ETF ticker for the types that take ETFs */
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
             symbols?: Array<string>;
-            /** @description The company by CIK. fundamental_metric, earnings_results, event_countdown (1–10 digits) */
-            cik?: string;
-            /** @description The company (or, for the types that take ETFs, the US ETF) by ticker. Same types as `cik`; price types, script and indicator: the instrument (a US stock / ETF ticker, a crypto slug / ticker, or a commodity `XAUUSD` / `XAGUSD`) */
-            symbol?: string;
-            /** @description Raw SEC form types (`8-K`, `S-1`). filing, filing_keyword */
+            /** @description Raw SEC form types (`8-K`, `S-1`). */
             form_types?: Array<string>;
-            /** @description Form categories. filing */
+            /** @description Form categories. */
             form_categories?: Array<"annual_report" | "current_report" | "insider_trade" | "other" | "quarterly_report" | "registration">;
-            /** @description Also amendments (`/A`). filing */
+            /** @description Also amendments (`/A`). */
             include_amendments?: boolean;
             /**
-             * @description `detected` = the moment the SEC publishes it (every filer); `processed` = after our processing. filing
+             * @description `detected` = the moment the SEC publishes it (every filer); `processed` = after our processing.
              * @enum {string}
              */
             stage?: "detected" | "processed";
-            /** @description Whole-word, case-insensitive keywords (2–50 characters). filing_keyword, news_keyword, earnings_call (keyword_hit), earnings_call_keyword */
-            keywords?: Array<string>;
+        };
+        /**
+         * FilingAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        FilingAlertTriggerInput: {
             /**
-             * @description Any or all keywords. Keyword types (default any)
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** @description Destination ids (≤ 10) */
+        AlertDestinationIds: Array<string>;
+        /** @description Your id; a second create with it returns the live alert */
+        AlertClientReferenceId: string;
+        /** @description Your end user's id (filters lists and events; 1–200 characters, not . or .., which no URL path can name) */
+        AlertExternalUserId: string;
+        /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+        AlertMetadata: {
+            [key: string]: unknown;
+        };
+        /**
+         * @description filing_keyword: see FilingKeywordAlertConditionInput for the condition and cross-field rules. Named companies require processed financial coverage. US ETF tickers are accepted, including trust series; series alerts match only their own events.
+         * @example {
+         *       "type": "filing_keyword",
+         *       "condition": {
+         *         "symbols": [
+         *           "AAPL"
+         *         ],
+         *         "keywords": [
+         *           "tariff"
+         *         ]
+         *       }
+         *     }
+         */
+        CreateFilingKeywordAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "filing_keyword";
+            condition: components["schemas"]["FilingKeywordAlertConditionInput"];
+            trigger?: components["schemas"]["FilingKeywordAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * FilingKeywordAlertConditionInput
+         * @description Name companies with ciks or symbols; at most 100 in all.
+         */
+        FilingKeywordAlertConditionInput: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @description Raw SEC form types (`8-K`, `S-1`). */
+            form_types?: Array<string>;
+            /** @description Whole-word, case-insensitive keywords (2–50 characters). */
+            keywords: Array<string>;
+            /**
+             * @description Any or all keywords (default any).
+             * @default any
              * @enum {string}
              */
             match?: "all" | "any";
             /**
-             * @description Where keywords are searched: filing_keyword full / risk_factors / mdna / legal_proceedings; news_keyword headline / headline_and_description; earnings_call_keyword full / prepared / qna
+             * @description Where keywords are searched.
+             * @default full
              * @enum {string}
              */
-            scope?: "full" | "headline" | "headline_and_description" | "legal_proceedings" | "mdna" | "prepared" | "qna" | "risk_factors";
-            /** @description News sources. news, news_keyword */
+            scope?: "full" | "legal_proceedings" | "mdna" | "risk_factors";
+        };
+        /**
+         * FilingKeywordAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        FilingKeywordAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description news: see NewsAlertConditionInput for the condition and cross-field rules. US ETF subjects are refused; use a company subject.
+         * @example {
+         *       "type": "news",
+         *       "condition": {
+         *         "symbols": [
+         *           "AAPL"
+         *         ]
+         *       }
+         *     }
+         */
+        CreateNewsAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "news";
+            condition: components["schemas"]["NewsAlertConditionInput"];
+            trigger?: components["schemas"]["NewsAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * NewsAlertConditionInput
+         * @description At most 100 of symbols + ciks in all.
+         */
+        NewsAlertConditionInput: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @description News sources. */
             sources?: Array<string>;
-            /** @description news: news kinds; dividend: declared / ex_date / payment */
-            kinds?: Array<"call_announcement" | "capital_markets" | "declared" | "dividend" | "earnings_results" | "event_announcement" | "ex_date" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "payment" | "promo" | "results_date">;
-            /** @description Only earnings news. news, news_keyword */
+            /** @description News kinds. */
+            kinds?: Array<"call_announcement" | "capital_markets" | "dividend" | "earnings_results" | "event_announcement" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "promo" | "results_date">;
+            /** @description Only earnings news. */
             earnings_only?: boolean;
-            /** @description Call lifecycle events. earnings_call (transcript_provisional, transcript_corrected, documents_updated, guidance_flash, keyword_hit need PRO) */
-            events?: Array<"assets_ready" | "documents_updated" | "ended" | "guidance_flash" | "keyword_hit" | "rescheduled" | "scheduled" | "started" | "transcript_corrected" | "transcript_provisional" | "transcript_ready">;
-            /** @description Only these speakers. earnings_call_keyword */
+        };
+        /**
+         * NewsAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        NewsAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description news_keyword: see NewsKeywordAlertConditionInput for the condition and cross-field rules. US ETF subjects are refused; use a company subject.
+         * @example {
+         *       "type": "news_keyword",
+         *       "condition": {
+         *         "symbols": [
+         *           "AAPL"
+         *         ],
+         *         "keywords": [
+         *           "merger"
+         *         ]
+         *       }
+         *     }
+         */
+        CreateNewsKeywordAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "news_keyword";
+            condition: components["schemas"]["NewsKeywordAlertConditionInput"];
+            trigger?: components["schemas"]["NewsKeywordAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * NewsKeywordAlertConditionInput
+         * @description At most 100 of symbols + ciks in all. Name at least one keyword or set earnings_only to true.
+         */
+        NewsKeywordAlertConditionInput: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /**
+             * @description Whole-word, case-insensitive keywords (2–50 characters).
+             * @default []
+             */
+            keywords?: Array<string>;
+            /**
+             * @description Any or all keywords (default any).
+             * @default any
+             * @enum {string}
+             */
+            match?: "all" | "any";
+            /**
+             * @description Where keywords are searched.
+             * @default headline
+             * @enum {string}
+             */
+            scope?: "headline" | "headline_and_description";
+            /** @description Only earnings news. */
+            earnings_only?: boolean;
+            /** @description News sources. */
+            sources?: Array<string>;
+        };
+        /**
+         * NewsKeywordAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        NewsKeywordAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description earnings_call: see EarningsCallAlertConditionInput for the condition and cross-field rules. Events follow captured calls. US ETF subjects are refused; use a company subject.
+         * @example {
+         *       "type": "earnings_call",
+         *       "condition": {
+         *         "symbols": [
+         *           "AAPL"
+         *         ],
+         *         "events": [
+         *           "started"
+         *         ]
+         *       }
+         *     }
+         */
+        CreateEarningsCallAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "earnings_call";
+            condition: components["schemas"]["EarningsCallAlertConditionInput"];
+            trigger?: components["schemas"]["EarningsCallAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * EarningsCallAlertConditionInput
+         * @description At most 100 of symbols + ciks in all. guidance_flash and keyword_hit require named companies. keyword_hit requires keywords.
+         */
+        EarningsCallAlertConditionInput: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @description Call lifecycle events. */
+            events: Array<"assets_ready" | "documents_updated" | "ended" | "guidance_flash" | "keyword_hit" | "rescheduled" | "scheduled" | "started" | "transcript_corrected" | "transcript_provisional" | "transcript_ready">;
+            /** @description Whole-word, case-insensitive keywords (2–50 characters). */
+            keywords?: Array<string>;
+        };
+        /**
+         * EarningsCallAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        EarningsCallAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description earnings_call_keyword: see EarningsCallKeywordAlertConditionInput for the condition and cross-field rules. Events follow captured calls. US ETF subjects are refused; use a company subject.
+         * @example {
+         *       "type": "earnings_call_keyword",
+         *       "condition": {
+         *         "symbols": [
+         *           "AAPL"
+         *         ],
+         *         "keywords": [
+         *           "guidance"
+         *         ]
+         *       }
+         *     }
+         */
+        CreateEarningsCallKeywordAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "earnings_call_keyword";
+            condition: components["schemas"]["EarningsCallKeywordAlertConditionInput"];
+            trigger?: components["schemas"]["EarningsCallKeywordAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * EarningsCallKeywordAlertConditionInput
+         * @description At most 100 of symbols + ciks in all.
+         */
+        EarningsCallKeywordAlertConditionInput: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @description Whole-word, case-insensitive keywords (2–50 characters). */
+            keywords: Array<string>;
+            /**
+             * @description Any or all keywords (default any).
+             * @default any
+             * @enum {string}
+             */
+            match?: "all" | "any";
+            /**
+             * @description Where keywords are searched.
+             * @default full
+             * @enum {string}
+             */
+            scope?: "full" | "prepared" | "qna";
+            /** @description Only these speakers. */
             speaker_roles?: Array<"analyst" | "management">;
-            /** @description Fire at this many mentions. earnings_call_keyword */
+            /** @description Fire at this many mentions. */
             min_mentions?: number;
-            /** @description Mentions moved against the previous call. earnings_call_keyword */
+            /** @description Mentions moved against the previous call. */
             mention_delta_rule?: {
-                /** @enum {string} */
+                /**
+                 * @description The direction of the change.
+                 * @enum {string}
+                 */
                 direction: "down" | "either" | "up";
+                /** @description Minimum change in mentions. */
                 min_delta: number;
             };
-            /** @description Only a dividend whose amount moved by at least `min_pct` percent. dividend */
+        };
+        /**
+         * EarningsCallKeywordAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        EarningsCallKeywordAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description dividend: see DividendAlertConditionInput for the condition and cross-field rules. US ETF tickers are accepted, including trust series; series alerts match only their own events.
+         * @example {
+         *       "type": "dividend",
+         *       "condition": {
+         *         "symbols": [
+         *           "AAPL"
+         *         ],
+         *         "kinds": [
+         *           "declared"
+         *         ]
+         *       }
+         *     }
+         */
+        CreateDividendAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "dividend";
+            condition: components["schemas"]["DividendAlertConditionInput"];
+            trigger?: components["schemas"]["DividendAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * DividendAlertConditionInput
+         * @description At most 100 of symbols + ciks in all.
+         */
+        DividendAlertConditionInput: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @description Dividend events: declaration, ex-date or payment. */
+            kinds: Array<"declared" | "ex_date" | "payment">;
+            /** @description Only a dividend whose amount moved by at least `min_pct` percent. */
             amount_change?: {
-                /** @enum {string} */
+                /**
+                 * @description The direction of the change.
+                 * @enum {string}
+                 */
                 direction: "any" | "cut" | "raise";
+                /** @description Minimum percentage change. */
                 min_pct: number;
             };
-            /** @description Only these dividend types. dividend */
-            dividend_types?: Array<string>;
-            /** @description Only when the yield (percent) is above / below. dividend */
+            /** @description Codes of GET /v1/catalog/dividend-types. */
+            dividend_types?: Array<"CD" | "LT" | "SC" | "ST">;
+            /** @description Only when the yield (percent) is above / below. */
             yield_rule?: {
-                /** @enum {string} */
+                /**
+                 * @description The yield comparison.
+                 * @enum {string}
+                 */
                 comparator: "above" | "below";
+                /** @description Yield threshold in percent. */
                 pct: number;
             };
-            /** @description Halt or resumption (empty = both). halt */
+        };
+        /**
+         * DividendAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        DividendAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description halt: see HaltAlertConditionInput for the condition and cross-field rules. Optional company filters follow the halt feed.
+         * @example {
+         *       "type": "halt",
+         *       "condition": {}
+         *     }
+         */
+        CreateHaltAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "halt";
+            condition: components["schemas"]["HaltAlertConditionInput"];
+            trigger?: components["schemas"]["HaltAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * HaltAlertConditionInput
+         * @description At most 100 of symbols + ciks in all.
+         */
+        HaltAlertConditionInput: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @description Halt or resumption (empty = both). */
             statuses?: Array<"halted" | "resumed">;
-            /** @description Only these halt reason codes. halt */
-            reason_codes?: Array<string>;
-            /** @description AND-combined metric thresholds. fundamental_metric */
-            rules?: Array<{
+            /** @description Codes of GET /v1/catalog/halt-reasons. */
+            reason_codes?: Array<"C3" | "C4" | "C9" | "C11" | "D" | "H4" | "H9" | "H10" | "H11" | "IPO1" | "IPOE" | "IPOQ" | "LUDP" | "LUDS" | "M1" | "M2" | "M" | "MWC0" | "MWC1" | "MWC2" | "MWC3" | "MWCQ" | "O1" | "R1" | "R2" | "R4" | "R9" | "T1" | "T2" | "T3" | "T5" | "T6" | "T7" | "T8" | "T12">;
+        };
+        /**
+         * HaltAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        HaltAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description fundamental_metric: see FundamentalMetricAlertConditionInput for the condition and cross-field rules. Named companies require processed financial coverage. US ETF subjects are refused; use a company subject.
+         * @example {
+         *       "type": "fundamental_metric",
+         *       "condition": {
+         *         "symbol": "AAPL",
+         *         "rules": [
+         *           {
+         *             "metric_id": "is_total_revenue",
+         *             "period_type": "quarterly",
+         *             "operator": "gt",
+         *             "value": "1000000"
+         *           }
+         *         ]
+         *       }
+         *     }
+         */
+        CreateFundamentalMetricAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "fundamental_metric";
+            condition: components["schemas"]["FundamentalMetricAlertConditionInput"];
+            trigger?: components["schemas"]["FundamentalMetricAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * FundamentalMetricAlertConditionInput
+         * @description Name exactly one company with cik or symbol. CAGR metric ids are not supported. Each metric_id + period_type pair can appear only once.
+         */
+        FundamentalMetricAlertConditionInput: {
+            /** @description The company by CIK. */
+            cik?: string;
+            /** @description The company by ticker. */
+            symbol?: string;
+            /** @description AND-combined metric thresholds. */
+            rules: Array<{
                 /** @description A metric id of GET /v1/catalog/metrics */
                 metric_id: string;
-                /** @enum {string} */
+                /**
+                 * @description The annual or quarterly period.
+                 * @enum {string}
+                 */
                 period_type: "annual" | "quarterly";
-                /** @enum {string} */
+                /**
+                 * @description The comparison operator.
+                 * @enum {string}
+                 */
                 operator: "equals" | "gt" | "lt" | "not_equals";
                 /** @description Decimal string (a decimal string) */
                 value: string;
             }>;
-            /** @description Results reports to fire on. earnings_results */
-            report_kinds?: Array<"final" | "preliminary">;
-            /** @description Year-over-year growth gates (signed percent). earnings_results */
-            yoy_rules?: Array<{
-                /** @enum {string} */
-                metric: "eps" | "revenue";
-                /** @enum {string} */
-                comparator: "above" | "below";
-                pct: number;
-            }>;
+        };
+        /**
+         * FundamentalMetricAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        FundamentalMetricAlertTriggerInput: {
             /**
-             * @description The event counted down to. event_countdown
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
              * @enum {string}
              */
-            event?: "dividend_payment" | "earnings_call" | "ex_dividend";
-            /** @description Days before (0 = on the day). event_countdown */
-            days_before?: number;
-            /** @description A ladder of days before. event_countdown */
-            offsets_days?: Array<number>;
-            /** @description Minutes before the call starts (event earnings_call only). event_countdown */
-            minutes_before?: number;
-            /** @description Local minute of the day the reminder fires (event_countdown: default 540 = 09:00). event_countdown, price_reminder */
-            time_of_day_minutes?: number;
-            /** @description IANA time zone (default America/New_York). event_countdown, price_reminder */
-            timezone?: string;
-            /** @description Tell when the event date moves (default true). event_countdown */
-            notify_on_date_change?: boolean;
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
             /**
-             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved. price, price_move, volume_spike, price_reminder, script, indicator
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description earnings_results: see EarningsResultsAlertConditionInput for the condition and cross-field rules. Named companies require processed financial coverage. US ETF subjects are refused; use a company subject.
+         * @example {
+         *       "type": "earnings_results",
+         *       "condition": {
+         *         "symbol": "AAPL",
+         *         "report_kinds": [
+         *           "final"
+         *         ]
+         *       }
+         *     }
+         */
+        CreateEarningsResultsAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "earnings_results";
+            condition: components["schemas"]["EarningsResultsAlertConditionInput"];
+            trigger?: components["schemas"]["EarningsResultsAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * EarningsResultsAlertConditionInput
+         * @description Name exactly one company with cik or symbol. Only one growth rule per metric.
+         */
+        EarningsResultsAlertConditionInput: {
+            /** @description The company by CIK. */
+            cik?: string;
+            /** @description The company by ticker. */
+            symbol?: string;
+            /** @description Results reports to fire on. */
+            report_kinds: Array<"final" | "preliminary">;
+            /** @description Year-over-year growth gates (signed percent). */
+            yoy_rules?: Array<{
+                /**
+                 * @description The measured metric.
+                 * @enum {string}
+                 */
+                metric: "eps" | "revenue";
+                /**
+                 * @description The growth comparison.
+                 * @enum {string}
+                 */
+                comparator: "above" | "below";
+                /** @description Year-over-year growth threshold in percent. */
+                pct: number;
+            }>;
+        };
+        /**
+         * EarningsResultsAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        EarningsResultsAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description event_countdown: see EventCountdownAlertConditionInput for the condition and cross-field rules. ETFs are accepted only for dividend countdowns, not earnings calls.
+         * @example {
+         *       "type": "event_countdown",
+         *       "condition": {
+         *         "symbol": "AAPL",
+         *         "event": "earnings_call",
+         *         "days_before": 1
+         *       }
+         *     }
+         */
+        CreateEventCountdownAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "event_countdown";
+            condition: components["schemas"]["EventCountdownAlertConditionInput"];
+            trigger?: components["schemas"]["EventCountdownAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * EventCountdownAlertConditionInput
+         * @description Name exactly one company with cik or symbol. minutes_before works with earnings_call only. minutes_before cannot combine with a multi-entry offsets_days ladder. days_before must be one of offsets_days.
+         */
+        EventCountdownAlertConditionInput: {
+            /** @description The company by CIK. */
+            cik?: string;
+            /** @description The company by ticker. */
+            symbol?: string;
+            /**
+             * @description The event counted down to.
+             * @enum {string}
+             */
+            event: "dividend_payment" | "earnings_call" | "ex_dividend";
+            /** @description Days before (0 = on the day). */
+            days_before: number;
+            /** @description A ladder of days before. */
+            offsets_days?: Array<number>;
+            /** @description Minutes before the call starts (event earnings_call only). */
+            minutes_before?: number;
+            /**
+             * @description Local minute of the day the reminder fires (event_countdown: default 540 = 09:00).
+             * @default 540
+             */
+            time_of_day_minutes?: number;
+            /**
+             * @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime.
+             * @default America/New_York
+             */
+            timezone?: string;
+            /** @description Tell when the event date moves (default true). */
+            notify_on_date_change?: boolean;
+        };
+        /**
+         * EventCountdownAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        EventCountdownAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description price: see PriceAlertConditionInput for the condition and cross-field rules. US stocks and ETFs, crypto and explicitly named commodities are accepted.
+         * @example {
+         *       "type": "price",
+         *       "condition": {
+         *         "symbol": "AAPL",
+         *         "operator": "crosses_above",
+         *         "level": 250
+         *       }
+         *     }
+         */
+        CreatePriceAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "price";
+            condition: components["schemas"]["PriceAlertConditionInput"];
+            trigger?: components["schemas"]["PriceAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * PriceAlertConditionInput
+         * @description The price alert condition.
+         */
+        PriceAlertConditionInput: {
+            /** @description Instrument: a US stock or ETF ticker, crypto slug or ticker, or commodity XAUUSD / XAGUSD. */
+            symbol: string;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved.
              * @enum {string}
              */
             asset_class?: "commodity" | "crypto" | "us_stock";
             /**
-             * @description `crosses_*` fire when the price crosses `level`; `above` / `below` also fire at once when the price is already on that side. price
+             * @description `crosses_*` fire when the price crosses `level`; `above` / `below` also fire at once when the price is already on that side.
              * @enum {string}
              */
-            operator?: "above" | "below" | "crosses" | "crosses_above" | "crosses_below";
-            /** @description The price level (> 0). price */
-            level?: number;
+            operator: "above" | "below" | "crosses" | "crosses_above" | "crosses_below";
+            /** @description The price level (> 0). */
+            level: number;
+        };
+        /**
+         * PriceAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        PriceAlertTriggerInput: {
             /**
-             * @description Which move fires. price_move
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
              * @enum {string}
              */
-            direction?: "both" | "down" | "up";
-            /** @description The move in percent of the baseline. price_move */
-            pct?: number;
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
             /**
-             * @description What the move is measured from (ignored with window_minutes); gap_open = the session open against the prior close, once per session. price_move
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+            /**
+             * @description When a crossed level arms again.
              * @enum {string}
              */
-            baseline?: "gap_open" | "intraday_open" | "prior_close" | "session_high" | "session_low";
-            /** @description Measure the move against the price this many minutes ago instead of the baseline. price_move */
+            rearm?: "auto" | "cross_back";
+            /** @description Hysteresis in percent. */
+            rearm_distance_pct?: number;
+        };
+        /**
+         * @description price_move: see PriceMoveAlertConditionInput for the condition and cross-field rules. US stocks and ETFs, crypto and explicitly named commodities are accepted.
+         * @example {
+         *       "type": "price_move",
+         *       "condition": {
+         *         "symbol": "AAPL",
+         *         "direction": "up",
+         *         "baseline": "prior_close",
+         *         "pct": 5
+         *       }
+         *     }
+         */
+        CreatePriceMoveAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "price_move";
+            condition: components["schemas"]["PriceMoveAlertConditionInput"];
+            trigger?: components["schemas"]["PriceMoveAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * PriceMoveAlertConditionInput
+         * @description gap_open does not take window_minutes.
+         */
+        PriceMoveAlertConditionInput: {
+            /** @description Instrument: a US stock or ETF ticker, crypto slug or ticker, or commodity XAUUSD / XAGUSD. */
+            symbol: string;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved.
+             * @enum {string}
+             */
+            asset_class?: "commodity" | "crypto" | "us_stock";
+            /**
+             * @description Which move fires.
+             * @enum {string}
+             */
+            direction: "both" | "down" | "up";
+            /** @description The move in percent of the baseline. */
+            pct: number;
+            /**
+             * @description What the move is measured from (ignored with window_minutes); gap_open = the session open against the prior close, once per session.
+             * @enum {string}
+             */
+            baseline: "gap_open" | "intraday_open" | "prior_close" | "session_high" | "session_low";
+            /** @description Measure the move against the price this many minutes ago instead of the baseline. */
             window_minutes?: number;
+        };
+        /**
+         * PriceMoveAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        PriceMoveAlertTriggerInput: {
             /**
-             * @description `relative` = a closed bar's volume ≥ multiple × its baseline; `absolute` = ≥ threshold; `session` = today's cumulative volume ≥ multiple × the 20-session average daily volume (US stocks). volume_spike
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
              * @enum {string}
              */
-            mode?: "absolute" | "relative" | "session";
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
             /**
-             * @description The bar evaluated at its close. volume_spike (1m, 5m, 15m, 30m, 1h, 1d, 1w, 1mo; every closed bar); script and indicator (1m, 5m, 15m, 30m, 1h, 4h, 1d, 1w, 1mo; the plan's shortest: LITE 1h, STANDARD 5m, PRO 1m)
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+            /**
+             * @description When a crossed level arms again.
              * @enum {string}
              */
-            interval?: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
-            /** @description Volume multiple of the baseline (relative / session). volume_spike */
+            rearm?: "auto" | "cross_back";
+            /** @description Hysteresis in percent. */
+            rearm_distance_pct?: number;
+        };
+        /**
+         * @description volume_spike: see VolumeSpikeAlertConditionInput for the condition and cross-field rules. US stocks and ETFs, crypto and explicitly named commodities are accepted.
+         * @example {
+         *       "type": "volume_spike",
+         *       "condition": {
+         *         "symbol": "AAPL",
+         *         "mode": "relative",
+         *         "interval": "1h",
+         *         "multiple": 3,
+         *         "lookback_bars": 20
+         *       }
+         *     }
+         */
+        CreateVolumeSpikeAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "volume_spike";
+            condition: components["schemas"]["VolumeSpikeAlertConditionInput"];
+            trigger?: components["schemas"]["VolumeSpikeAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * VolumeSpikeAlertConditionInput
+         * @description Absolute mode requires threshold and refuses multiple; other modes require multiple and refuse threshold. Session mode requires a US stock and refuses interval, lookback_bars, baseline_mode and price_direction. Non-session modes require interval and lookback_bars. rvol_slot uses 2–20 sessions; other baselines use 5–200 bars.
+         */
+        VolumeSpikeAlertConditionInput: {
+            /** @description Instrument: a US stock or ETF ticker, crypto slug or ticker, or commodity XAUUSD / XAGUSD. */
+            symbol: string;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved.
+             * @enum {string}
+             */
+            asset_class?: "commodity" | "crypto" | "us_stock";
+            /**
+             * @description `relative` = a closed bar's volume ≥ multiple × its baseline; `absolute` = ≥ threshold; `session` = today's cumulative volume ≥ multiple × the 20-session average daily volume (US stocks).
+             * @enum {string}
+             */
+            mode: "absolute" | "relative" | "session";
+            /**
+             * @description The bar interval evaluated at its close.
+             * @enum {string}
+             */
+            interval?: "1d" | "1h" | "1m" | "1mo" | "1w" | "5m" | "15m" | "30m";
+            /** @description Volume multiple of the baseline (relative / session). */
             multiple?: number;
-            /** @description Bar volume threshold, > 0 (absolute). volume_spike */
+            /** @description Bar volume threshold, > 0 (absolute). */
             threshold?: number;
-            /** @description Bars in the baseline, 5–200 (rvol_slot: sessions, 2–20). volume_spike */
+            /** @description Bars in the baseline, 5–200 (rvol_slot: sessions, 2–20). */
             lookback_bars?: number;
             /**
-             * @description The volume baseline: the mean or the median of the previous bars, or `rvol_slot` = the mean of the same time-of-day bar of earlier sessions (default flat_mean). volume_spike
+             * @description The volume baseline: the mean or the median of the previous bars, or `rvol_slot` = the mean of the same time-of-day bar of earlier sessions (default flat_mean).
              * @enum {string}
              */
             baseline_mode?: "flat_mean" | "median" | "rvol_slot";
             /**
-             * @description Only bars that closed up / down (default any). volume_spike
+             * @description Only bars that closed up / down (default any).
              * @enum {string}
              */
             price_direction?: "any" | "down" | "up";
-            /**
-             * @description price_reminder: when the reminder fires — once at `at`, on the hour, daily or weekly at `time_of_day_minutes`. script: when the script's alerts deliver — `once_per_bar_close` (default) at most once per alert id and closed bar, `once_per_bar` the same, `every_time` every evaluation, `once` the first evaluation only. indicator: the same (`once` = this alert's first fire only). With `evaluation` pre_close: one delivery per alert id and session (`every_time`: every signal of the pass; `once`: the first only). price_reminder, script, indicator
-             * @enum {string}
-             */
-            frequency?: "daily" | "every_time" | "hourly" | "once" | "once_per_bar" | "once_per_bar_close" | "weekly";
-            /** @description The instant of a `once` reminder (ISO 8601 date-time with offset, e.g. 2026-12-01T14:30:00Z). price_reminder */
-            at?: string;
-            /** @description Day of a weekly reminder, 0 = Sunday. price_reminder */
-            weekday?: number;
-            /** @description Several weekdays (0 = Sunday) of a daily / weekly reminder. price_reminder */
-            days?: Array<number>;
-            /** @description The script version evaluated (`scv_…`, status ok, of a script of this account). script */
-            script_version_id?: string;
-            /** @description Values for the script's declared inputs (checked against its manifest; absent = the defaults). script */
-            inputs?: {
-                [key: string]: unknown;
-            };
-            /** @description A script chain: what feeds each of the script's `input.externalSeries` inputs, by its input key (every such input must be bound; ≤ 4 `builtin_indicator`, ≤ 16 in the plan). script */
-            series_inputs?: {
-                [key: string]: components["schemas"]["ScriptSeriesInputInput"];
-            };
-            /** @description The producer scripts `script_output` series inputs read, producers before the nodes that read them (≤ 8 dependencies, ≤ 16,384 bytes with series_inputs). script */
-            nodes?: Array<components["schemas"]["ScriptNodeInput"]>;
-            /** @description Only these of the script's alerts (its version's `alert_ids`); empty = all. script */
-            alert_ids?: Array<string>;
-            evaluation?: components["schemas"]["ScriptEvaluationInput"];
-            template?: components["schemas"]["IndicatorTemplateRef"];
-            condition?: components["schemas"]["IndicatorConditionInput"];
-            filters?: components["schemas"]["IndicatorFiltersInput"];
-            /** @description Required release kinds for a macro alert */
-            macro_events?: Array<"macro.released" | "macro.revised">;
-            /** @description Optional economic dataset families */
-            macro_families?: Array<"gdp" | "inflation" | "labor" | "yield_curve">;
-            /** @description Optional public macro series identifiers */
-            macro_series_ids?: Array<"consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa">;
-            macro_threshold?: components["schemas"]["MacroThresholdInput"];
         };
         /**
-         * ScriptSeriesInputInput
-         * @description What feeds one `input.externalSeries` input of a script (a script chain), one value per bar on the alert's symbol, interval and bars; a value the producer does not give that bar reads NaN. (request form)
+         * VolumeSpikeAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
          */
-        ScriptSeriesInputInput: {
+        VolumeSpikeAlertTriggerInput: {
             /**
-             * @description What feeds the input every bar: `ohlc` a bar field, `builtin_indicator` a built-in indicator's series, `script_output` a plot of a node of `nodes`
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
              * @enum {string}
              */
-            kind: "builtin_indicator" | "ohlc" | "script_output";
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
             /**
-             * @description ohlc: the bar field (`hl2` = (high + low) / 2, `hlc3`, `ohlc4`, `hlcc4` = (high + low + 2 × close) / 4; no volume)
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+            /**
+             * @description When a crossed level arms again.
              * @enum {string}
              */
-            field?: "close" | "high" | "hl2" | "hlc3" | "hlcc4" | "low" | "ohlc4" | "open";
-            /** @description builtin_indicator: the built-in indicator (`rsi`, `sma`, `ema`, `macd`, `bb`, …; the indicator condition's ids) */
+            rearm?: "auto" | "cross_back";
+            /** @description Hysteresis in percent. */
+            rearm_distance_pct?: number;
+        };
+        /**
+         * @description price_reminder: see PriceReminderAlertConditionInput for the condition and cross-field rules. US stocks and ETFs, crypto and explicitly named commodities are accepted.
+         * @example {
+         *       "type": "price_reminder",
+         *       "condition": {
+         *         "symbol": "AAPL",
+         *         "frequency": "daily",
+         *         "time_of_day_minutes": 540,
+         *         "timezone": "America/New_York"
+         *       }
+         *     }
+         */
+        CreatePriceReminderAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "price_reminder";
+            condition: components["schemas"]["PriceReminderAlertConditionInput"];
+            trigger?: components["schemas"]["PriceReminderAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * PriceReminderAlertConditionInput
+         * @description Once frequency requires at and refuses time_of_day_minutes, weekday and days. at works with once only. Daily and weekly frequencies require time_of_day_minutes; weekly also requires weekday or days.
+         */
+        PriceReminderAlertConditionInput: {
+            /** @description Instrument: a US stock or ETF ticker, crypto slug or ticker, or commodity XAUUSD / XAGUSD. */
+            symbol: string;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved.
+             * @enum {string}
+             */
+            asset_class?: "commodity" | "crypto" | "us_stock";
+            /**
+             * @description When the reminder fires: once at at, on the hour, daily or weekly.
+             * @enum {string}
+             */
+            frequency: "daily" | "hourly" | "once" | "weekly";
+            /**
+             * Format: date-time
+             * @description The instant of a `once` reminder (ISO 8601 date-time with offset, e.g. 2026-12-01T14:30:00Z).
+             */
+            at?: string;
+            /** @description Local minute of the day the reminder fires. */
+            time_of_day_minutes?: number;
+            /** @description Day of a weekly reminder, 0 = Sunday. */
+            weekday?: number;
+            /** @description Several weekdays (0 = Sunday) of a daily / weekly reminder. */
+            days?: Array<number>;
+            /**
+             * @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime.
+             * @default America/New_York
+             */
+            timezone?: string;
+        };
+        /**
+         * PriceReminderAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        PriceReminderAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description indicator: see IndicatorAlertConditionInput for the condition and cross-field rules. US stocks and ETFs, crypto and explicitly named commodities are accepted.
+         * @example {
+         *       "type": "indicator",
+         *       "condition": {
+         *         "symbol": "AAPL",
+         *         "interval": "1h",
+         *         "template": {
+         *           "key": "rsi-cross"
+         *         }
+         *       }
+         *     }
+         */
+        CreateIndicatorAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "indicator";
+            condition: components["schemas"]["IndicatorAlertConditionInput"];
+            trigger?: components["schemas"]["IndicatorAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * IndicatorAlertConditionInput
+         * @description Give exactly one of template or condition. filters require condition.
+         */
+        IndicatorAlertConditionInput: {
+            /** @description Instrument: a US stock or ETF ticker, crypto slug or ticker, or commodity XAUUSD / XAGUSD. */
+            symbol: string;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved.
+             * @enum {string}
+             */
+            asset_class?: "commodity" | "crypto" | "us_stock";
+            /**
+             * @description The bar interval evaluated at its close (the plan's shortest: LITE 1h, STANDARD 5m, PRO 1m).
+             * @enum {string}
+             */
+            interval: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
+            /** @description A built-in template and its inputs. */
+            template?: components["schemas"]["IndicatorTemplateRef"];
+            /** @description A structured trigger comparison. */
+            condition?: components["schemas"]["IndicatorConditionInput"];
+            /** @description State comparisons that must hold when the trigger fires. */
+            filters?: components["schemas"]["IndicatorFiltersInput"];
+            /**
+             * @description When signals deliver; once, once per bar or close, or every evaluation. Pre-close evaluates once per session.
+             * @default once_per_bar_close
+             * @enum {string}
+             */
+            frequency?: "every_time" | "once" | "once_per_bar" | "once_per_bar_close";
+            /** @description Evaluate at bar close or before the session close. */
+            evaluation?: components["schemas"]["ScriptEvaluationInput"];
+        };
+        /**
+         * IndicatorConditionInput
+         * @description A structured trigger `lhs <comparator> rhs`, evaluated at each bar close. The crossings take any right side but a zone; `entering` / `exiting` only a rectangle zone (`indicator_id: rectangle`, `series_key: band`).
+         */
+        IndicatorConditionInput: {
+            /** @description The left operand. */
+            lhs: components["schemas"]["IndicatorOperandInput"];
+            /**
+             * @description The transition that fires
+             * @enum {string}
+             */
+            comparator: "crossing" | "crossing_down" | "crossing_up" | "entering" | "exiting";
+            /** @description The right operand. */
+            rhs: components["schemas"]["IndicatorOperandInput"];
+        };
+        /**
+         * IndicatorOperandInput
+         * @description One side of an indicator condition (invinite's chart-condition operand): an indicator series, a price field, volume, or a constant (`value`, right side only).
+         */
+        IndicatorOperandInput: {
+            /**
+             * @description What the operand reads
+             * @enum {string}
+             */
+            kind: "indicator" | "price" | "value" | "volume";
+            /** @description indicator: the built-in indicator (`rsi`, `sma`, `ema`, `macd`, `bb`, …; the chart's indicator ids) */
             indicator_id?: string;
-            /** @description builtin_indicator: which output series (`rsi`, `macd` / `signal` / `histogram`, `upper` / `basis` / `lower`, …) */
+            /** @description indicator: which output series (`rsi`, `macd` / `signal` / `histogram`, `upper` / `basis` / `lower`, …) */
             series_key?: string;
-            /** @description builtin_indicator: the indicator's parameters (`length`, `source`, …; absent = its defaults) */
+            /** @description indicator: the indicator's parameters (`length`, `source`, …; absent = its defaults) At most 50 parameters; parameter names are 1–100 characters. */
             params?: {
                 [key: string]: unknown;
             };
-            /** @description script_output: the `node_key` of the producing node */
-            node_key?: string;
-            /** @description script_output: the plot slot of the node's script version (its `manifest.plots[].slotId`) */
-            slot_id?: string;
+            /** @description indicator: the name used in the fire summary (default: id and parameters) */
+            label?: string;
+            /**
+             * @description The price field; last means close at bar close.
+             * @enum {string}
+             */
+            source?: "close" | "high" | "last" | "low" | "open";
+            /** @description The constant value (right operand only). */
+            value?: number;
         };
         /**
-         * ScriptNodeInput
-         * @description A producer script of a chain: evaluated on the alert's symbol, interval and bars before the scripts that read its plots. (request form)
+         * IndicatorFiltersInput
+         * @description State filters that gate the trigger (at most 4 comparisons in all, two levels).
          */
-        ScriptNodeInput: {
-            /** @description The node's name in this plan (unique, not `root`), named by `script_output` series inputs */
-            node_key: string;
-            /** @description The producer's script version (`scv_…`, status ok, of a script of this account) */
-            script_version_id: string;
-            /** @description Values for the producer's declared inputs (absent = the defaults) */
-            inputs?: {
-                [key: string]: unknown;
-            };
-            /** @description The producer's own `input.externalSeries` inputs (a built-in series, a bar field, or an earlier node's plot) */
-            series_inputs?: {
-                [key: string]: components["schemas"]["ScriptSeriesInputInput"];
-            };
+        IndicatorFiltersInput: {
+            /**
+             * @description group: how its leaves combine
+             * @enum {string}
+             */
+            op: "and" | "or";
+            /** @description group: its leaves */
+            children: Array<components["schemas"]["IndicatorFilterChildInput"]>;
+        };
+        /**
+         * IndicatorFilterChildInput
+         * @description A filter leaf or one nested group of leaves.
+         */
+        IndicatorFilterChildInput: {
+            /**
+             * @description What the operand reads
+             * @enum {string}
+             */
+            kind: "condition" | "group";
+            /** @description The state comparison. */
+            condition?: components["schemas"]["IndicatorFilterConditionInput"];
+            /**
+             * @description group: how its leaves combine
+             * @enum {string}
+             */
+            op?: "and" | "or";
+            /** @description group: its leaves */
+            children?: Array<components["schemas"]["IndicatorFilterLeafInput"]>;
+        };
+        /**
+         * IndicatorFilterConditionInput
+         * @description A state comparison that must hold on the trigger bar.
+         */
+        IndicatorFilterConditionInput: {
+            /** @description The left operand. */
+            lhs: components["schemas"]["IndicatorOperandInput"];
+            /**
+             * @description The state comparison
+             * @enum {string}
+             */
+            comparator: "greater_than" | "greater_than_or_equal" | "less_than" | "less_than_or_equal";
+            /** @description The right operand. */
+            rhs: components["schemas"]["IndicatorOperandInput"];
+            /**
+             * @description The bar interval evaluated at its close.
+             * @enum {string}
+             */
+            interval?: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
+        };
+        /**
+         * IndicatorFilterLeafInput
+         * @description One filter comparison.
+         */
+        IndicatorFilterLeafInput: {
+            /**
+             * @description What the operand reads
+             * @enum {string}
+             */
+            kind: "condition";
+            /** @description The state comparison. */
+            condition: components["schemas"]["IndicatorFilterConditionInput"];
         };
         /**
          * ScriptEvaluationInput
-         * @description When a script / indicator alert evaluates: `bar_close` (default) at each close of its interval, or `pre_close` — `offset_minutes` before the US session close (16:00 New York, 13:00 on a half day, never on a weekend or market holiday) on the still-forming bar of its interval. A pre_close alert delivers ONLY its pre-close evaluations (its closed bars still advance the script; their events are not delivered), at most once per session; the fire's `reason.details` carry `phase: "pre_close"`, `offset_minutes` and `session_close`. (request form)
+         * @description When a script / indicator alert evaluates: `bar_close` (default) at each close of its interval, or `pre_close` — `offset_minutes` before the US session close (16:00 New York, 13:00 on a half day, never on a weekend or market holiday) on the still-forming bar of its interval. A pre_close alert delivers ONLY its pre-close evaluations (its closed bars still advance the script; their events are not delivered), at most once per session; the fire's `reason.details` carry `phase: "pre_close"`, `offset_minutes` and `session_close`.
          */
         ScriptEvaluationInput: {
             /**
-             * @description `bar_close` at each bar close, `pre_close` before the session close
+             * @description When the alert evaluates.
              * @enum {string}
              */
             kind: "bar_close" | "pre_close";
@@ -10783,107 +14617,285 @@ export interface components {
             exchange?: "AMEX" | "BATS" | "CBOE" | "NASDAQ" | "NYSE" | "NYSEARCA" | "NYSEMKT";
         };
         /**
-         * IndicatorConditionInput
-         * @description A structured trigger `lhs <comparator> rhs`, evaluated at each bar close. The crossings take any right side but a zone; `entering` / `exiting` only a rectangle zone (`indicator_id: rectangle`, `series_key: band`). (request form)
+         * IndicatorAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
          */
-        IndicatorConditionInput: {
-            lhs: components["schemas"]["IndicatorOperandInput"];
+        IndicatorAlertTriggerInput: {
             /**
-             * @description The transition that fires
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
              * @enum {string}
              */
-            comparator: "crossing" | "crossing_down" | "crossing_up" | "entering" | "exiting";
-            rhs: components["schemas"]["IndicatorOperandInput"];
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+            /** @description Minimum bars between fires, counted like chartlang: the bar of a fire must start at least cooldown_bars × the interval after the bar of the last fire, so a night or a weekend counts as time (half a bar of slack: a calendar `1mo` / `1w` / `1d` bar shorter than the nominal interval still counts as a whole bar). */
+            cooldown_bars?: number;
         };
         /**
-         * IndicatorOperandInput
-         * @description One side of an indicator condition (invinite's chart-condition operand): an indicator series, a price field, volume, or a constant (`value`, right side only). (request form)
+         * @description script: see ScriptAlertConditionInput for the condition and cross-field rules. US stocks and ETFs, crypto and explicitly named commodities are accepted.
+         * @example {
+         *       "type": "script",
+         *       "condition": {
+         *         "symbol": "AAPL",
+         *         "script_version_id": "scv_01JQAA00000000000000000000",
+         *         "interval": "1h"
+         *       }
+         *     }
          */
-        IndicatorOperandInput: {
+        CreateScriptAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "script";
+            condition: components["schemas"]["ScriptAlertConditionInput"];
+            trigger?: components["schemas"]["ScriptAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * ScriptAlertConditionInput
+         * @description The script alert condition.
+         */
+        ScriptAlertConditionInput: {
+            /** @description The script version evaluated (`scv_…`, status ok, of a script of this account). */
+            script_version_id: string;
+            /** @description Instrument: a US stock or ETF ticker, crypto slug or ticker, or commodity XAUUSD / XAGUSD. */
+            symbol: string;
+            /**
+             * @description The instrument's market: `us_stock` (US stocks and ETFs), `crypto` (coins by CoinGecko slug or ticker) or `commodity` (`XAUUSD` / `XAGUSD`, only when named). Absent at create = a stock first, then a coin; stored resolved.
+             * @enum {string}
+             */
+            asset_class?: "commodity" | "crypto" | "us_stock";
+            /**
+             * @description The bar interval evaluated at its close (the plan's shortest: LITE 1h, STANDARD 5m, PRO 1m).
+             * @enum {string}
+             */
+            interval: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
+            /** @description Values for the script's declared inputs (checked against its manifest; absent = the defaults). At most 100 inputs. */
+            inputs?: {
+                [key: string]: unknown;
+            };
+            /** @description A script chain: what feeds each of the script's `input.externalSeries` inputs, by its input key (every such input must be bound; ≤ 4 `builtin_indicator`, ≤ 16 in the plan). At most 100 external series bindings. */
+            series_inputs?: {
+                [key: string]: components["schemas"]["ScriptSeriesInputInput"];
+            };
+            /** @description The producer scripts `script_output` series inputs read, producers before the nodes that read them (≤ 8 dependencies, ≤ 16,384 bytes with series_inputs). */
+            nodes?: Array<components["schemas"]["ScriptNodeInput"]>;
+            /** @description Only these of the script's alerts (its version's `alert_ids`); empty = all. */
+            alert_ids?: Array<string>;
+            /**
+             * @description When signals deliver; once, once per bar or close, or every evaluation. Pre-close evaluates once per session.
+             * @default once_per_bar_close
+             * @enum {string}
+             */
+            frequency?: "every_time" | "once" | "once_per_bar" | "once_per_bar_close";
+            /** @description Evaluate at bar close or before the session close. */
+            evaluation?: components["schemas"]["ScriptEvaluationInput"];
+        };
+        /**
+         * ScriptSeriesInputInput
+         * @description What feeds one `input.externalSeries` input of a script (a script chain), one value per bar on the alert's symbol, interval and bars; a value the producer does not give that bar reads NaN.
+         */
+        ScriptSeriesInputInput: {
             /**
              * @description What the operand reads
              * @enum {string}
              */
-            kind: "indicator" | "price" | "value" | "volume";
+            kind: "builtin_indicator" | "ohlc" | "script_output";
+            /**
+             * @description ohlc: the bar field (`hl2` = (high + low) / 2, `hlc3`, `ohlc4`, `hlcc4` = (high + low + 2 × close) / 4; no volume)
+             * @enum {string}
+             */
+            field?: "close" | "high" | "hl2" | "hlc3" | "hlcc4" | "low" | "ohlc4" | "open";
             /** @description indicator: the built-in indicator (`rsi`, `sma`, `ema`, `macd`, `bb`, …; the chart's indicator ids) */
             indicator_id?: string;
             /** @description indicator: which output series (`rsi`, `macd` / `signal` / `histogram`, `upper` / `basis` / `lower`, …) */
             series_key?: string;
-            /** @description indicator: the indicator's parameters (`length`, `source`, …; absent = its defaults) */
+            /** @description indicator: the indicator's parameters (`length`, `source`, …; absent = its defaults) At most 50 parameters; parameter names are 1–100 characters. */
             params?: {
                 [key: string]: unknown;
             };
-            /** @description indicator: the name used in the fire summary (default: id and parameters) */
-            label?: string;
-            /**
-             * @description price: the bar field (`last` = the close at bar close)
-             * @enum {string}
-             */
-            source?: "close" | "high" | "last" | "low" | "open";
-            /** @description value: the constant (right side only) */
-            value?: number;
+            /** @description script_output: the `node_key` of the producing node */
+            node_key?: string;
+            /** @description script_output: the plot slot of the node's script version (its `manifest.plots[].slotId`) */
+            slot_id?: string;
         };
         /**
-         * IndicatorFiltersInput
-         * @description State filters that gate the trigger (at most 4 comparisons in all, two levels). (request form)
+         * ScriptNodeInput
+         * @description A producer script of a chain: evaluated on the alert's symbol, interval and bars before the scripts that read its plots.
          */
-        IndicatorFiltersInput: {
-            /**
-             * @description How the children combine
-             * @enum {string}
-             */
-            op: "and" | "or";
-            /** @description Leaves and groups */
-            children: Array<components["schemas"]["IndicatorFilterChildInput"]>;
+        ScriptNodeInput: {
+            /** @description script_output: the `node_key` of the producing node */
+            node_key: string;
+            /** @description The script version evaluated (`scv_…`, status ok, of a script of this account). */
+            script_version_id: string;
+            /** @description Values for the script's declared inputs (checked against its manifest; absent = the defaults). At most 100 inputs. */
+            inputs?: {
+                [key: string]: unknown;
+            };
+            /** @description A script chain: what feeds each of the script's `input.externalSeries` inputs, by its input key (every such input must be bound; ≤ 4 `builtin_indicator`, ≤ 16 in the plan). At most 100 external series bindings. */
+            series_inputs?: {
+                [key: string]: components["schemas"]["ScriptSeriesInputInput"];
+            };
         };
         /**
-         * IndicatorFilterChildInput
-         * @description A filter leaf (`kind: condition` + `condition`) or one nested group (`kind: group` + `op` + `children` of leaves). (request form)
+         * ScriptAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
          */
-        IndicatorFilterChildInput: {
+        ScriptAlertTriggerInput: {
             /**
-             * @description A leaf or a group
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
              * @enum {string}
              */
-            kind: "condition" | "group";
-            condition?: components["schemas"]["IndicatorFilterConditionInput"];
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
             /**
-             * @description group: how its leaves combine
-             * @enum {string}
+             * Format: date-time
+             * @description The alert becomes `expired` then
              */
-            op?: "and" | "or";
-            /** @description group: its leaves */
-            children?: Array<components["schemas"]["IndicatorFilterLeafInput"]>;
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+            /** @description Minimum bars between fires, counted like chartlang: the bar of a fire must start at least cooldown_bars × the interval after the bar of the last fire, so a night or a weekend counts as time (half a bar of slack: a calendar `1mo` / `1w` / `1d` bar shorter than the nominal interval still counts as a whole bar). */
+            cooldown_bars?: number;
         };
         /**
-         * IndicatorFilterConditionInput
-         * @description A state comparison that must hold on the trigger bar. (request form)
+         * @description macro: see MacroAlertConditionInput for the condition and cross-field rules. No instrument subject; whole-economy observations.
+         * @example {
+         *       "type": "macro",
+         *       "condition": {
+         *         "macro_events": [
+         *           "macro.released"
+         *         ],
+         *         "macro_series_ids": [
+         *           "cpi_all_sa"
+         *         ]
+         *       }
+         *     }
          */
-        IndicatorFilterConditionInput: {
-            lhs: components["schemas"]["IndicatorOperandInput"];
+        CreateMacroAlertRequest: {
             /**
-             * @description The state comparison
+             * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
-            comparator: "greater_than" | "greater_than_or_equal" | "less_than" | "less_than_or_equal";
-            rhs: components["schemas"]["IndicatorOperandInput"];
-            /**
-             * @description Read on another timeframe of the same symbol (absent = the alert's interval)
-             * @enum {string}
-             */
-            interval?: "1d" | "1h" | "1m" | "1mo" | "1w" | "4h" | "5m" | "15m" | "30m";
+            type: "macro";
+            condition: components["schemas"]["MacroAlertConditionInput"];
+            trigger?: components["schemas"]["MacroAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
         };
         /**
-         * IndicatorFilterLeafInput
-         * @description One filter comparison. (request form)
+         * MacroAlertConditionInput
+         * @description Selected series must be within the selected families. The threshold series must be admitted by every filter. The threshold field must be supported by the selected series.
          */
-        IndicatorFilterLeafInput: {
-            /**
-             * @description Always `condition`
-             * @enum {string}
-             */
-            kind: "condition";
-            condition: components["schemas"]["IndicatorFilterConditionInput"];
+        MacroAlertConditionInput: {
+            /** @description Required release kinds for a macro alert */
+            macro_events: Array<"macro.released" | "macro.revised">;
+            /** @description Optional economic dataset families */
+            macro_families?: Array<"gdp" | "inflation" | "labor" | "yield_curve">;
+            /** @description Optional public macro series identifiers */
+            macro_series_ids?: Array<"consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa">;
+            /** @description Numeric comparison on one published economic series and period. */
+            macro_threshold?: components["schemas"]["MacroThresholdInput"];
         };
         /**
          * MacroThresholdInput
@@ -10896,23 +14908,311 @@ export interface components {
              */
             series_id: "consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa";
             /**
-             * @description Numeric field supported by the selected series
+             * @description Numeric field supported by the selected series.
              * @enum {string}
              */
             field: "change_1m_pct" | "change_12m_pct" | "change_prior" | "change_year" | "change_year_pct" | "value";
             /**
-             * @description Comparison operator
+             * @description The comparison operator.
              * @enum {string}
              */
             operator: "gt" | "gte" | "lt" | "lte";
-            /** @description Finite threshold in the selected field’s published unit */
+            /** @description Finite threshold in the selected field’s published unit. */
             value: number;
         };
         /**
-         * AlertTriggerInput
+         * MacroAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        MacroAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        UpdateFilingAlertRequest: {
+            /** @enum {string} */
+            type: "filing";
+            condition?: components["schemas"]["FilingAlertConditionInput"];
+            trigger?: components["schemas"]["FilingAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateFilingKeywordAlertRequest: {
+            /** @enum {string} */
+            type: "filing_keyword";
+            condition?: components["schemas"]["FilingKeywordAlertConditionInput"];
+            trigger?: components["schemas"]["FilingKeywordAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateNewsAlertRequest: {
+            /** @enum {string} */
+            type: "news";
+            condition?: components["schemas"]["NewsAlertConditionInput"];
+            trigger?: components["schemas"]["NewsAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateNewsKeywordAlertRequest: {
+            /** @enum {string} */
+            type: "news_keyword";
+            condition?: components["schemas"]["NewsKeywordAlertConditionInput"];
+            trigger?: components["schemas"]["NewsKeywordAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateEarningsCallAlertRequest: {
+            /** @enum {string} */
+            type: "earnings_call";
+            condition?: components["schemas"]["EarningsCallAlertConditionInput"];
+            trigger?: components["schemas"]["EarningsCallAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateEarningsCallKeywordAlertRequest: {
+            /** @enum {string} */
+            type: "earnings_call_keyword";
+            condition?: components["schemas"]["EarningsCallKeywordAlertConditionInput"];
+            trigger?: components["schemas"]["EarningsCallKeywordAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateDividendAlertRequest: {
+            /** @enum {string} */
+            type: "dividend";
+            condition?: components["schemas"]["DividendAlertConditionInput"];
+            trigger?: components["schemas"]["DividendAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateHaltAlertRequest: {
+            /** @enum {string} */
+            type: "halt";
+            condition?: components["schemas"]["HaltAlertConditionInput"];
+            trigger?: components["schemas"]["HaltAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateFundamentalMetricAlertRequest: {
+            /** @enum {string} */
+            type: "fundamental_metric";
+            condition?: components["schemas"]["FundamentalMetricAlertConditionInput"];
+            trigger?: components["schemas"]["FundamentalMetricAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateEarningsResultsAlertRequest: {
+            /** @enum {string} */
+            type: "earnings_results";
+            condition?: components["schemas"]["EarningsResultsAlertConditionInput"];
+            trigger?: components["schemas"]["EarningsResultsAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateEventCountdownAlertRequest: {
+            /** @enum {string} */
+            type: "event_countdown";
+            condition?: components["schemas"]["EventCountdownAlertConditionInput"];
+            trigger?: components["schemas"]["EventCountdownAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdatePriceAlertRequest: {
+            /** @enum {string} */
+            type: "price";
+            condition?: components["schemas"]["PriceAlertConditionInput"];
+            trigger?: components["schemas"]["PriceAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdatePriceMoveAlertRequest: {
+            /** @enum {string} */
+            type: "price_move";
+            condition?: components["schemas"]["PriceMoveAlertConditionInput"];
+            trigger?: components["schemas"]["PriceMoveAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateVolumeSpikeAlertRequest: {
+            /** @enum {string} */
+            type: "volume_spike";
+            condition?: components["schemas"]["VolumeSpikeAlertConditionInput"];
+            trigger?: components["schemas"]["VolumeSpikeAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdatePriceReminderAlertRequest: {
+            /** @enum {string} */
+            type: "price_reminder";
+            condition?: components["schemas"]["PriceReminderAlertConditionInput"];
+            trigger?: components["schemas"]["PriceReminderAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateIndicatorAlertRequest: {
+            /** @enum {string} */
+            type: "indicator";
+            condition?: components["schemas"]["IndicatorAlertConditionInput"];
+            trigger?: components["schemas"]["IndicatorAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateScriptAlertRequest: {
+            /** @enum {string} */
+            type: "script";
+            condition?: components["schemas"]["ScriptAlertConditionInput"];
+            trigger?: components["schemas"]["ScriptAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateMacroAlertRequest: {
+            /** @enum {string} */
+            type: "macro";
+            condition?: components["schemas"]["MacroAlertConditionInput"];
+            trigger?: components["schemas"]["MacroAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        AlertSettingsUpdateRequest: {
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+            trigger?: components["schemas"]["AlertTriggerUpdateInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * AlertTriggerUpdateInput
          * @description When the alert may fire (request form)
          */
-        AlertTriggerInput: {
+        AlertTriggerUpdateInput: {
             /**
              * @description `once` = the alert becomes `triggered` after its first fire (default every_time)
              * @enum {string}
@@ -10982,7 +15282,7 @@ export interface components {
              */
             result: "created" | "deleted" | "paused" | "resumed" | "unchanged" | "updated" | null;
             /** @description The alert after the item; null for delete and refusals */
-            alert: components["schemas"]["Alert"] | null;
+            alert: null | Omit<components["schemas"]["Alert"], "type">;
             /** @description Why the item was refused; null when ok */
             error: components["schemas"]["AlertBatchError"] | null;
         };
@@ -10994,47 +15294,2445 @@ export interface components {
             param: null | string;
             remedy: string;
         };
-        /**
-         * AlertBatchItem
-         * @description `create` / `upsert`: the create fields (`upsert` needs `client_reference_id`); `delete` / `pause` / `resume`: `id` or `client_reference_id`
-         */
-        AlertBatchItem: {
+        AlertBatchItem: components["schemas"]["AlertBatchActionItem"] | components["schemas"]["DividendAlertBatchWriteItem"] | components["schemas"]["EarningsCallAlertBatchWriteItem"] | components["schemas"]["EarningsCallKeywordAlertBatchWriteItem"] | components["schemas"]["EarningsResultsAlertBatchWriteItem"] | components["schemas"]["EventCountdownAlertBatchWriteItem"] | components["schemas"]["FilingAlertBatchWriteItem"] | components["schemas"]["FilingKeywordAlertBatchWriteItem"] | components["schemas"]["FundamentalMetricAlertBatchWriteItem"] | components["schemas"]["HaltAlertBatchWriteItem"] | components["schemas"]["IndicatorAlertBatchWriteItem"] | components["schemas"]["MacroAlertBatchWriteItem"] | components["schemas"]["NewsAlertBatchWriteItem"] | components["schemas"]["NewsKeywordAlertBatchWriteItem"] | components["schemas"]["PriceAlertBatchWriteItem"] | components["schemas"]["PriceMoveAlertBatchWriteItem"] | components["schemas"]["PriceReminderAlertBatchWriteItem"] | components["schemas"]["ScriptAlertBatchWriteItem"] | components["schemas"]["VolumeSpikeAlertBatchWriteItem"];
+        FilingAlertBatchWriteItem: {
             /** @enum {string} */
-            op: "create" | "delete" | "pause" | "resume" | "upsert";
-            /** @description The alert (delete / pause / resume) */
-            id?: string;
-            /** @description upsert: apply only to this version */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "filing";
+            condition: components["schemas"]["FilingAlertConditionInput"];
+            trigger?: components["schemas"]["FilingAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
             version?: number;
-            /** @enum {string} */
-            type?: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
-            condition?: components["schemas"]["AlertConditionInput"];
-            trigger?: components["schemas"]["AlertTriggerInput"];
-            /** @description Destination ids (≤ 10) */
-            destination_ids?: Array<string>;
-            /** @description Your id; a second create with it returns the live alert */
-            client_reference_id?: string;
-            /** @description Your end user's id (filters lists and events; 1–200 characters, not . or .., which no URL path can name) */
-            external_user_id?: string;
-            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
-            metadata?: {
-                [key: string]: unknown;
-            };
         };
+        FilingKeywordAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "filing_keyword";
+            condition: components["schemas"]["FilingKeywordAlertConditionInput"];
+            trigger?: components["schemas"]["FilingKeywordAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        NewsAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "news";
+            condition: components["schemas"]["NewsAlertConditionInput"];
+            trigger?: components["schemas"]["NewsAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        NewsKeywordAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "news_keyword";
+            condition: components["schemas"]["NewsKeywordAlertConditionInput"];
+            trigger?: components["schemas"]["NewsKeywordAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        EarningsCallAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "earnings_call";
+            condition: components["schemas"]["EarningsCallAlertConditionInput"];
+            trigger?: components["schemas"]["EarningsCallAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        EarningsCallKeywordAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "earnings_call_keyword";
+            condition: components["schemas"]["EarningsCallKeywordAlertConditionInput"];
+            trigger?: components["schemas"]["EarningsCallKeywordAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        DividendAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "dividend";
+            condition: components["schemas"]["DividendAlertConditionInput"];
+            trigger?: components["schemas"]["DividendAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        HaltAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "halt";
+            condition: components["schemas"]["HaltAlertConditionInput"];
+            trigger?: components["schemas"]["HaltAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        FundamentalMetricAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "fundamental_metric";
+            condition: components["schemas"]["FundamentalMetricAlertConditionInput"];
+            trigger?: components["schemas"]["FundamentalMetricAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        EarningsResultsAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "earnings_results";
+            condition: components["schemas"]["EarningsResultsAlertConditionInput"];
+            trigger?: components["schemas"]["EarningsResultsAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        EventCountdownAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "event_countdown";
+            condition: components["schemas"]["EventCountdownAlertConditionInput"];
+            trigger?: components["schemas"]["EventCountdownAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        PriceAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "price";
+            condition: components["schemas"]["PriceAlertConditionInput"];
+            trigger?: components["schemas"]["PriceAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        PriceMoveAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "price_move";
+            condition: components["schemas"]["PriceMoveAlertConditionInput"];
+            trigger?: components["schemas"]["PriceMoveAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        VolumeSpikeAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "volume_spike";
+            condition: components["schemas"]["VolumeSpikeAlertConditionInput"];
+            trigger?: components["schemas"]["VolumeSpikeAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        PriceReminderAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "price_reminder";
+            condition: components["schemas"]["PriceReminderAlertConditionInput"];
+            trigger?: components["schemas"]["PriceReminderAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        IndicatorAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "indicator";
+            condition: components["schemas"]["IndicatorAlertConditionInput"];
+            trigger?: components["schemas"]["IndicatorAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        ScriptAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "script";
+            condition: components["schemas"]["ScriptAlertConditionInput"];
+            trigger?: components["schemas"]["ScriptAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        MacroAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "macro";
+            condition: components["schemas"]["MacroAlertConditionInput"];
+            trigger?: components["schemas"]["MacroAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        AlertBatchActionItem: {
+            /** @enum {string} */
+            op: "delete" | "pause" | "resume";
+            /** @description The alert id. */
+            id?: string;
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+        };
+        AlertEvent: components["schemas"]["AccountFireCapReachedEvent"] | components["schemas"]["AlertFiredEvent"] | components["schemas"]["AlertStatusChangedEvent"] | components["schemas"]["AlertUserFireCapReachedEvent"] | components["schemas"]["DestinationDisabledEvent"] | components["schemas"]["DestinationTestEvent"];
         /** AlertEvent */
-        AlertEvent: {
+        AlertFiredEvent: {
             /** @description Event id (`evt_…`; the `webhook-id` of its deliveries) */
             id: string;
-            /** @enum {string} */
-            type: "account.fire_cap_reached" | "alert.fired" | "alert.status_changed" | "alert_user.fire_cap_reached" | "destination.disabled" | "destination.test";
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "alert.fired";
             /** @description Null for account events */
             alert_id: null | string;
             external_user_id: null | string;
             /** Format: date-time */
             occurred_at: string;
-            /** @description The event body as delivered (`data` of the webhook) */
-            payload: {
+            payload: components["schemas"]["AlertFiredData"];
+        };
+        AlertFiredData: components["schemas"]["DividendAlertFiredData"] | components["schemas"]["EarningsCallAlertFiredData"] | components["schemas"]["EarningsCallKeywordAlertFiredData"] | components["schemas"]["EarningsResultsAlertFiredData"] | components["schemas"]["EventCountdownAlertFiredData"] | components["schemas"]["FilingAlertFiredData"] | components["schemas"]["FilingKeywordAlertFiredData"] | components["schemas"]["FundamentalMetricAlertFiredData"] | components["schemas"]["HaltAlertFiredData"] | components["schemas"]["IndicatorAlertFiredData"] | components["schemas"]["MacroAlertFiredData"] | components["schemas"]["NewsAlertFiredData"] | components["schemas"]["NewsKeywordAlertFiredData"] | components["schemas"]["PriceAlertFiredData"] | components["schemas"]["PriceMoveAlertFiredData"] | components["schemas"]["PriceReminderAlertFiredData"] | components["schemas"]["ScriptAlertFiredData"] | components["schemas"]["VolumeSpikeAlertFiredData"];
+        /**
+         * FilingAlertFiredData
+         * @description A filing fire: its reason details follow FilingFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "filing",
+         *         "metadata": {},
+         *         "external_user_id": null,
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "details": {
+         *           "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000123/report.htm",
+         *           "stage": "detected",
+         *           "filed_at": "2026-11-13T23:09:36Z",
+         *           "form_type": "13F-HR",
+         *           "detected_by": "socket",
+         *           "company_name": "Example filer",
+         *           "accession_number": "0000320193-26-000123",
+         *           "period_of_report": "2026-09-30"
+         *         },
+         *         "summary": "Sanitized example filing fire."
+         *       },
+         *       "source": {
+         *         "key": "example-filing",
+         *         "kind": "filing.detected"
+         *       },
+         *       "subject": {
+         *         "cik": "0001772715",
+         *         "symbol": null
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-16T11:06:04.918Z",
+         *       "alert_type": "filing"
+         *     }
+         */
+        FilingAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "filing";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["FilingFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /** @description The alert, as created */
+        AlertFiredAlertRef: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description Alert type
+             * @enum {string}
+             */
+            type: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+            /** @description Your reference, as set on the alert */
+            client_reference_id: null | string;
+            /** @description Your end user, as set on the alert */
+            external_user_id: null | string;
+            /** @description Your metadata, as set on the alert */
+            metadata: null | {
                 [key: string]: unknown;
             };
+        };
+        /**
+         * FilingFireDetails
+         * @description Facts emitted by filing alerts, including historical optional fields.
+         */
+        FilingFireDetails: {
+            /** @description SEC accession number. */
+            accession_number: string;
+            /** @description SEC form type. */
+            form_type: null | string;
+            /**
+             * Format: date-time
+             * @description Filing date or timestamp.
+             */
+            filed_at: null | string;
+            /** @description Filing URL. */
+            url: null | string;
+            /** @description Detected or processed filing stage. */
+            stage: string;
+            /** @description Filer name supplied by the detected feed. */
+            company_name?: null | string;
+            /**
+             * Format: date
+             * @description Reported period on the detected filing.
+             */
+            period_of_report?: null | string;
+            /** @description Detected filing source. */
+            detected_by?: string;
+            /**
+             * Format: date
+             * @description Processed filing period end.
+             */
+            period_end?: null | string;
+            /** @description Processed filing fiscal year. */
+            fiscal_year?: null | number;
+            /** @description Processed filing fiscal quarter. */
+            fiscal_quarter?: null | number;
+            /** @description All symbols named by a processed filing. */
+            symbols?: Array<string>;
+        };
+        AlertFireSource: {
+            /** @description Source event kind. */
+            kind: string;
+            /** @description Stable upstream deduplication key. */
+            key: string;
+        };
+        AlertFireSubject: {
+            /** @description Ticker or instrument symbol; null when the source names only a CIK. */
+            symbol: null | string;
+            /** @description SEC filer CIK when known. */
+            cik?: null | string;
+            /** @description Instrument asset class. */
+            asset_class?: string;
+            /**
+             * Format: date-time
+             * @description The earnings call's conference date.
+             */
+            conference_date?: null | string;
+        };
+        /**
+         * FilingKeywordAlertFiredData
+         * @description A filing_keyword fire: its reason details follow FilingKeywordFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "alert_type": "filing_keyword",
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "filing_keyword",
+         *         "client_reference_id": "example-alert",
+         *         "external_user_id": null,
+         *         "metadata": {}
+         *       },
+         *       "fired_at": "2026-11-27T14:30:00.000Z",
+         *       "reason": {
+         *         "summary": "Example filing_keyword fire.",
+         *         "details": {
+         *           "accession_number": "0000320193-26-000123",
+         *           "form_type": "8-K",
+         *           "filed_at": "2026-11-27T14:30:00.000Z",
+         *           "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000123/report.htm",
+         *           "matched_keywords": [
+         *             "guidance"
+         *           ],
+         *           "snippet": "Example guidance statement.",
+         *           "match": "any",
+         *           "scope": "full"
+         *         }
+         *       },
+         *       "source": {
+         *         "kind": "filings.new",
+         *         "key": "example-filing_keyword"
+         *       },
+         *       "subject": {
+         *         "symbol": "AAPL",
+         *         "cik": "0000320193"
+         *       }
+         *     }
+         */
+        FilingKeywordAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "filing_keyword";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["FilingKeywordFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * FilingKeywordFireDetails
+         * @description Facts emitted by filing_keyword alerts, including historical optional fields.
+         */
+        FilingKeywordFireDetails: {
+            /** @description SEC accession number. */
+            accession_number: string;
+            /** @description SEC form type. */
+            form_type: string;
+            /**
+             * Format: date-time
+             * @description Filing date.
+             */
+            filed_at: string;
+            /** @description Filing URL. */
+            url: null | string;
+            /** @description Bounded matching filing snippet. */
+            snippet: null | string;
+            /** @description Keywords matched by the scanner. */
+            matched_keywords: Array<string>;
+            /** @description Whether any or all subscribed keywords were required. */
+            match: string;
+            /** @description The part of the document or article scanned. */
+            scope: string;
+        };
+        /**
+         * NewsAlertFiredData
+         * @description A news fire: its reason details follow NewsFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "news",
+         *         "metadata": {},
+         *         "external_user_id": null,
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "details": {
+         *           "url": "https://example.com/news",
+         *           "ciks": [
+         *             "0000080424"
+         *           ],
+         *           "kind": "other",
+         *           "title": "Example company announcement",
+         *           "source": {
+         *             "id": "example",
+         *             "host": "example.com",
+         *             "name": "Example publisher"
+         *           },
+         *           "news_id": "00000000-0000-4000-8000-000000000001",
+         *           "symbols": [
+         *             "PG"
+         *           ],
+         *           "published_at": "2026-11-16T12:00:00.000Z",
+         *           "is_earnings_news": false
+         *         },
+         *         "summary": "Sanitized example news fire."
+         *       },
+         *       "source": {
+         *         "key": "example-news",
+         *         "kind": "news.new"
+         *       },
+         *       "subject": {
+         *         "cik": "0000080424",
+         *         "symbol": "PG"
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-16T10:06:01.050Z",
+         *       "alert_type": "news"
+         *     }
+         */
+        NewsAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "news";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["NewsFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * NewsFireDetails
+         * @description Facts emitted by news alerts, including historical optional fields.
+         */
+        NewsFireDetails: {
+            /** @description News item id. */
+            news_id: string;
+            /** @description Published headline. */
+            title: string;
+            /** @description Source article URL. */
+            url: null | string;
+            /**
+             * Format: date-time
+             * @description Article publication time.
+             */
+            published_at: string;
+            /** @description News kind. */
+            kind: string;
+            source: {
+                /** @description Publisher id. */
+                id: string;
+                /** @description Publisher name. */
+                name: null | string;
+                /** @description Publisher host. */
+                host: null | string;
+            };
+            /** @description Whether the item is earnings news. */
+            is_earnings_news: boolean;
+            /** @description Symbols named by the news item. */
+            symbols: Array<string>;
+            /** @description CIKs named by the news item. */
+            ciks: Array<string>;
+        };
+        /**
+         * NewsKeywordAlertFiredData
+         * @description A news_keyword fire: its reason details follow NewsKeywordFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "news_keyword",
+         *         "metadata": {},
+         *         "external_user_id": "example-user",
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "details": {
+         *           "url": "https://example.com/news",
+         *           "kind": "other",
+         *           "match": "any",
+         *           "scope": "headline",
+         *           "title": "Example company announcement",
+         *           "source": {
+         *             "id": "example",
+         *             "host": "example.com",
+         *             "name": "Example publisher"
+         *           },
+         *           "news_id": "00000000-0000-4000-8000-000000000001",
+         *           "published_at": "2026-11-17T10:00:00.000Z",
+         *           "is_earnings_news": false,
+         *           "matched_keywords": [
+         *             "example-keyword-1"
+         *           ]
+         *         },
+         *         "summary": "Sanitized example news keyword fire."
+         *       },
+         *       "source": {
+         *         "key": "example-news_keyword",
+         *         "kind": "news.new"
+         *       },
+         *       "subject": {
+         *         "cik": "0001045810",
+         *         "symbol": "NVDA"
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-17T10:03:30.958Z",
+         *       "alert_type": "news_keyword"
+         *     }
+         */
+        NewsKeywordAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "news_keyword";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["NewsKeywordFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * NewsKeywordFireDetails
+         * @description Facts emitted by news_keyword alerts, including historical optional fields.
+         */
+        NewsKeywordFireDetails: {
+            /** @description News item id. */
+            news_id: string;
+            /** @description Published headline. */
+            title: string;
+            /** @description Source article URL. */
+            url: null | string;
+            /**
+             * Format: date-time
+             * @description Article publication time.
+             */
+            published_at: string;
+            /** @description News kind. */
+            kind: string;
+            source: {
+                /** @description Publisher id. */
+                id: string;
+                /** @description Publisher name. */
+                name: null | string;
+                /** @description Publisher host. */
+                host: null | string;
+            };
+            /** @description Whether the item is earnings news. */
+            is_earnings_news: boolean;
+            /** @description Keywords matched by the scanner. */
+            matched_keywords: Array<string>;
+            /** @description Whether any or all subscribed keywords were required. */
+            match: string;
+            /** @description The part of the document or article scanned. */
+            scope: string;
+            /** @description Bounded article summary; absent on older fires. */
+            description?: null | string;
+            /** @description Symbols named by the news item; absent on older fires. */
+            symbols?: Array<string>;
+            /** @description Earnings fiscal year when known. */
+            earnings_fiscal_year?: null | number;
+            /** @description Earnings fiscal quarter when known. */
+            earnings_fiscal_quarter?: null | number;
+        };
+        /**
+         * EarningsCallAlertFiredData
+         * @description A earnings_call fire: its reason details follow EarningsCallFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "alert_type": "earnings_call",
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "earnings_call",
+         *         "client_reference_id": "example-alert",
+         *         "external_user_id": null,
+         *         "metadata": {}
+         *       },
+         *       "fired_at": "2026-11-27T14:30:00.000Z",
+         *       "reason": {
+         *         "summary": "Example earnings_call fire.",
+         *         "details": {
+         *           "event": "started",
+         *           "conference_date": "2026-11-27T14:30:00.000Z",
+         *           "event_key": "example-call-started",
+         *           "fiscal_year": 2026,
+         *           "fiscal_quarter": 4,
+         *           "streaming_url": null,
+         *           "transitioned_at": "2026-11-27T14:30:00.000Z"
+         *         }
+         *       },
+         *       "source": {
+         *         "kind": "earnings_call.started",
+         *         "key": "example-earnings_call"
+         *       },
+         *       "subject": {
+         *         "symbol": "AAPL",
+         *         "cik": "0000320193"
+         *       }
+         *     }
+         */
+        EarningsCallAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "earnings_call";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["EarningsCallFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * EarningsCallFireDetails
+         * @description Facts emitted by earnings_call alerts, including historical optional fields.
+         */
+        EarningsCallFireDetails: {
+            /** @description Call lifecycle, guidance-flash or keyword-hit event. */
+            event: string;
+            /**
+             * Format: date-time
+             * @description Call conference date.
+             */
+            conference_date: null | string;
+            /** @description Stable source event key. */
+            event_key: string;
+            /** @description Call fiscal year. */
+            fiscal_year?: null | number;
+            /** @description Call fiscal quarter. */
+            fiscal_quarter?: null | number;
+            /** @description Call streaming URL. */
+            streaming_url?: null | string;
+            /**
+             * Format: date-time
+             * @description Lifecycle transition time.
+             */
+            transitioned_at?: null | string;
+            live_transcript?: null | {
+                /** @description Live transcript availability. */
+                available: boolean;
+                /** @description Transcript version. */
+                version: null | number;
+                /** @description Number of segments. */
+                segments: number;
+            };
+            /** @description Published transcript version. */
+            transcript_version?: null | number;
+            /**
+             * Format: date-time
+             * @description Conference date before rescheduling.
+             */
+            previous_conference_date?: null | string;
+            /** @description Reschedule reason. */
+            reason?: null | string;
+            /** @description Number of reschedules. */
+            reschedule_count?: number;
+            assets?: {
+                /** @description Audio availability. */
+                audio: boolean;
+                /** @description Slide availability. */
+                slides: boolean;
+                /** @description Press-release availability. */
+                press_release: boolean;
+            };
+            /** @description Document update scope. */
+            scope?: string;
+            /** @description Newly available investor documents. */
+            added?: Array<{
+                /** @description Document id. */
+                document_id: string;
+                /** @description Document table. */
+                table: string;
+                /** @description Document kind. */
+                kind: null | string;
+                /** @description Document section. */
+                section: null | string;
+                /** @description Document year. */
+                year: null | number;
+                /** @description Document period. */
+                period: null | string;
+                /** @description Document title. */
+                title: null | string;
+                /** @description Earnings event id. */
+                event_id: null | string;
+            }>;
+            guidance_flash?: {
+                /** @description Segment sequence. */
+                seq: number;
+                /** @description Flash revision. */
+                revision: number;
+                /** @description Printed metric. */
+                metric: string;
+                /** @description Normalized metric. */
+                metric_normalized: string;
+                /** @description Guidance period. */
+                period_label: string;
+                /** @description Range low. */
+                low: null | number;
+                /** @description Range high. */
+                high: null | number;
+                /** @description Point estimate. */
+                point: null | number;
+                /** @description Unit. */
+                unit: null | string;
+                /** @description Currency. */
+                currency: null | string;
+                /** @description Guidance sentence. */
+                source_sentence: string;
+                /** @description Sentence start milliseconds. */
+                start_ms: number;
+            };
+            /** @description Transcript layer. */
+            layer?: string;
+            /** @description Matched live keywords. */
+            keywords?: Array<string>;
+            /** @description Segment sequence. */
+            seq?: number;
+            /** @description Segment start milliseconds. */
+            start_ms?: number;
+            /** @description Segment end milliseconds. */
+            end_ms?: number;
+            /** @description Segment speaker label. */
+            speaker_label?: null | string;
+            /** @description Bounded matching segment text. */
+            text?: string;
+        };
+        /**
+         * EarningsCallKeywordAlertFiredData
+         * @description A earnings_call_keyword fire: its reason details follow EarningsCallKeywordFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "alert_type": "earnings_call_keyword",
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "earnings_call_keyword",
+         *         "client_reference_id": "example-alert",
+         *         "external_user_id": null,
+         *         "metadata": {}
+         *       },
+         *       "fired_at": "2026-11-27T14:30:00.000Z",
+         *       "reason": {
+         *         "summary": "Example earnings_call_keyword fire.",
+         *         "details": {
+         *           "conference_date": "2026-11-27T14:30:00.000Z",
+         *           "fiscal_year": 2026,
+         *           "fiscal_quarter": 4,
+         *           "matched_keywords": [
+         *             "growth"
+         *           ],
+         *           "snippet": "Example growth statement.",
+         *           "speaker": "Example speaker",
+         *           "mention_count": 1,
+         *           "quotes": [
+         *             {
+         *               "keyword": "growth",
+         *               "snippet": "Example growth statement.",
+         *               "count": 1,
+         *               "speaker": "Example speaker"
+         *             }
+         *           ],
+         *           "match": "any",
+         *           "scope": "full",
+         *           "event_key": "example-transcript-ready"
+         *         }
+         *       },
+         *       "source": {
+         *         "kind": "earnings_call.transcript_ready",
+         *         "key": "example-earnings_call_keyword"
+         *       },
+         *       "subject": {
+         *         "symbol": "AAPL",
+         *         "cik": "0000320193"
+         *       }
+         *     }
+         */
+        EarningsCallKeywordAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "earnings_call_keyword";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["EarningsCallKeywordFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * EarningsCallKeywordFireDetails
+         * @description Facts emitted by earnings_call_keyword alerts, including historical optional fields.
+         */
+        EarningsCallKeywordFireDetails: {
+            /**
+             * Format: date-time
+             * @description Call conference date.
+             */
+            conference_date: string;
+            /** @description Call fiscal year. */
+            fiscal_year: null | number;
+            /** @description Call fiscal quarter. */
+            fiscal_quarter: null | number;
+            /** @description Keywords matched by the scanner. */
+            matched_keywords: Array<string>;
+            /** @description Whether any or all subscribed keywords were required. */
+            match: string;
+            /** @description The part of the document or article scanned. */
+            scope: string;
+            /** @description Bounded matching transcript snippet. */
+            snippet: null | string;
+            /** @description Speaker of the first match. */
+            speaker: null | string;
+            /** @description Total matching mentions. */
+            mention_count: null | number;
+            /** @description Stable source event key. */
+            event_key: string;
+            /** @description Matched quotes and mention counts. */
+            quotes: Array<{
+                /** @description Matched keyword. */
+                keyword: string;
+                /** @description Matching quote. */
+                snippet: null | string;
+                /** @description Mention count. */
+                count: number;
+                /** @description Quote speaker. */
+                speaker: null | string;
+                /** @description Previous call mention count. */
+                prior_count?: number;
+            }>;
+        };
+        /**
+         * DividendAlertFiredData
+         * @description A dividend fire: its reason details follow DividendFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "alert_type": "dividend",
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "dividend",
+         *         "client_reference_id": "example-alert",
+         *         "external_user_id": null,
+         *         "metadata": {}
+         *       },
+         *       "fired_at": "2026-11-27T14:30:00.000Z",
+         *       "reason": {
+         *         "summary": "Example dividend fire.",
+         *         "details": {
+         *           "kind": "announced",
+         *           "symbol": "AAPL",
+         *           "ex_date": "2026-12-01",
+         *           "declaration_date": "2026-11-27",
+         *           "record_date": "2026-12-01",
+         *           "payment_date": "2026-12-15",
+         *           "cash_amount": 0.26,
+         *           "currency": "USD",
+         *           "frequency": 4,
+         *           "dividend_type": "CD",
+         *           "dividend_yield": 0.5
+         *         }
+         *       },
+         *       "source": {
+         *         "kind": "dividends.new",
+         *         "key": "example-dividend"
+         *       },
+         *       "subject": {
+         *         "symbol": "AAPL",
+         *         "cik": "0000320193"
+         *       }
+         *     }
+         */
+        DividendAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "dividend";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["DividendFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * DividendFireDetails
+         * @description Facts emitted by dividend alerts, including historical optional fields.
+         */
+        DividendFireDetails: {
+            /** @description Dividend source event kind. */
+            kind: string;
+            /** @description Dividend instrument symbol. */
+            symbol: string;
+            /**
+             * Format: date
+             * @description Ex-dividend date.
+             */
+            ex_date: string;
+            /**
+             * Format: date
+             * @description Declaration date.
+             */
+            declaration_date: null | string;
+            /**
+             * Format: date
+             * @description Record date.
+             */
+            record_date: null | string;
+            /**
+             * Format: date
+             * @description Payment date.
+             */
+            payment_date: null | string;
+            /** @description Cash dividend amount. */
+            cash_amount: null | number;
+            /** @description Dividend currency. */
+            currency: null | string;
+            /** @description Feed dividend frequency, a number or a label; null when unknown. */
+            frequency: unknown;
+            /** @description Dividend type code, usually listed in GET /v1/catalog/dividend-types. */
+            dividend_type: null | string;
+            /** @description Dividend yield. */
+            dividend_yield: null | number;
+            /** @description Percent change from the prior cash dividend. */
+            change_pct?: number;
+            /** @description Prior cash dividend amount. */
+            prior_cash_amount?: number;
+        };
+        /**
+         * HaltAlertFiredData
+         * @description A halt fire: its reason details follow HaltFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "halt",
+         *         "metadata": {},
+         *         "external_user_id": null,
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "details": {
+         *           "market": "Nasdaq",
+         *           "replay": true,
+         *           "status": "halted",
+         *           "halted_at": "2025-05-19T00:21:31-04:00",
+         *           "resumed_at": null,
+         *           "reason_code": "T1",
+         *           "reason_text": "Example halt explanation."
+         *         },
+         *         "summary": "Sanitized example halt fire."
+         *       },
+         *       "source": {
+         *         "key": "example-halt",
+         *         "kind": "halt.changed"
+         *       },
+         *       "subject": {
+         *         "cik": "0001084201",
+         *         "symbol": "SVA"
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-16T09:00:06.067Z",
+         *       "alert_type": "halt"
+         *     }
+         */
+        HaltAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "halt";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["HaltFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * HaltFireDetails
+         * @description Facts emitted by halt alerts, including historical optional fields.
+         */
+        HaltFireDetails: {
+            /** @description Halted or resumed state. */
+            status: string;
+            /** @description Feed reason code, usually listed in GET /v1/catalog/halt-reasons. */
+            reason_code: string;
+            /** @description Feed halt explanation. */
+            reason_text: string;
+            /** @description Feed market label. */
+            market: string;
+            /**
+             * Format: date-time
+             * @description Halt timestamp.
+             */
+            halted_at: string;
+            /**
+             * Format: date-time
+             * @description Resumption timestamp.
+             */
+            resumed_at: null | string;
+            /** @description Whether the halt was replayed. */
+            replay: boolean;
+        };
+        /**
+         * FundamentalMetricAlertFiredData
+         * @description A fundamental_metric fire: its reason details follow FundamentalMetricFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "alert_type": "fundamental_metric",
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "fundamental_metric",
+         *         "client_reference_id": "example-alert",
+         *         "external_user_id": null,
+         *         "metadata": {}
+         *       },
+         *       "fired_at": "2026-11-27T14:30:00.000Z",
+         *       "reason": {
+         *         "summary": "Example fundamental_metric fire.",
+         *         "details": {
+         *           "period_key": "2026Q4",
+         *           "metrics": [
+         *             {
+         *               "metric_id": "revenue",
+         *               "period_type": "quarterly",
+         *               "operator": "gt",
+         *               "value": "1000000",
+         *               "actual": 1100000,
+         *               "prior_actual": 900000
+         *             }
+         *           ]
+         *         }
+         *       },
+         *       "source": {
+         *         "kind": "financials.updated",
+         *         "key": "example-fundamental_metric"
+         *       },
+         *       "subject": {
+         *         "symbol": "AAPL",
+         *         "cik": "0000320193"
+         *       }
+         *     }
+         */
+        FundamentalMetricAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "fundamental_metric";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["FundamentalMetricFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * FundamentalMetricFireDetails
+         * @description Facts emitted by fundamental_metric alerts, including historical optional fields.
+         */
+        FundamentalMetricFireDetails: {
+            /** @description Evaluated filing or calendar period. */
+            period_key: string;
+            /** @description Per-rule current, threshold and prior values. */
+            metrics: Array<{
+                /** @description Standardized metric id. */
+                metric_id: string;
+                /** @description Annual or quarterly period. */
+                period_type: string;
+                /** @description Threshold comparison. */
+                operator: string;
+                /** @description Configured threshold. */
+                value: string;
+                /** @description Current measured value. */
+                actual: null | number;
+                /** @description Prior measured value. */
+                prior_actual: null | number;
+            }>;
+        };
+        /**
+         * EarningsResultsAlertFiredData
+         * @description A earnings_results fire: its reason details follow EarningsResultsFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "alert_type": "earnings_results",
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "earnings_results",
+         *         "client_reference_id": "example-alert",
+         *         "external_user_id": null,
+         *         "metadata": {}
+         *       },
+         *       "fired_at": "2026-11-27T14:30:00.000Z",
+         *       "reason": {
+         *         "summary": "Example earnings_results fire.",
+         *         "details": {
+         *           "fiscal_year": 2026,
+         *           "fiscal_quarter": 4,
+         *           "calendar_period": "2026Q4",
+         *           "report_kind": "final",
+         *           "revenue": 1100000,
+         *           "revenue_yoy_pct": 10,
+         *           "net_income": 100000,
+         *           "net_income_yoy_pct": 5,
+         *           "eps": 1.1,
+         *           "eps_yoy_pct": 10
+         *         }
+         *       },
+         *       "source": {
+         *         "kind": "financials.updated",
+         *         "key": "example-earnings_results"
+         *       },
+         *       "subject": {
+         *         "symbol": "AAPL",
+         *         "cik": "0000320193"
+         *       }
+         *     }
+         */
+        EarningsResultsAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "earnings_results";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["EarningsResultsFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * EarningsResultsFireDetails
+         * @description Facts emitted by earnings_results alerts, including historical optional fields.
+         */
+        EarningsResultsFireDetails: {
+            /** @description Reported fiscal year. */
+            fiscal_year: null | number;
+            /** @description Reported fiscal quarter. */
+            fiscal_quarter: null | number;
+            /** @description Reported calendar quarter. */
+            calendar_period: string;
+            /** @description Preliminary or final report. */
+            report_kind: string;
+            /** @description Reported revenue. */
+            revenue: null | number;
+            /** @description Revenue year-over-year percent change. */
+            revenue_yoy_pct: null | number;
+            /** @description Reported net income. */
+            net_income: null | number;
+            /** @description Net-income year-over-year percent change. */
+            net_income_yoy_pct: null | number;
+            /** @description Reported EPS. */
+            eps: null | number;
+            /** @description EPS year-over-year percent change. */
+            eps_yoy_pct: null | number;
+        };
+        /**
+         * EventCountdownAlertFiredData
+         * @description A event_countdown fire: its reason details follow EventCountdownFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "alert_type": "event_countdown",
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "event_countdown",
+         *         "client_reference_id": "example-alert",
+         *         "external_user_id": null,
+         *         "metadata": {}
+         *       },
+         *       "fired_at": "2026-11-27T14:30:00.000Z",
+         *       "reason": {
+         *         "summary": "Example event_countdown fire.",
+         *         "details": {
+         *           "kind": "countdown",
+         *           "event": "earnings_call",
+         *           "event_date": "2026-12-01",
+         *           "event_at": null,
+         *           "days_before": 1,
+         *           "minutes_before": null
+         *         }
+         *       },
+         *       "source": {
+         *         "kind": "event_countdown",
+         *         "key": "example-event_countdown"
+         *       },
+         *       "subject": {
+         *         "symbol": "AAPL",
+         *         "cik": "0000320193"
+         *       }
+         *     }
+         */
+        EventCountdownAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "event_countdown";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["EventCountdownFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * EventCountdownFireDetails
+         * @description Facts emitted by event_countdown alerts, including historical optional fields.
+         */
+        EventCountdownFireDetails: {
+            /** @description Countdown rung or date_changed notice. */
+            kind: string;
+            /** @description Underlying calendar event kind. */
+            event: string;
+            /**
+             * Format: date
+             * @description Current scheduled date.
+             */
+            event_date: string;
+            /**
+             * Format: date-time
+             * @description Scheduled instant when known.
+             */
+            event_at?: null | string;
+            /** @description Countdown days before. */
+            days_before?: null | number;
+            /** @description Countdown minutes before. */
+            minutes_before?: null | number;
+            /**
+             * Format: date
+             * @description Previous scheduled date.
+             */
+            previous_event_date?: string;
+        };
+        /**
+         * PriceAlertFiredData
+         * @description A price fire: its reason details follow PriceFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "price",
+         *         "metadata": {},
+         *         "external_user_id": "example-user",
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "details": {
+         *           "level": 447.8590365160738,
+         *           "operator": "crosses",
+         *           "tick_time": "2026-11-20T22:39:57.117Z",
+         *           "trigger_price": 392.747,
+         *           "previous_price": 535.07
+         *         },
+         *         "summary": "Sanitized example price fire."
+         *       },
+         *       "source": {
+         *         "key": "example-price",
+         *         "kind": "market.ticks.delta"
+         *       },
+         *       "subject": {
+         *         "symbol": "MSFT",
+         *         "asset_class": "us_stock"
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-20T22:39:57.120Z",
+         *       "alert_type": "price"
+         *     }
+         */
+        PriceAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "price";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["PriceFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * PriceFireDetails
+         * @description Facts emitted by price alerts, including historical optional fields.
+         */
+        PriceFireDetails: {
+            /** @description The price leg or volume mode that fired. */
+            operator: string;
+            /** @description The crossed level, absent for a gap-open comparison. */
+            level: null | number;
+            /** @description Observed price that triggered the alert. */
+            trigger_price: number;
+            /** @description Previous observation, when available. */
+            previous_price: null | number;
+            /**
+             * Format: date-time
+             * @description Observation timestamp.
+             */
+            tick_time: string;
+            /**
+             * Format: date-time
+             * @description Recovered bar timestamp.
+             */
+            bar_time?: string;
+            /** @description Observation replayed after a restart. */
+            recovered?: boolean;
+        };
+        /**
+         * PriceMoveAlertFiredData
+         * @description A price_move fire: its reason details follow PriceMoveFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "price_move",
+         *         "metadata": {},
+         *         "external_user_id": null,
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "details": {
+         *           "pct": 0.1,
+         *           "level": null,
+         *           "baseline": "window",
+         *           "operator": "move_down",
+         *           "tick_time": "2026-11-16T12:14:33.425Z",
+         *           "percent_moved": -0.210320154,
+         *           "trigger_price": 1793.48,
+         *           "baseline_price": null,
+         *           "previous_price": null,
+         *           "window_minutes": 5
+         *         },
+         *         "summary": "Sanitized example price move fire."
+         *       },
+         *       "source": {
+         *         "key": "example-price_move",
+         *         "kind": "crypto.ticks.delta"
+         *       },
+         *       "subject": {
+         *         "symbol": "ethereum",
+         *         "asset_class": "crypto"
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-16T12:14:33.428Z",
+         *       "alert_type": "price_move"
+         *     }
+         */
+        PriceMoveAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "price_move";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["PriceMoveFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * PriceMoveFireDetails
+         * @description Facts emitted by price_move alerts, including historical optional fields.
+         */
+        PriceMoveFireDetails: {
+            /** @description The price leg or volume mode that fired. */
+            operator: string;
+            /** @description The crossed level, absent for a gap-open comparison. */
+            level: null | number;
+            /** @description Observed price; null when unavailable during recovery. */
+            trigger_price: null | number;
+            /** @description Previous observation, when available. */
+            previous_price: null | number;
+            /**
+             * Format: date-time
+             * @description Observation timestamp.
+             */
+            tick_time: string;
+            /**
+             * Format: date-time
+             * @description Recovered bar timestamp.
+             */
+            bar_time?: string;
+            /** @description Observation replayed after a restart. */
+            recovered?: boolean;
+            /** @description Configured move percentage. */
+            pct: number;
+            /** @description Configured comparison baseline. */
+            baseline: string;
+            /** @description Comparison baseline price. */
+            baseline_price: null | number;
+            /** @description Measured percentage move. */
+            percent_moved: number;
+            /** @description Rolling comparison window. */
+            window_minutes?: null | number;
+        };
+        /**
+         * VolumeSpikeAlertFiredData
+         * @description A volume_spike fire: its reason details follow VolumeSpikeFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "volume_spike",
+         *         "metadata": {},
+         *         "external_user_id": null,
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "details": {
+         *           "ratio": 1.122934260495604,
+         *           "bar_time": "2026-11-17T16:38:00.000Z",
+         *           "interval": "1m",
+         *           "multiple": 1.1,
+         *           "operator": "relative",
+         *           "threshold": null,
+         *           "tick_time": "2026-11-17T16:38:00.000Z",
+         *           "bar_volume": 51805,
+         *           "baseline_mode": "flat_mean",
+         *           "trigger_price": 351.4,
+         *           "previous_price": 351.9658,
+         *           "baseline_volume": 46133.6
+         *         },
+         *         "summary": "Sanitized example volume spike fire."
+         *       },
+         *       "source": {
+         *         "key": "example-volume_spike",
+         *         "kind": "bar.1m"
+         *       },
+         *       "subject": {
+         *         "symbol": "AAPL",
+         *         "asset_class": "us_stock"
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-17T16:39:03.330Z",
+         *       "alert_type": "volume_spike"
+         *     }
+         */
+        VolumeSpikeAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "volume_spike";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["VolumeSpikeFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * VolumeSpikeFireDetails
+         * @description Facts emitted by volume_spike alerts, including historical optional fields.
+         */
+        VolumeSpikeFireDetails: {
+            /** @description The price leg or volume mode that fired. */
+            operator: string;
+            /**
+             * Format: date-time
+             * @description Observation timestamp.
+             */
+            tick_time: string;
+            /** @description Observation replayed after a restart. */
+            recovered?: boolean;
+            /** @description Session crossed volume level. */
+            level?: null | number;
+            /** @description Bar closing price. */
+            trigger_price?: number;
+            /** @description Bar opening price. */
+            previous_price?: null | number;
+            /** @description Configured baseline multiple. */
+            multiple: null | number;
+            /** @description Configured absolute volume threshold. */
+            threshold?: null | number;
+            /** @description Average daily shares traded. */
+            average_daily_volume?: null | number;
+            /** @description Cumulative session volume. */
+            session_volume?: null | number;
+            /** @description Previous session observation. */
+            previous_session_volume?: null | number;
+            /** @description Volume bar interval. */
+            interval?: string;
+            /**
+             * Format: date-time
+             * @description Volume bar timestamp.
+             */
+            bar_time?: string;
+            /** @description Observed bar volume. */
+            bar_volume?: number;
+            /** @description Baseline bar volume. */
+            baseline_volume?: number;
+            /** @description Baseline calculation mode. */
+            baseline_mode?: string;
+            /** @description Measured baseline multiple. */
+            ratio?: number;
+        };
+        /**
+         * PriceReminderAlertFiredData
+         * @description A price_reminder fire: its reason details follow PriceReminderFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "price_reminder",
+         *         "metadata": {},
+         *         "external_user_id": "example-user",
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "details": {
+         *           "price": 352.28,
+         *           "stale": false,
+         *           "frequency": "daily",
+         *           "price_time": "2026-11-17T10:13:02.154Z",
+         *           "scheduled_at": "2026-11-17T10:13:00.000Z"
+         *         },
+         *         "summary": "Sanitized example price reminder fire."
+         *       },
+         *       "source": {
+         *         "key": "example-price_reminder",
+         *         "kind": "price_reminder"
+         *       },
+         *       "subject": {
+         *         "cik": "0000320193",
+         *         "symbol": "AAPL",
+         *         "asset_class": "us_stock"
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-17T10:13:02.586Z",
+         *       "alert_type": "price_reminder"
+         *     }
+         */
+        PriceReminderAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "price_reminder";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["PriceReminderFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * PriceReminderFireDetails
+         * @description Facts emitted by price_reminder alerts, including historical optional fields.
+         */
+        PriceReminderFireDetails: {
+            /** @description Reminder frequency. */
+            frequency: string;
+            /**
+             * Format: date-time
+             * @description Scheduled reminder instant.
+             */
+            scheduled_at: string;
+            /** @description Latest observed price. */
+            price: null | number;
+            /**
+             * Format: date-time
+             * @description Latest observed price time.
+             */
+            price_time: null | string;
+            /** @description Whether the latest observation is stale. */
+            stale: boolean;
+        };
+        /**
+         * IndicatorAlertFiredData
+         * @description A indicator fire: its reason details follow IndicatorFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "indicator",
+         *         "metadata": {},
+         *         "external_user_id": "example-user",
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "details": {
+         *           "id": "example-signal",
+         *           "kind": "signal",
+         *           "meta": {},
+         *           "bar_time": "2026-11-18T05:00:00.000Z",
+         *           "interval": "1d",
+         *           "severity": "info",
+         *           "frequency": "once_per_bar_close",
+         *           "script_version_id": "scv_01JD2Q4X7Y8Z9A0B1C2D3E4F5G"
+         *         },
+         *         "summary": "Sanitized example indicator fire."
+         *       },
+         *       "source": {
+         *         "key": "example-indicator",
+         *         "kind": "indicator"
+         *       },
+         *       "subject": {
+         *         "symbol": "MSFT",
+         *         "asset_class": "us_stock"
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-19T01:00:00.000Z",
+         *       "alert_type": "indicator"
+         *     }
+         */
+        IndicatorAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "indicator";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["IndicatorFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * IndicatorFireDetails
+         * @description Facts emitted by indicator alerts, including historical optional fields.
+         */
+        IndicatorFireDetails: {
+            /**
+             * Format: date-time
+             * @description Bar timestamp; a pre-close fire uses the forming bar.
+             */
+            bar_time: string;
+            /** @description Bar interval. */
+            interval: string;
+            /** @description Evaluated script version id. */
+            script_version_id: string;
+            /** @description Alert evaluation frequency. */
+            frequency: string;
+            /** @description Bar replayed after a restart. */
+            recovered?: boolean;
+            /** @description Pre-close evaluation phase. */
+            phase?: string;
+            /** @description Minutes before the session close. */
+            offset_minutes?: number;
+            /**
+             * Format: date-time
+             * @description Session close timestamp.
+             */
+            session_close?: string;
+            /** @description Script event kind. */
+            kind?: string;
+            /** @description Script event id. */
+            id?: string;
+            /** @description Optional script event title. */
+            title?: string;
+            /** @description Optional script severity. */
+            severity?: string;
+            /** @description User-defined script event metadata. */
+            meta?: null | {
+                [key: string]: unknown;
+            };
+            /** @description Shared indicator threshold comparator. */
+            comparator?: string;
+            /** @description Shared indicator threshold. */
+            threshold?: number;
+            /** @description Current shared indicator probe value. */
+            value?: number;
+            /** @description Previous shared indicator probe value. */
+            previous_value?: number;
+        };
+        /**
+         * ScriptAlertFiredData
+         * @description A script fire: its reason details follow ScriptFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "script",
+         *         "metadata": {},
+         *         "external_user_id": "example-user",
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "details": {
+         *           "id": "example-signal",
+         *           "kind": "signal",
+         *           "meta": {},
+         *           "bar_time": "2026-11-17T20:52:00.000Z",
+         *           "interval": "1m",
+         *           "severity": "info",
+         *           "frequency": "once_per_bar_close",
+         *           "script_version_id": "scv_01JD2Q4X7Y8Z9A0B1C2D3E4F5G"
+         *         },
+         *         "summary": "Sanitized example script fire."
+         *       },
+         *       "source": {
+         *         "key": "example-script",
+         *         "kind": "script"
+         *       },
+         *       "subject": {
+         *         "symbol": "bitcoin",
+         *         "asset_class": "crypto"
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-17T20:53:00.000Z",
+         *       "alert_type": "script"
+         *     }
+         */
+        ScriptAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "script";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["ScriptFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * ScriptFireDetails
+         * @description Facts emitted by script alerts, including historical optional fields.
+         */
+        ScriptFireDetails: {
+            /**
+             * Format: date-time
+             * @description Bar timestamp; a pre-close fire uses the forming bar.
+             */
+            bar_time: string;
+            /** @description Bar interval. */
+            interval: string;
+            /** @description Evaluated script version id. */
+            script_version_id: string;
+            /** @description Alert evaluation frequency. */
+            frequency: string;
+            /** @description Bar replayed after a restart. */
+            recovered?: boolean;
+            /** @description Pre-close evaluation phase. */
+            phase?: string;
+            /** @description Minutes before the session close. */
+            offset_minutes?: number;
+            /**
+             * Format: date-time
+             * @description Session close timestamp.
+             */
+            session_close?: string;
+            /** @description Script event kind. */
+            kind?: string;
+            /** @description Script event id. */
+            id?: string;
+            /** @description Optional script event title. */
+            title?: string;
+            /** @description Optional script severity. */
+            severity?: string;
+            /** @description User-defined script event metadata. */
+            meta?: null | {
+                [key: string]: unknown;
+            };
+            /** @description Shared indicator threshold comparator. */
+            comparator?: string;
+            /** @description Shared indicator threshold. */
+            threshold?: number;
+            /** @description Current shared indicator probe value. */
+            value?: number;
+            /** @description Previous shared indicator probe value. */
+            previous_value?: number;
+        };
+        /**
+         * MacroAlertFiredData
+         * @description A macro fire: its reason details follow MacroFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "alert_type": "macro",
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "macro",
+         *         "client_reference_id": "example-alert",
+         *         "external_user_id": null,
+         *         "metadata": {}
+         *       },
+         *       "fired_at": "2026-11-27T14:30:00.000Z",
+         *       "reason": {
+         *         "summary": "Example macro fire.",
+         *         "details": {
+         *           "source_event_id": "macro_example",
+         *           "source_event_type": "macro.released",
+         *           "release_id": "treasury:nominal-par:2026-11-26",
+         *           "version": 1,
+         *           "matched_count": 1,
+         *           "matches": [
+         *             {
+         *               "series_id": "treasury_par_y10",
+         *               "reference_date": "2026-11-26",
+         *               "field": "value",
+         *               "value": 4.1,
+         *               "unit": "percent",
+         *               "operator": "gt",
+         *               "threshold": 4
+         *             }
+         *           ],
+         *           "affected": []
+         *         }
+         *       },
+         *       "source": {
+         *         "kind": "macro.released",
+         *         "key": "example-macro"
+         *       }
+         *     }
+         */
+        MacroAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "macro";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["MacroFireDetails"];
+            };
+            source: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+        };
+        /**
+         * MacroFireDetails
+         * @description Facts emitted by macro alerts, including historical optional fields.
+         */
+        MacroFireDetails: {
+            /** @description Shared upstream macro event id. */
+            source_event_id: string;
+            /**
+             * @description Official macro release or revision.
+             * @enum {string}
+             */
+            source_event_type: "macro.released" | "macro.revised";
+            /** @description Official macro release id. */
+            release_id: string;
+            version: number;
+            matched_count: number;
+            /** @description Bounded matching observations. */
+            matches: Array<{
+                /**
+                 * @description Stable macro series id.
+                 * @enum {string}
+                 */
+                series_id: "consumer_spending_contribution" | "continued_claims_4_week_sa" | "continued_claims_nsa" | "continued_claims_sa" | "corporate_profits" | "cpi_all_nsa" | "cpi_all_sa" | "cpi_core_nsa" | "cpi_core_sa" | "cpi_energy_nsa" | "cpi_energy_sa" | "cpi_food_nsa" | "cpi_food_sa" | "cpi_services_less_energy_nsa" | "cpi_services_less_energy_sa" | "cpi_shelter_nsa" | "cpi_shelter_sa" | "government_contribution" | "hires_nsa" | "hires_sa" | "hourly_earnings_nsa" | "hourly_earnings_sa" | "initial_claims_4_week_sa" | "initial_claims_nsa" | "initial_claims_sa" | "insured_unemployment_rate_nsa" | "insured_unemployment_rate_sa" | "investment_contribution" | "job_openings_nsa" | "job_openings_sa" | "net_exports_contribution" | "nominal_gdp" | "participation_rate_nsa" | "participation_rate_sa" | "payrolls_nsa" | "payrolls_sa" | "pce_all_sa" | "pce_core_sa" | "personal_income" | "quits_nsa" | "quits_sa" | "real_consumer_spending" | "real_gdi_growth" | "real_gdp" | "real_gdp_growth" | "saving_rate" | "treasury_par_m1" | "treasury_par_m1_5" | "treasury_par_m2" | "treasury_par_m3" | "treasury_par_m4" | "treasury_par_m6" | "treasury_par_y1" | "treasury_par_y2" | "treasury_par_y3" | "treasury_par_y5" | "treasury_par_y7" | "treasury_par_y10" | "treasury_par_y20" | "treasury_par_y30" | "unemployment_rate_nsa" | "unemployment_rate_sa" | "unemployment_rate_u6_nsa" | "unemployment_rate_u6_sa";
+                /**
+                 * Format: date
+                 * @description Observation reference date.
+                 */
+                reference_date: string;
+                /**
+                 * @description Compared observation field.
+                 * @enum {string}
+                 */
+                field: "change_1m_pct" | "change_12m_pct" | "change_prior" | "change_year" | "change_year_pct" | "value";
+                /** @description Measured value. */
+                value: null | number;
+                /** @description Measurement unit. */
+                unit: string;
+                /**
+                 * @description Threshold comparison.
+                 * @enum {string}
+                 */
+                operator?: "gt" | "gte" | "lt" | "lte";
+                /** @description Configured threshold. */
+                threshold?: number;
+            }>;
+            /** @description Affected spans and current REST history links. */
+            affected: Array<{
+                /** @description Affected macro series. */
+                series_id: string;
+                /**
+                 * Format: date
+                 * @description First affected reference date.
+                 */
+                first_reference_date: string;
+                /**
+                 * Format: date
+                 * @description Last affected reference date.
+                 */
+                last_reference_date: string;
+                /** @description REST history URL. */
+                history_url: string;
+            }>;
+        };
+        /** AlertEvent */
+        AlertStatusChangedEvent: {
+            /** @description Event id (`evt_…`; the `webhook-id` of its deliveries) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "alert.status_changed";
+            /** @description Null for account events */
+            alert_id: null | string;
+            external_user_id: null | string;
+            /** Format: date-time */
+            occurred_at: string;
+            payload: components["schemas"]["AlertStatusChangedData"];
+        };
+        /** @description An alert changed status on its own: it expired (`expires_at`), triggered and stopped (`once` / `max_fires`), became active (`activate_at` / the end of `pause_until`), or — a script / indicator alert — was disabled because its script failed 3 bars in a row (`script_error`, with `error_class` and `error`) */
+        AlertStatusChangedData: {
+            /** @description Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it */
+            event_id: string;
+            /** @description The alert, as created */
+            alert: {
+                /** @description Alert id (`alt_…`) */
+                id: string;
+                /**
+                 * @description Alert type
+                 * @enum {string}
+                 */
+                type: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+                /** @description Your reference, as set on the alert */
+                client_reference_id: null | string;
+                /** @description Your end user, as set on the alert */
+                external_user_id: null | string;
+                /** @description Your metadata, as set on the alert */
+                metadata: null | {
+                    [key: string]: unknown;
+                };
+            };
+            /**
+             * @description The new status
+             * @enum {string}
+             */
+            status: "active" | "disabled" | "expired" | "triggered";
+            /** @description The status before the change */
+            previous_status: string;
+            /**
+             * @description What caused the change
+             * @enum {string}
+             */
+            reason: "activate_at" | "expires_at" | "max_fires" | "once" | "pause_until" | "script_error";
+            /**
+             * @description `script_error` only: how the script failed (`steps` / `time` = its step or time budget per bar, `heap` / `worker` = out of memory, `load` = it could not start, `exception` = it threw)
+             * @enum {string}
+             */
+            error_class?: "exception" | "heap" | "load" | "steps" | "time" | "worker";
+            /** @description `script_error` only: the last failure's message */
+            error?: string;
+            /**
+             * Format: date-time
+             * @description When the status changed
+             */
+            changed_at: string;
+        };
+        /** AlertEvent */
+        DestinationDisabledEvent: {
+            /** @description Event id (`evt_…`; the `webhook-id` of its deliveries) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "destination.disabled";
+            /** @description Null for account events */
+            alert_id: null | string;
+            external_user_id: null | string;
+            /** Format: date-time */
+            occurred_at: string;
+            payload: components["schemas"]["DestinationDisabledData"];
+        };
+        /** @description A destination was disabled: it answered 410 (`gone`) or only failures for 72 h with at least 10 failed attempts in a row (`failing`). Its open deliveries are dead. Recorded on the pull feed (GET /v1/alert-events) and mailed to the account; never sent to a webhook (the destination is the one that failed) */
+        DestinationDisabledData: {
+            /** @description Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it */
+            event_id: string;
+            destination: {
+                /** @description Destination id (`dst_…`) */
+                id: string;
+                /** @description The destination's URL */
+                url: string;
+            };
+            /**
+             * @description Why
+             * @enum {string}
+             */
+            reason: "failing" | "gone";
+            /**
+             * Format: date-time
+             * @description When it was disabled
+             */
+            disabled_at: string;
+        };
+        /** AlertEvent */
+        DestinationTestEvent: {
+            /** @description Event id (`evt_…`; the `webhook-id` of its deliveries) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "destination.test";
+            /** @description Null for account events */
+            alert_id: null | string;
+            external_user_id: null | string;
+            /** Format: date-time */
+            occurred_at: string;
+            payload: components["schemas"]["DestinationTestData"];
+        };
+        /** @description `POST /v1/destinations/{id}:test`: one event to that destination only */
+        DestinationTestData: {
+            /** @description Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it */
+            event_id: string;
+            destination: {
+                /** @description Destination id (`dst_…`) */
+                id: string;
+                /** @description The destination's URL */
+                url: string;
+            };
+            /**
+             * @description Present (true) only on a test event
+             * @enum {boolean}
+             */
+            test: true;
+            /**
+             * Format: date-time
+             * @description When the test was requested
+             */
+            sent_at: string;
+        };
+        /** AlertEvent */
+        AccountFireCapReachedEvent: {
+            /** @description Event id (`evt_…`; the `webhook-id` of its deliveries) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "account.fire_cap_reached";
+            /** @description Null for account events */
+            alert_id: null | string;
+            external_user_id: null | string;
+            /** Format: date-time */
+            occurred_at: string;
+            payload: components["schemas"]["AccountFireCapReachedData"];
+        };
+        /** @description The account reached the daily fire cap of its Enterprise deal (`fires_per_day`; no plan has a daily cap), once per UTC day, to every active destination. Further fires of the day stay on the pull feed with `delivery_skipped: fire_cap`; deliveries resume at 00:00 UTC. An end user's own cap has its own event, `alert_user.fire_cap_reached` */
+        AccountFireCapReachedData: {
+            /** @description Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it */
+            event_id: string;
+            /**
+             * Format: date
+             * @description The UTC day
+             */
+            day: string;
+            /** @description Fires per UTC day of the Enterprise deal (`fires_per_day`) */
+            cap: number;
+            /**
+             * @description The account's tier — `enterprise`: only an Enterprise deal sets a daily fire cap
+             * @enum {string}
+             */
+            tier: "enterprise" | "free" | "lite" | "pro" | "standard";
+        };
+        /** AlertEvent */
+        AlertUserFireCapReachedEvent: {
+            /** @description Event id (`evt_…`; the `webhook-id` of its deliveries) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "alert_user.fire_cap_reached";
+            /** @description Null for account events */
+            alert_id: null | string;
+            external_user_id: null | string;
+            /** Format: date-time */
+            occurred_at: string;
+            payload: components["schemas"]["AlertUserFireCapReachedData"];
+        };
+        /** @description An end user reached its daily fire cap (`max_fires_per_day` of the user, else the account default; once per user and UTC day, to every active destination of the account). Its further fires of the day stay on the pull feed with `delivery_skipped: alert_user_fire_cap` and do not count against the account's cap; deliveries resume at 00:00 UTC */
+        AlertUserFireCapReachedData: {
+            /** @description Event id (`evt_…`) = the `webhook-id` of its single deliveries; dedupe on it */
+            event_id: string;
+            /** @description The end user (your id) */
+            external_user_id: string;
+            /**
+             * Format: date
+             * @description The UTC day
+             */
+            day: string;
+            /** @description The user's effective fires per UTC day */
+            cap: number;
         };
         /**
          * AlertUser
@@ -11122,9 +17820,7 @@ export interface components {
              * @enum {string|null}
              */
             result: "created" | "updated" | null;
-            /** @description The end user after the item; null when refused */
             alert_user: components["schemas"]["AlertUser"] | null;
-            /** @description Why the item was refused; null when ok */
             error: components["schemas"]["AlertBatchError"] | null;
         };
         /**
@@ -11333,7 +18029,6 @@ export interface components {
             description: null | string;
             /** @description Versions so far (at most 20) */
             version_count: number;
-            /** @description The newest version (null only for a script whose first upload failed to store) */
             latest_version: components["schemas"]["ScriptVersion"] | null;
             /** Format: date-time */
             created_at: string;
@@ -11889,6 +18584,164 @@ export interface components {
             /** @description 30-year Treasury par yield in percent when available */
             y30: null | number;
         };
+        /**
+         * AlertTypeCatalogEntry
+         * @description One alert type and its generated request and payload reference.
+         */
+        AlertTypeCatalogEntry: {
+            /** @description The alert discriminator. */
+            type: string;
+            /** @description Display name. */
+            name: string;
+            /** @description Alert behavior and scope. */
+            description: string;
+            /**
+             * @description The product family.
+             * @enum {string}
+             */
+            family: "corporate_actions" | "earnings" | "filings" | "indicators" | "macro" | "market" | "news";
+            /** @description Supported subject scope. */
+            subjects: {
+                /**
+                 * @description Subject kind.
+                 * @enum {string}
+                 */
+                kind: "company" | "instrument" | "none";
+                /** @description Supported asset classes. */
+                asset_classes: Array<string>;
+                /** @description Whether ETF subjects are supported, subject to the documented event restrictions. */
+                etf: boolean;
+                /** @description Maximum named subjects; zero for subjectless macro alerts. */
+                max: number;
+            };
+            /**
+             * @description Coverage requirement.
+             * @enum {string}
+             */
+            coverage: "any" | "captured_calls" | "processed_companies";
+            /**
+             * @description Base minimum plan.
+             * @enum {string}
+             */
+            minimum_tier: "free" | "lite" | "pro" | "standard";
+            /** @description Selectable events and their effective plans. */
+            events: Array<{
+                /** @description A selectable event. */
+                event: string;
+                /**
+                 * @description Effective minimum plan for the event.
+                 * @enum {string}
+                 */
+                minimum_tier: "free" | "lite" | "pro" | "standard";
+            }>;
+            /** @description Condition input component name. */
+            condition_schema: string;
+            /** @description Trigger input component name. */
+            trigger_schema: string;
+            /** @description Fired payload component name. */
+            payload_schema: string;
+            /** @description Required top-level condition fields; cross-field requirements remain in descriptions. */
+            required: Array<string>;
+            /** @description Condition field definitions. */
+            fields: Array<{
+                /** @description Condition field name. */
+                name: string;
+                /** @description Whether this field is required. */
+                required: boolean;
+                /** @description JSON field type. */
+                type: string;
+                /** @description Meaning of the field. */
+                description: string;
+                /** @description Related reference catalog, when available. */
+                catalog: null | string;
+                /** @description The minimum constraint from the condition schema. */
+                minimum?: number;
+                /** @description The maximum constraint from the condition schema. */
+                maximum?: number;
+                /** @description The exclusiveMinimum constraint from the condition schema. */
+                exclusiveMinimum?: boolean;
+                /** @description The exclusiveMaximum constraint from the condition schema. */
+                exclusiveMaximum?: boolean;
+                /** @description The minItems constraint from the condition schema. */
+                minItems?: number;
+                /** @description The maxItems constraint from the condition schema. */
+                maxItems?: number;
+                /** @description The minLength constraint from the condition schema. */
+                minLength?: number;
+                /** @description The maxLength constraint from the condition schema. */
+                maxLength?: number;
+                /** @description The condition field pattern. */
+                pattern?: string;
+                /** @description The condition field format. */
+                format?: string;
+                /** @description The condition field schema. */
+                schema?: string;
+                /** @description The allowed values of the field or its array items. */
+                enum?: Array<unknown>;
+                /** @description The documented default value. */
+                default?: unknown;
+            }>;
+            /** @description Supported trigger fields. */
+            trigger_fields: Array<string>;
+            /** @description Related reference operations. */
+            related: Array<string>;
+            /** @description A valid create request for this alert type. */
+            example: {
+                [key: string]: unknown;
+            };
+            /** @description A sanitized real fire or a deterministic builder fixture; see payload example provenance. */
+            payload_example: {
+                [key: string]: unknown;
+            };
+            /**
+             * Format: uri
+             * @description Alert guide anchor.
+             */
+            docs_url: string;
+        };
+        /**
+         * NewsKindCatalogEntry
+         * @description One news kind or topic.
+         */
+        NewsKindCatalogEntry: {
+            /** @description The filter value. */
+            value: string;
+            /**
+             * @description The vocabulary containing this value.
+             * @enum {string}
+             */
+            group: "development_topic" | "kind" | "topic";
+            /** @description Display name. */
+            name: string;
+            /** @description Meaning of the value. */
+            description: string;
+        };
+        /**
+         * HaltReasonCatalogEntry
+         * @description One published halt or resumption reason.
+         */
+        HaltReasonCatalogEntry: {
+            /** @description Halt or resumption code. */
+            code: string;
+            /** @description Display name. */
+            name: string;
+            /** @description Meaning of the exchange code. */
+            description: string;
+            /** @description Known applicable venues; the list need not exhaust every CQS venue. */
+            markets: Array<string>;
+        };
+        /**
+         * DividendTypeCatalogEntry
+         * @description One dividend type.
+         */
+        DividendTypeCatalogEntry: {
+            /** @description Dividend type code. */
+            code: string;
+            /** @description Display name. */
+            name: string;
+            /** @description Meaning of the dividend type. */
+            description: string;
+        };
         WebSocketSubscribeMacro: {
             /** @enum {string} */
             type: "subscribe";
@@ -12433,12 +19286,12 @@ export interface components {
              * @description Also receive partial (not yet final) segments
              * @default false
              */
-            partials: boolean;
+            partials?: boolean;
             /**
              * @description Also receive price_tick frames of the call's stock (≤ 1 per second while the call is live). Per-call only: with scope: all_live the subscribe is refused (bad_message)
              * @default false
              */
-            prices: boolean;
+            prices?: boolean;
             /** @description Keyword alerts: a keyword_hit frame for every FINAL segment that contains one (whole words, case-insensitive, multi-word allowed). Held for this subscription only */
             keywords?: Array<string>;
             /**
@@ -12446,7 +19299,7 @@ export interface components {
              * @default exact
              * @enum {string}
              */
-            keyword_match: "exact" | "stem";
+            keyword_match?: "exact" | "stem";
             /** @description Only hits spoken by one of these roles (from the provisional live speaker names; a hit whose speaker is still unnamed passes) */
             speaker_roles?: Array<"analyst" | "executive" | "ir_host" | "operator">;
             /** @description all_live only: calls of companies ranked ≤ min_rank by market cap */
@@ -12483,7 +19336,7 @@ export interface components {
              * @description Earnings news only
              * @default false
              */
-            earnings_only: boolean;
+            earnings_only?: boolean;
             kinds?: Array<"call_announcement" | "capital_markets" | "dividend" | "earnings_results" | "event_announcement" | "guidance" | "legal_spam" | "m_and_a" | "management_change" | "material_agreement" | "other" | "promo" | "results_date">;
             /** @description edgar (SEC filings) and / or ir (company newsrooms) */
             sources?: Array<"edgar" | "ir">;
@@ -12673,22 +19526,88 @@ export interface components {
             /** @enum {string} */
             channel: "news";
         };
-        AlertWebhookEnvelope: {
+        AlertWebhookEnvelope: components["schemas"]["AccountFireCapReachedWebhookEvent"] | components["schemas"]["AlertFiredBatchWebhookEvent"] | components["schemas"]["AlertFiredWebhookEvent"] | components["schemas"]["AlertStatusChangedWebhookEvent"] | components["schemas"]["AlertUserFireCapReachedWebhookEvent"] | components["schemas"]["DestinationDisabledWebhookEvent"] | components["schemas"]["DestinationTestWebhookEvent"];
+        AlertCreateRequest: components["schemas"]["CreateDividendAlertRequest"] | components["schemas"]["CreateEarningsCallAlertRequest"] | components["schemas"]["CreateEarningsCallKeywordAlertRequest"] | components["schemas"]["CreateEarningsResultsAlertRequest"] | components["schemas"]["CreateEventCountdownAlertRequest"] | components["schemas"]["CreateFilingAlertRequest"] | components["schemas"]["CreateFilingKeywordAlertRequest"] | components["schemas"]["CreateFundamentalMetricAlertRequest"] | components["schemas"]["CreateHaltAlertRequest"] | components["schemas"]["CreateIndicatorAlertRequest"] | components["schemas"]["CreateMacroAlertRequest"] | components["schemas"]["CreateNewsAlertRequest"] | components["schemas"]["CreateNewsKeywordAlertRequest"] | components["schemas"]["CreatePriceAlertRequest"] | components["schemas"]["CreatePriceMoveAlertRequest"] | components["schemas"]["CreatePriceReminderAlertRequest"] | components["schemas"]["CreateScriptAlertRequest"] | components["schemas"]["CreateVolumeSpikeAlertRequest"];
+        AlertUpdateRequest: components["schemas"]["AlertSettingsUpdateRequest"] | components["schemas"]["UpdateDividendAlertRequest"] | components["schemas"]["UpdateEarningsCallAlertRequest"] | components["schemas"]["UpdateEarningsCallKeywordAlertRequest"] | components["schemas"]["UpdateEarningsResultsAlertRequest"] | components["schemas"]["UpdateEventCountdownAlertRequest"] | components["schemas"]["UpdateFilingAlertRequest"] | components["schemas"]["UpdateFilingKeywordAlertRequest"] | components["schemas"]["UpdateFundamentalMetricAlertRequest"] | components["schemas"]["UpdateHaltAlertRequest"] | components["schemas"]["UpdateIndicatorAlertRequest"] | components["schemas"]["UpdateMacroAlertRequest"] | components["schemas"]["UpdateNewsAlertRequest"] | components["schemas"]["UpdateNewsKeywordAlertRequest"] | components["schemas"]["UpdatePriceAlertRequest"] | components["schemas"]["UpdatePriceMoveAlertRequest"] | components["schemas"]["UpdatePriceReminderAlertRequest"] | components["schemas"]["UpdateScriptAlertRequest"] | components["schemas"]["UpdateVolumeSpikeAlertRequest"];
+        /** AlertBatchRequest */
+        AlertBatchRequest: {
+            items: Array<components["schemas"]["AlertBatchItem"]>;
+        };
+        AlertFiredWebhookEvent: {
             /**
-             * @description Event type
+             * @description discriminator enum property added by openapi-typescript
              * @enum {string}
              */
-            type: "account.fire_cap_reached" | "alert.fired" | "alert.fired.batch" | "alert.status_changed" | "alert_user.fire_cap_reached" | "destination.disabled" | "destination.test";
-            /**
-             * Format: date-time
-             * @description When the event happened (a batch: when it was sent). Deliveries are NOT ordered: order by this
-             */
+            type: "alert.fired";
+            /** Format: date-time */
             timestamp: string;
-            /** @description Type-specific, see each x-webhooks entry */
-            data: {
-                [key: string]: unknown;
-            };
+            data: components["schemas"]["AlertFiredData"];
         };
+        AlertStatusChangedWebhookEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "alert.status_changed";
+            /** Format: date-time */
+            timestamp: string;
+            data: components["schemas"]["AlertStatusChangedData"];
+        };
+        DestinationDisabledWebhookEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "destination.disabled";
+            /** Format: date-time */
+            timestamp: string;
+            data: components["schemas"]["DestinationDisabledData"];
+        };
+        DestinationTestWebhookEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "destination.test";
+            /** Format: date-time */
+            timestamp: string;
+            data: components["schemas"]["DestinationTestData"];
+        };
+        AccountFireCapReachedWebhookEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "account.fire_cap_reached";
+            /** Format: date-time */
+            timestamp: string;
+            data: components["schemas"]["AccountFireCapReachedData"];
+        };
+        AlertUserFireCapReachedWebhookEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "alert_user.fire_cap_reached";
+            /** Format: date-time */
+            timestamp: string;
+            data: components["schemas"]["AlertUserFireCapReachedData"];
+        };
+        AlertFiredBatchWebhookEvent: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "alert.fired.batch";
+            /** Format: date-time */
+            timestamp: string;
+            data: components["schemas"]["AlertFiredBatchData"];
+        };
+        AlertFiredBatchData: {
+            batch_id: string;
+            events: Array<components["schemas"]["AlertStoredWebhookEvent"]>;
+        };
+        AlertStoredWebhookEvent: components["schemas"]["AccountFireCapReachedWebhookEvent"] | components["schemas"]["AlertFiredWebhookEvent"] | components["schemas"]["AlertStatusChangedWebhookEvent"] | components["schemas"]["AlertUserFireCapReachedWebhookEvent"] | components["schemas"]["DestinationDisabledWebhookEvent"] | components["schemas"]["DestinationTestWebhookEvent"];
     };
 }
 export type $defs = Record<string, never>;
@@ -12711,7 +19630,7 @@ export interface operations {
                  *           "type": "dividend",
                  *           "condition": {
                  *             "symbols": [
-                 *               "MSFT"
+                 *               "AAPL"
                  *             ],
                  *             "kinds": [
                  *               "declared"
@@ -12850,38 +19769,10 @@ export interface operations {
                  *         ],
                  *         "stage": "detected"
                  *       },
-                 *       "trigger": {
-                 *         "mode": "every_time"
-                 *       },
-                 *       "destination_ids": [
-                 *         "dst_01JD2Q4X7Y8Z9A0B1C2D3E4F5G"
-                 *       ],
-                 *       "client_reference_id": "watchlist-aapl-8k",
-                 *       "external_user_id": "user_8812",
-                 *       "metadata": {
-                 *         "list": "tech"
-                 *       }
+                 *       "client_reference_id": "watchlist-aapl-8k"
                  *     }
                  */
-                "application/json": {
-                    /**
-                     * @description The alert type
-                     * @enum {string}
-                     */
-                    type: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
-                    condition: components["schemas"]["AlertConditionInput"];
-                    trigger?: components["schemas"]["AlertTriggerInput"];
-                    /** @description Destination ids (≤ 10) */
-                    destination_ids?: Array<string>;
-                    /** @description Your id; a second create with it returns the live alert */
-                    client_reference_id?: string;
-                    /** @description Your end user's id (filters lists and events; 1–200 characters, not . or .., which no URL path can name) */
-                    external_user_id?: string;
-                    /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
-                    metadata?: {
-                        [key: string]: unknown;
-                    };
-                };
+                "application/json": components["schemas"]["CreateDividendAlertRequest"] | components["schemas"]["CreateEarningsCallAlertRequest"] | components["schemas"]["CreateEarningsCallKeywordAlertRequest"] | components["schemas"]["CreateEarningsResultsAlertRequest"] | components["schemas"]["CreateEventCountdownAlertRequest"] | components["schemas"]["CreateFilingAlertRequest"] | components["schemas"]["CreateFilingKeywordAlertRequest"] | components["schemas"]["CreateFundamentalMetricAlertRequest"] | components["schemas"]["CreateHaltAlertRequest"] | components["schemas"]["CreateIndicatorAlertRequest"] | components["schemas"]["CreateMacroAlertRequest"] | components["schemas"]["CreateNewsAlertRequest"] | components["schemas"]["CreateNewsKeywordAlertRequest"] | components["schemas"]["CreatePriceAlertRequest"] | components["schemas"]["CreatePriceMoveAlertRequest"] | components["schemas"]["CreatePriceReminderAlertRequest"] | components["schemas"]["CreateScriptAlertRequest"] | components["schemas"]["CreateVolumeSpikeAlertRequest"];
             };
         };
         responses: {
@@ -13506,6 +20397,59 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "id": "evt_01M8EDVTCWPZQJ9S7T4VNPVMC2",
+                     *       "type": "alert.fired",
+                     *       "alert_id": "alt_01M8E9AXGBNTS153J87JNGP71X",
+                     *       "external_user_id": null,
+                     *       "occurred_at": "2026-11-27T11:57:15.035Z",
+                     *       "payload": {
+                     *         "test": true,
+                     *         "alert": {
+                     *           "id": "alt_01M8E9AXGBNTS153J87JNGP71X",
+                     *           "type": "filing",
+                     *           "metadata": {},
+                     *           "external_user_id": null,
+                     *           "client_reference_id": "typed-alert-13-historical-smoke"
+                     *         },
+                     *         "reason": {
+                     *           "details": {
+                     *             "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000123/report.htm",
+                     *             "stage": "detected",
+                     *             "filed_at": "2026-11-13T23:09:36Z",
+                     *             "form_type": "13F-HR",
+                     *             "detected_by": "socket",
+                     *             "company_name": "Example filer",
+                     *             "accession_number": "0000320193-26-000123",
+                     *             "period_of_report": "2026-09-30",
+                     *             "period_end": null,
+                     *             "fiscal_year": null,
+                     *             "fiscal_quarter": null,
+                     *             "symbols": [
+                     *               "string"
+                     *             ]
+                     *           },
+                     *           "summary": "Test event for alert alt_01M8E9AXGBNTS153J87JNGP71X"
+                     *         },
+                     *         "subject": {
+                     *           "cik": "0001772715",
+                     *           "symbol": null,
+                     *           "asset_class": "string",
+                     *           "conference_date": null
+                     *         },
+                     *         "event_id": "evt_01M8EDVTCWPZQJ9S7T4VNPVMC2",
+                     *         "fired_at": "2026-11-27T11:57:15.035Z",
+                     *         "alert_type": "filing",
+                     *         "source": {
+                     *           "kind": "string",
+                     *           "key": "string"
+                     *         },
+                     *         "suppressed_since_last": 1,
+                     *         "delivery_skipped": "fire_cap"
+                     *       }
+                     *     }
+                     */
                     "application/json": components["schemas"]["AlertEvent"];
                 };
             };
@@ -20207,6 +27151,79 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "id": "evt_01M8EDKHVTVZXBHHF4548YYFZF",
+                     *           "type": "alert.fired",
+                     *           "alert_id": "alt_01M8E9AXGBNTS153J87JNGP71X",
+                     *           "external_user_id": null,
+                     *           "occurred_at": "2026-11-27T11:52:44.153Z",
+                     *           "payload": {
+                     *             "test": true,
+                     *             "alert": {
+                     *               "id": "alt_01M8E9AXGBNTS153J87JNGP71X",
+                     *               "type": "filing",
+                     *               "metadata": {},
+                     *               "external_user_id": null,
+                     *               "client_reference_id": "typed-alert-13-historical-smoke"
+                     *             },
+                     *             "reason": {
+                     *               "details": {
+                     *                 "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000123/report.htm",
+                     *                 "stage": "detected",
+                     *                 "filed_at": "2026-11-13T23:09:36Z",
+                     *                 "form_type": "13F-HR",
+                     *                 "detected_by": "socket",
+                     *                 "company_name": "Example filer",
+                     *                 "accession_number": "0000320193-26-000123",
+                     *                 "period_of_report": "2026-09-30",
+                     *                 "period_end": null,
+                     *                 "fiscal_year": null,
+                     *                 "fiscal_quarter": null,
+                     *                 "symbols": [
+                     *                   "string"
+                     *                 ]
+                     *               },
+                     *               "summary": "Test event for alert alt_01M8E9AXGBNTS153J87JNGP71X"
+                     *             },
+                     *             "event_id": "evt_01M8EDKHVTVZXBHHF4548YYFZF",
+                     *             "fired_at": "2026-11-27T11:52:44.153Z",
+                     *             "alert_type": "filing",
+                     *             "subject": {
+                     *               "cik": "0001772715",
+                     *               "symbol": null,
+                     *               "asset_class": "string",
+                     *               "conference_date": null
+                     *             },
+                     *             "source": {
+                     *               "kind": "string",
+                     *               "key": "string"
+                     *             },
+                     *             "suppressed_since_last": 1,
+                     *             "delivery_skipped": "fire_cap"
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["AlertEvent"]>;
@@ -20282,6 +27299,79 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "id": "evt_01M8E9AXNF9ZPKMYY5YZ86E2J5",
+                     *           "type": "alert.fired",
+                     *           "alert_id": "alt_01M8E9AXGBNTS153J87JNGP71X",
+                     *           "external_user_id": null,
+                     *           "occurred_at": "2026-11-27T10:38:07.023Z",
+                     *           "payload": {
+                     *             "test": true,
+                     *             "alert": {
+                     *               "id": "alt_01M8E9AXGBNTS153J87JNGP71X",
+                     *               "type": "filing",
+                     *               "metadata": {},
+                     *               "external_user_id": null,
+                     *               "client_reference_id": "typed-alert-13-historical-smoke"
+                     *             },
+                     *             "reason": {
+                     *               "details": {
+                     *                 "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000123/report.htm",
+                     *                 "stage": "detected",
+                     *                 "filed_at": "2026-11-13T23:09:36Z",
+                     *                 "form_type": "13F-HR",
+                     *                 "detected_by": "socket",
+                     *                 "company_name": "Example filer",
+                     *                 "accession_number": "0000320193-26-000123",
+                     *                 "period_of_report": "2026-09-30",
+                     *                 "period_end": null,
+                     *                 "fiscal_year": null,
+                     *                 "fiscal_quarter": null,
+                     *                 "symbols": [
+                     *                   "string"
+                     *                 ]
+                     *               },
+                     *               "summary": "Test event for alert alt_01M8E9AXGBNTS153J87JNGP71X"
+                     *             },
+                     *             "event_id": "evt_01M8E9AXNF9ZPKMYY5YZ86E2J5",
+                     *             "fired_at": "2026-11-27T10:38:07.023Z",
+                     *             "alert_type": "filing",
+                     *             "subject": {
+                     *               "cik": "0001772715",
+                     *               "symbol": null,
+                     *               "asset_class": "string",
+                     *               "conference_date": null
+                     *             },
+                     *             "source": {
+                     *               "kind": "string",
+                     *               "key": "string"
+                     *             },
+                     *             "suppressed_since_last": 1,
+                     *             "delivery_skipped": "fire_cap"
+                     *           }
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["AlertEvent"]>;
@@ -20445,6 +27535,192 @@ export interface operations {
                     "application/json": {
                         /** @description The rows of this page */
                         data: Array<components["schemas"]["AlertTemplate"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listAlertTypeCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "type": "filing",
+                     *           "name": "Filing",
+                     *           "description": "An SEC filing is detected or processed.",
+                     *           "family": "filings",
+                     *           "subjects": {
+                     *             "kind": "company",
+                     *             "asset_classes": [
+                     *               "us_stock"
+                     *             ],
+                     *             "etf": true,
+                     *             "max": 100
+                     *           },
+                     *           "coverage": "any",
+                     *           "minimum_tier": "free",
+                     *           "events": [],
+                     *           "condition_schema": "FilingAlertConditionInput",
+                     *           "trigger_schema": "FilingAlertTriggerInput",
+                     *           "payload_schema": "FilingAlertFiredData",
+                     *           "required": [],
+                     *           "fields": [
+                     *             {
+                     *               "name": "ciks",
+                     *               "required": false,
+                     *               "type": "array",
+                     *               "description": "Companies by CIK.",
+                     *               "catalog": null,
+                     *               "minItems": 1,
+                     *               "maxItems": 100,
+                     *               "minimum": 0,
+                     *               "maximum": 0,
+                     *               "exclusiveMinimum": false,
+                     *               "exclusiveMaximum": false,
+                     *               "minLength": 0,
+                     *               "maxLength": 0,
+                     *               "pattern": "string",
+                     *               "format": "string",
+                     *               "schema": "string",
+                     *               "enum": [
+                     *                 null
+                     *               ],
+                     *               "default": null
+                     *             }
+                     *           ],
+                     *           "trigger_fields": [
+                     *             "mode"
+                     *           ],
+                     *           "related": [],
+                     *           "example": {
+                     *             "type": "filing",
+                     *             "condition": {
+                     *               "symbols": [
+                     *                 "AAPL"
+                     *               ],
+                     *               "form_types": [
+                     *                 "8-K"
+                     *               ],
+                     *               "stage": "detected"
+                     *             }
+                     *           },
+                     *           "payload_example": {
+                     *             "alert": {
+                     *               "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+                     *               "type": "filing",
+                     *               "metadata": {},
+                     *               "external_user_id": null,
+                     *               "client_reference_id": "example-alert"
+                     *             },
+                     *             "reason": {
+                     *               "details": {
+                     *                 "url": "https://www.sec.gov/Archives/edgar/data/320193/000032019326000123/report.htm",
+                     *                 "stage": "detected",
+                     *                 "filed_at": "2026-11-13T23:09:36Z",
+                     *                 "form_type": "13F-HR",
+                     *                 "detected_by": "socket",
+                     *                 "company_name": "Example filer",
+                     *                 "accession_number": "0000320193-26-000123",
+                     *                 "period_of_report": "2026-09-30"
+                     *               },
+                     *               "summary": "Sanitized example filing fire."
+                     *             },
+                     *             "source": {
+                     *               "key": "example-filing",
+                     *               "kind": "filing.detected"
+                     *             },
+                     *             "subject": {
+                     *               "cik": "0001772715",
+                     *               "symbol": null
+                     *             },
+                     *             "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+                     *             "fired_at": "2026-11-16T11:06:04.918Z",
+                     *             "alert_type": "filing"
+                     *           },
+                     *           "docs_url": "https://data.invinite.com/docs/alerts#filing"
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["AlertTypeCatalogEntry"]>;
                         /** @description true when a next page exists */
                         has_more: boolean;
                         /** @description Opaque cursor of the next page; null on the last page */
@@ -21779,6 +29055,102 @@ export interface operations {
             402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listDividendTypeCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "code": "CD",
+                     *           "name": "Regular cash",
+                     *           "description": "A cash distribution on a recurring payment schedule."
+                     *         }
+                     *       ],
+                     *       "has_more": false,
+                     *       "next_cursor": null,
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["DividendTypeCatalogEntry"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];
@@ -24539,6 +31911,105 @@ export interface operations {
             402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listHaltReasonCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "code": "C11",
+                     *           "name": "Regulatory halt ended",
+                     *           "description": "The other regulatory authority has ended its halt.",
+                     *           "markets": [
+                     *             "nasdaq"
+                     *           ]
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyJSMiJdLCJmIjoiZWExYjM0MDU0ZTE4ZjI1NSJ9",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["HaltReasonCatalogEntry"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];
@@ -27407,6 +34878,108 @@ export interface operations {
             402: components["responses"]["PaymentRequired"];
             403: components["responses"]["Forbidden"];
             404: components["responses"]["NotFound"];
+            429: components["responses"]["TooManyRequests"];
+            500: components["responses"]["InternalError"];
+            503: components["responses"]["ServiceUnavailable"];
+        };
+    };
+    listNewsKindCatalog: {
+        parameters: {
+            query?: {
+                /**
+                 * @description The news vocabulary to read.
+                 * @example kind
+                 */
+                group?: "development_topic" | "kind" | "topic";
+                /**
+                 * @description Comma list of root-level fields to keep (R7)
+                 * @example fiscal_year,period_end
+                 */
+                fields?: string;
+                /**
+                 * @description Rows per page (default 25, max 200)
+                 * @example 25
+                 */
+                limit?: number;
+                /**
+                 * @description Opaque `next_cursor` of the previous page; reuse it with the SAME filters (changed filters → 400 cursor_mismatch)
+                 * @example eyJ2IjoyfQ
+                 */
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description A page of rows */
+            200: {
+                headers: {
+                    "X-Request-Id": components["headers"]["X-Request-Id"];
+                    "ETag": components["headers"]["ETag"];
+                    "Cache-Control": components["headers"]["Cache-Control"];
+                    "X-Credits-Charged": components["headers"]["X-Credits-Charged"];
+                    "X-Credits-Remaining": components["headers"]["X-Credits-Remaining"];
+                    "X-RateLimit-Limit-Second": components["headers"]["X-RateLimit-Limit-Second"];
+                    "X-RateLimit-Remaining-Second": components["headers"]["X-RateLimit-Remaining-Second"];
+                    "X-RateLimit-Limit-Minute": components["headers"]["X-RateLimit-Limit-Minute"];
+                    "X-RateLimit-Remaining-Minute": components["headers"]["X-RateLimit-Remaining-Minute"];
+                    "X-RateLimit-Reset": components["headers"]["X-RateLimit-Reset"];
+                    "RateLimit": components["headers"]["RateLimit"];
+                    "RateLimit-Policy": components["headers"]["RateLimit-Policy"];
+                    "Link": components["headers"]["Link"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    /**
+                     * @example {
+                     *       "data": [
+                     *         {
+                     *           "value": "availability",
+                     *           "group": "development_topic",
+                     *           "name": "Availability",
+                     *           "description": "Product access, rollout or geographic availability."
+                     *         }
+                     *       ],
+                     *       "has_more": true,
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyJ0b3BpY1x1MDAwMG90aGVyIl0sImYiOiJkZjhjNDllNmM0ZDgxNjVjIn0",
+                     *       "meta": {
+                     *         "coverage": {
+                     *           "state": "complete",
+                     *           "through": null,
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
+                     *         },
+                     *         "source": {
+                     *           "dataset_release": null,
+                     *           "version_id": null,
+                     *           "accession": null,
+                     *           "fetched_at": null
+                     *         }
+                     *       }
+                     *     }
+                     */
+                    "application/json": {
+                        /** @description The rows of this page */
+                        data: Array<components["schemas"]["NewsKindCatalogEntry"]>;
+                        /** @description true when a next page exists */
+                        has_more: boolean;
+                        /** @description Opaque cursor of the next page; null on the last page */
+                        next_cursor: null | string;
+                        /** @description Page metadata */
+                        meta: {
+                            coverage?: components["schemas"]["MetaCoverage"];
+                            source?: components["schemas"]["MetaSource"];
+                        };
+                    };
+                };
+            };
+            304: components["responses"]["NotModified"];
+            400: components["responses"]["BadRequest"];
+            401: components["responses"]["Unauthorized"];
+            402: components["responses"]["PaymentRequired"];
+            403: components["responses"]["Forbidden"];
             429: components["responses"]["TooManyRequests"];
             500: components["responses"]["InternalError"];
             503: components["responses"]["ServiceUnavailable"];
@@ -30613,39 +38186,24 @@ export interface operations {
             };
             cookie?: never;
         };
-        /** @description Any of the fields; at least one */
         requestBody: {
             content: {
                 /**
                  * @example {
-                 *       "version": 1,
+                 *       "type": "filing",
                  *       "condition": {
                  *         "symbols": [
-                 *           "AAPL",
-                 *           "MSFT"
+                 *           "AAPL"
                  *         ],
                  *         "form_types": [
                  *           "8-K"
-                 *         ]
-                 *       }
+                 *         ],
+                 *         "stage": "detected"
+                 *       },
+                 *       "version": 1
                  *     }
                  */
-                "application/json": {
-                    /** @description Apply only to this version (409 conflict otherwise) */
-                    version?: number;
-                    condition?: components["schemas"]["AlertConditionInput"];
-                    trigger?: components["schemas"]["AlertTriggerInput"];
-                    /** @description Destination ids (≤ 10) */
-                    destination_ids?: Array<string>;
-                    /** @description Your id; a second create with it returns the live alert */
-                    client_reference_id?: null | string;
-                    /** @description Your end user's id (filters lists and events; 1–200 characters, not . or .., which no URL path can name) */
-                    external_user_id?: null | string;
-                    /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
-                    metadata?: {
-                        [key: string]: unknown;
-                    };
-                };
+                "application/json": components["schemas"]["AlertSettingsUpdateRequest"] | components["schemas"]["UpdateDividendAlertRequest"] | components["schemas"]["UpdateEarningsCallAlertRequest"] | components["schemas"]["UpdateEarningsCallKeywordAlertRequest"] | components["schemas"]["UpdateEarningsResultsAlertRequest"] | components["schemas"]["UpdateEventCountdownAlertRequest"] | components["schemas"]["UpdateFilingAlertRequest"] | components["schemas"]["UpdateFilingKeywordAlertRequest"] | components["schemas"]["UpdateFundamentalMetricAlertRequest"] | components["schemas"]["UpdateHaltAlertRequest"] | components["schemas"]["UpdateIndicatorAlertRequest"] | components["schemas"]["UpdateMacroAlertRequest"] | components["schemas"]["UpdateNewsAlertRequest"] | components["schemas"]["UpdateNewsKeywordAlertRequest"] | components["schemas"]["UpdatePriceAlertRequest"] | components["schemas"]["UpdatePriceMoveAlertRequest"] | components["schemas"]["UpdatePriceReminderAlertRequest"] | components["schemas"]["UpdateScriptAlertRequest"] | components["schemas"]["UpdateVolumeSpikeAlertRequest"];
             };
         };
         responses: {

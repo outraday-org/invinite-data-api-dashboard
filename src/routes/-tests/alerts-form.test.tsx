@@ -7,8 +7,10 @@ import type * as MutationsModule from "@/lib/api/mutations";
 import { CreateAlertForm, EditAlertForm } from "@/components/alerts/alert-editor";
 import { AlertFormView, rangeText } from "@/components/alerts/alert-form-view";
 import { emptyAlertForm, fromAlert, prefilledForm, toUpdateBody } from "@/lib/alerts/alert-form";
-import { ALERT_FILING, ALERT_PRICE, TEMPLATES_FIXTURE } from "@/lib/alerts/alerts-fixtures";
+import { ALERT_FILING, ALERT_PRICE, fixtureAlert, TEMPLATES_FIXTURE } from "@/lib/alerts/alerts-fixtures";
+import { CONDITION_FIELDS } from "@/lib/alerts/condition-fields";
 import { ApiRequestError } from "@/lib/api/errors";
+import { ALERT_TYPE_FIELDS } from "@/lib/api/operations.gen";
 
 const mutations = vi.hoisted(() => ({ calls: [] as Array<{ input: Record<string, unknown>; operation: string }>, next: [] as Array<() => Promise<unknown>> }));
 
@@ -66,6 +68,30 @@ const view = (patch: Partial<Parameters<typeof AlertFormView>[0]> = {}) => (
 );
 
 describe("AlertFormView (one form from the field map)", () => {
+    it.each(Object.keys(ALERT_TYPE_FIELDS) as Array<keyof typeof ALERT_TYPE_FIELDS>)("%s marks required schema fields and their actual controls", (type) => {
+        const { container } = render(view({ state: emptyAlertForm(type) }));
+
+        const required = CONDITION_FIELDS[type].filter(field => field.required);
+
+        expect(container.querySelectorAll("[aria-label=\"Required\"]")).toHaveLength(required.length);
+
+        expect(container.querySelectorAll("[aria-required=\"true\"]").length).toBeGreaterThanOrEqual(required.length);
+    });
+
+    it("a type switch drops an incompatible scope and clears stale template inputs", async () => {
+        const onChange = vi.fn();
+
+        const state = { ...emptyAlertForm("news_keyword"), condition: { keywords: "supply chain", scope: "headline", symbols: "AAPL" }, template: { inputs: { length: "14" }, key: "stale" } };
+
+        render(view({ onChange, state }));
+
+        fireEvent.click(screen.getByRole("button", { name: "Alert type" }));
+
+        fireEvent.click(await screen.findByRole("menuitemradio", { name: "Filing keyword" }));
+
+        expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ condition: { keywords: "supply chain", symbols: "AAPL" }, template: { inputs: {}, key: "" }, type: "filing_keyword" }));
+    });
+
     it("a price alert shows the price fields and the price trigger fields, nothing of other types", () => {
         render(view());
 
@@ -212,6 +238,20 @@ describe("AlertFormView (one form from the field map)", () => {
 });
 
 describe("CreateAlertForm", () => {
+    it("Check and Create stop locally when required fields are missing", () => {
+        render(<CreateAlertForm initial={emptyAlertForm("price")} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Check" }));
+
+        expect(screen.getAllByText("Required for Price level.")).toHaveLength(3);
+
+        expect(screen.getByLabelText("Symbol")).toHaveAttribute("aria-required", "true");
+
+        fireEvent.click(screen.getByRole("button", { name: "Create alert" }));
+
+        expect(mutations.calls).toHaveLength(0);
+    });
+
     it("prefills a Treasury tenor, edits a unit-labelled threshold and round-trips delivery and cooldown", async () => {
         const state = prefilledForm("macro", undefined, { series: "treasury_par_y10" });
 
@@ -235,12 +275,11 @@ describe("CreateAlertForm", () => {
 
         const expected = { macro_events: ["macro.released", "macro.revised"], macro_families: ["yield_curve"], macro_series_ids: ["treasury_par_y10"], macro_threshold: {
             field: "value", operator: "gt", series_id: "treasury_par_y10", value: 4,
-        } };
+        } } as const;
 
         expect(mutations.calls[0].input).toMatchObject({ body: { condition: expected, destination_ids: ["dst_saved"], trigger: { cooldown_seconds: 120 }, type: "macro" }, validateOnly: true });
 
-        const saved = { ...ALERT_PRICE, cik: null, condition: expected as typeof ALERT_PRICE.condition, destination_ids: ["dst_saved"], symbol: null,
-            trigger: { cooldown_seconds: 120, mode: "every_time" as const }, type: "macro" as const, version: 3 };
+        const saved = fixtureAlert("macro", { condition: JSON.parse(JSON.stringify(expected)), destination_ids: ["dst_saved"], trigger: { cooldown_seconds: 120, mode: "every_time" }, version: 3 });
 
         expect(toUpdateBody(fromAlert(saved), saved.version)).toMatchObject({ body: { condition: expected, destination_ids: ["dst_saved"], trigger: { cooldown_seconds: 120 }, version: 3 }, errors: {} });
     });
@@ -257,6 +296,22 @@ describe("CreateAlertForm", () => {
         expect(mutations.calls[0]).toMatchObject({ input: { validateOnly: true }, operation: "createAlert" });
 
         expect(mutations.calls[0].input.idempotencyKey).toBeUndefined();
+    });
+
+    it("a type switch clears field errors from the preceding type", async () => {
+        mutations.next.push(() => Promise.reject(new ApiRequestError(400, { error: "invalid_parameter", message: "Choose another scope.", param: "condition.scope" })));
+
+        render(<CreateAlertForm initial={fromAlert(fixtureAlert("news_keyword", { condition: { keywords: ["recall"], scope: "headline" } }))} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Check" }));
+
+        await screen.findByText("Choose another scope.");
+
+        fireEvent.click(screen.getByRole("button", { name: "Alert type" }));
+
+        fireEvent.click(await screen.findByRole("menuitemradio", { name: "Filing keyword" }));
+
+        expect(screen.queryByText("Choose another scope.")).toBeNull();
     });
 
     it("a retry after a lost answer sends the same Idempotency-Key; the created alert opens its page", async () => {
@@ -325,7 +380,7 @@ describe("EditAlertForm", () => {
 
         await waitFor(() => expect(mutations.calls).toHaveLength(1));
 
-        expect(mutations.calls[0]).toMatchObject({ input: { body: { version: 1 }, id: ALERT_PRICE.id }, operation: "updateAlert" });
+        expect(mutations.calls[0]).toMatchObject({ input: { body: { condition: ALERT_PRICE.condition, type: "price", version: 1 }, id: ALERT_PRICE.id }, operation: "updateAlert" });
 
         expect(await screen.findByText("This alert changed elsewhere since you opened it")).toBeInTheDocument();
 

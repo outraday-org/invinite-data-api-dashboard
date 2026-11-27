@@ -3,8 +3,8 @@ import type { JsonValue } from "@/lib/api/types";
 import type { WebhookEntry, WebhookSchema } from "../../../scripts/webhooks.mjs";
 
 /**
- * The webhook reference's derived text (backend tasks/data-api-dashboard 2-alerts task 3), pure. The spec gives no
- * example bodies (`x-webhooks` has no `example`), so `exampleBody` builds an example SHAPE from each schema — the first
+ * The webhook reference's derived text (backend tasks/data-api-dashboard 2-alerts task 3), pure. The spec provides
+ * examples on the per-type 13.0 fire schemas; exampleOf preserves them. Otherwise exampleBody builds a shape — the first
  * enum value, a placeholder by type, an id prefix where the description names one (`evt_…`) — and the page labels it so.
  */
 
@@ -22,6 +22,10 @@ function idPrefixOf(description: string | undefined): null | string {
 
 /** An example value of a schema (pure, deterministic): an object shows its required fields (all where none is required). */
 export function exampleOf(schema: WebhookSchema): JsonValue {
+    if (schema.example !== undefined) return schema.example;
+
+    if (schema.oneOf?.length) return exampleOf(schema.oneOf[0]);
+
     if (schema.enum && schema.enum.length > 0) return schema.enum[0];
 
     switch (schema.type) {

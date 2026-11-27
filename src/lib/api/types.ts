@@ -453,9 +453,8 @@ export type V2BeneficialOwnershipType = NonNullable<ApiQuery<"/v1/beneficial-own
 export type V2InsiderSaleNoticesResponse = ApiResponse<"/v1/insider-sale-notices", "get">;
 export type V2InsiderSaleNotice = V2InsiderSaleNoticesResponse["data"][number];
 
-// Alerts (backend tasks/data-api-dashboard 2-alerts task 2; Data API 7.1): the alert rules, their event log and the
-// indicator templates. `condition` / `metadata` / an event's `payload` are free JSON in the spec (`additionalProperties`):
-// narrowed to `JsonValue` (`SecJson`) so a server function may return them.
+// Alerts (Data API 13.0): discriminated rule, request and stored-event unions. SecJson narrows only nested free JSON
+// (metadata, script inputs and similar extension points) to serializable JsonValue for server functions.
 type CreateAlertBody = NonNullable<paths["/v1/alerts"]["post"]["requestBody"]>["content"]["application/json"];
 type BatchAlertsBody = NonNullable<paths["/v1/alerts:batch"]["post"]["requestBody"]>["content"]["application/json"];
 
@@ -465,15 +464,17 @@ export type AlertType = Alert["type"];
 export type AlertStatus = Alert["status"];
 export type AlertQuotaUsage = NonNullable<AlertsListResponse["meta"]["quota"]>;
 export type AlertsListQuery = ApiQuery<"/v1/alerts">;
-export type AlertConditionInput = SecJson<CreateAlertBody["condition"]>;
+export type AlertConditionInput<T extends AlertType = AlertType> = Extract<CreateAlertRequest, { type: T }>["condition"];
+type UnionKeys<T> = T extends unknown ? keyof T : never;
+
 /** A field of `AlertConditionInput` (the union of every type's fields). */
-export type AlertConditionField = keyof CreateAlertBody["condition"];
-export type AlertTriggerInput = NonNullable<CreateAlertBody["trigger"]>;
-export type AlertTriggerField = keyof AlertTriggerInput;
+export type AlertConditionField = UnionKeys<AlertConditionInput>;
+export type AlertTriggerInput<T extends AlertType = AlertType> = NonNullable<Extract<CreateAlertRequest, { type: T }>["trigger"]>;
+export type AlertTriggerField = UnionKeys<AlertTriggerInput>;
 export type AlertActiveWindow = NonNullable<AlertTriggerInput["active_window"]>;
 export type CreateAlertRequest = SecJson<CreateAlertBody>;
-/** Stored type accompanies condition edits during the 12.x → 13.0 cutover, before the full contract repin. */
-export type UpdateAlertRequest = SecJson<NonNullable<paths["/v1/alerts/{id}"]["patch"]["requestBody"]>["content"]["application/json"]> & { type?: AlertType };
+/** SDK 13: condition edits carry their stored type; settings-only updates need no type. */
+export type UpdateAlertRequest = SecJson<NonNullable<paths["/v1/alerts/{id}"]["patch"]["requestBody"]>["content"]["application/json"]>;
 export type AlertBatchItem = SecJson<BatchAlertsBody["items"][number]>;
 export type AlertBatchOp = AlertBatchItem["op"];
 export type AlertBatchResponse = SecJson<ApiResponse<"/v1/alerts:batch", "post">>;
@@ -482,6 +483,7 @@ export type AlertTestAccepted = paths["/v1/alerts/{id}:test"]["post"]["responses
 export type AlertEventsResponse = SecJson<ApiResponse<"/v1/alert-events", "get">>;
 export type AlertEvent = AlertEventsResponse["data"][number];
 export type AlertEventType = AlertEvent["type"];
+export type AlertFiredData<T extends AlertType = AlertType> = Extract<Extract<AlertEvent, { type: "alert.fired" }>["payload"], { alert_type: T }>;
 export type AlertTemplatesResponse = SecJson<ApiResponse<"/v1/alert-templates", "get">>;
 export type AlertTemplate = AlertTemplatesResponse["data"][number];
 export type AlertTemplateInput = AlertTemplate["inputs"][number];

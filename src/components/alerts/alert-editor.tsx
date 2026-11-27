@@ -162,6 +162,8 @@ export function CreateAlertForm({ initial, initialScriptId }: { initial: AlertFo
                 mode="create"
                 notice={<WriteOutcomeNotice outcome={outcome} />}
                 onChange={(next) => {
+                    if (next.type !== state.type) setErrors({});
+
                     setState(next);
 
                     setOutcome(null);
@@ -210,7 +212,7 @@ export function EditAlertForm({ alert, initial, onDone, onReload }: { alert: Ale
 
         setOutcome(null);
 
-        if (Object.keys(local).length > 0) return;
+        if (!body || Object.keys(local).length > 0) return;
 
         try {
             await update.mutateAsync({ body, id: alert.id });
@@ -239,6 +241,8 @@ export function EditAlertForm({ alert, initial, onDone, onReload }: { alert: Ale
                 notice={<WriteOutcomeNotice onReload={onReload} outcome={outcome} />}
                 onCancel={onDone}
                 onChange={(next) => {
+                    if (next.type !== state.type) setErrors({});
+
                     setState(next);
 
                     setOutcome(null);

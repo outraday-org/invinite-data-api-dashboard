@@ -9,6 +9,7 @@ import { AlertEventsView, SingleEventView } from "@/components/alerts/alert-even
 import { eventsNewestFirst } from "@/lib/alerts/alert-view";
 import { ALERT_DIVIDEND, ALERT_EARNINGS_CALL, ALERT_FILING, ALERT_INDICATOR, ALERT_NEWS_KEYWORD, ALERT_PRICE, EVENT_TEST, EVENTS_PAGE_FIXTURE, fixtureEvent } from "@/lib/alerts/alerts-fixtures";
 import { ApiRequestError } from "@/lib/api/errors";
+import { ALERT_TYPE_FIELDS } from "@/lib/api/operations.gen";
 import { LiveStatus } from "@/routes/alerts/events";
 import { plansAlerts } from "@/routes/alerts/route";
 
@@ -25,8 +26,56 @@ afterEach(cleanup);
 const listState = { error: null, hasNextPage: false, isFetchingNextPage: false, isLoading: false, onLoadMore: vi.fn() };
 
 describe("/alerts/events (the feed)", () => {
+    it("renders typed fire details with schema descriptions and raw JSON in a disclosure", () => {
+        const payload = ALERT_TYPE_FIELDS.price.firedExample;
+
+        const event = fixtureEvent("evt_price", { payload });
+
+        const { container } = render(<SingleEventView error={null} event={event} isLoading={false} onClose={vi.fn()} onRetry={vi.fn()} />);
+
+        const details = screen.getByTestId("fired-details");
+
+        expect(details).toHaveTextContent("Price level (price)");
+
+        expect(details).toHaveTextContent(payload.reason.summary);
+
+        expect(within(details).getByText("Trigger price").closest("[title]")).toHaveAttribute("title", ALERT_TYPE_FIELDS.price.firedDetails.find(field => field.name === "trigger_price")!.description);
+
+        expect(details).toHaveTextContent(String(payload.reason.details.trigger_price));
+
+        expect(container.querySelector("details")).not.toHaveAttribute("open");
+
+        fireEvent.click(screen.getByText("Raw payload (the data of the webhook)"));
+
+        expect(container.querySelector("details")).toHaveAttribute("open");
+    });
+
+    it("omits absent optional fire details on historical or test events", () => {
+        const original = ALERT_TYPE_FIELDS.filing.firedExample;
+
+        const { company_name: _companyName, ...details } = original.reason.details;
+
+        const event = fixtureEvent("evt_historical", { payload: { ...original, reason: { ...original.reason, details } } });
+
+        render(<SingleEventView error={null} event={event} isLoading={false} onClose={vi.fn()} onRetry={vi.fn()} />);
+
+        const grid = screen.getByTestId("fired-details");
+
+        expect(within(grid).queryByText("Company name")).toBeNull();
+
+        expect(within(grid).getByText("Accession number")).toBeInTheDocument();
+    });
+
+    it("non-fire events keep their payload view without typed fire details", () => {
+        render(<SingleEventView error={null} event={EVENTS_PAGE_FIXTURE.data[1]} isLoading={false} onClose={vi.fn()} onRetry={vi.fn()} />);
+
+        expect(screen.queryByTestId("fired-details")).toBeNull();
+
+        expect(screen.getByText("active → triggered")).toBeInTheDocument();
+    });
+
     it("shows the macro release identity and version on a destination fire", () => {
-        const event = fixtureEvent("evt_macro", { payload: { reason: { details: { release_id: "treasury:2026-01-02", source_event_type: "macro.revised", version: 2 }, summary: "Ten-year yield above 4 percent" } } });
+        const event = fixtureEvent("evt_macro", { payload: { ...ALERT_TYPE_FIELDS.macro.firedExample, reason: { details: { ...ALERT_TYPE_FIELDS.macro.firedExample.reason.details, release_id: "treasury:2026-01-02", source_event_type: "macro.revised", version: 2 }, summary: "Ten-year yield above 4 percent" } } });
 
         render(<AlertEventsView events={[event]} liveIds={new Set()} loadedNote="All events" operationId="listAlertEvents" state={listState} />);
 
@@ -46,7 +95,7 @@ describe("/alerts/events (the feed)", () => {
 
         expect(within(rows[1]).getByText("Test")).toBeInTheDocument();
 
-        expect(within(rows[2]).getByText("active → paused")).toBeInTheDocument();
+        expect(within(rows[2]).getByText("active → triggered")).toBeInTheDocument();
 
         expect(within(rows[3]).getByRole("link", { name: ALERT_FILING.id })).toHaveAttribute("href", `/alerts/${ALERT_FILING.id}`);
 

@@ -11,9 +11,13 @@ import { Button } from "@/components/ui/button";
 import { CopyButton } from "@/components/ui/copy-button";
 import { LoadMoreButton } from "@/components/ui/load-more-button";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Stat, StatGrid } from "@/components/ui/stat";
 import { eventSummary, isTestEvent } from "@/lib/alerts/alert-view";
-import { alertEventTypeLabel } from "@/lib/alerts/labels";
+import { fieldLabel } from "@/lib/alerts/condition-fields";
+import { alertEventTypeLabel, alertTypeLabel } from "@/lib/alerts/labels";
+import { ALERT_TYPE_FIELDS } from "@/lib/api/operations.gen";
 import { formatInstant } from "@/lib/format";
+import { isRecord } from "@/lib/guards";
 import { cn } from "@/lib/utils";
 
 /** How long a live event stays highlighted after it arrived. */
@@ -59,15 +63,57 @@ function EventRow({ event, fresh, onToggle, open }: { event: AlertEvent; fresh: 
             </div>
             {open && (
                 <div className="border-t px-3 py-2">
-                    <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>Payload (the data of the webhook)</span>
-                        <CopyButton label="Copy the payload as JSON" value={json} />
-                    </div>
-                    <JsonTree className="bg-muted/30 max-h-[50vh] overflow-auto rounded-md border p-2" value={event.payload} />
+                    {event.type === "alert.fired" && <FiredDetails payload={event.payload} />}
+                    <details open={event.type !== "alert.fired"}>
+                        <summary className="cursor-pointer text-xs text-muted-foreground">Raw payload (the data of the webhook)</summary>
+                        <div className="mb-1 flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>Payload (the data of the webhook)</span>
+                            <CopyButton label="Copy the payload as JSON" value={json} />
+                        </div>
+                        <JsonTree className="bg-muted/30 max-h-[50vh] overflow-auto rounded-md border p-2" value={event.payload} />
+                    </details>
                 </div>
             )}
         </li>
     );
+}
+
+/** Required on current fires; historical/test details may omit individual fields. */
+function FiredDetails({ payload }: { payload: Extract<AlertEvent, { type: "alert.fired" }>["payload"] }) {
+    // Read as unknown first so pre-13 stored fires without alert_type can use their nested alert type.
+    const historical: Record<string, unknown> = payload;
+
+    const namedType = historical.alert_type;
+
+    const type = typeof namedType === "string" && namedType ? namedType : (isRecord(historical.alert) && typeof historical.alert.type === "string" ? historical.alert.type : "unknown");
+
+    const metadata = Object.hasOwn(ALERT_TYPE_FIELDS, type) ? ALERT_TYPE_FIELDS[type as keyof typeof ALERT_TYPE_FIELDS] : null;
+
+    const reason = isRecord(payload.reason) ? payload.reason : null;
+
+    const details: Record<string, unknown> = reason && isRecord(reason.details) ? reason.details : {};
+
+    return (
+        <div className="mb-3 flex flex-col gap-2" data-testid="fired-details">
+            <StatGrid>
+                <Stat label="Alert type" value={`${alertTypeLabel(type)} (${type})`} />
+                <Stat label="Summary" value={reason?.summary ?? "—"} />
+                {metadata?.firedDetails.filter(field => details[field.name] !== undefined).map(field => (
+                    <Stat key={field.name} label={<span title={field.description}>{fieldLabel(field.name)}</span>} value={detailValue(details[field.name])} />
+                ))}
+            </StatGrid>
+        </div>
+    );
+}
+
+function detailValue(value: unknown): React.ReactNode {
+    if (value === null) return "—";
+
+    if (typeof value === "boolean") return value ? "Yes" : "No";
+
+    if (typeof value === "object") return <pre className="max-w-full overflow-x-auto text-xs">{JSON.stringify(value, null, 2)}</pre>;
+
+    return String(value);
 }
 
 export type AlertEventsListState = {

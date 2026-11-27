@@ -24,7 +24,7 @@ const TARGETS_SHOWN = 3;
  * named = every company (a `dividend` / `earnings_call` alert may watch all).
  */
 export function alertTarget(alert: Pick<Alert, "cik" | "condition" | "symbol">): string {
-    const condition = isRecord(alert.condition) ? alert.condition : {};
+    const condition: Record<string, unknown> = isRecord(alert.condition) ? alert.condition : {};
 
     if (Array.isArray(condition.macro_events)) {
         if (isRecord(condition.macro_threshold) && isMacroSeries(condition.macro_threshold.series_id)) return MACRO_ALERT_SERIES[condition.macro_threshold.series_id].label;
@@ -53,12 +53,12 @@ export function alertTarget(alert: Pick<Alert, "cik" | "condition" | "symbol">):
 
 /** Whether an event was sent by "Send test event" (`payload.test`). */
 export function isTestEvent(event: Pick<AlertEvent, "payload">) {
-    return isRecord(event.payload) && event.payload.test === true;
+    return isRecord(event.payload) && "test" in event.payload && event.payload.test === true;
 }
 
 /** One line of an event: the fire's `reason.summary`, a status change's from → to, else the type in words. */
 export function eventSummary(event: Pick<AlertEvent, "payload" | "type">): string {
-    const payload = isRecord(event.payload) ? event.payload : {};
+    const payload: Record<string, unknown> = isRecord(event.payload) ? event.payload : {};
 
     const reason = payload.reason;
 
@@ -70,6 +70,8 @@ export function eventSummary(event: Pick<AlertEvent, "payload" | "type">): strin
 
         return reason.summary;
     }
+
+    if (typeof payload.previous_status === "string" && typeof payload.status === "string") return `${payload.previous_status} → ${payload.status}`;
 
     if (typeof payload.from === "string" && typeof payload.to === "string") return `${payload.from} → ${payload.to}`;
 
