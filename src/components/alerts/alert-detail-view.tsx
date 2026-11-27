@@ -14,9 +14,10 @@ import { Section } from "@/components/ui/section";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { fieldText } from "@/lib/alerts/alert-form";
 import { alertTarget } from "@/lib/alerts/alert-view";
-import { CONDITION_FIELDS, triggerFieldsFor, WEEKDAY_LABELS } from "@/lib/alerts/condition-fields";
+import { FIELD_SPECS, presentField, triggerFieldsFor, WEEKDAY_LABELS } from "@/lib/alerts/condition-fields";
 import { ALERT_TYPE_INFO, canPause, canResume, enumWords } from "@/lib/alerts/labels";
 import { describeMacroThreshold } from "@/lib/alerts/macro-condition";
+import { ALERT_TYPE_FIELDS } from "@/lib/api/operations.gen";
 import { formatInstant, formatNumber } from "@/lib/format";
 import { isRecord } from "@/lib/guards";
 
@@ -54,11 +55,11 @@ export function valueText(spec: FieldSpec, value: unknown): React.ReactNode {
  * field map), delivery and references; the alert's events below (`children`).
  */
 export function AlertDetailView({ alert, busy, children, onAction, onEdit }: { alert: Alert; busy: boolean; children?: React.ReactNode; onAction: (action: AlertAction) => void; onEdit: () => void }) {
-    const condition = isRecord(alert.condition) ? alert.condition : {};
+    const condition: Record<string, unknown> = isRecord(alert.condition) ? alert.condition : {};
 
     const trigger: Record<string, unknown> = isRecord(alert.trigger) ? alert.trigger : {};
 
-    const conditionRows = CONDITION_FIELDS[alert.type].filter(spec => condition[spec.name] !== undefined);
+    const conditionRows = ALERT_TYPE_FIELDS[alert.type].condition.filter(field => condition[field.name] !== undefined).map(field => ({ ...presentField(field, FIELD_SPECS[field.name]), name: field.name }));
 
     const triggerRows = triggerFieldsFor(alert.type).filter(spec => trigger[spec.name] !== undefined);
 

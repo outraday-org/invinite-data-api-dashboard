@@ -34,9 +34,9 @@ describe("/alerts/webhooks (x-webhooks of the pinned spec)", () => {
 
         expect(entries).toHaveLength(7);
 
-        const test = entries[4];
+        const test = entries.find(entry => within(entry).getByRole("heading").textContent === "destination.test")!;
 
-        expect(within(test).getByText("`POST /v1/destinations/{id}:test`: one event to that destination only")).toBeInTheDocument();
+        expect(within(test).getByText(WEBHOOKS.find(entry => entry.type === "destination.test")!.description, { selector: "p" })).toBeInTheDocument();
 
         expect(within(test).getByRole("table", { name: "destination.test data fields" })).toHaveTextContent("destination.id");
 

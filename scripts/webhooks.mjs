@@ -7,7 +7,7 @@
 // eslint; the spec's field order must survive it).
 
 /** The schema keys the page reads; every other key is dropped. */
-const KEPT = ["type", "format", "description", "enum", "nullable", "minimum", "maximum", "minItems", "maxItems"];
+const KEPT = ["type", "format", "description", "enum", "nullable", "minimum", "maximum", "minItems", "maxItems", "example"];
 
 const resolve = (spec, schema) => {
     let current = schema;
@@ -40,11 +40,38 @@ function merged(spec, schema) {
     return out;
 }
 
+/** A compact common projection for the existing table; complete variants stay on the union itself. */
+function sharedSchema(branches) {
+    const first = branches[0] ?? {};
+
+    const out = { type: first.type ?? "object" };
+
+    if (branches.every(branch => branch.enum)) out.enum = [...new Set(branches.flatMap(branch => branch.enum))];
+
+    for (const key of KEPT.filter(key => key !== "enum" && key !== "example")) {
+        if (branches.every(branch => branch[key] === first[key]) && first[key] !== undefined) out[key] = first[key];
+    }
+
+    if (first.fields) {
+        out.fields = first.fields.filter(field => branches.every(branch => branch.fields?.some(candidate => candidate.name === field.name))).map((field) => {
+            const matches = branches.map(branch => branch.fields.find(candidate => candidate.name === field.name));
+
+            return { name: field.name, required: matches.every(match => match.required), schema: sharedSchema(matches.map(match => match.schema)) };
+        });
+    }
+
+    if (branches.every(branch => branch.items)) out.items = sharedSchema(branches.map(branch => branch.items));
+
+    return out;
+}
+
 /** The page's form of a schema: the kept keys, `fields` in the spec's order (with `required`), `items`, free objects. */
 export function simplifySchema(spec, schema) {
     const current = merged(spec, schema);
 
-    const out = {};
+    const branches = current.oneOf?.map(branch => simplifySchema(spec, branch));
+
+    const out = branches ? { ...sharedSchema(branches), oneOf: branches, ...(current.discriminator ? { discriminator: current.discriminator } : {}) } : {};
 
     for (const key of KEPT) {
         if (current[key] !== undefined) out[key] = current[key];

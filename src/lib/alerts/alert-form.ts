@@ -3,21 +3,21 @@ import type {
     Alert,
     AlertActiveWindow,
     AlertConditionField,
-    AlertConditionInput,
     AlertTemplate,
-    AlertTriggerInput,
     AlertType,
     CreateAlertRequest,
     JsonValue,
     UpdateAlertRequest,
 } from "@/lib/api/types";
 
-import { MACRO_ALERT_SERIES } from "@/lib/api/operations.gen";
+import { ALERT_TYPE_FIELDS, MACRO_ALERT_SERIES } from "@/lib/api/operations.gen";
 import { isRecord } from "@/lib/guards";
 
 import type { FieldSpec, TriggerScalarField } from "./condition-fields";
 
+import { createValidator, fieldValidator, isCreateAlertRequest } from "./alert-contract";
 import { ACTIVE_WINDOW_DAYS, CONDITION_FIELDS, INDICATOR_STRUCTURED_FIELDS, triggerFieldsFor } from "./condition-fields";
+import { ALERT_TYPE_INFO } from "./labels";
 import { isMacroSeries, MACRO_OPERATOR_LABELS, readMacroThreshold, thresholdFields } from "./macro-condition";
 
 /**
@@ -137,6 +137,8 @@ export function readField(spec: FieldSpec, raw: FieldText | undefined): Read {
         case "boolean": {
             const text = textOf(raw);
 
+            if (text && text !== "true" && text !== "false") return { error: "Choose Yes or No." };
+
             return { value: text === "" ? undefined : text === "true" };
         }
 
@@ -154,12 +156,16 @@ export function readField(spec: FieldSpec, raw: FieldText | undefined): Read {
         case "string": {
             const text = textOf(raw);
 
+            if (text && spec.options && !spec.options.includes(text)) return { error: `One of ${spec.options.join(", ")}.` };
+
             return { value: text === "" ? undefined : text };
         }
 
         case "enum-list":
         case "string-list": {
             const items = listOf(raw, spec.splitOnCommasOnly);
+
+            if (spec.options && items.some(item => !spec.options!.includes(item))) return { error: `One of ${spec.options.join(", ")}.` };
 
             if (spec.maxItems !== undefined && items.length > spec.maxItems) return { error: `At most ${spec.maxItems} entries.` };
 
@@ -258,7 +264,7 @@ function windowOf(window: ActiveWindowState, errors: FieldErrors): AlertActiveWi
         return {
             type: "weekly",
             ...(window.timezone.trim() ? { timezone: window.timezone.trim() } : {}),
-            ...(window.days.length > 0 ? { days: window.days.filter((day): day is (typeof ACTIVE_WINDOW_DAYS)[number] => (ACTIVE_WINDOW_DAYS as ReadonlyArray<string>).includes(day)) } : {}),
+            ...(window.days.length > 0 ? { days: window.days.filter((day): day is NonNullable<AlertActiveWindow["days"]>[number] => (ACTIVE_WINDOW_DAYS as ReadonlyArray<string>).includes(day)) } : {}),
             ...(window.from.trim() ? { from: window.from.trim() } : {}),
             ...(window.to.trim() ? { to: window.to.trim() } : {}),
         };
@@ -340,9 +346,8 @@ function readForm(state: AlertFormState, templates: ReadonlyArray<AlertTemplate>
 
         if ("error" in read) errors[`condition.${spec.name}`] = read.error;
         else if (read.value !== undefined) condition[spec.name] = read.value;
+        else if (spec.required) errors[`condition.${spec.name}`] = `Required for ${ALERT_TYPE_INFO[state.type].label}.`;
     }
-
-    if (state.type === "macro" && !condition.macro_events) errors["condition.macro_events"] = "Choose at least one publication event.";
 
     const trigger: Record<string, JsonValue> = {};
 
@@ -381,14 +386,14 @@ function readForm(state: AlertFormState, templates: ReadonlyArray<AlertTemplate>
 
     if (Object.keys(metadata).length > 50) errors.metadata = "At most 50 keys.";
 
-    return { condition: condition as AlertConditionInput, destinationIds, errors, metadata, trigger: trigger as AlertTriggerInput };
+    return { condition, destinationIds, errors, metadata, trigger };
 }
 
 /** The body of `POST /v1/alerts` (only what is set), or the field errors. */
-export function toCreateBody(state: AlertFormState, templates: ReadonlyArray<AlertTemplate> = []): { body: CreateAlertRequest; errors: FieldErrors } {
+export function toCreateBody(state: AlertFormState, templates: ReadonlyArray<AlertTemplate> = []): { body: CreateAlertRequest | null; errors: FieldErrors } {
     const { condition, destinationIds, errors, metadata, trigger } = readForm(state, templates);
 
-    const body: CreateAlertRequest = {
+    const body = {
         condition,
         type: state.type,
         ...(Object.keys(trigger).length > 0 ? { trigger } : {}),
@@ -398,7 +403,17 @@ export function toCreateBody(state: AlertFormState, templates: ReadonlyArray<Ale
         ...(Object.keys(metadata).length > 0 ? { metadata } : {}),
     };
 
-    return { body, errors };
+    const validation = createValidator(state.type).safeParse(body);
+
+    if (!validation.success) {
+        for (const issue of validation.error.issues) {
+            const key = fieldKeyOf(issue.path.map(String).join(".")) ?? "form";
+
+            errors[key] ??= issue.message;
+        }
+    }
+
+    return { body: Object.keys(errors).length === 0 && isCreateAlertRequest(body) ? body : null, errors };
 }
 
 /**
@@ -406,21 +421,61 @@ export function toCreateBody(state: AlertFormState, templates: ReadonlyArray<Ale
  * (an emptied reference is sent as null = cleared), and `version` = the version the form was loaded at (a 409
  * `conflict` when the alert changed since). The stored type accompanies the condition so the API can select its typed variant.
  */
-export function toUpdateBody(state: AlertFormState, version: number, templates: ReadonlyArray<AlertTemplate> = []): { body: UpdateAlertRequest; errors: FieldErrors } {
-    const { condition, destinationIds, errors, metadata, trigger } = readForm(state, templates);
+export function toUpdateBody(state: AlertFormState, version: number, templates: ReadonlyArray<AlertTemplate> = []): { body: null | UpdateAlertRequest; errors: FieldErrors } {
+    const { body, errors } = toCreateBody(state, templates);
+
+    if (!body) return { body: null, errors };
 
     return {
         body: {
+            ...body,
             client_reference_id: state.clientReferenceId.trim() || null,
-            condition,
-            destination_ids: destinationIds,
+            destination_ids: body.destination_ids ?? [],
             external_user_id: state.externalUserId.trim() || null,
-            metadata,
-            trigger,
-            type: state.type,
+            metadata: body.metadata ?? {},
+            trigger: body.trigger ?? {},
             version,
         },
         errors,
+    };
+}
+
+/** Keep shared values only when both editors and the new schema accept them. Delivery stays intact. */
+export function switchAlertType(state: AlertFormState, type: AlertType): AlertFormState {
+    const retain = (group: "condition" | "trigger", before: ReadonlyArray<FieldSpec & { name: string }>, after: ReadonlyArray<FieldSpec & { name: string }>, values: Partial<Record<string, FieldText>>) => {
+        const kept: Partial<Record<string, FieldText>> = {};
+
+        for (const field of after) {
+            const previous = before.find(candidate => candidate.name === field.name);
+
+            if (!previous || previous.kind !== field.kind || values[field.name] === undefined) continue;
+
+            // JSON objects with different referenced schemas may share an editor but not a shape.
+            const priorRaw = ALERT_TYPE_FIELDS[state.type].condition.find(candidate => candidate.name === field.name);
+
+            const nextRaw = ALERT_TYPE_FIELDS[type].condition.find(candidate => candidate.name === field.name);
+
+            if (field.kind === "json" && JSON.stringify(priorRaw) !== JSON.stringify(nextRaw)) continue;
+
+            const read = readField(field, values[field.name]);
+
+            if (!("error" in read) && read.value !== undefined && fieldValidator(type, group, field.name)?.safeParse(read.value).success) kept[field.name] = values[field.name];
+        }
+
+        return kept;
+    };
+
+    const condition = retain("condition", CONDITION_FIELDS[state.type], CONDITION_FIELDS[type], state.condition);
+
+    const trigger = retain("trigger", triggerFieldsFor(state.type), triggerFieldsFor(type), state.trigger);
+
+    return {
+        ...state,
+        condition: { ...emptyAlertForm(type).condition, ...condition },
+        indicatorMode: "template",
+        template: { inputs: {}, key: "" },
+        trigger,
+        type,
     };
 }
 

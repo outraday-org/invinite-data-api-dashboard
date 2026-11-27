@@ -1,8 +1,9 @@
 import type { AlertConditionField } from "@/lib/api/types";
 
 import type { AlertFormState, FieldText } from "./alert-form";
+import type { ConditionFieldSpec } from "./condition-fields";
 
-import { CONDITION_FIELDS, FIELD_SPECS } from "./condition-fields";
+import { CONDITION_FIELDS } from "./condition-fields";
 import { ALERT_TYPE_INFO, enumWords } from "./labels";
 
 /** The summary's title ("SEC filing on AAPL, MSFT") and its detail phrases, shown joined by " · ". */
@@ -16,7 +17,7 @@ const TARGETS_SHOWN = 3;
 /** How many condition details the summary names before "and N more". */
 const DETAILS_SHOWN = 3;
 
-function entriesOf(name: AlertConditionField, value: FieldText | undefined): Array<string> {
+function entriesOf(spec: ConditionFieldSpec, value: FieldText | undefined): Array<string> {
     if (value === undefined) return [];
 
     if (Array.isArray(value)) return value.map(String).filter(Boolean);
@@ -24,8 +25,6 @@ function entriesOf(name: AlertConditionField, value: FieldText | undefined): Arr
     const text = value.trim();
 
     if (text === "") return [];
-
-    const spec = FIELD_SPECS[name];
 
     if (spec.kind === "string-list" || spec.kind === "int-list") return text.split(spec.splitOnCommasOnly ? /[,\n]/ : /[\s,]+/).map(item => item.trim()).filter(Boolean);
 
@@ -39,9 +38,7 @@ function targetText(entries: ReadonlyArray<string>) {
 }
 
 /** One condition field in words: "form types 8-K, 10-K"; a JSON field only says that it is set. */
-function detailText(name: AlertConditionField, entries: ReadonlyArray<string>) {
-    const spec = FIELD_SPECS[name];
-
+function detailText(spec: ConditionFieldSpec, entries: ReadonlyArray<string>) {
     const label = spec.label.toLowerCase();
 
     if (spec.kind === "json" || spec.kind === "template") return `${label} set`;
@@ -62,7 +59,7 @@ function detailText(name: AlertConditionField, entries: ReadonlyArray<string>) {
 export function alertFormSummary(state: AlertFormState): AlertFormSummary {
     const condition = state.condition;
 
-    const targets = TARGET_FIELDS.flatMap(name => entriesOf(name, condition[name]));
+    const targets = CONDITION_FIELDS[state.type].filter(spec => TARGET_FIELDS.includes(spec.name)).flatMap(spec => entriesOf(spec, condition[spec.name]));
 
     const typeLabel = ALERT_TYPE_INFO[state.type].label;
 
@@ -71,9 +68,9 @@ export function alertFormSummary(state: AlertFormState): AlertFormSummary {
     const conditionDetails = CONDITION_FIELDS[state.type]
         .filter(spec => !TARGET_FIELDS.includes(spec.name))
         .flatMap((spec) => {
-            const entries = entriesOf(spec.name, condition[spec.name]);
+            const entries = entriesOf(spec, condition[spec.name]);
 
-            return entries.length > 0 ? [detailText(spec.name, entries)] : [];
+            return entries.length > 0 ? [detailText(spec, entries)] : [];
         });
 
     if (state.type === "indicator" && state.indicatorMode === "template" && state.template.key) conditionDetails.unshift(`template ${state.template.key}`);

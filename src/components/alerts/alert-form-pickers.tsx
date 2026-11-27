@@ -157,7 +157,7 @@ const UNSET = "__unset";
  * errors cannot run and is not offered). A version id the lists do not show (an alert's older version, a typed id) is
  * kept and named.
  */
-export function ScriptVersionPicker({ id, onChange, options, value }: { id: string; onChange: (versionId: string) => void; options: ScriptOptions; value: string }) {
+export function ScriptVersionPicker({ id, onChange, options, required, value }: { required?: boolean; id: string; onChange: (versionId: string) => void; options: ScriptOptions; value: string }) {
     const usable = options.versions.filter(version => version.status === "ok");
 
     const listed = options.versions.some(version => version.id === value);
@@ -168,6 +168,7 @@ export function ScriptVersionPicker({ id, onChange, options, value }: { id: stri
         <div className="flex flex-col gap-2" data-testid="script-version-picker">
             <DropdownSelect
                 aria-label="Script"
+                aria-required={required}
                 className="w-full"
                 id={`${id}-script`}
                 label={script ? script.name : options.isLoading ? "Loading scripts…" : options.scripts.length === 0 ? "No script uploaded yet" : "Pick a script"}
@@ -182,6 +183,7 @@ export function ScriptVersionPicker({ id, onChange, options, value }: { id: stri
             {options.scriptId && (
                 <DropdownSelect
                     aria-label="Script version"
+                    aria-required={required}
                     className="w-full"
                     id={id}
                     label={listed ? `Version ${options.versions.find(version => version.id === value)?.version}` : value ? value : usable.length === 0 && !options.isLoading ? "No compiled version" : "Pick a version"}

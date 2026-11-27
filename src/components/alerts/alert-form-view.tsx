@@ -18,6 +18,7 @@ import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { TokenInput } from "@/components/ui/token-input";
+import { switchAlertType } from "@/lib/alerts/alert-form";
 import { alertFormSummary } from "@/lib/alerts/alert-form-summary";
 import { ACTIVE_WINDOW_DAYS, ACTIVE_WINDOW_UNITS, CONDITION_FIELDS, INDICATOR_STRUCTURED_FIELDS, triggerFieldsFor, WEEKDAY_LABELS } from "@/lib/alerts/condition-fields";
 import { ALERT_TYPE_GROUPS, ALERT_TYPE_INFO, enumWords } from "@/lib/alerts/labels";
@@ -48,6 +49,7 @@ export function FieldShell({
     helpMode = "always",
     htmlFor,
     label,
+    required,
     wide,
 }: {
     children: React.ReactNode;
@@ -56,6 +58,7 @@ export function FieldShell({
     helpMode?: "always" | "focus";
     htmlFor?: string;
     label: string;
+    required?: boolean;
     wide?: boolean;
 }) {
     const [helpOpen, setHelpOpen] = React.useState(false);
@@ -70,6 +73,7 @@ export function FieldShell({
         <div className={cn("group/field flex min-w-0 flex-col gap-1", wide && "col-span-full")} data-field={htmlFor}>
             <div className="flex min-h-5 items-center gap-1">
                 {htmlFor ? <label className="text-sm font-medium" htmlFor={htmlFor}>{label}</label> : <span className="text-sm font-medium">{label}</span>}
+                {required && <span aria-label="Required" className="text-destructive">*</span>}
                 {tucked && (
                     <button
                         aria-controls={helpId}
@@ -94,12 +98,13 @@ export function FieldShell({
     );
 }
 
-function ChoiceSelect({ id, label, onChange, options, value }: { id: string; label: string; onChange: (value: string) => void; options: ReadonlyArray<{ label: string; value: string }>; value: string }) {
+function ChoiceSelect({ id, label, onChange, options, required, value }: { required?: boolean; id: string; label: string; onChange: (value: string) => void; options: ReadonlyArray<{ label: string; value: string }>; value: string }) {
     const all = [{ label: "Not set", value: UNSET }, ...options];
 
     return (
         <DropdownSelect
             aria-label={label}
+            aria-required={required}
             className="w-full"
             id={id}
             label={all.some(option => option.value === (value === "" ? UNSET : value)) ? undefined : value}
@@ -110,12 +115,13 @@ function ChoiceSelect({ id, label, onChange, options, value }: { id: string; lab
     );
 }
 
-function CheckboxGroup({ label, onChange, options, value }: { label: string; onChange: (value: Array<string>) => void; options: ReadonlyArray<{ label: string; value: string }>; value: ReadonlyArray<string> }) {
+function CheckboxGroup({ label, onChange, options, required, value }: { required?: boolean; label: string; onChange: (value: Array<string>) => void; options: ReadonlyArray<{ label: string; value: string }>; value: ReadonlyArray<string> }) {
     return (
         <div aria-label={label} className="flex flex-wrap gap-x-4 gap-y-1.5" role="group">
             {options.map(option => (
                 <label className="inline-flex items-center gap-1.5 max-sm:min-h-9" key={option.value}>
                     <input
+                        aria-required={required}
                         checked={value.includes(option.value)}
                         className="size-3.5 accent-primary"
                         onChange={event => onChange(event.target.checked ? [...value, option.value] : value.filter(item => item !== option.value))}
@@ -173,31 +179,31 @@ export function FieldInput({ error, fieldKey, onChange, spec, value }: { error?:
 
     switch (spec.kind) {
         case "boolean": {
-            input = <ChoiceSelect id={id} label={spec.label} onChange={onChange} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} value={text} />;
+            input = <ChoiceSelect id={id} label={spec.label} onChange={onChange} options={[{ label: "Yes", value: "true" }, { label: "No", value: "false" }]} required={spec.required} value={text} />;
 
             break;
         }
 
         case "datetime": {
-            input = <Input aria-describedby={helpId} aria-invalid={invalid} id={id} onChange={event => onChange(event.target.value)} step={1} type="datetime-local" value={text} />;
+            input = <Input aria-describedby={helpId} aria-invalid={invalid} aria-required={spec.required} id={id} onChange={event => onChange(event.target.value)} step={1} type="datetime-local" value={text} />;
 
             break;
         }
 
         case "enum": {
-            input = <ChoiceSelect id={id} label={spec.label} onChange={onChange} options={optionList(spec.options)} value={text} />;
+            input = <ChoiceSelect id={id} label={spec.label} onChange={onChange} options={optionList(spec.options)} required={spec.required} value={text} />;
 
             break;
         }
 
         case "enum-list": {
-            input = <CheckboxGroup label={spec.label} onChange={onChange} options={optionList(spec.options)} value={picked} />;
+            input = <CheckboxGroup label={spec.label} onChange={onChange} options={optionList(spec.options)} required={spec.required} value={picked} />;
 
             break;
         }
 
         case "json": {
-            input = <Textarea aria-describedby={helpId} aria-invalid={invalid} className="font-mono" id={id} onChange={event => onChange(event.target.value)} placeholder={spec.placeholder} rows={3} spellCheck={false} value={text} />;
+            input = <Textarea aria-describedby={helpId} aria-invalid={invalid} aria-required={spec.required} className="font-mono" id={id} onChange={event => onChange(event.target.value)} placeholder={spec.placeholder} rows={3} spellCheck={false} value={text} />;
 
             break;
         }
@@ -209,6 +215,7 @@ export function FieldInput({ error, fieldKey, onChange, spec, value }: { error?:
                 <TokenInput
                     aria-describedby={helpId}
                     aria-invalid={invalid}
+                    aria-required={spec.required}
                     id={id}
                     joiner={spec.splitOnCommasOnly ? "\n" : ", "}
                     onChange={onChange}
@@ -222,19 +229,19 @@ export function FieldInput({ error, fieldKey, onChange, spec, value }: { error?:
         }
 
         case "time-of-day": {
-            input = <Input aria-describedby={helpId} aria-invalid={invalid} id={id} onChange={event => onChange(event.target.value)} type="time" value={text} />;
+            input = <Input aria-describedby={helpId} aria-invalid={invalid} aria-required={spec.required} id={id} onChange={event => onChange(event.target.value)} type="time" value={text} />;
 
             break;
         }
 
         case "weekday": {
-            input = <ChoiceSelect id={id} label={spec.label} onChange={onChange} options={WEEKDAY_OPTIONS} value={text} />;
+            input = <ChoiceSelect id={id} label={spec.label} onChange={onChange} options={WEEKDAY_OPTIONS} required={spec.required} value={text} />;
 
             break;
         }
 
         case "weekday-list": {
-            input = <CheckboxGroup label={spec.label} onChange={onChange} options={WEEKDAY_OPTIONS} value={picked} />;
+            input = <CheckboxGroup label={spec.label} onChange={onChange} options={WEEKDAY_OPTIONS} required={spec.required} value={picked} />;
 
             break;
         }
@@ -244,6 +251,7 @@ export function FieldInput({ error, fieldKey, onChange, spec, value }: { error?:
                 <Input
                     aria-describedby={helpId}
                     aria-invalid={invalid}
+                    aria-required={spec.required}
                     id={id}
                     inputMode={numeric ? "decimal" : undefined}
                     onChange={event => onChange(event.target.value)}
@@ -261,6 +269,7 @@ export function FieldInput({ error, fieldKey, onChange, spec, value }: { error?:
             helpMode={helpIsPinned(spec) ? "always" : "focus"}
             htmlFor={grouped ? undefined : id}
             label={spec.label}
+            required={spec.required}
             wide={WIDE_KINDS.has(spec.kind)}
         >
             {input}
@@ -610,8 +619,8 @@ export function AlertFormView({
         // A4: the script version from the account's scripts, its declared inputs as fields.
         if (spec.name === "script_version_id" && scriptOptions) {
             return (
-                <FieldShell error={errors["condition.script_version_id"]} help="A compiled version of one of your scripts (Scripts tab)." htmlFor={fieldId("condition.script_version_id")} key={spec.name} label="Script version" wide>
-                    <ScriptVersionPicker id={fieldId("condition.script_version_id")} onChange={setText} options={scriptOptions} value={text} />
+                <FieldShell error={errors["condition.script_version_id"]} help="A compiled version of one of your scripts (Scripts tab)." htmlFor={fieldId("condition.script_version_id")} key={spec.name} label="Script version" required={spec.required} wide>
+                    <ScriptVersionPicker id={fieldId("condition.script_version_id")} onChange={setText} options={scriptOptions} required={spec.required} value={text} />
                 </FieldShell>
             );
         }
@@ -672,7 +681,7 @@ export function AlertFormView({
         >
             <div className="flex min-w-0 flex-col gap-4">
                 <FormSection title="What to watch">
-                    <TypePicker disabled={mode === "edit"} macroAvailable={macroAccess === "available"} onChange={type => set({ type, ...(type === "macro" && !state.condition.macro_events ? { condition: { ...state.condition, macro_events: ["macro.released", "macro.revised"] } } : {}) })} type={state.type} />
+                    <TypePicker disabled={mode === "edit"} macroAvailable={macroAccess === "available"} onChange={type => onChange(switchAlertType(state, type))} type={state.type} />
                     {mode === "edit" && <p className="text-muted-foreground text-xs">The type of an alert never changes; duplicate it to start from another type.</p>}
                 </FormSection>
                 <FormSection title="Condition">

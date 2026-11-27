@@ -57,6 +57,7 @@ function TriggerContent({ label, placeholder, valueId }: { label: string | undef
  */
 export function DropdownSelect<T extends string>({
     "aria-label": ariaLabel,
+    "aria-required": ariaRequired,
     children,
     className,
     disabled,
@@ -74,6 +75,7 @@ export function DropdownSelect<T extends string>({
 }: {
     /** The picker's accessible name (a `FilterField` label may name it instead, through `id`). */
     "aria-label"?: string;
+    "aria-required"?: boolean;
     /** More menu content after the options (a loading or failure line). */
     "children"?: React.ReactNode;
     "className"?: string;
@@ -113,6 +115,7 @@ export function DropdownSelect<T extends string>({
                 <DropdownMenuTrigger
                     aria-describedby={valueId}
                     aria-label={ariaLabel}
+                    aria-required={ariaRequired}
                     className={cn(DROPDOWN_SELECT_TRIGGER_CLASS, className)}
                     data-size={size}
                     data-slot="dropdown-select-trigger"

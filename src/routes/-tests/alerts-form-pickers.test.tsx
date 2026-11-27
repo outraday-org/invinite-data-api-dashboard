@@ -63,7 +63,7 @@ describe("destination picker", () => {
     it("the form sends the picked ids as before (toCreateBody unchanged)", () => {
         const state = { ...emptyAlertForm("filing"), destinationIds: [DESTINATION_ACTIVE.id, DESTINATION_DISABLED.id].join("\n") };
 
-        expect(toCreateBody(state).body.destination_ids).toEqual([DESTINATION_ACTIVE.id, DESTINATION_DISABLED.id]);
+        expect(toCreateBody(state).body!.destination_ids).toEqual([DESTINATION_ACTIVE.id, DESTINATION_DISABLED.id]);
     });
 });
 

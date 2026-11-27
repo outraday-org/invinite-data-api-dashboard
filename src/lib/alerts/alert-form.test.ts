@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import type { Alert } from "@/lib/api/types";
 
 import { ApiRequestError } from "@/lib/api/errors";
+import { ALERT_TYPE_FIELDS } from "@/lib/api/operations.gen";
 
-import { emptyAlertForm, fieldErrorsOf, fieldKeyOf, fromAlert, prefilledForm, readField, toCreateBody, toUpdateBody } from "./alert-form";
-import { ALERT_DIVIDEND, ALERT_EARNINGS_CALL, ALERT_FILING, ALERT_FUNDAMENTAL, ALERT_INDICATOR, ALERT_NEWS_KEYWORD, ALERT_PRICE, TEMPLATES_FIXTURE } from "./alerts-fixtures";
-import { FIELD_SPECS } from "./condition-fields";
+import { isCreateAlertRequest } from "./alert-contract";
+import { emptyAlertForm, fieldErrorsOf, fieldKeyOf, fromAlert, prefilledForm, readField, switchAlertType, toCreateBody, toUpdateBody } from "./alert-form";
+import { ALERT_DIVIDEND, ALERT_EARNINGS_CALL, ALERT_FILING, ALERT_FUNDAMENTAL, ALERT_INDICATOR, ALERT_NEWS_KEYWORD, ALERT_PRICE, fixtureAlert, TEMPLATES_FIXTURE } from "./alerts-fixtures";
+import { CONDITION_FIELDS } from "./condition-fields";
 
 /** Instants compare as instants (the form keeps minutes in the viewer's zone; `.000Z` vs `Z` is the same time). */
 const sameInstants = (value: unknown): unknown => {
@@ -33,19 +35,19 @@ describe("a stored alert reads back equal through the form (one type per group)"
 
         expect(errors).toEqual({});
 
-        expect(body.type).toBe(alert.type);
+        expect(body!.type).toBe(alert.type);
 
-        expect(body.condition).toEqual(alert.condition);
+        expect(body!.condition).toEqual(alert.condition);
 
-        expect(sameInstants(body.trigger ?? {})).toEqual(sameInstants(alert.trigger));
+        expect(sameInstants(body!.trigger ?? {})).toEqual(sameInstants(alert.trigger));
 
-        expect(body.destination_ids ?? []).toEqual(alert.destination_ids);
+        expect(body!.destination_ids ?? []).toEqual(alert.destination_ids);
 
-        expect(body.metadata ?? {}).toEqual(alert.metadata);
+        expect(body!.metadata ?? {}).toEqual(alert.metadata);
 
-        expect(body.client_reference_id ?? null).toBe(alert.client_reference_id);
+        expect(body!.client_reference_id ?? null).toBe(alert.client_reference_id);
 
-        expect(body.external_user_id ?? null).toBe(alert.external_user_id);
+        expect(body!.external_user_id ?? null).toBe(alert.external_user_id);
     });
 });
 
@@ -69,7 +71,7 @@ describe("toCreateBody", () => {
 
         state.condition = { keywords: "supply chain, recall\nguidance cut", symbols: "AAPL MSFT,NVDA" };
 
-        expect(toCreateBody(state).body.condition).toEqual({ keywords: ["supply chain", "recall", "guidance cut"], symbols: ["AAPL", "MSFT", "NVDA"] });
+        expect(toCreateBody(state).body!.condition).toEqual({ keywords: ["supply chain", "recall", "guidance cut"], symbols: ["AAPL", "MSFT", "NVDA"] });
     });
 
     it("a field that cannot be read is an error under its key, never sent", () => {
@@ -81,7 +83,7 @@ describe("toCreateBody", () => {
 
         state.metadata = [{ key: "", value: "x" }];
 
-        expect(toCreateBody(state).errors).toEqual({
+        expect(toCreateBody(state).errors).toMatchObject({
             "condition.pct": "At least 0.1.",
             "condition.window_minutes": "Not a whole number.",
             "metadata": "Every value needs a key.",
@@ -92,7 +94,7 @@ describe("toCreateBody", () => {
 
         json.condition = { rules: "[{" };
 
-        expect(toCreateBody(json).errors).toEqual({ "condition.rules": "Not valid JSON." });
+        expect(toCreateBody(json).errors).toMatchObject({ "condition.rules": "Not valid JSON." });
     });
 
     it("the indicator sends either its template or its structured condition", () => {
@@ -102,11 +104,11 @@ describe("toCreateBody", () => {
 
         state.template = { inputs: { length: "21" }, key: "rsi-cross" };
 
-        expect(toCreateBody(state, TEMPLATES_FIXTURE.data).body.condition).toEqual({ interval: "1h", symbol: "SPY", template: { inputs: { length: 21 }, key: "rsi-cross" } });
+        expect(toCreateBody(state, TEMPLATES_FIXTURE.data).body!.condition).toEqual({ interval: "1h", symbol: "SPY", template: { inputs: { length: 21 }, key: "rsi-cross" } });
 
         state.indicatorMode = "structured";
 
-        expect(toCreateBody(state, TEMPLATES_FIXTURE.data).body.condition).toEqual({
+        expect(toCreateBody(state, TEMPLATES_FIXTURE.data).body!.condition).toEqual({
             condition: { comparator: "crossing_up", lhs: { kind: "price" }, rhs: { kind: "value", value: 1 } },
             interval: "1h",
             symbol: "SPY",
@@ -131,9 +133,9 @@ describe("toCreateBody", () => {
 
         const { body } = toCreateBody(state);
 
-        expect(body.condition).toEqual({ days: [1, 5], frequency: "weekly", symbol: "AAPL", time_of_day_minutes: 570, weekday: 3 });
+        expect(body!.condition).toEqual({ days: [1, 5], frequency: "weekly", symbol: "AAPL", time_of_day_minutes: 570, weekday: 3 });
 
-        expect(body.trigger).toEqual({ active_window: { days: ["mo", "fr"], from: "09:30", timezone: "America/New_York", to: "16:00", type: "weekly" } });
+        expect(body!.trigger).toEqual({ active_window: { days: ["mo", "fr"], from: "09:30", timezone: "America/New_York", to: "16:00", type: "weekly" } });
     });
 });
 
@@ -147,7 +149,7 @@ describe("toUpdateBody", () => {
 
         expect(body).toMatchObject({ client_reference_id: null, destination_ids: ALERT_FILING.destination_ids, external_user_id: "user_8812", trigger: { mode: "every_time" }, version: 7 });
 
-        expect(body.type).toBe(ALERT_FILING.type);
+        expect(body).toHaveProperty("type", ALERT_FILING.type);
     });
 });
 
@@ -157,7 +159,7 @@ describe("fromAlert / prefilledForm", () => {
 
         const state = fromAlert(alert);
 
-        expect(toCreateBody(state).body.metadata).toEqual({ list: "tech", tags: ["a", "b"], tier: 3 });
+        expect(toCreateBody(state).body!.metadata).toEqual({ list: "tech", tags: ["a", "b"], tier: 3 });
 
         state.metadata = state.metadata.map(row => (row.key === "tier" ? { ...row, value: "{" } : row));
 
@@ -165,9 +167,9 @@ describe("fromAlert / prefilledForm", () => {
     });
 
     it("an instant with seconds keeps them through the form", () => {
-        const alert = { ...ALERT_PRICE, trigger: { activate_at: "2026-12-01T14:30:45Z" } };
+        const alert = { ...ALERT_PRICE, trigger: { ...ALERT_PRICE.trigger, activate_at: "2026-12-01T14:30:45Z" } };
 
-        expect(new Date(String(toCreateBody(fromAlert(alert)).body.trigger?.activate_at)).toISOString()).toBe("2026-12-01T14:30:45.000Z");
+        expect(new Date(String(toCreateBody(fromAlert(alert)).body!.trigger?.activate_at)).toISOString()).toBe("2026-12-01T14:30:45.000Z");
     });
 
     it("a duplicate drops the client reference id (unique per account)", () => {
@@ -224,10 +226,92 @@ describe("API problems on the form's fields", () => {
     });
 
     it("readField keeps the schema's bounds", () => {
-        expect(readField(FIELD_SPECS.min_mentions, "1001")).toEqual({ error: "At most 1000." });
+        expect(readField(CONDITION_FIELDS.earnings_call_keyword.find(field => field.name === "min_mentions")!, "1001")).toEqual({ error: "At most 1000." });
 
-        expect(readField(FIELD_SPECS.offsets_days, "1, 7, 30")).toEqual({ value: [1, 7, 30] });
+        expect(readField(CONDITION_FIELDS.event_countdown.find(field => field.name === "offsets_days")!, "1, 7, 30")).toEqual({ value: [1, 7, 30] });
 
-        expect(readField(FIELD_SPECS.symbols, "")).toEqual({ value: undefined });
+        expect(readField(CONDITION_FIELDS.filing.find(field => field.name === "symbols")!, "")).toEqual({ value: undefined });
+    });
+});
+
+describe("SDK 13 per-type form contract", () => {
+    it.each(Object.keys(ALERT_TYPE_FIELDS) as Array<keyof typeof ALERT_TYPE_FIELDS>)("%s: the published create example round-trips through the form", (type) => {
+        const example: unknown = structuredClone(ALERT_TYPE_FIELDS[type].example);
+
+        expect(isCreateAlertRequest(example)).toBe(true);
+
+        if (!isCreateAlertRequest(example)) throw new Error("Invalid published example");
+
+        const state = fromAlert(fixtureAlert(type));
+
+        state.trigger = {};
+
+        expect(toCreateBody(state)).toEqual({ body: example, errors: {} });
+    });
+
+    it("required fields block requests and report the missing field", () => {
+        expect(toCreateBody(emptyAlertForm("price"))).toEqual({ body: null, errors: {
+            "condition.level": "Required for Price level.",
+            "condition.operator": "Required for Price level.",
+            "condition.symbol": "Required for Price level.",
+        } });
+    });
+
+    it("a shared enum value is cleared when another type rejects it, while compatible text and delivery remain", () => {
+        const state = emptyAlertForm("news_keyword");
+
+        state.condition = { keywords: "supply chain", scope: "headline", symbols: "AAPL" };
+
+        state.trigger = { cooldown_seconds: "60", mode: "every_time" };
+
+        state.destinationIds = "dst_keep";
+
+        state.externalUserId = "user_keep";
+
+        state.metadata = [{ key: "list", value: "tech" }];
+
+        state.template = { inputs: { length: "14" }, key: "stale" };
+
+        const next = switchAlertType(state, "filing_keyword");
+
+        expect(next.condition).toEqual({ keywords: "supply chain", symbols: "AAPL" });
+
+        expect(next.trigger).toEqual(state.trigger);
+
+        expect(next.destinationIds).toBe(state.destinationIds);
+
+        expect(next.externalUserId).toBe(state.externalUserId);
+
+        expect(next.metadata).toEqual(state.metadata);
+
+        expect(next.template).toEqual({ inputs: {}, key: "" });
+    });
+
+    it("type switches apply the new field's pattern and length constraints", () => {
+        const state = emptyAlertForm("script");
+
+        state.condition.symbol = "0xcrypto";
+
+        expect(switchAlertType(state, "fundamental_metric").condition.symbol).toBeUndefined();
+
+        state.condition.symbol = "a-very-long-crypto-coin-slug";
+
+        expect(switchAlertType(state, "fundamental_metric").condition.symbol).toBeUndefined();
+
+        state.condition.symbol = "AAPL";
+
+        expect(switchAlertType(state, "fundamental_metric").condition.symbol).toBe("AAPL");
+    });
+
+    it("type switches reject incompatible intervals and trigger fields, and restore macro defaults", () => {
+        const state = emptyAlertForm("script");
+
+        state.condition = { interval: "4h", symbol: "AAPL" };
+
+        state.trigger = { cooldown_bars: "3", cooldown_seconds: "30" };
+
+        expect(switchAlertType(state, "volume_spike")).toMatchObject({ condition: { symbol: "AAPL" }, trigger: { cooldown_seconds: "30" } });
+
+        expect(switchAlertType(state, "macro").condition).toEqual({ macro_events: ["macro.released", "macro.revised"] });
     });
 });

@@ -2,218 +2,248 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { isCatalogMetricId } from "../reference/catalog";
-import { CONDITION_FIELDS, FIELD_SPECS, TRIGGER_FIELDS, TYPE_FIELDS } from "./condition-fields";
-import { PRICE_ALERT_TYPES } from "./labels";
+import type { AlertType } from "@/lib/api/types";
 
-/**
- * The alert form's field map against the pinned spec: `AlertConditionInput`'s descriptions name the types of each field
- * ("… filing, filing_keyword"). This test reads them the way the map was built and fails when (a) an `Alert.type` has no
- * entry, (b) an entry names a field the schema does not have, (c) the schema gives a type a field the map lacks (or the
- * map gives one the schema does not), and when an enum, a bound or a list length differs.
- */
+import { ALERT_TYPE_FIELDS } from "@/lib/api/operations.gen";
+
+import type { AlertField } from "../../../scripts/alert-fields.mjs";
+import type { FieldKind, FieldSpec } from "./condition-fields";
+
+import { alertTypeFields } from "../../../scripts/alert-fields.mjs";
+import { isCatalogMetricId } from "../reference/catalog";
+import {
+    ACTIVE_WINDOW_DAYS,
+    ACTIVE_WINDOW_UNITS,
+    CONDITION_FIELDS,
+    conditionFieldsFor,
+    FIELD_SPECS,
+
+    fieldLabel,
+
+    presentField,
+    triggerFieldsFor,
+    TYPE_FIELDS,
+} from "./condition-fields";
 
 type Schema = {
     $ref?: string;
+    allOf?: ReadonlyArray<Schema>;
+    example?: unknown;
     description?: string;
-    enum?: Array<string>;
+    discriminator?: { mapping: Record<string, string>; propertyName: string };
+    enum?: ReadonlyArray<string>;
     items?: Schema;
     maximum?: number;
     maxItems?: number;
     minimum?: number;
     properties?: Record<string, Schema>;
-    type?: string;
+    required?: ReadonlyArray<string>;
 };
 
-const spec = JSON.parse(readFileSync(join(__dirname, "..", "..", "..", "openapi.json"), "utf8")) as { components: { schemas: Record<string, Schema> } };
+const spec = JSON.parse(readFileSync(join(__dirname, "..", "..", "..", "openapi.json"), "utf8")) as {
+    components: { schemas: Record<string, Schema> };
+};
 
 const schemas = spec.components.schemas;
 
-const conditionInput = schemas.AlertConditionInput;
+function resolve(raw: Schema | undefined): Schema {
+    if (!raw) throw new Error("Missing alert component or field");
 
-const ALERT_TYPES = schemas.Alert.properties!.type.enum!;
-
-const refOf = (schema: Schema) => (schema.$ref ? schemas[schema.$ref.split("/").at(-1)!] : null);
-
-const sentences = (text: string) => text.replace(" (request form)", "").split(/\.\s+/).map(sentence => sentence.replace(/\.$/, ""));
-
-/** The alert types a text names (whole words: `filing` is not `filing_keyword`). */
-const typesIn = (text: string) => ALERT_TYPES.filter(type => new RegExp(`(?<![\\w.-])${type}(?![\\w-])`).test(text));
-
-/**
- * The types of each condition field as the schema states them. A field's own description ends with its types; three
- * spellings are resolved: "Same types as `x`", "price types" (the four price types of the schema's description) and
- * "Keyword types" (the `*_keyword` types). A `$ref` field's types are in its schema's first sentence, else in the
- * sentence of `AlertConditionInput`'s description that names it (`template` / `condition` / `filters`).
- */
-function schemaFieldTypes(): Record<string, Set<string>> {
-    const out: Record<string, Set<string>> = {};
-
-    for (const [field, schema] of Object.entries(conditionInput.properties!)) {
-        // Namespaced economic-series fields belong to the single macro condition; some have no type in their prose.
-        if (field.startsWith("macro_")) {
-            out[field] = new Set(["macro"]);
-
-            continue;
-        }
-
-        const ref = refOf(schema);
-
-        if (ref) {
-            let types = typesIn(sentences(ref.description ?? "")[0]);
-
-            if (types.length === 0) types = sentences(conditionInput.description!).filter(sentence => sentence.includes(`\`${field}\``)).flatMap(typesIn);
-
-            out[field] = new Set(types);
-
-            continue;
-        }
-
-        const last = sentences(schema.description ?? "").at(-1)!;
-
-        const types = new Set(typesIn(last));
-
-        const same = /Same types as `(\w+)`/.exec(last);
-
-        if (same) for (const type of out[same[1]]) types.add(type);
-
-        if (/price types/i.test(last)) for (const type of PRICE_ALERT_TYPES) types.add(type);
-
-        if (/Keyword types/.test(last)) for (const type of ALERT_TYPES.filter(name => name.endsWith("_keyword"))) types.add(type);
-
-        out[field] = types;
-    }
-
-    return out;
+    return raw.$ref ? resolve(schemas[raw.$ref.split("/").at(-1)!]) : raw;
 }
 
-/** The map's fields per type, inverted to types per field. */
-function mapFieldTypes(): Record<string, Set<string>> {
-    const out: Record<string, Set<string>> = {};
+const create = resolve(schemas.AlertCreateRequest);
 
-    for (const [type, fields] of Object.entries(TYPE_FIELDS)) {
-        for (const field of fields) (out[field] ??= new Set()).add(type);
+const mapping = create.discriminator?.mapping;
+
+if (!mapping) throw new Error("Create alert discriminator mapping is missing");
+
+const types = Object.keys(ALERT_TYPE_FIELDS) as Array<AlertType>;
+
+const presentation: Partial<Record<string, Partial<FieldSpec>>> = FIELD_SPECS;
+
+const presentationKeys = ["help", "kind", "label", "placeholder", "splitOnCommasOnly"];
+
+function verifyMetadata(fields: ReadonlyArray<AlertField>, raw: Schema | undefined) {
+    const schema = resolve(raw);
+
+    expect(fields.map(field => field.name)).toEqual(Object.keys(schema.properties ?? {}));
+
+    for (const field of fields) {
+        const rawField = schema.properties?.[field.name];
+
+        const declared = resolve(rawField);
+
+        const item = declared.items ? resolve(declared.items) : undefined;
+
+        const bounds = item ?? declared;
+
+        expect(field.required, field.name).toBe((schema.required ?? []).includes(field.name));
+
+        expect(field.description, field.name).toBe(declared.description ?? "");
+
+        expect(field.enum, field.name).toEqual(declared.enum ?? item?.enum);
+
+        expect(field.min, field.name).toBe(bounds.minimum);
+
+        expect(field.max, field.name).toBe(bounds.maximum);
+
+        expect(field.maxItems, field.name).toBe(declared.maxItems);
+
+        const ref = rawField?.$ref ?? (rawField?.allOf?.length === 1 ? rawField.allOf[0].$ref : undefined);
+
+        expect(field.ref, field.name).toBe(ref);
     }
-
-    return out;
 }
 
-describe("CONDITION_FIELDS against openapi.json", () => {
-    it("(a) every Alert.type has an entry, and no other type", () => {
-        expect(Object.keys(CONDITION_FIELDS).sort()).toEqual([...ALERT_TYPES].sort());
+function verifyPresentation(field: FieldSpec, metadata: AlertField) {
+    const kindOverrides: Partial<Record<AlertField["kind"], ReadonlyArray<FieldKind>>> = {
+        "int-list": ["weekday-list"],
+        "integer": ["time-of-day", "weekday"],
+        "json": ["template"],
+        "string": ["datetime"],
+    };
+
+    expect(field.label.trim().length, metadata.name).toBeGreaterThan(0);
+
+    expect(typeof field.help, metadata.name).toBe("string");
+
+    expect([metadata.kind, ...(kindOverrides[metadata.kind] ?? [])], metadata.name).toContain(field.kind);
+
+    expect(field.required, metadata.name).toBe(metadata.required);
+
+    expect(field.options, metadata.name).toEqual(metadata.enum);
+
+    expect(field.min, metadata.name).toBe(metadata.min);
+
+    expect(field.max, metadata.name).toBe(metadata.max);
+
+    expect(field.maxItems, metadata.name).toBe(metadata.maxItems);
+}
+
+describe("per-type alert editor fields", () => {
+    it("regenerates exactly from the pinned contract, without interpreting descriptions", () => {
+        expect(alertTypeFields(spec)).toEqual(ALERT_TYPE_FIELDS);
+
+        expect(create.discriminator?.propertyName).toBe("type");
+
+        expect(types).toHaveLength(18);
+
+        expect([...types].sort()).toEqual(Object.keys(mapping).sort());
+
+        expect(Object.keys(CONDITION_FIELDS).sort()).toEqual([...types].sort());
+
+        expect(Object.keys(TYPE_FIELDS).sort()).toEqual([...types].sort());
     });
 
-    it("(b) every field the map names is a field of AlertConditionInput", () => {
-        const schemaFields = new Set(Object.keys(conditionInput.properties!));
+    it.each(types)("%s uses its own condition, trigger and fired-detail schemas", (type) => {
+        const request = resolve({ $ref: mapping[type] });
 
-        expect(Object.keys(FIELD_SPECS).filter(field => !schemaFields.has(field))).toEqual([]);
+        const generated = ALERT_TYPE_FIELDS[type];
 
-        expect(Object.values(TYPE_FIELDS).flat().filter(field => !schemaFields.has(field))).toEqual([]);
+        const condition: ReadonlyArray<AlertField> = generated.condition;
+
+        const trigger: ReadonlyArray<AlertField> = generated.trigger;
+
+        const firedMapping = schemas.AlertFiredData.discriminator?.mapping;
+
+        const payload = resolve({ $ref: firedMapping?.[type] });
+
+        const reason = resolve(payload.properties?.reason);
+
+        expect(request.properties?.type.enum).toEqual([type]);
+
+        verifyMetadata(condition, request.properties?.condition);
+
+        verifyMetadata(trigger, request.properties?.trigger);
+
+        verifyMetadata(generated.firedDetails, reason.properties?.details);
+
+        expect(generated.example).toEqual(request.example);
+
+        expect(generated.firedExample).toEqual(payload.example);
+
+        const presented = conditionFieldsFor(type);
+
+        expect(presented.map(field => field.name)).toEqual(condition.map(field => field.name));
+
+        expect(CONDITION_FIELDS[type]).toEqual(presented);
+
+        expect(TYPE_FIELDS[type]).toEqual(condition.map(field => field.name));
+
+        for (const [index, field] of presented.entries()) verifyPresentation(field, condition[index]);
+
+        const scalarTriggers = trigger.filter(field => field.name !== "active_window");
+
+        const triggerEditors = triggerFieldsFor(type);
+
+        expect(triggerEditors.map(field => field.name)).toEqual(scalarTriggers.map(field => field.name));
+
+        for (const [index, field] of triggerEditors.entries()) verifyPresentation(field, scalarTriggers[index]);
     });
 
-    it("(c) each type takes exactly the fields the schema's descriptions give it", () => {
-        const fromSchema = schemaFieldTypes();
+    it("keeps presentation entries applicable and free of schema constraints", () => {
+        const names = new Set<string>(types.flatMap(type => ALERT_TYPE_FIELDS[type].condition.map(field => field.name)));
 
-        const fromMap = mapFieldTypes();
+        for (const [name, entry] of Object.entries(FIELD_SPECS)) {
+            expect(names.has(name), name).toBe(true);
 
-        for (const field of Object.keys(conditionInput.properties!)) {
-            expect({ field, types: [...(fromMap[field] ?? [])].sort() }).toEqual({ field, types: [...fromSchema[field]].sort() });
+            expect(Object.keys(entry).filter(key => !presentationKeys.includes(key)), name).toEqual([]);
         }
-    });
 
-    it("the parser still finds its anchors (a reworded description fails here, not silently)", () => {
-        expect(conditionInput.description).toContain("An `indicator` alert takes a built-in `template`");
+        for (const type of types) {
+            for (const metadata of ALERT_TYPE_FIELDS[type].condition) {
+                const field = presentField(metadata, presentation[metadata.name]);
 
-        expect(conditionInput.properties!.symbol.description).toContain("Same types as `cik`");
-
-        expect(conditionInput.properties!.match.description).toContain("Keyword types");
-    });
-
-    it("every field has a spec; enums, bounds and list lengths are the schema's", () => {
-        expect(Object.keys(FIELD_SPECS).sort()).toEqual(Object.keys(conditionInput.properties!).sort());
-
-        for (const [field, schema] of Object.entries(conditionInput.properties!)) {
-            const mine = FIELD_SPECS[field as keyof typeof FIELD_SPECS];
-
-            const options = schema.enum ?? schema.items?.enum;
-
-            if (options) {
-                expect({ field, options: [...(mine.options ?? [])].sort() }).toEqual({ field, options: [...options].sort() });
-
-                for (const subset of Object.values(mine.optionsByType ?? {})) expect(subset.every(option => options.includes(option))).toBe(true);
+                verifyPresentation(field, metadata);
             }
-
-            const bounds = schema.type === "array" ? schema.items : schema;
-
-            expect({ field, max: mine.max, min: mine.min }).toEqual({ field, max: bounds?.maximum, min: bounds?.minimum });
-
-            expect({ field, maxItems: mine.maxItems }).toEqual({ field, maxItems: schema.maxItems });
         }
     });
 
-    it("the editor fits the schema type", () => {
-        const kindsOf: Partial<Record<string, ReadonlyArray<string>>> = {
-            "array:integer": ["int-list", "weekday-list"],
-            "array:object": ["json"],
-            "array:string": ["string-list"],
-            "array:string:enum": ["enum-list"],
-            "boolean": ["boolean"],
-            "integer": ["integer", "time-of-day", "weekday"],
-            "number": ["number"],
-            "object": ["json"],
-            "ref": ["json", "template"],
-            "string": ["string", "datetime"],
-            "string:enum": ["enum"],
+    it("provides a usable default for an added field without a presentation entry", () => {
+        const metadata: AlertField = {
+            description: "A newly published optional label.",
+            kind: "string",
+            name: "future_signal_label",
+            required: false,
         };
 
-        for (const [field, schema] of Object.entries(conditionInput.properties!)) {
-            let shape: string = schema.$ref ? "ref" : schema.type!;
+        const field = presentField(metadata);
 
-            if (schema.type === "array") shape = `array:${schema.items?.type ?? "object"}${schema.items?.enum ? ":enum" : ""}`;
-            else if (schema.enum) shape = `${schema.type}:enum`;
+        expect(field.label).toBe(fieldLabel(metadata.name));
 
-            expect({ field, ok: kindsOf[shape]?.includes(FIELD_SPECS[field as keyof typeof FIELD_SPECS].kind) }).toEqual({ field, ok: true });
+        expect(field.help).toBe(metadata.description);
+
+        verifyPresentation(field, metadata);
+    });
+
+    it("takes active-window choices from the per-type trigger schema", () => {
+        for (const type of types) {
+            const request = resolve({ $ref: mapping[type] });
+
+            const trigger = resolve(request.properties?.trigger);
+
+            const window = resolve(trigger.properties?.active_window);
+
+            expect(ACTIVE_WINDOW_DAYS).toEqual(resolve(resolve(window.properties?.days).items).enum);
+
+            expect(ACTIVE_WINDOW_UNITS).toEqual(resolve(window.properties?.unit).enum);
         }
     });
 });
 
-describe("JSON placeholders", () => {
-    it("every placeholder parses, and the rules example names a catalog metric id the API takes (UI walk F111)", () => {
-        for (const field of Object.values(FIELD_SPECS)) {
-            if (field.kind === "json" && field.placeholder) expect(() => JSON.parse(field.placeholder!)).not.toThrow();
+describe("JSON editor placeholders", () => {
+    it("parses every effective JSON placeholder and uses a catalog metric in the rule example", () => {
+        for (const type of types) {
+            for (const field of conditionFieldsFor(type)) {
+                if (field.kind === "json" && field.placeholder) expect(() => JSON.parse(field.placeholder!)).not.toThrow();
+            }
         }
 
-        const [rule] = JSON.parse(FIELD_SPECS.rules.placeholder!) as Array<{ metric_id: string }>;
+        const ruleField = conditionFieldsFor("fundamental_metric").find(field => field.name === "rules");
+
+        const [rule] = JSON.parse(ruleField?.placeholder ?? "[]") as Array<{ metric_id: string }>;
 
         expect(isCatalogMetricId(rule.metric_id)).toBe(true);
-    });
-});
-
-describe("TRIGGER_FIELDS against AlertTriggerInput", () => {
-    const trigger = schemas.AlertTriggerInput.properties!;
-
-    it("every scalar field of the schema, with its bounds and enums (active_window has its own editor)", () => {
-        expect(TRIGGER_FIELDS.map(field => field.name).sort()).toEqual(Object.keys(trigger).filter(name => name !== "active_window").sort());
-
-        for (const field of TRIGGER_FIELDS) {
-            const schema = trigger[field.name];
-
-            expect({ max: field.max, min: field.min, name: field.name, options: field.options }).toEqual({
-                max: schema.maximum,
-                min: schema.minimum,
-                name: field.name,
-                options: schema.enum,
-            });
-        }
-    });
-
-    it("the type-restricted fields follow their descriptions (script / indicator; price types)", () => {
-        expect(trigger.cooldown_bars.description).toContain("script / indicator");
-
-        expect(trigger.rearm.description).toContain("Price types");
-
-        expect(TRIGGER_FIELDS.find(field => field.name === "cooldown_bars")?.types).toEqual(["indicator", "script"]);
-
-        expect(TRIGGER_FIELDS.find(field => field.name === "rearm")?.types).toEqual(PRICE_ALERT_TYPES);
     });
 });

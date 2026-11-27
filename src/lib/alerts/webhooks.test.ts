@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { WEBHOOK_ENVELOPE, WEBHOOKS } from "@/lib/api/operations.gen";
+import { ALERT_TYPE_FIELDS, WEBHOOK_ENVELOPE, WEBHOOKS } from "@/lib/api/operations.gen";
 
 import { webhookEntries, webhookEnvelope } from "../../../scripts/webhooks.mjs";
 import { EXAMPLE_INSTANT, exampleBody, exampleOf, fieldRows, typeText } from "./webhooks";
@@ -57,15 +57,23 @@ describe("example bodies and field rows (the spec has no example: shapes built f
     it("arrays hold one example item; types read as words", () => {
         const batch = WEBHOOKS.find(entry => entry.type === "alert.fired.batch")!;
 
-        expect(exampleOf(batch.data)).toEqual({ batch_id: "bat_…", events: [{ data: {}, timestamp: EXAMPLE_INSTANT, type: "alert.fired" }] });
+        expect(exampleOf(batch.data)).toEqual({ batch_id: "…", events: [{ data: ALERT_TYPE_FIELDS.filing.firedExample, timestamp: EXAMPLE_INSTANT, type: "alert.fired" }] });
 
-        expect(fieldRows(batch.data).map(row => `${row.path}: ${typeText(row.schema)}`)).toEqual([
-            "batch_id: string",
-            "events: array of object",
-            "events[].type: \"alert.fired\" | \"alert.status_changed\" | \"destination.disabled\" | \"destination.test\" | \"account.fire_cap_reached\" | \"alert_user.fire_cap_reached\"",
-            "events[].timestamp: string (date-time)",
-            "events[].data: object",
-        ]);
+        const paths = fieldRows(batch.data).map(row => row.path);
+
+        expect(paths).toEqual(expect.arrayContaining(["batch_id", "events", "events[].type", "events[].timestamp", "events[].data"]));
+
+        expect(batch.data.fields?.find(field => field.name === "events")?.schema.items?.discriminator?.propertyName).toBe("type");
+
+        expect(batch.data.fields?.find(field => field.name === "events")?.schema.items?.oneOf).toHaveLength(6);
+
+        const fired = WEBHOOKS.find(entry => entry.type === "alert.fired")!;
+
+        expect(fired.data.discriminator?.propertyName).toBe("alert_type");
+
+        expect(fired.data.oneOf).toHaveLength(18);
+
+        expect(fired.data.oneOf?.map(branch => branch.example)).toEqual(expect.arrayContaining(Object.values(ALERT_TYPE_FIELDS).map(type => type.firedExample)));
 
         expect(typeText({ nullable: true, type: "string" })).toBe("string or null");
     });

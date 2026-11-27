@@ -741,14 +741,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
   (`client.server.ts`), `fetch(` only in the reviewed public-file readers, no XHR / beacon / EventSource, `new WebSocket`
   only in `lib/live/use-live-*.ts` through `liveWsUrl` (`/v1/stream`) and in `lib/live/stream-socket.ts`, whose every
   caller is a `use-live-*` hook passing `liveWsUrl(…)`, the host named only by `env.ts` and the request panel (`request-panel.tsx`, its curl text).
-- **Field map** (`src/lib/alerts/condition-fields.ts`): `FIELD_SPECS` (every `AlertConditionInput` field: editor kind,
-  label, help, enum, bounds; `optionsByType` for `scope` / `kinds` / `interval` / `frequency`), `TYPE_FIELDS` (18 types),
-  `CONDITION_FIELDS`, `TRIGGER_FIELDS` (`cooldown_bars` script / indicator, `rearm*` price types). `condition-fields.test.ts`
-  parses the schema's descriptions ("Same types as `x`", "price types", "Keyword types", the `$ref` fields) and fails on a
-  missing / extra type or field, an enum or a bound. The form model `alert-form.ts` (pure): `toCreateBody`,
-  `toUpdateBody` (whole condition / trigger / delivery + the LOADED `version`; an emptied reference = null),
-  `fromAlert` (edit, duplicate without the client reference id), `prefilledForm` (`?type=&symbol=`), `fieldErrorsOf` /
-  `fieldKeyOf` (a 400's `param` / `errors[]` → `condition.<field>`, `trigger.<field>`, `destination_ids`, …, else `form`).
+- **Typed alert fields (Data API 13.0)**: `scripts/alert-fields.mjs`, part of `generate:api`, walks the `createAlert` discriminator and corresponding fired payload components. `ALERT_TYPE_FIELDS` in `operations.gen.ts` supplies condition/trigger order, editor shape, required flags, enums, bounds, descriptions, examples and normalized validation schemas. `condition-fields.ts` holds presentation overrides only; no applicability is inferred from prose. `alert-contract.ts` lazily compiles the selected schema with Zod. Invalid forms have a null body plus inline field errors and never submit. Type switches retain values only when the editor shape and new allowed values/bounds match, clear template state and field errors, keep delivery settings and apply macro defaults. Condition PATCHes keep the loaded `type` and `version`. `AlertDetailView` reads schema order; fire events show `alert_type`, summary and schema-described detail rows, with raw JSON in a disclosure. Missing optional/historical detail fields remain safe; the six stored event types keep their labels.
 - **Routes** (`src/routes/alerts/`, Browse entry "Alerts"; tabs `src/lib/alerts/tabs.ts` — A3 / A4 append theirs):
   `route.tsx` (tabs + plan gate: `me.allowed_families` holds "Alerts"), `/alerts` (`?status=&type=&external_user_id=
   &client_reference_id=&symbol=&destination_id=`, all sent to the API; quota line from `meta.quota`; the empty text
@@ -799,7 +792,7 @@ File-based routing with TanStack Router. The route tree is auto-generated in `ro
 - Tests: `src/lib/api/{alerts-requests,no-direct-api-calls}.test.ts`, `mutations.test.tsx`, the redaction cases of
   `request-meta.test.ts`, `src/lib/alerts/*.test.ts`, the alerts cases of `ws-frames.test.ts`, `use-live-alerts.test.tsx`,
   `src/routes/-tests/alerts-{list,form,events}.test.tsx`. Fixtures `src/lib/alerts/alerts-fixtures.ts` (tests only; the spec
-  has no response examples for alerts — they follow the schemas and its request / id examples).
+  uses the published per-type create and fired examples).
 
 ### Ownership and offerings (backend `tasks/data-api-dashboard` O7 group 6)
 
@@ -1126,8 +1119,8 @@ with no view states why here. Data API 11.2 (backend financialdatasets-parity 1-
 (`listInsiderHoldings`, `listFinancialVintages`, `listExchangeCatalog`, `listSectorCatalog`); Data API 11.5 (ownership forms) two
 (`listBeneficialOwnershipFilings`, `listInsiderSaleNotices`); Data API 12.1 (earnings extraction) three (`listNonGaapMetrics`,
 `listKpiSeries`, `listKpiCatalog`); Data API 12.2 (SEC bulk data, backend sec-bulk-downloads task 8) six
-(`listBulkFiles`, `getBulkFileDownload`, `createBulkExport`, `listBulkExports`, `getBulkExport`, `getBulkExportDownload`). **Complete (2026-11-26): 149
-rows = the 149 operation ids of `openapi.json`, each exactly once** — the 148 HTTP operations of `operations.gen.ts` plus the WebSocket `streamEvents` (`WS /v1/stream`, one
+(`listBulkFiles`, `getBulkFileDownload`, `createBulkExport`, `listBulkExports`, `getBulkExport`, `getBulkExportDownload`). **Coverage inventory (Data API 13.0): 153
+rows = the 153 operation ids of `openapi.json`, each exactly once** — the 152 HTTP operations of `operations.gen.ts` plus the WebSocket `streamEvents` (`WS /v1/stream`, one
 row naming its channels). `src/lib/api/coverage.test.ts` parses this table against `openapi.json` and fails on a
 missing, duplicate or unknown id: a new operation of the spec needs its row (page or reason) here.
 
@@ -1240,6 +1233,10 @@ missing, duplicate or unknown id: a new operation of the spec needs its row (pag
 | `listDocumentKindCatalog` | `GET /v1/catalog/document-kinds` | `/catalog?tab=document-kinds` (O7 group 7) |
 | `listMappingRules` | `GET /v1/catalog/mapping-rules` | `/catalog?tab=mapping-rules` (`statement`, `metric_id` from a metric row; O7 group 7) |
 | `listExchangeCatalog` | `GET /v1/catalog/exchanges` | `/catalog?tab=exchanges` (counts; links `/instruments?exchange=`; Data API 11.2) |
+| `listAlertTypeCatalog` | `GET /v1/catalog/alert-types` | Planned task 11: `/catalog?tab=alert-types`; runtime labels and ETF support. No catalog page yet in task 10. |
+| `listNewsKindCatalog` | `GET /v1/catalog/news-kinds` | Planned task 11: `/catalog?tab=news-kinds`; news kind and topic labels. No catalog page yet in task 10. |
+| `listHaltReasonCatalog` | `GET /v1/catalog/halt-reasons` | Planned task 11: `/catalog?tab=halt-reasons`; halt reason labels. No catalog page yet in task 10. |
+| `listDividendTypeCatalog` | `GET /v1/catalog/dividend-types` | Planned task 11: `/catalog?tab=dividend-types`; dividend type labels. No catalog page yet in task 10. |
 | `listKpiCatalog` | `GET /v1/catalog/kpis` | `/catalog?tab=kpis` (sector, KPI, unit, period kinds; `?sector=` picker filtered in the page; Data API 12.1) |
 | `listSectorCatalog` | `GET /v1/catalog/sectors` | `/catalog?tab=sectors` (industries per sector); `/instruments?view=companies` (the sector picker's choices and the `?sector=` check; Data API 11.2) |
 | `listCompanies` | `GET /v1/companies` | `/instruments?view=companies` (Companies tab: `q`, `exchange`, `sector` (only one `/v1/catalog/sectors` names), `sort`; O7 group 7) |

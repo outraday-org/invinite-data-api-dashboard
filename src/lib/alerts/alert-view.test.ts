@@ -31,9 +31,9 @@ describe("events", () => {
     it("a line per event: the fire's summary, a status change, the type in words", () => {
         expect(eventSummary(EVENT_OLD)).toBe("AAPL filed an 8-K");
 
-        expect(eventSummary(EVENT_STATUS)).toBe("active → paused");
+        expect(eventSummary(EVENT_STATUS)).toBe("active → triggered");
 
-        expect(eventSummary(fixtureEvent("evt_x", { payload: {}, type: "destination.disabled" }))).toBe("Destination disabled");
+        expect(eventSummary(fixtureEvent<"destination.disabled">("evt_x", { payload: { destination: { id: "dst_example", url: "https://example.com/hooks" }, disabled_at: "2026-11-20T15:00:00Z", event_id: "evt_x", reason: "failing" }, type: "destination.disabled" }))).toBe("Destination disabled");
 
         expect(isTestEvent(EVENT_TEST)).toBe(true);
 

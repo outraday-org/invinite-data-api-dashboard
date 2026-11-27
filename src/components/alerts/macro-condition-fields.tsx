@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { DropdownMultiSelect, DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import { familyLabels, isMacroSeries, MACRO_EVENTS, MACRO_FAMILIES, MACRO_METRIC_LABELS, MACRO_OPERATOR_LABELS, readMacroThreshold, thresholdFields } from "@/lib/alerts/macro-condition";
-import { MACRO_ALERT_SERIES } from "@/lib/api/operations.gen";
+import { ALERT_TYPE_FIELDS, MACRO_ALERT_SERIES } from "@/lib/api/operations.gen";
 
 type Condition = AlertFormState["condition"];
+
+const eventsRequired = ALERT_TYPE_FIELDS.macro.condition.find(field => field.name === "macro_events")?.required;
 
 const ids = Object.keys(MACRO_ALERT_SERIES).filter(isMacroSeries);
 
@@ -44,10 +46,13 @@ export function MacroConditionFields({ condition, errors, onChange}: { condition
     return (
         <div className="col-span-full grid gap-4 sm:grid-cols-2">
             <fieldset className="space-y-1">
-                <legend className="font-medium">Publication events</legend>
+                <legend className="font-medium">
+                    Publication events
+                    {eventsRequired && <span aria-label="Required" className="text-destructive">*</span>}
+                </legend>
                 {MACRO_EVENTS.map(kind => (
                     <label className="flex items-center gap-2" key={kind}>
-                        <input checked={events.includes(kind)} onChange={() => onChange({ ...condition, macro_events: toggle(events, kind) })} type="checkbox" />
+                        <input aria-required={eventsRequired} checked={events.includes(kind)} onChange={() => onChange({ ...condition, macro_events: toggle(events, kind) })} type="checkbox" />
                         {kind === "macro.released" ? "Releases" : "Revisions"}
                     </label>
                 ))}
