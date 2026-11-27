@@ -1,7 +1,7 @@
 import { ChevronDown, ChevronRight } from "lucide-react";
 import * as React from "react";
 
-import { FinancialsTableToolbar, PeriodTableFrame } from "@/components/financial-metrics/metrics-list-body";
+import { PeriodTableFrame } from "@/components/financial-metrics/metrics-list-body";
 import { ChartRowButton, MetricChartDialog } from "@/components/metric-chart/metric-chart-dialog";
 import { useChartSelection } from "@/components/metric-chart/use-chart-selection";
 import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
@@ -116,18 +116,17 @@ export function FinancialsPresentationTable({
 
     return (
         <>
-            {(toolbar || isCollapsible) && (
-                <FinancialsTableToolbar>
-                    <div className="flex min-w-0 flex-wrap items-center gap-x-3">{toolbar}</div>
-                    {isCollapsible && (
-                        <ExpandCollapseButtons
-                            onCollapseAll={() => setExpanded(new Set())}
-                            onExpandAll={() => setExpanded(new Set(allExpandableIds))}
-                        />
-                    )}
-                </FinancialsTableToolbar>
-            )}
-            <PeriodTableFrame>
+            <PeriodTableFrame
+                actions={isCollapsible
+                    ? (
+                            <ExpandCollapseButtons
+                                onCollapseAll={() => setExpanded(new Set())}
+                                onExpandAll={() => setExpanded(new Set(allExpandableIds))}
+                            />
+                        )
+                    : undefined}
+                toolbar={toolbar}
+            >
                 <Table>
                     <TableHeader>
                         <TableRow>

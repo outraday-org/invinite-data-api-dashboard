@@ -36,7 +36,7 @@ function cellTitle(cell: NonNullable<StatementLine["values"][number]>) {
 
 /**
  * The flat statement table of the summary / detailed views: one line per metric / concept, one column per period
- * (newest first). A derived value is italic (its tooltip says so); a click charts the line. A detailed value is a
+ * (newest first). A derived value looks like a filed one (its tooltip says it is derived); a click charts the line. A detailed value is a
  * button: "Explain this number" without charting the line — a standardized one by its fact id (`/v1/facts/{id}`), an
  * as-reported one from the fact itself (formula, operands, filing; `cik` = the company's, for the EDGAR links; `rows` =
  * the loaded periods, where a formula member's own filing is looked up first). `filedValues` (the as-reported summary,
@@ -99,7 +99,7 @@ export function FinancialsFlatTable({ cik = null, columns, filedValues = false, 
                                                 ? (
                                                         <button
                                                             aria-label={`Explain ${line.label}, ${column.label}`}
-                                                            className={cn("tabular-nums rounded-sm focus-visible:outline-2 focus-visible:outline-ring", cell.derived ? "italic" : null)}
+                                                            className="tabular-nums rounded-sm focus-visible:outline-2 focus-visible:outline-ring"
                                                             onClick={(event) => {
                                                                 event.stopPropagation();
 
@@ -132,7 +132,7 @@ export function FinancialsFlatTable({ cik = null, columns, filedValues = false, 
                                                         )
                                                     : cell
                                                         ? (
-                                                                <span className={cn("tabular-nums", cell.derived ? "italic" : null)} title={cellTitle(cell)}>
+                                                                <span className="tabular-nums" title={cellTitle(cell)}>
                                                                     {formatterOf(line.id)(cell.value)}
                                                                 </span>
                                                             )

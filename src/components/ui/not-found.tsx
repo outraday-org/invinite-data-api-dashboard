@@ -2,10 +2,12 @@ import { Link } from "@tanstack/react-router";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { PageContainer } from "@/components/ui/page-container";
 
+/** The not-found page: a narrow `PageContainer`, like the route error and the onboarding card. */
 export function NotFound() {
     return (
-        <div className="mx-auto flex max-w-3xl flex-col gap-6 px-4 py-10 lg:px-8">
+        <PageContainer width="narrow">
             <Card className="border-border/60">
                 <CardHeader>
                     <CardTitle>Not found</CardTitle>
@@ -22,6 +24,6 @@ export function NotFound() {
                     </Link>
                 </CardContent>
             </Card>
-        </div>
+        </PageContainer>
     );
 }

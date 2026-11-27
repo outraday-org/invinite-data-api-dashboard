@@ -79,7 +79,9 @@ vi.mock("@/lib/api/queries", async () => {
 
 // The framed document fetches its HTML through React Query: its props are what these views decide.
 vi.mock("@/components/html/html-viewer", () => ({
-    HtmlViewer: ({ highlightId, url }: { highlightId?: null | string; url: string }) => <div data-highlight={highlightId ?? undefined} data-testid="html-viewer" data-url={url} />,
+    HtmlViewer: ({ anchorId, highlightId, url }: { anchorId?: null | string; highlightId?: null | string; url: string }) => (
+        <div data-anchor={anchorId ?? undefined} data-highlight={highlightId ?? undefined} data-testid="html-viewer" data-url={url} />
+    ),
 }));
 
 // The plan badges read `/v1/me` (outside these pure views): no badge.
@@ -131,7 +133,7 @@ describe("Statements (`/v1/financials/*`)", () => {
         expect(onLoadMore).toHaveBeenCalledTimes(1);
     });
 
-    it("detailed (as reported): the company's caption, a derived value italic with its formula", () => {
+    it("detailed (as reported): the company's caption, a derived value with its formula in the tooltip, never italic", () => {
         render(<FinancialsStatementsView {...list} basis="as-reported" pages={[V2_AS_REPORTED_DETAILED]} statement="income-statement" view="detailed" />);
 
         expect(screen.getByText("Net income")).toHaveAttribute("title", "us-gaap:NetIncomeLoss");
@@ -141,7 +143,7 @@ describe("Statements (`/v1/financials/*`)", () => {
 
         const derived = within(screen.getByText("Net income").closest("tr")!).getByTitle(/Formula: FY - Q1 - Q2 - Q3/);
 
-        expect(derived).toHaveClass("italic");
+        expect(derived).not.toHaveClass("italic");
 
         expect(derived.getAttribute("title")).toContain("Computed by Invinite");
     });
@@ -214,7 +216,8 @@ describe("Statements (`/v1/financials/*`)", () => {
 
         expect(screen.getByTestId("html-viewer")).toHaveAttribute("data-highlight", "f-56");
 
-        expect(vi.mocked(useReportedValueLookup)).toHaveBeenLastCalledWith(null, null);
+        // No request: every caller of the lookup (the member's and the period filing's dialog) idles.
+        expect(vi.mocked(useReportedValueLookup).mock.calls.every(([company]) => company === null)).toBe(true);
 
         fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
 
@@ -227,9 +230,39 @@ describe("Statements (`/v1/financials/*`)", () => {
         // The fiscal year is no loaded column: one annual request around its end, then the 10-K at its element.
         fireEvent.click(within(screen.getByTestId("formula-expression")).getAllByRole("button")[0]);
 
-        expect(vi.mocked(useReportedValueLookup)).toHaveBeenLastCalledWith("0000320193", { fiscalYearGte: 2025, fiscalYearLte: 2027, period: "annual" });
+        expect(vi.mocked(useReportedValueLookup)).toHaveBeenCalledWith("0000320193", { fiscalYearGte: 2025, fiscalYearLte: 2027, period: "annual" });
 
         expect(screen.getByTestId("html-viewer")).toHaveAttribute("data-highlight", "f-210");
+    });
+
+    it("detailed (as reported): a computed Q4 opens its period's filing at the table of its fiscal year, no cell marked", () => {
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[V2_AS_REPORTED_Q4]} statement="income-statement" view="detailed" />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Explain Total net sales, Q4 2026" }));
+
+        // The Source accession: the 10-K, at the table of the fiscal year it states (an annual lookup of the longest operand).
+        fireEvent.click(within(screen.getByTestId("as-reported-explanation")).getByRole("button", { name: "0000320193-26-000026" }));
+
+        const viewer = screen.getByTestId("html-viewer");
+
+        expect(viewer).toHaveAttribute("data-anchor", "f-210");
+
+        expect(viewer).not.toHaveAttribute("data-highlight");
+
+        expect(screen.getByText(/computed by Invinite, not in the filing: its table is marked/u)).toBeInTheDocument();
+
+        fireEvent.keyDown(document.activeElement ?? document.body, { key: "Escape" });
+
+        cleanup();
+
+        render(<FinancialsStatementsView {...list} basis="as-reported" pages={[V2_AS_REPORTED_Q4]} statement="income-statement" view="detailed" />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Explain Total net sales, Q4 2026" }));
+
+        // The hero's action does the same.
+        fireEvent.click(screen.getByRole("button", { name: "Show the table in the filing" }));
+
+        expect(screen.getByTestId("html-viewer")).toHaveAttribute("data-anchor", "f-210");
     });
 
     it("detailed (as reported): a computed value with a filing opens it at the top (no element stated)", () => {

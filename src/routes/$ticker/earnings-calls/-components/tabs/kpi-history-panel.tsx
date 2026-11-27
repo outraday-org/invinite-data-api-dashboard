@@ -124,7 +124,7 @@ export function KpiHistoryView({
                             onClick={() => onSortChange(value)}
                             size="xs"
                             type="button"
-                            variant={sort === value ? "secondary" : "outline"}
+                            variant={sort === value ? "default" : "outline"}
                         >
                             {value === "-conference_date" ? "Newest first" : "Oldest first"}
                         </Button>

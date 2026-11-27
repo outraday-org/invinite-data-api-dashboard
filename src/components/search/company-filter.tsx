@@ -25,6 +25,7 @@ type CompanyOption = { logoUrl?: null | string; name?: null | string; symbol: st
 export function CompanyFilter({
     id,
     label = "Companies",
+    max = MAX_COMPANIES,
     onChange,
     placeholder = "Any company",
     value,
@@ -32,6 +33,8 @@ export function CompanyFilter({
     /** The trigger's id (a `FilterField`'s `<label htmlFor>`). */
     id?: string;
     label?: string;
+    /** Companies the list may hold (default the API's 50 of one `company=` list). */
+    max?: number;
     onChange: (next: Array<string>) => void;
     placeholder?: string;
     value: ReadonlyArray<string>;
@@ -65,6 +68,7 @@ export function CompanyFilter({
                 <CompanyPickerDialog
                     initial={value}
                     label={label}
+                    max={max}
                     onApply={(next) => {
                         onChange(next);
 
@@ -86,11 +90,13 @@ export function CompanyFilter({
 export function CompanyPickerDialog({
     initial,
     label,
+    max = MAX_COMPANIES,
     onApply,
     onClose,
 }: {
     initial: ReadonlyArray<string>;
     label: string;
+    max?: number;
     onApply: (next: Array<string>) => void;
     onClose: () => void;
 }) {
@@ -128,14 +134,14 @@ export function CompanyPickerDialog({
             .map(instrument => ({ logoUrl: instrument.logo_url, name: instrument.name, symbol: instrument.symbol.toUpperCase() }));
     }, [asked, search.data]);
 
-    const full = draft.length >= MAX_COMPANIES;
+    const full = draft.length >= max;
 
     const toggle = (option: CompanyOption) => {
         if (option.name || option.logoUrl) setKnown(prev => ({ ...prev, [option.symbol]: option }));
 
         setDraft(prev => (prev.includes(option.symbol)
             ? prev.filter(symbol => symbol !== option.symbol)
-            : prev.length >= MAX_COMPANIES ? prev : [...prev, option.symbol]));
+            : prev.length >= max ? prev : [...prev, option.symbol]));
     };
 
     const showTyped = typed.length > 0 && isCompanyToken(typed) && !hits.some(hit => hit.symbol === typed.toUpperCase());
@@ -153,7 +159,7 @@ export function CompanyPickerDialog({
                     <DialogTitle>{label}</DialogTitle>
                     <DialogDescription>
                         Search by ticker or name and switch companies on or off. At most
-                        {MAX_COMPANIES}
+                        {max}
                         .
                     </DialogDescription>
                 </DialogHeader>

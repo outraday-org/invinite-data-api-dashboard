@@ -3,6 +3,11 @@ import * as React from "react";
 import { useGetHtmlStorageContent } from "@/hooks/use-get-html-storage-content";
 
 type UseHtmlDocumentProcessingParams = {
+    /**
+     * An element whose TABLE is shown (a computed value the filing does not state: the table of a value it does): the
+     * table outlined, no cell marked.
+     */
+    anchorId?: null | string;
     /** An element id to mark (an inline-XBRL value's `html_tag_id`): a green ring drawn by box-shadow, no layout shift. */
     highlightId?: null | string;
     url: string;
@@ -21,7 +26,14 @@ export function highlightStyle(id: string) {
     return `[id=${quoted}]{box-shadow:0 0 0 2px ${HIGHLIGHT_GREEN},0 0 0 6px color-mix(in oklch, ${HIGHLIGHT_GREEN} 25%, transparent);border-radius:2px;scroll-margin:40vh}`;
 }
 
-export const useHtmlDocumentProcessing = ({ highlightId = null, url }: UseHtmlDocumentProcessingParams) => {
+/** The style outlining the table that holds `id` (`:has`, no layout shift). */
+export function anchorTableStyle(id: string) {
+    const quoted = JSON.stringify(id);
+
+    return `table:has([id=${quoted}]){outline:2px solid ${HIGHLIGHT_GREEN};outline-offset:6px;border-radius:2px;scroll-margin-top:24px}`;
+}
+
+export const useHtmlDocumentProcessing = ({ anchorId = null, highlightId = null, url }: UseHtmlDocumentProcessingParams) => {
     const [srcDoc, setSrcDoc] = React.useState<null | string>(null);
 
     const [failed, setFailed] = React.useState<boolean>(false);
@@ -76,10 +88,12 @@ export const useHtmlDocumentProcessing = ({ highlightId = null, url }: UseHtmlDo
 
             doc.head.insertBefore(base, doc.head.firstChild);
 
-            if (highlightId) {
+            const marks = [highlightId ? highlightStyle(highlightId) : null, anchorId ? anchorTableStyle(anchorId) : null].filter(Boolean);
+
+            if (marks.length > 0) {
                 const style = doc.createElement("style");
 
-                style.textContent = highlightStyle(highlightId);
+                style.textContent = marks.join("");
 
                 doc.head.append(style);
             }
@@ -91,7 +105,7 @@ export const useHtmlDocumentProcessing = ({ highlightId = null, url }: UseHtmlDo
         catch {
             setFailed(true);
         }
-    }, [url, html, isError, baseHref, highlightId]);
+    }, [url, html, isError, baseHref, highlightId, anchorId]);
 
     return {
         baseHref,

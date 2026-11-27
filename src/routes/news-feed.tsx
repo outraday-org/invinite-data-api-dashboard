@@ -1,19 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, X } from "lucide-react";
 import * as React from "react";
 
 import type { LiveNewsStop } from "@/lib/live/use-live-news";
 import type { NewsFeedSearch, NewsFilters } from "@/lib/news/labels";
 
 import { LIVE_NEWS_PLAN_NOTE, LiveStopNotice, LiveToggle } from "@/components/live/live-toggle";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { CompanyFilter } from "@/components/search/company-filter";
+import { FilterField } from "@/components/ui/filter-bar";
 import { PageContainer } from "@/components/ui/page-container";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { titleHead } from "@/lib/layout";
+import { liveOn, liveParam, useLiveDefault } from "@/lib/live/live-default";
 import { validateNewsFeedSearch } from "@/lib/news/labels";
-import { parseTickers, useWatchlist, WATCHLIST_MAX } from "@/lib/news/watchlist";
+import { useWatchlist, WATCHLIST_MAX } from "@/lib/news/watchlist";
 import { IN_PLACE } from "@/lib/url-state";
 import { NewsFilters as NewsFilterControls } from "@/routes/$ticker/news/-components/news-filters";
 import { NewsItemPanel } from "@/routes/$ticker/news/-components/news-item-panel";
@@ -42,58 +41,17 @@ export function feedDescription(scope: FeedScope) {
 export function feedEmptyText({ live, scope, tickers }: { live: boolean; scope: FeedScope; tickers: number }) {
     if (scope === "market") return live ? "Listening: new items appear here as they are published." : "Switch Live on to follow every company's new items.";
 
-    return tickers === 0 ? "Add tickers to your watchlist to see their news." : "No news for these companies in this window.";
+    return tickers === 0 ? "Add tickers above to see their news." : "No news for these companies in this window.";
 }
 
-/** The watchlist editor (pure: tested in `news-feed.test.tsx`): chips with a remove button and the add field. */
-export function WatchlistEditor({ list, onAdd, onRemove }: { list: ReadonlyArray<string>; onAdd: (tickers: Array<string>) => void; onRemove: (ticker: string) => void }) {
-    const [draft, setDraft] = React.useState("");
-
-    const typed = parseTickers(draft);
-
-    const full = list.length >= WATCHLIST_MAX;
-
-    const submit = (event: React.FormEvent) => {
-        event.preventDefault();
-
-        if (typed.length === 0 || full) return;
-
-        onAdd(typed);
-
-        setDraft("");
-    };
-
+/** The watchlist (pure: tested in `news-feed.test.tsx`): the company picker dialog over the stored tickers. */
+export function WatchlistEditor({ list, onChange }: { list: ReadonlyArray<string>; onChange: (list: Array<string>) => void }) {
     return (
-        <section aria-label="Watchlist" className="flex flex-col gap-2 rounded-md border p-3">
-            <div className="flex flex-wrap items-center gap-1" data-testid="watchlist">
-                {list.length === 0 && <span className="text-muted-foreground text-xs">No tickers yet.</span>}
-                {list.map(ticker => (
-                    <Badge className="gap-1 pr-0.5" key={ticker} variant="secondary">
-                        {ticker}
-                        <Button aria-label={`Remove ${ticker}`} onClick={() => onRemove(ticker)} size="icon-xs" type="button" variant="ghost">
-                            <X />
-                        </Button>
-                    </Badge>
-                ))}
-            </div>
-            <form className="flex flex-wrap items-center gap-2" onSubmit={submit}>
-                <Input
-                    aria-label="Add tickers"
-                    className="w-full sm:w-[260px]"
-                    disabled={full}
-                    maxLength={200}
-                    onChange={event => setDraft(event.target.value)}
-                    placeholder="Add tickers — e.g. AAPL, MSFT"
-                    value={draft}
-                />
-                <Button disabled={typed.length === 0 || full} type="submit" variant="outline">
-                    <Plus />
-                    Add
-                </Button>
-                <span className="text-muted-foreground text-xs">
-                    {`${list.length} of ${WATCHLIST_MAX} tickers, kept in this browser only.`}
-                </span>
-            </form>
+        <section aria-label="Watchlist" className="flex max-w-xl flex-col gap-1">
+            <FilterField label="Watchlist">
+                {id => <CompanyFilter id={id} label="Watchlist" max={WATCHLIST_MAX} onChange={onChange} placeholder="Add tickers" value={list} />}
+            </FilterField>
+            <span className="text-muted-foreground text-xs">{`${list.length} of ${WATCHLIST_MAX} companies, kept in this browser only.`}</span>
         </section>
     );
 }
@@ -122,16 +80,20 @@ function NewsFeedPage() {
 
     const [stop, setStop] = React.useState<LiveNewsStop | null>(null);
 
+    // Live is on by default when the key's plan reaches the stream (`useLiveDefault`); `?live=false` turns it off.
+    const liveByDefault = useLiveDefault();
+
     const onLiveStop = (reason: LiveNewsStop) => {
         setStop(reason);
 
-        void navigate({ replace: true, resetScroll: false, search: prev => ({ ...prev, live: undefined }) });
+        void navigate({ replace: true, resetScroll: false, search: prev => ({ ...prev, live: liveParam(false, liveByDefault) }) });
     };
 
     const company = scope === "watchlist" ? watchlist.list.join(",") : "";
 
     // An empty watchlist subscribes nothing (no tickers would mean the whole market): Live waits for a ticker.
-    const live = search.live === true && (scope === "market" || watchlist.list.length > 0);
+    // Oldest-first pauses it (live items join the newest-first list only) without rewriting the switch.
+    const live = liveOn(search.live, liveByDefault) && search.sort !== "oldest" && (scope === "market" || watchlist.list.length > 0);
 
     const news = useNewsList({
         company,
@@ -145,7 +107,7 @@ function NewsFeedPage() {
         <NewsFilterControls
             categories={[]}
             companyScope={false}
-            onChange={patch => onChange(patch.sort === "oldest" ? { ...patch, live: undefined } : patch)}
+            onChange={onChange}
             search={search}
             tags={[]}
             windowFilters={scope === "watchlist"}
@@ -160,7 +122,7 @@ function NewsFeedPage() {
             onChange={(on) => {
                 setStop(null);
 
-                onChange(on ? { live: true, sort: undefined } : { live: undefined });
+                onChange(on ? { live: liveParam(true, liveByDefault), sort: undefined } : { live: liveParam(false, liveByDefault) });
             }}
         />
     );
@@ -185,7 +147,7 @@ function NewsFeedPage() {
                 scopeLabel={scope === "market" ? "Every company" : "Your watchlist"}
                 search={(
                     <>
-                        {scope === "watchlist" && <WatchlistEditor list={watchlist.list} onAdd={watchlist.add} onRemove={watchlist.remove} />}
+                        {scope === "watchlist" && <WatchlistEditor list={watchlist.list} onChange={watchlist.set} />}
                         {(scope === "market" || watchlist.list.length > 0) && (
                             <NewsSearchBox
                                 company={scope === "market" ? undefined : company}

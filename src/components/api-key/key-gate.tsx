@@ -1,5 +1,6 @@
 import type * as React from "react";
 
+import { PageContainer } from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useKeyState } from "@/lib/api/queries";
 
@@ -15,10 +16,10 @@ export function KeyGate({ children }: { children: React.ReactNode }) {
 
     if (state === "checking") {
         return (
-            <div className="flex flex-col gap-4 px-4 py-6 lg:px-8" data-testid="key-gate-checking">
+            <PageContainer data-testid="key-gate-checking">
                 <Skeleton className="h-6 w-56" />
                 <Skeleton className="h-64 w-full" />
-            </div>
+            </PageContainer>
         );
     }
 

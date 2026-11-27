@@ -301,7 +301,7 @@ describe("keyed macro page requests", () => {
         expect(f.curve).not.toHaveBeenCalled();
     });
 
-    it("keeps Saturday claims dates and breaks a chart at missing or explicitly unavailable dates", () => {
+    it("keeps Saturday claims dates and marks missing or explicitly unavailable dates (the line connects across them)", () => {
         expect(macroSearch.parse({ from: "2026-11-14", series: "initial_claims_sa", view: "history" }).from).toBe(
             "2026-11-14",
         );

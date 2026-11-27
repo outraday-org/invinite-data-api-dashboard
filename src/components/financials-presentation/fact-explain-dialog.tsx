@@ -200,7 +200,7 @@ export function FactExplanationView({ fact, filing = null, formula, onOpenFiling
                                         )}
                                         {source.accession && (
                                             <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
-                                                <FilingRef accession={source.accession} cik={cik} onOpen={() => onOpenFiling(source.accession!)} />
+                                                <FilingRef accession={source.accession} cik={cik} onOpen={() => (source.anchor ? openSource(source.accession!, source.anchor) : onOpenFiling(source.accession!))} />
                                                 {source.anchor && (
                                                     <ShowInFilingButton elementId={source.anchor} label="Open at the value" onOpen={() => openSource(source.accession!, source.anchor)} />
                                                 )}

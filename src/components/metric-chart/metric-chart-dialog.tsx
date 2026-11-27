@@ -160,6 +160,7 @@ export function MetricChartDialog({
                                                                 : value}
                                                     />
                                                     <Line
+                                                        connectNulls
                                                         dataKey="value"
                                                         dot={false}
                                                         name={metricLabel}

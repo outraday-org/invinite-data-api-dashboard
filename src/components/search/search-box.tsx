@@ -82,10 +82,10 @@ export function SearchQueryForm({
     );
 }
 
-/** A toggle chip of a search's option row (mode, type, "Match case"): `aria-pressed`, secondary while on. */
+/** A toggle chip of a search's option row (mode, type, "Match case"): `aria-pressed`, primary while on. */
 export function SearchChip({ children, onClick, pressed }: { children: React.ReactNode; onClick: () => void; pressed: boolean }) {
     return (
-        <Button aria-pressed={pressed} onClick={onClick} size="xs" type="button" variant={pressed ? "secondary" : "outline"}>
+        <Button aria-pressed={pressed} onClick={onClick} type="button" variant={pressed ? "default" : "outline"}>
             {children}
         </Button>
     );

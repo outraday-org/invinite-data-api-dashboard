@@ -12,6 +12,7 @@ import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { Notice } from "@/components/ui/notice";
 import { PageContainer } from "@/components/ui/page-container";
 import { PageHeader } from "@/components/ui/page-header";
+import { isSearchTimeout } from "@/lib/api/errors";
 import { useV2TranscriptSearch } from "@/lib/api/queries";
 import { joinCompanyList, parseCompanyList } from "@/lib/company-list";
 import { SEARCH_MODES } from "@/lib/earnings/labels";
@@ -89,6 +90,16 @@ export function TranscriptSearchView({
         return <Notice badge="Exact" title={`Exact search needs ${EXACT_MIN_UNSCOPED} characters or a company`}>Nothing was sent: the API refuses a shorter exact pattern without a company.</Notice>;
     }
 
+    if (isSearchTimeout(error)) {
+        return (
+            <Notice badge="Timed out" title="The search took too long" tone="warn">
+                {search.company
+                    ? "The API stopped the search at its time limit, after a second attempt. Try again in a moment."
+                    : "The API stopped the search at its time limit, after a second attempt. A common word across every company's calls is the usual cause: try again in a moment, or narrow the search with a company, a shorter call window or one type."}
+            </Notice>
+        );
+    }
+
     const capped = (data?.data.length ?? 0) >= TRANSCRIPT_SEARCH_LIMIT;
 
     return (
@@ -157,7 +168,7 @@ function SearchPage() {
     const activeCount = [search.mode, search.type, search.company, search.from ?? search.to].filter(value => value !== undefined).length;
 
     return (
-        <PageContainer width="narrow">
+        <PageContainer>
             <PageHeader
                 description={`What was said on every company's earnings calls: transcripts, Q&A and slide text. One page of at most ${TRANSCRIPT_SEARCH_LIMIT} passages per search (10 credits); narrow it to find more.`}
                 title="Transcript search"
@@ -172,7 +183,7 @@ function SearchPage() {
                         <SearchModeChips mode={search.mode ?? "lexical"} onModeChange={setMode} />
                     </div>
                 </FilterField>
-                <FilterField label="In" span={2}>
+                <FilterField label="In" span={3}>
                     <div className="flex flex-wrap gap-1">
                         <SearchChip onClick={() => onChange({ type: undefined })} pressed={search.type === undefined}>All</SearchChip>
                         {TYPES.map(type => (
@@ -182,8 +193,8 @@ function SearchPage() {
                         ))}
                     </div>
                 </FilterField>
-                <FilterField label="Companies" span={2}>
-                    {id => <CompanyFilter id={id} onChange={companies => onChange({ company: joinCompanyList(companies) })} value={parseCompanyList(search.company)} />}
+                <FilterField label="Company" span={2}>
+                    {id => <CompanyFilter id={id} max={1} onChange={companies => onChange({ company: joinCompanyList(companies) })} value={parseCompanyList(search.company)} />}
                 </FilterField>
                 <FilterField label="Calls" span={2}>
                     <DayRange from={search.from} labels={{ from: "Calls from", to: "Calls to" }} onChange={onChange} to={search.to} />

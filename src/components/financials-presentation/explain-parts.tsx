@@ -8,7 +8,7 @@ import type { ValueRef } from "@/lib/financials/value-ref";
 import { FilingDocumentDialog } from "@/components/sec/filing-document-dialog";
 import { useReportedValueLookup } from "@/lib/api/queries";
 import { edgarFolderUrl } from "@/lib/earnings/edgar";
-import { findValueSource, valueLookupOf } from "@/lib/financials/value-ref";
+import { findValueSource, refMonths, valueLookupOf } from "@/lib/financials/value-ref";
 import { cn, formatNumberEn } from "@/lib/utils";
 
 /** A value at full magnitude ("—" when absent). */
@@ -208,6 +208,58 @@ export function ValueFilingDialog({ cik, onClose, rows = [], target }: {
             onClose={onClose}
             resolving={{ error: lookup.error, isLoading: lookup.isLoading }}
             target={target ? { accession: found?.accession ?? null, elementId: found?.elementId ?? null, title: target.title } : null}
+        />
+    );
+}
+
+/** A computed value's period filing to open at its table: the filing and the operands that may be filed in it. */
+export type PeriodFilingTarget = { accession: string; refs: ReadonlyArray<ValueRef>; title: string };
+
+/** The operand most likely filed in the period's filing: the longest one (a Q4's fiscal year, stated by the 10-K). */
+function longestRef(refs: ReadonlyArray<ValueRef>) {
+    return refs.reduce<null | ValueRef>((best, ref) => (best === null || (refMonths(ref) ?? 0) > (refMonths(best) ?? 0) ? ref : best), null);
+}
+
+/**
+ * The filing of a computed value (Q4, TTM, YTD: the filing does not state it) opened at the table it belongs to: an
+ * operand filed in the SAME filing with an element (the 10-K's fiscal year for a Q4) — from the loaded rows, else one
+ * as-reported detailed request for the longest operand — names the table; it is outlined, no cell marked. No such
+ * operand = the filing's top.
+ */
+export function PeriodFilingDialog({ cik, onClose, rows = [], target }: {
+    cik: null | string;
+    onClose: () => void;
+    rows?: ReadonlyArray<V2StatementPeriod>;
+    target: null | PeriodFilingTarget;
+}) {
+    const local = React.useMemo(() => {
+        if (!target) return null;
+
+        for (const ref of target.refs) {
+            const found = findValueSource(rows, ref);
+
+            if (found?.accession === target.accession && found.elementId) return found.elementId;
+        }
+
+        return null;
+    }, [rows, target]);
+
+    const ref = target && !local ? longestRef(target.refs) : null;
+
+    const lookup = useReportedValueLookup(ref ? cik : null, ref ? valueLookupOf(ref) : null);
+
+    const remote = ref && lookup.data ? findValueSource(lookup.data.data, ref) : null;
+
+    const anchorId = local ?? (remote?.accession === target?.accession ? (remote?.elementId ?? null) : null);
+
+    // While the operand is looked up the filing waits (no jump once the table is known); a failed lookup opens the top.
+    const waiting = ref !== null && lookup.isLoading;
+
+    return (
+        <FilingDocumentDialog
+            onClose={onClose}
+            resolving={{ error: null, isLoading: waiting }}
+            target={target ? { accession: waiting ? null : target.accession, anchorId, elementId: null, title: target.title } : null}
         />
     );
 }

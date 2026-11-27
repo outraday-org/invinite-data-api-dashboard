@@ -65,29 +65,50 @@ export type MetricsListState = {
     onLoadMore: () => void;
 };
 
-/** The "Load older periods" button of the list around a period table (null = none: last page, or no list). */
-const LoadOlderContext = React.createContext<React.ReactNode>(null);
+/** What the surrounding `MetricsListBody` hands its period table: "Load older periods" (null = last page) and the toolbar. */
+const PeriodListContext = React.createContext<{ loadOlder: React.ReactNode; toolbar: React.ReactNode }>({ loadOlder: null, toolbar: null });
 
-/**
- * A period table with its "Load older periods" (ui-redesign task 9): the next page adds COLUMNS, so from 640 px the
- * button sits at the table's right edge, centred on its 36 px header row; below it the button goes under the table.
- * The button comes from the surrounding `MetricsListBody` (context), so each table only wraps itself.
- */
-export function PeriodTableFrame({ children }: { children: React.ReactNode }) {
-    const loadOlder = React.use(LoadOlderContext);
-
+/** The line above a period table: the currency, a hint (left), the tree's Expand / Collapse all and "Load older periods" (right). */
+export function FinancialsTableToolbar({ actions, children }: { actions?: React.ReactNode; children?: React.ReactNode }) {
     return (
-        <div className="flex min-w-0 flex-col gap-2 sm:flex-row sm:items-start" data-slot="period-table-frame">
-            <div className="min-w-0 flex-1">{children}</div>
-            {loadOlder && <div className="shrink-0 sm:mt-0.5">{loadOlder}</div>}
+        <div className="text-muted-foreground flex min-h-8 flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs" data-slot="financials-table-toolbar">
+            <div className="flex min-w-0 flex-wrap items-center gap-x-3">{children}</div>
+            {actions && <div className="text-foreground ml-auto flex shrink-0 items-center gap-3">{actions}</div>}
         </div>
     );
 }
 
-/** The line above a period table: the currency, a hint, the tree's Expand / Collapse all (one row, wraps on a phone). */
-export function FinancialsTableToolbar({ children }: { children: React.ReactNode }) {
+/**
+ * A period table with its toolbar line above it: the next page adds COLUMNS, so "Load older periods" sits at the right
+ * end of that line, outside the table's sideways scroll, and the table takes the full width. The button and the
+ * page's toolbar come from the surrounding `MetricsListBody` (context); a table with its own line (the presentation
+ * tree's Expand / Collapse all) passes `toolbar` / `actions`.
+ */
+export function PeriodTableFrame({
+    actions,
+    children,
+    toolbar,
+}: {
+    actions?: React.ReactNode;
+    children: React.ReactNode;
+    toolbar?: React.ReactNode;
+}) {
+    const list = React.use(PeriodListContext);
+
+    const left = toolbar ?? list.toolbar;
+
+    const right = actions || list.loadOlder
+        ? (
+                <>
+                    {actions}
+                    {list.loadOlder}
+                </>
+            )
+        : null;
+
     return (
-        <div className="text-muted-foreground flex min-h-7 flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs" data-slot="financials-table-toolbar">
+        <div className="flex min-w-0 flex-col gap-2" data-slot="period-table-frame">
+            {(left || right) && <FinancialsTableToolbar actions={right}>{left}</FinancialsTableToolbar>}
             {children}
         </div>
     );
@@ -97,8 +118,8 @@ export function FinancialsTableToolbar({ children }: { children: React.ReactNode
  * The body of a v2 financials / metrics / segments page (statements, ratios, growth, CAGR, segments): the request's
  * state, the coverage notice (pending = being prepared), the table when rows are loaded, "No … available" only for a
  * complete empty last page, and "Load older periods" (older periods by `next_cursor`) — beside the table through
- * `PeriodTableFrame`, or under the empty state when no table shows. `toolbar` = the line above the table (the
- * currency, a hint, Expand / Collapse all).
+ * `PeriodTableFrame`'s toolbar line, or under the empty state when no table shows. `toolbar` = the left of that line
+ * (the currency, a hint).
  */
 export function MetricsListBody({
     children,
@@ -127,7 +148,7 @@ export function MetricsListBody({
 
     if (isLoading && loadedPages === 0) return <Skeleton className="h-64 w-full" />;
 
-    const loadOlder = <LoadMoreButton className="justify-start pt-0" direction="right" hasNextPage={hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={onLoadMore} />;
+    const loadOlder = <LoadMoreButton className="pt-0" direction="right" hasNextPage={hasNextPage} isFetchingNextPage={isFetchingNextPage} onLoadMore={onLoadMore} />;
 
     return (
         <div className="flex flex-col gap-2">
@@ -135,8 +156,7 @@ export function MetricsListBody({
             {hasRows
                 ? (
                         <>
-                            {toolbar && <FinancialsTableToolbar>{toolbar}</FinancialsTableToolbar>}
-                            <LoadOlderContext value={hasNextPage ? loadOlder : null}>{children}</LoadOlderContext>
+                            <PeriodListContext value={{ loadOlder: hasNextPage ? loadOlder : null, toolbar: toolbar ?? null }}>{children}</PeriodListContext>
                         </>
                     )
                 : (

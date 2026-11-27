@@ -107,7 +107,7 @@ export function AsReportedFinancials({ tabs, ticker }: FinancialsTabProps) {
                             className="w-full"
                             onClick={() => update({ reportedOnly: reportedOnly ? undefined : true })}
                             title="Hide the values Invinite derived (Q4, TTM, YTD)"
-                            variant={reportedOnly ? "secondary" : "outline"}
+                            variant={reportedOnly ? "default" : "outline"}
                         >
                             Reported only
                         </Button>

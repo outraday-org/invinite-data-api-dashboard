@@ -100,7 +100,7 @@ export function FinancialsStatementsView({
             pendingTitle={STATEMENTS_PENDING_TITLE}
             state={state}
             title="Failed to load financials"
-            toolbar={view === "presentation" ? undefined : <div className="flex min-w-0 flex-wrap items-center gap-x-3">{toolbar}</div>}
+            toolbar={view === "presentation" ? undefined : toolbar}
         >
             {view === "presentation"
                 ? <FinancialsPresentationTable isCollapsible={basis === "standardized"} periods={trees} toolbar={toolbar} />

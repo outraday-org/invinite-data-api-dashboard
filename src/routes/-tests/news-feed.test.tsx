@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { WATCHLIST_MAX } from "@/lib/news/watchlist";
@@ -11,41 +11,33 @@ vi.mock("@tanstack/react-router", () => ({
 }));
 
 // Keep the server functions (TanStack Start) unloaded.
-vi.mock("@/lib/api/queries", () => ({}));
+vi.mock("@/lib/api/queries", () => ({ useInstrumentSearch: () => ({ data: undefined, isFetching: false }) }));
 
 afterEach(cleanup);
 
 describe("WatchlistEditor", () => {
-    it("adds the typed tickers in one go and removes one by its chip", () => {
-        const onAdd = vi.fn();
+    it("shows the stored tickers in the company filter, clears them and states the count", () => {
+        const onChange = vi.fn();
 
-        const onRemove = vi.fn();
+        render(<WatchlistEditor list={["AAPL", "MSFT"]} onChange={onChange} />);
 
-        render(<WatchlistEditor list={["AAPL", "MSFT"]} onAdd={onAdd} onRemove={onRemove} />);
+        expect(screen.getAllByTestId("company-chip").map(chip => chip.textContent)).toEqual(["AAPL", "MSFT"]);
 
-        expect(within(screen.getByTestId("watchlist")).getByText("AAPL")).toBeTruthy();
+        expect(screen.getByText(`2 of ${WATCHLIST_MAX} companies, kept in this browser only.`)).toBeTruthy();
 
-        expect(screen.getByText(`2 of ${WATCHLIST_MAX} tickers, kept in this browser only.`)).toBeTruthy();
+        fireEvent.click(screen.getByLabelText("Clear watchlist"));
 
-        fireEvent.change(screen.getByLabelText("Add tickers"), { target: { value: "nvda, brk.b" } });
-
-        fireEvent.click(screen.getByText("Add"));
-
-        expect(onAdd).toHaveBeenCalledWith(["NVDA", "BRK.B"]);
-
-        expect(screen.getByLabelText("Add tickers")).toHaveValue("");
-
-        fireEvent.click(screen.getByLabelText("Remove MSFT"));
-
-        expect(onRemove).toHaveBeenCalledWith("MSFT");
+        expect(onChange).toHaveBeenCalledWith([]);
     });
 
-    it("refuses more tickers once the list is full", () => {
-        render(<WatchlistEditor list={Array.from({ length: WATCHLIST_MAX }, (_, index) => `T${index}`)} onAdd={vi.fn()} onRemove={vi.fn()} />);
+    it("opens the company picker dialog", () => {
+        render(<WatchlistEditor list={[]} onChange={vi.fn()} />);
 
-        expect(screen.getByLabelText("Add tickers")).toBeDisabled();
+        fireEvent.click(screen.getByRole("button", { name: "Watchlist: Add tickers" }));
 
-        expect((screen.getByText("Add").closest("button") as HTMLButtonElement).disabled).toBe(true);
+        expect(screen.getByRole("dialog")).toBeTruthy();
+
+        expect(screen.getByText(/At most\s*20/u)).toBeTruthy();
     });
 });
 
@@ -55,7 +47,7 @@ describe("the feed's texts", () => {
 
         expect(feedDescription("market")).toMatch(/needs a company or an event/u);
 
-        expect(feedEmptyText({ live: false, scope: "watchlist", tickers: 0 })).toBe("Add tickers to your watchlist to see their news.");
+        expect(feedEmptyText({ live: false, scope: "watchlist", tickers: 0 })).toBe("Add tickers above to see their news.");
 
         expect(feedEmptyText({ live: false, scope: "market", tickers: 3 })).toBe("Switch Live on to follow every company's new items.");
 

@@ -12,9 +12,10 @@ import { toV2FilingDocuments } from "@/lib/sec/source";
 
 /**
  * A filing to show: its accession (null = not known: still being looked up, or not found), the value's inline-XBRL
- * element (null = open at the top) and what the reader clicked.
+ * element (null = open at the top), `anchorId` = for a value the filing does not state (a computed Q4), the element of
+ * one it does in the same table (the table is shown, no cell marked) and what the reader clicked.
  */
-export type FilingDocumentTarget = { accession: null | string; elementId: null | string; title: string };
+export type FilingDocumentTarget = { accession: null | string; anchorId?: null | string; elementId: null | string; title: string };
 
 /**
  * The filing's main document: the one whose type is the form (the 10-Q / 10-K itself; the filing answer names no
@@ -56,7 +57,7 @@ export function FilingDocumentDialog({ onClose, resolving, target }: {
                         <DialogTitle className="flex items-start justify-between gap-3">
                             <span className="min-w-0 truncate">{filing.data ? `${filing.data.form} · ${target?.accession ?? ""}` : (target?.accession ?? (unresolved && resolving?.isLoading ? "Finding the filing…" : "Filing"))}</span>
                             {url && (
-                                <a className="text-primary flex shrink-0 items-center gap-1 text-xs font-normal hover:underline" href={elementUrl(url, target?.elementId ?? null)} rel="noopener noreferrer" target="_blank">
+                                <a className="text-primary flex shrink-0 items-center gap-1 text-xs font-normal hover:underline" href={elementUrl(url, target?.elementId ?? target?.anchorId ?? null)} rel="noopener noreferrer" target="_blank">
                                     Open in new tab
                                     <ExternalLink className="size-3" />
                                 </a>
@@ -64,7 +65,11 @@ export function FilingDocumentDialog({ onClose, resolving, target }: {
                         </DialogTitle>
                         <DialogDescription className="[overflow-wrap:anywhere]">
                             {target
-                                ? (target.elementId ? `${target.title} · the value is marked in the document` : target.title)
+                                ? (target.elementId
+                                        ? `${target.title} · the value is marked in the document`
+                                        : target.anchorId
+                                            ? `${target.title} · computed by Invinite, not in the filing: its table is marked`
+                                            : target.title)
                                 : null}
                         </DialogDescription>
                     </DialogHeader>
@@ -80,7 +85,7 @@ export function FilingDocumentDialog({ onClose, resolving, target }: {
                                 : filing.isLoading
                                     ? <Skeleton className="h-full w-full" />
                                     : url
-                                        ? <HtmlViewer className="h-full" highlightId={target?.elementId ?? null} title={target?.title ?? "Filing"} url={url} />
+                                        ? <HtmlViewer anchorId={target?.elementId ? null : (target?.anchorId ?? null)} className="h-full" highlightId={target?.elementId ?? null} title={target?.title ?? "Filing"} url={url} />
                                         : <div className="text-muted-foreground text-sm">The filing has no public HTML copy yet.</div>}
                     </div>
                 </div>

@@ -185,7 +185,7 @@ import type {
     V2Usage,
 } from "./types";
 
-import { ApiRequestError, errorDescription, isUnauthorized, rethrowApiError, retryUnlessApiError } from "./errors";
+import { ApiRequestError, errorDescription, isUnauthorized, rethrowApiError, retrySearchTimeoutOnce, retryUnlessApiError, SEARCH_RETRY_DELAY_MS } from "./errors";
 import {
     getApiBaseUrl,
     getApiLicensing,
@@ -340,7 +340,7 @@ const EARNINGS_EVENT_STALE_MS = 10 * 60 * 1000;
 
 type EarningsQueryExtras<T> = Pick<
     UseQueryOptions<T, Error, T, ReadonlyArray<unknown>>,
-    "gcTime" | "placeholderData" | "refetchInterval" | "retry" | "retryOnMount"
+    "gcTime" | "placeholderData" | "refetchInterval" | "retry" | "retryDelay" | "retryOnMount"
 >;
 
 /**
@@ -1181,7 +1181,10 @@ export type V2TranscriptSearchInput = {
     type?: V2TranscriptSearchType;
 };
 
-/** "Search this call" (`AskThisCall`): runs once `q` is non-empty (set it on submit, not per keystroke). */
+/**
+ * "Search this call" (`AskThisCall`) and `/search`: runs once `q` is non-empty (set it on submit, not per keystroke).
+ * A timed-out search (503, not billed) is asked once more after the API's `Retry-After` (`retrySearchTimeoutOnce`).
+ */
 export function useV2TranscriptSearch(input: V2TranscriptSearchInput) {
     return useEarningsQuery<V2TranscriptSearchResponse>({
         enabled: input.q.trim().length > 0,
@@ -1199,6 +1202,8 @@ export function useV2TranscriptSearch(input: V2TranscriptSearchInput) {
             input.conferenceDateGte ?? "",
             input.conferenceDateLte ?? "",
         ],
+        retry: retrySearchTimeoutOnce,
+        retryDelay: SEARCH_RETRY_DELAY_MS,
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }

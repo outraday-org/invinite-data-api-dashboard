@@ -120,6 +120,24 @@ describe("TranscriptSearchView (/search)", () => {
         expect(screen.getByText("company: one company per search")).toBeInTheDocument();
     });
 
+    it("says a timed-out search took too long and how to narrow it", () => {
+        const error = new ApiRequestError(503, { error: "unavailable", message: "Search is temporarily unavailable." });
+
+        render(<TranscriptSearchView data={null} error={error} isLoading={false} search={{ q: "revenue" }} />);
+
+        expect(screen.getByText("The search took too long")).toBeInTheDocument();
+
+        expect(screen.getByText(/narrow the search with a company/)).toBeInTheDocument();
+    });
+
+    it("keeps the API's words for a search that is switched off", () => {
+        const error = new ApiRequestError(503, { error: "unavailable", message: "Transcript search is not enabled" });
+
+        render(<TranscriptSearchView data={null} error={error} isLoading={false} search={{ q: "revenue" }} />);
+
+        expect(screen.getByText("Transcript search is not enabled")).toBeInTheDocument();
+    });
+
     it("states the call window, the API's 365-day default without a company", () => {
         expect(windowText({})).toBe("Calls of the last 365 days (the API's default window)");
 

@@ -110,7 +110,7 @@ export function StatusDot({ status }: { status: OverallStatus }) {
     const summary = OVERALL_LABELS[status];
 
     return (
-        <span aria-label={summary} className="ml-auto flex items-center" data-testid="api-status-dot" role="img" title={summary}>
+        <span aria-label={summary} className="flex shrink-0 items-center" data-testid="api-status-dot" role="img" title={summary}>
             <span className={cn("size-2 rounded-full", DOT_CLASSES[status])} />
         </span>
     );

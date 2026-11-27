@@ -12,7 +12,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { asReportedExplanation } from "@/lib/financials/as-reported-explanation";
 
-import type { ValueFilingTarget } from "./explain-parts";
+import type { PeriodFilingTarget, ValueFilingTarget } from "./explain-parts";
 
 import {
     ExplainField,
@@ -23,6 +23,7 @@ import {
     fullNumber,
     Mono,
     OperandChip,
+    PeriodFilingDialog,
     ResultChip,
     ShowInFilingButton,
     ValueFilingDialog,
@@ -62,11 +63,13 @@ function MemberChip({ member, mixedConcepts, onOpenValue }: { member: AsReported
  * document — at the value, marked, when its element is known; `onOpenValue` a member's filing. A filed value with a
  * known period offers its "Filed values" (`vintages`: every filing that stated it, on a click).
  */
-export function AsReportedExplanationView({ cik, model, onOpenDocument, onOpenFiling, onOpenValue, vintages = null }: {
+export function AsReportedExplanationView({ cik, model, onOpenDocument, onOpenFiling, onOpenPeriodFiling, onOpenValue, vintages = null }: {
     cik: null | string;
     model: AsReportedExplanationModel;
     onOpenDocument: (accession: string, elementId: null | string) => void;
     onOpenFiling: (accession: string) => void;
+    /** A computed value's period filing, opened at its table (`PeriodFilingDialog`); absent = the filing's top. */
+    onOpenPeriodFiling?: (accession: string, refs: ReadonlyArray<ValueRef>) => void;
     onOpenValue?: (ref: ValueRef, title: string) => void;
     vintages?: FinancialVintagesTarget | null;
 }) {
@@ -75,6 +78,15 @@ export function AsReportedExplanationView({ cik, model, onOpenDocument, onOpenFi
         <MemberChip key={index} member={member} mixedConcepts={model.mixedConcepts} onOpenValue={onOpenValue} />
     );
 
+    const refs = model.members.flatMap(member => (member.ref ? [member.ref] : []));
+
+    // A filed value opens at its place, marked; a computed one at the table of its operands in the period's filing.
+    const openSource = (accession: string) => {
+        if (!model.derived && model.htmlTagId) onOpenDocument(accession, model.htmlTagId);
+        else if (model.derived && refs.length > 0 && onOpenPeriodFiling) onOpenPeriodFiling(accession, refs);
+        else onOpenFiling(accession);
+    };
+
     const openable = model.members.some(member => member.ref !== null) && onOpenValue !== undefined;
 
     return (
@@ -82,7 +94,9 @@ export function AsReportedExplanationView({ cik, model, onOpenDocument, onOpenFi
             <ValueHero
                 action={model.accession && !model.derived && model.htmlTagId
                     ? <ShowInFilingButton elementId={model.htmlTagId} onOpen={() => onOpenDocument(model.accession!, model.htmlTagId)} />
-                    : null}
+                    : model.accession && model.derived && refs.length > 0 && onOpenPeriodFiling
+                        ? <ShowInFilingButton elementId={null} label="Show the table in the filing" onOpen={() => openSource(model.accession!)} />
+                        : null}
                 badge={<Badge variant={model.derived ? "secondary" : "outline"}>{model.derived ? "Computed" : "Filed"}</Badge>}
                 caption={model.caption}
                 sub={<Mono>{model.concept}</Mono>}
@@ -150,7 +164,12 @@ export function AsReportedExplanationView({ cik, model, onOpenDocument, onOpenFi
                     ? (
                             <ExplainFields>
                                 <ExplainField label={model.derived ? "Period's filing" : "Filing"}>
-                                    <FilingRef accession={model.accession} cik={cik} onOpen={() => onOpenFiling(model.accession!)} />
+                                    <FilingRef
+                                        accession={model.accession}
+                                        cik={cik}
+                                        // A filed value opens at its place, marked (as the hero's button); else the filing's top.
+                                        onOpen={() => openSource(model.accession!)}
+                                    />
                                 </ExplainField>
                             </ExplainFields>
                         )
@@ -178,6 +197,8 @@ export function AsReportedExplainDialog({ onClose, target }: { onClose: () => vo
 
     const [value, setValue] = React.useState<null | ValueFilingTarget>(null);
 
+    const [period, setPeriod] = React.useState<null | PeriodFilingTarget>(null);
+
     return (
         <>
             <Dialog onOpenChange={open => !open && onClose()} open={target !== null}>
@@ -194,6 +215,7 @@ export function AsReportedExplainDialog({ onClose, target }: { onClose: () => vo
                                     model={model}
                                     onOpenDocument={(accession, elementId) => setDocument({ accession, elementId, title: target.period })}
                                     onOpenFiling={accession => setDocument({ accession, elementId: null, title: target.period })}
+                                    onOpenPeriodFiling={(accession, refs) => setPeriod({ accession, refs, title: target.period })}
                                     onOpenValue={(ref, title) => setValue({ ref, title: `${model.caption} · ${title}` })}
                                     vintages={target.vintages}
                                 />
@@ -204,6 +226,7 @@ export function AsReportedExplainDialog({ onClose, target }: { onClose: () => vo
             </Dialog>
             <FilingDocumentDialog onClose={() => setDocument(null)} target={document} />
             <ValueFilingDialog cik={target?.cik ?? null} onClose={() => setValue(null)} rows={target?.rows} target={value} />
+            <PeriodFilingDialog cik={target?.cik ?? null} onClose={() => setPeriod(null)} rows={target?.rows} target={period} />
         </>
     );
 }

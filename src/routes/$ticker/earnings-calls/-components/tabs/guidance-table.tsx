@@ -245,7 +245,7 @@ export function GuidanceTable({
                         onClick={() => setReview(value)}
                         size="xs"
                         type="button"
-                        variant={review === value ? "secondary" : "outline"}
+                        variant={review === value ? "default" : "outline"}
                     >
                         {value === "all" ? "All" : "Needs review"}
                     </Button>

@@ -374,9 +374,10 @@ export function AppSidebar() {
                 </SidebarContent>
                 <SidebarFooter className="border-sidebar-border gap-1 border-t">
                     <SidebarMenu className="flex-row flex-wrap gap-1" data-testid="sidebar-help">
-                        {HELP_NAV.map(link => (
+                        {HELP_NAV.map((link, index) => (
                             <SidebarMenuItem className="min-w-0 flex-1" key={link.href}>
-                                <a className={cn(linkClass, "text-xs")} href={link.href} rel="noreferrer" target="_blank">
+                                {/* One row: the first link starts left, the next one (Licensing) sits at the right end. */}
+                                <a className={cn(linkClass, "text-xs", index > 0 && "justify-end")} href={link.href} rel="noreferrer" target="_blank">
                                     <span className="truncate">{link.label}</span>
                                     {link.href === STATUS_PAGE_URL
                                         ? <ApiStatusDot />

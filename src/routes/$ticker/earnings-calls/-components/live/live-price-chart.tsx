@@ -132,10 +132,10 @@ export function LivePriceChart({ buckets, callT0, cursorMs, prices }: LivePriceC
             <p className="text-muted-foreground text-xs">{LIVE_PRICE_CAVEAT}</p>
             <div className="flex flex-wrap items-center gap-2 text-xs tabular-nums">
                 <div aria-label="Price chart scale" className="flex items-center gap-1" role="group">
-                    <Button aria-pressed={yMode === "return"} onClick={() => setYMode("return")} size="xs" type="button" variant={yMode === "return" ? "secondary" : "outline"}>
+                    <Button aria-pressed={yMode === "return"} onClick={() => setYMode("return")} size="xs" type="button" variant={yMode === "return" ? "default" : "outline"}>
                         Return
                     </Button>
-                    <Button aria-pressed={yMode === "price"} onClick={() => setYMode("price")} size="xs" type="button" variant={yMode === "price" ? "secondary" : "outline"}>
+                    <Button aria-pressed={yMode === "price"} onClick={() => setYMode("price")} size="xs" type="button" variant={yMode === "price" ? "default" : "outline"}>
                         Price
                     </Button>
                 </div>
@@ -185,7 +185,7 @@ export function LivePriceChart({ buckets, callT0, cursorMs, prices }: LivePriceC
                         )}
                         <Tooltip content={<PriceTooltip rows={rows} xLabel={xLabel} />} cursor={LINE_CURSOR} />
                         <Line
-                            connectNulls={false}
+                            connectNulls
                             dataKey={yMode === "return" ? "returnBps" : "price"}
                             dot={renderIsolatedDot}
                             isAnimationActive={false}

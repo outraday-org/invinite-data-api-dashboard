@@ -211,7 +211,7 @@ export function DocumentsTab({ event, eventId, onSearchChange, onTabChange, sear
                         onClick={() => toggleKind(kind)}
                         size="xs"
                         type="button"
-                        variant={kinds.includes(kind) ? "secondary" : "outline"}
+                        variant={kinds.includes(kind) ? "default" : "outline"}
                     >
                         {kindLabel(kind)}
                     </Button>

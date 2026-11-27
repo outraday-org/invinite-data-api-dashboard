@@ -15,6 +15,7 @@ import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
 import { useCompanyFiscalPeriods, useInstrument, useV2FilingsInfinite } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
+import { liveOn, liveParam, useLiveDefault } from "@/lib/live/live-default";
 import { commaList, hasLiveForm, isFilingOf, mergeLiveRows, toLiveFilingRow } from "@/lib/live/live-filings";
 import { facetSummary, fiscalPeriodIndex, formTypesOfFacet, toFilingListRow } from "@/lib/sec/parity";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
@@ -29,7 +30,7 @@ import { useLiveFilingsFeed } from "./-components/use-live-filings-feed";
 
 /**
  * `?form=` (one form type of the facet), `?items=` (8-K items, comma list), `?from=&to=` (filed days, inclusive),
- * `?sort=asc` (oldest filed first; default newest), `?live=true` (new filings over the stream on top), `?search=true`
+ * `?sort=asc` (oldest filed first; default newest), `?live=false` / `?live=true` (new filings over the stream on top; on by default when the key's plan reaches the stream, `useLiveDefault`), `?search=true`
  * (the SEC filing search box; `?source=<version id>&block=<block id>` = a cited passage), `?filing=<accession>` (the
  * HTML view of a loaded row; a filing outside the loaded pages opens its documents instead), `?docs=<accession>` (the
  * SEC source panel of that accession).
@@ -128,10 +129,14 @@ function FilingsPage() {
     // filter (a live frame carries no 8-K items and is filed today).
     const liveApplies = sortDirection === "desc" && !search.to && items.length === 0;
 
+    const liveByDefault = useLiveDefault();
+
+    const liveEnabled = liveOn(search.live, liveByDefault);
+
     const live = useLiveFilingsFeed({
-        enabled: search.live === true,
+        enabled: liveEnabled,
         onReconnected: () => void refetch(),
-        onStopped: () => onChange({ live: undefined }),
+        onStopped: () => onChange({ live: liveParam(false, liveByDefault) }),
     });
 
     const liveRows = liveApplies
@@ -226,12 +231,12 @@ function FilingsPage() {
                         <AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.filings} />
                         <LiveToggle
                             listening="Listening for new filings"
-                            live={search.live === true}
+                            live={liveEnabled}
                             mode={live.mode}
                             onChange={(on) => {
                                 live.clearStop();
 
-                                onChange({ live: on || undefined });
+                                onChange({ live: liveParam(on, liveByDefault) });
                             }}
                         />
                     </>
@@ -250,7 +255,7 @@ function FilingsPage() {
                 sortDirection={sortDirection}
                 to={search.to}
                 trailing={(
-                    <Button aria-pressed={search.search === true} onClick={() => onChange({ search: search.search ? undefined : true })} type="button" variant={search.search ? "secondary" : "outline"}>
+                    <Button aria-pressed={search.search === true} onClick={() => onChange({ search: search.search ? undefined : true })} type="button" variant={search.search ? "default" : "outline"}>
                         <SearchIcon />
                         Search text
                     </Button>
@@ -258,10 +263,10 @@ function FilingsPage() {
             />
 
             <LiveStopNotice planNote={LIVE_FILINGS_PLAN_NOTE} stop={live.stop} />
-            {search.live && !liveApplies && (
+            {liveEnabled && !liveApplies && (
                 <div className="text-muted-foreground text-xs" role="status">Live filings join a newest-first list without an end date or 8-K items filter.</div>
             )}
-            {search.live && liveApplies && (
+            {liveEnabled && liveApplies && (
                 <div className="text-muted-foreground text-xs" role="status">{`Live adds new filings whose primary ticker is ${ticker.toUpperCase()}, from when Live was switched on.`}</div>
             )}
 

@@ -13,7 +13,7 @@ const WIDTH_CLASS: Record<PageContainerWidth, string> = {
 
 /**
  * THE page frame of every route (ui-redesign task 2): centred in the content column, one width of three — `default`
- * 1200 px, `narrow` (forms, `/search`, the onboarding card, the route error), `wide` (macro) —, the shell's padding
+ * 1200 px, `narrow` (the onboarding card, the route error, not found), `wide` (macro) —, the shell's padding
  * (`px-4 py-5` phone, `sm:px-6 sm:py-6`, `xl:px-8 xl:py-8`) and the section rhythm `gap-6`. `min-w-0`: a wide child
  * (a table) scrolls inside its own wrapper instead of stretching the page.
  */

@@ -24,14 +24,17 @@ import { useLatestFilingsPage } from "@/lib/api/queries";
 import { DASH, formatDay, formatInstant } from "@/lib/format";
 import { firstPage, nextPage, pageCursor, pageNumber, pagerFor, previousPage } from "@/lib/keyset-pager";
 import { titleHead } from "@/lib/layout";
+import { liveOn, liveParam, useLiveDefault } from "@/lib/live/live-default";
 import { commaList, hasLiveForm, mergeLatest } from "@/lib/live/live-filings";
 import { useArrivalFlash } from "@/lib/live/use-arrival-flash";
 import { IN_PLACE, optionalDay, optionalFlag, optionalText } from "@/lib/url-state";
 import { useLiveFilingsFeed } from "@/routes/$ticker/filings/-components/use-live-filings-feed";
 
 /**
- * `?paused=true` (the live feed off; on by default), `?form=` (the list's forms, comma list: sent to `/v1/filings` as
- * `form` and applied to the live frames in the browser), the market-wide search's filters `?searchForm=&searchItem=&filedFrom=&filedTo=` (applied on Search) and
+ * `?live=false` (the live feed off; on by default when the key's plan reaches the stream, `useLiveDefault`;
+ * `?live=true` switches it on otherwise; the old `?paused=true` still reads as off), `?form=` (the list's forms, comma
+ * list: sent to `/v1/filings` as `form` and applied to the live frames in the browser), the market-wide search's filters
+ * `?searchForm=&searchItem=&filedFrom=&filedTo=` (applied on Search) and
  * `?source=<version id>&block=<block id>` (a hit's cited passage).
  */
 /** `?searchItem=7`: the router reads a bare number as a number (JSON search values); a section id is text. */
@@ -42,6 +45,8 @@ const filingsSearchSchema = z.object({
     filedFrom: optionalDay(),
     filedTo: optionalDay(),
     form: optionalText(60),
+    live: optionalFlag(),
+    /** Before 2026-11-27 the switch was `?paused=true`: an old link still turns it off. */
     paused: optionalFlag(),
     searchForm: optionalText(20),
     searchItem: sectionItemsParam,
@@ -174,7 +179,11 @@ function FilingsPage() {
 
     const onChange = (patch: z.infer<typeof filingsSearchSchema>) => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, ...patch }) });
 
-    const paused = search.paused === true;
+    const liveByDefault = useLiveDefault();
+
+    const liveEnabled = liveOn(search.live ?? (search.paused ? false : undefined), liveByDefault);
+
+    const paused = !liveEnabled;
 
     const forms = commaList(search.form);
 
@@ -191,11 +200,11 @@ function FilingsPage() {
 
     // The stream replays nothing: after a reconnect page 1 is read again.
     const live = useLiveFilingsFeed({
-        enabled: !paused,
+        enabled: liveEnabled,
         onReconnected: () => {
             if (page === 1) void list.refetch();
         },
-        onStopped: () => onChange({ paused: true }),
+        onStopped: () => onChange({ live: liveParam(false, liveByDefault), paused: undefined }),
     });
 
     const shown = live.filings.filter(({ filing }) => hasLiveForm(filing, forms));
@@ -220,12 +229,12 @@ function FilingsPage() {
                 actions={(
                     <LiveToggle
                         listening="Listening for new filings"
-                        live={!paused}
+                        live={liveEnabled}
                         mode={live.mode}
                         onChange={(on) => {
                             live.clearStop();
 
-                            onChange({ paused: on ? undefined : true });
+                            onChange({ live: liveParam(on, liveByDefault), paused: undefined });
                         }}
                     />
                 )}

@@ -176,6 +176,7 @@ function CumulativeChart({ data }: { data: V2PriceAttributionResponse }) {
                     formatter={value => (typeof value === "number" ? formatBps(value) : "—")}
                 />
                 <Line
+                    connectNulls
                     dataKey="cumulative"
                     dot={false}
                     isAnimationActive={false}

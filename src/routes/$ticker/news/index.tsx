@@ -19,6 +19,7 @@ import { RequestErrorState } from "@/components/ui/request-error-state";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useV2Company } from "@/lib/api/queries";
 import { tickerHead } from "@/lib/layout";
+import { liveOn, liveParam, useLiveDefault } from "@/lib/live/live-default";
 import { issuerLabels, validateNewsSearch } from "@/lib/news/labels";
 import { IN_PLACE } from "@/lib/url-state";
 
@@ -279,22 +280,28 @@ function CompanyNews({
 
     const [stop, setStop] = useState<LiveNewsStop | null>(null);
 
+    // Live is on by default when the key's plan reaches the stream (`useLiveDefault`); `?live=false` turns it off.
+    // Oldest-first pauses it (live items join the newest-first list only) without rewriting the switch.
+    const liveByDefault = useLiveDefault();
+
+    const live = liveOn(search.live, liveByDefault) && search.sort !== "oldest";
+
     // React Compiler memoizes this (no manual useCallback): the live hook reads it through a ref anyway.
     const onLiveStop = (reason: LiveNewsStop) => {
         setStop(reason);
 
-        void navigate({ replace: true, resetScroll: false, search: prev => ({ ...prev, live: undefined }) });
+        void navigate({ replace: true, resetScroll: false, search: prev => ({ ...prev, live: liveParam(false, liveByDefault) }) });
     };
 
     // `/v1/news` needs a company or an event (a 400 without both: no market-wide list), so the page asks per company.
-    const news = useNewsList({ company: ticker, event: search.event, filters, liveTickers: [ticker], onLiveStop, search });
+    const news = useNewsList({ company: ticker, event: search.event, filters, liveTickers: [ticker], onLiveStop, search: { ...search, live } });
 
     const controls = (
         <NewsFilterControls
             activeCount={newsFilterCount(search) + (search.event ? 1 : 0)}
             categories={publisherCik ? issuerLabels(news.fetched, publisherCik, "categories") : []}
             eventFilter={id => <NewsEventFilter event={search.event} id={id} onChange={event => onFilterChange({ event })} ticker={ticker} />}
-            onChange={patch => onFilterChange(patch.sort === "oldest" ? { ...patch, live: undefined } : patch)}
+            onChange={onFilterChange}
             onReset={() => onFilterChange({ ...NEWS_FILTER_RESET, event: undefined })}
             search={search}
             tags={publisherCik ? issuerLabels(news.fetched, publisherCik, "tags") : []}
@@ -307,13 +314,13 @@ function CompanyNews({
             {alerts}
             <LiveToggle
                 listening="Listening for new items"
-                live={search.live === true}
+                live={live}
                 mode={news.liveMode}
                 onChange={(on) => {
                     setStop(null);
 
                     // Live items join the newest-first list: switching it on drops `sort=oldest`.
-                    onFilterChange(on ? { live: true, sort: undefined } : { live: undefined });
+                    onFilterChange(on ? { live: liveParam(true, liveByDefault), sort: undefined } : { live: liveParam(false, liveByDefault) });
                 }}
             />
         </>

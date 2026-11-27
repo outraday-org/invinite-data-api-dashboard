@@ -167,6 +167,23 @@ export function retryUnlessApiError(failureCount: number, error: unknown) {
 }
 
 /**
+ * A search statement that ran into the API's time limit: 503 `unavailable` "Search is temporarily unavailable" (with
+ * `Retry-After: 5`). The first attempt warms the database, so a second one often answers. A search that is switched
+ * off is a 503 `unavailable` too ("… is not enabled") and is no timeout.
+ */
+export function isSearchTimeout(error: unknown) {
+    return error instanceof ApiRequestError && error.status === 503 && error.code === "unavailable" && !/not enabled/i.test(error.message);
+}
+
+/** The API's `Retry-After` of a timed-out search. */
+export const SEARCH_RETRY_DELAY_MS = 5000;
+
+/** React Query `retry` of a search: a timed-out search is asked ONCE more, any other API answer is final. */
+export function retrySearchTimeoutOnce(failureCount: number, error: unknown) {
+    return isSearchTimeout(error) ? failureCount < 1 : retryUnlessApiError(failureCount, error);
+}
+
+/**
  * REST plan gate: v1 `403 { error: "Forbidden" }`, v2 `403` problem `plan_required` (the WebSocket's code is
  * `forbidden_tier`).
  */

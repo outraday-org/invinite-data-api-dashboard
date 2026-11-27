@@ -6,33 +6,41 @@ import { useHtmlDocumentProcessing } from "../../hooks/use-html-document-process
 
 /**
  * A filed HTML document, fetched, stripped of scripts and framed through `srcDoc` (same origin, so the page can reach
- * into it). `highlightId` = an element to mark green and scroll to the middle once loaded. When the storage refuses the
+ * into it). `highlightId` = an element to mark green and scroll to the middle once loaded; `anchorId` = an element whose
+ * table is outlined and scrolled to the top (a computed value: the filing's table, no cell marked). When the storage refuses the
  * fetch (no CORS header for this origin, e.g. localhost) the URL is framed directly: at `#<id>` the browser still scrolls
  * there, but nothing can be marked.
  */
 export function HtmlViewer({
+    anchorId = null,
     className,
     highlightId = null,
     title = "HTML preview",
     url,
 }: {
     url: string;
+    anchorId?: null | string;
     className?: string;
     highlightId?: null | string;
     title?: string;
 }) {
-    const { failed, srcDoc } = useHtmlDocumentProcessing({ highlightId, url });
+    const { failed, srcDoc } = useHtmlDocumentProcessing({ anchorId, highlightId, url });
 
     const scrollToHighlight = React.useCallback((event: React.SyntheticEvent<HTMLIFrameElement>) => {
-        if (!highlightId) return;
+        const target = highlightId ?? anchorId;
+
+        if (!target) return;
 
         try {
-            event.currentTarget.contentDocument?.getElementById(highlightId)?.scrollIntoView({ block: "center" });
+            const element = event.currentTarget.contentDocument?.getElementById(target);
+
+            if (highlightId) element?.scrollIntoView({ block: "center" });
+            else (element?.closest("table") ?? element)?.scrollIntoView({ block: "start" });
         }
         catch {
             // A cross-origin frame (the fallback) is not reachable: its `#<id>` scrolled it already.
         }
-    }, [highlightId]);
+    }, [anchorId, highlightId]);
 
     if (!url) return null;
 
@@ -46,7 +54,7 @@ export function HtmlViewer({
                                 className="h-full w-full border-0 bg-white"
                                 loading="lazy"
                                 referrerPolicy="no-referrer"
-                                src={highlightId ? `${url}#${encodeURIComponent(highlightId)}` : url}
+                                src={highlightId ?? anchorId ? `${url}#${encodeURIComponent((highlightId ?? anchorId)!)}` : url}
                                 title={title}
                             />
                         )

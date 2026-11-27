@@ -70,7 +70,7 @@ export const MacroChart = ({
                 labelFormatter={label => (maturity ? `${label} months` : label)}
             />
             <Line
-                connectNulls={false}
+                connectNulls
                 dataKey="value"
                 dot={points.length < 32}
                 isAnimationActive={false}

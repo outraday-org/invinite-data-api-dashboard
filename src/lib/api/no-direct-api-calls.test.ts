@@ -32,6 +32,7 @@ const FETCH_ALLOWED: Readonly<Record<string, string>> = {
     "hooks/use-get-html-storage-content.ts": "a public storage HTML file (filing rendition), no key",
     "lib/download.ts": "saves a public file (recording, document) by its public URL, no key",
     "lib/reference/public-status.ts": "the public status site's keyless snapshot (`STATUS_PAGE_URL` + `api/snapshot`, credentials omitted), never the API host",
+    "lib/storage-html.ts": "server function: a public storage HTML file (`STORAGE_HOSTS` only, no key), the CORS fallback of the filing viewer",
 };
 
 const API_HOST = /api\.data\.invinite\.com/;
