@@ -8,7 +8,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { WebhookReferenceView } from "@/components/alerts/webhook-reference-view";
 import { ALERT_TYPE_FIELDS, WEBHOOK_ENVELOPE, WEBHOOKS } from "@/lib/api/operations.gen";
-import { Route, webhookSearchSchema } from "@/routes/alerts/webhooks";
+import { DEFAULT_WEBHOOK_ALERT_TYPE, Route, webhookSearchSchema } from "@/routes/alerts/webhooks";
 
 import { webhookEntries } from "../../../scripts/webhooks.mjs";
 
@@ -87,7 +87,11 @@ describe("typed webhook reference", () => {
     });
 
     it("unknown URL values select the first variant and retain all per-type anchors", () => {
-        expect(webhookSearchSchema.parse({ type: "unknown" })).toEqual({ type: undefined });
+        expect(webhookSearchSchema.parse({ type: "unknown" })).toEqual({ type: DEFAULT_WEBHOOK_ALERT_TYPE });
+
+        expect(webhookSearchSchema.parse({})).toEqual({});
+
+        expect(webhookSearchSchema.parse({ type: "halt" })).toEqual({ type: "halt" });
 
         render(<WebhookReferenceView envelope={WEBHOOK_ENVELOPE} selectedType="unknown" webhooks={WEBHOOKS} />);
 

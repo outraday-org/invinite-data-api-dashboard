@@ -9,7 +9,10 @@ import { IN_PLACE } from "@/lib/url-state";
 
 export const WEBHOOK_ALERT_TYPES = WEBHOOKS.find(entry => entry.type === "alert.fired")?.data.variants?.map(variant => variant.value) ?? [];
 
-export const webhookSearchSchema = z.object({ type: z.enum(WEBHOOK_ALERT_TYPES).optional().catch(undefined) });
+// Keep an explicit valid query on invalid input: Netlify can pass the old query through a queryless redirect.
+export const DEFAULT_WEBHOOK_ALERT_TYPE = WEBHOOK_ALERT_TYPES[0];
+
+export const webhookSearchSchema = z.object({ type: z.enum(WEBHOOK_ALERT_TYPES).optional().catch(DEFAULT_WEBHOOK_ALERT_TYPE) });
 
 export const Route = createFileRoute("/alerts/webhooks")({
     component: WebhooksPage,

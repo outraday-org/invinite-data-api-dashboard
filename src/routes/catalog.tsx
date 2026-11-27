@@ -55,6 +55,7 @@ import {
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { EXTRACTION_PERIOD_KIND_LABELS, kpiUnitLabel } from "@/lib/earnings/extraction";
 import { formatNumber } from "@/lib/format";
+import { isRecord } from "@/lib/guards";
 import { ROW_ACTION_REVEAL_CLASS, titleHead, WRAPPING_TABS_LIST_CLASS } from "@/lib/layout";
 import {
     CATALOG_TAB_LABELS,
@@ -75,7 +76,18 @@ const STATEMENTS = ["income-statement", "balance-sheet", "cash-flow"] as const s
  * `?form=` (sections), `?metric=` (mapping rules: one metric's rules) — those three are API parameters — and `?sector=`
  * (sectors: one sector's industries; KPIs: one KPI catalog sector — both filtered in the page).
  */
-export const catalogSearchSchema = z.object({
+/** An invalid group must not canonicalize to a queryless redirect that the host can repopulate. */
+function canonicalCatalogSearch(input: unknown) {
+    if (!isRecord(input) || input.group === undefined) return input;
+
+    const validGroup = NEWS_CATALOG_GROUPS.some(group => group === input.group);
+
+    const validTab = CATALOG_TABS.some(tab => tab === input.tab);
+
+    return !validGroup && !validTab ? { ...input, tab: CATALOG_TABS[0] } : input;
+}
+
+const catalogSearchObjectSchema = z.object({
     form: z.string().trim().regex(/^[A-Z0-9][A-Z0-9 /-]{0,19}$/i).optional().catch(undefined),
     group: optionalEnum(NEWS_CATALOG_GROUPS),
     metric: z.string().trim().regex(/^[a-z0-9_]{1,120}$/).optional().catch(undefined),
@@ -84,6 +96,12 @@ export const catalogSearchSchema = z.object({
     statement: optionalEnum(STATEMENTS),
     tab: optionalEnum(CATALOG_TABS),
 });
+
+// Retain the original typed search-input shape for links while the parser still guards raw unknown values.
+export const catalogSearchSchema = z.preprocess(
+    (input: z.input<typeof catalogSearchObjectSchema>) => canonicalCatalogSearch(input),
+    catalogSearchObjectSchema,
+);
 
 export type CatalogSearch = z.infer<typeof catalogSearchSchema>;
 
