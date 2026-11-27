@@ -4604,13 +4604,13 @@
   "provenance": {
     "repository": "https://github.com/outraday-org/invinite-data-api",
     "version": "1.0.0",
-    "specSha256": "c1ce8fa33639c84752524dd5c190ce1f7a6b4d8b1c814e5f1b2ef4ac99b861d6",
+    "specSha256": "aa1f864c2f4e3115b6b26f9af1c20188c768f96cf191aa5973fbac093f752e6c",
     "sourceHashes": {
-      "openapi.json": "c1ce8fa33639c84752524dd5c190ce1f7a6b4d8b1c814e5f1b2ef4ac99b861d6",
+      "openapi.json": "aa1f864c2f4e3115b6b26f9af1c20188c768f96cf191aa5973fbac093f752e6c",
       "openapitools.json": "0350a3db0a0a0adf49a7c7cdefe7eff466964480780e911b197763d202db1390",
       "package.json": "62dc9c98a97e546c4f2b86c7b579e545567de5ce5bab81cba28b3847e4574fc5",
       "scripts/check-data-sdk-names.ts": "b6a1d893085874a64f7b652c5c780add4d2adf503e63d4a851c2745159da9600",
-      "scripts/prepare-data-sdk-spec.mjs": "302abbffa65c7aedf61afac63bd20afcbd3266ca8e9bb24b0182b99eca6198e3",
+      "scripts/prepare-data-sdk-spec.mjs": "b707e49945bec96fd8b5d07b97eae88f80083352a42e3d99fa5a3a7d07ff5528",
       "scripts/reference-artifacts.ts": "0ef8e67cb5454a3f50f43de77b0be1aebb7897164ddf3f5288b58dc7d0f47255",
       "sdks/data/config/python.json": "8f90ab7c0fd25e125c0c6618ae6e09119ef0b5045818c098fd8b259d1888dd5f",
       "sdks/data/config/typescript.json": "69139143672ed147b18c217784cbed3bf609ebeb6b5fbd00617e09344b99c4f2",
@@ -4631,7 +4631,7 @@
       "sdks/data/templates/typescript/pagination.mustache": "190dc450794bc089117af5b5c2f7b2ff707dc2bf6175e49465c393cdba89b395",
       "sdks/data/templates/typescript/webhooks.mustache": "757001711eafe57e914c05cd6b2d86b5555c4d32d80bf3b1a94e4f570df0c20a"
     },
-    "revision": "68b8c7994bd8df694de4f7afcb36ec53eb9c45d0",
-    "fingerprint": "19b56bd0b1cf1a27323a51864c2ca88193650649ba4f5e7d61a45cca0d12ccbb"
+    "revision": "ee5ccc2b7fb0ebc508ba4d2339ee4c0e3d9072a1",
+    "fingerprint": "d4170906632e94be412b977fb01d58e4d16a056cdeb0d1f0d243449df4120b92"
   }
 }
