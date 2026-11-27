@@ -886,6 +886,10 @@ export interface paths {
          * @description List the section IDs and titles for SEC filing forms.
          *
          *     Use `form` to see the sections of one form. Pass a section ID in the `item` filter on `GET /v1/search/filings` to search within that part of a filing.
+         *
+         *     With sections-only projection enabled, derived primary 10-K/10-Q/8-K filings and amendments can receive item outlines without legacy processing; not-yet-projected versions answer pending.
+         *
+         *     Exhibits and unsupported forms with no available legacy outline answer 200 with an empty list and coverage reason no_legacy_outline. Stored generic outlines remain available.
          */
         get: operations["listSectionCatalog"];
         put?: never;
@@ -1196,6 +1200,10 @@ export interface paths {
          * @description List the section outline of an SEC filing document.
          *
          *     Use a `current_version_id` from `GET /v1/filings/{accession}` with `expand=documents`. The default uses generic headings when available and otherwise uses the filing's item outline. Each section identifies the blocks to read in the same version.
+         *
+         *     With sections-only projection enabled, derived primary 10-K/10-Q/8-K filings and amendments can receive item outlines without legacy processing; not-yet-projected versions answer pending.
+         *
+         *     Exhibits and unsupported forms with no available legacy outline answer 200 with an empty list and coverage reason no_legacy_outline. Stored generic outlines remain available.
          */
         get: operations["listDocumentSections"];
         put?: never;
@@ -3259,7 +3267,11 @@ export interface paths {
          * List segment values
          * @description List financial values by business or geographic segment.
          *
-         *     Choose a company and `period`. Narrow by `metric` or `axis`, such as a geographic breakdown. Each row pairs a value with the dimension members that identify its segment.
+         *     Select company and period. segment_id filters catalog categories; metric filters standardized metric_id. Non-revenue metrics (operating income, D&A, assets, goodwill, capex) exist only on the business axis. Row currency is authoritative; catalog units are nominal.
+         *
+         *     Segment operating income need not sum to consolidated income. PRO detailed rows carry roles and reconciles_to_total; the basic route does not establish reconciliation. Assets/goodwill are period-end balances: no TTM/YTD. Fiscal-Q4 quarterly rows exist only where the enriched filing holds one.
+         *
+         *     follow_links keeps original rows and adds one-hop rename/merge predecessor copies before the successor first_period_end; never splits or sums. Keep source_row_id plus target dimensions when pivoting merge components. Links require filed proof and reach only as far as stored per-filing vintages.
          */
         get: operations["listSegments"];
         put?: never;
@@ -3281,7 +3293,11 @@ export interface paths {
          * List segment values with lineage
          * @description List segment values with their source filing and XBRL tag.
          *
-         *     Select a company and `period`, then use `metric` or `axis` to narrow the segment rows. Where available, `accession` and `html_tag_id` locate the reported value in the filing.
+         *     Select company and period. segment_id filters catalog categories; metric filters standardized metric_id. Non-revenue metrics (operating income, D&A, assets, goodwill, capex) exist only on the business axis. Row currency is authoritative; catalog units are nominal.
+         *
+         *     Segment operating income need not sum to consolidated income. PRO detailed rows carry roles and reconciles_to_total; the basic route does not establish reconciliation. Assets/goodwill are period-end balances: no TTM/YTD. Fiscal-Q4 quarterly rows exist only where the enriched filing holds one.
+         *
+         *     follow_links keeps original rows and adds one-hop rename/merge predecessor copies before the successor first_period_end; never splits or sums. Keep source_row_id plus target dimensions when pivoting merge components. Links require filed proof and reach only as far as stored per-filing vintages.
          */
         get: operations["listSegmentsDetailed"];
         put?: never;
@@ -5804,12 +5820,20 @@ export interface components {
              * @example is_total_revenue
              */
             metric_id: string;
-            /** @description Segment id, unique within the company */
+            /** @description Metric-and-axis category from the segment catalog; not a unique member identifier. */
             segment_id: string;
             /** @description Value at full magnitude */
             value: number;
-            /** @description The segment's axis / member pairs (normalised; v1 `segment`) */
+            /** @description The segment's axis / member pairs (normalised; v1 `segment`) With follow_links=true, the linked axis and member use their canonical local names on both original rows and predecessor copies; the copy names the successor. */
             dimensions: Array<components["schemas"]["Dimension"]>;
+            /** @description The row's own ISO 4217 monetary unit, upper-cased; null for a non-monetary or unrecognized unit. Authoritative over the catalog's nominal unit. */
+            currency?: null | string;
+            /** @description Present only when follow_links=true: true for a predecessor copy under its successor dimensions, false for an original row. */
+            via_link?: boolean;
+            /** @description Present only when follow_links=true: the original stored local member, before any relabeling. */
+            source_member?: null | string;
+            /** @description Present only when follow_links=true: the original derived financial_facts_segmented row identifier, not a raw SEC fact id. Combine with dimensions to distinguish multiple linked targets; never merge components by target and period alone. */
+            source_row_id?: string;
         };
         /**
          * SegmentDetailed
@@ -5852,11 +5876,11 @@ export interface components {
              * @example is_total_revenue
              */
             metric_id: string;
-            /** @description Segment id, unique within the company */
+            /** @description Metric-and-axis category from the segment catalog; not a unique member identifier. */
             segment_id: string;
             /** @description Value at full magnitude */
             value: number;
-            /** @description The segment's axis / member pairs (normalised; v1 `segment`) */
+            /** @description The segment's axis / member pairs (normalised; v1 `segment`) With follow_links=true, the linked axis and member use their canonical local names on both original rows and predecessor copies; the copy names the successor. */
             dimensions: Array<components["schemas"]["Dimension"]>;
             /** @description Reported XBRL concept */
             metric: null | string;
@@ -5868,6 +5892,80 @@ export interface components {
             html_label: null | string;
             /** @description Unit */
             unit: null | string;
+            /** @description The row's own ISO 4217 monetary unit, upper-cased; null for a non-monetary or unrecognized unit. Authoritative over the catalog's nominal unit. */
+            currency?: null | string;
+            /** @description Present only when follow_links=true: true for a predecessor copy under its successor dimensions, false for an original row. */
+            via_link?: boolean;
+            /** @description Present only when follow_links=true: the original stored local member, before any relabeling. */
+            source_member?: null | string;
+            /** @description Present only when follow_links=true: the original derived financial_facts_segmented row identifier, not a raw SEC fact id. Combine with dimensions to distinguish multiple linked targets; never merge components by target and period alone. */
+            source_row_id?: string;
+            /**
+             * @description Reconciling corporate or elimination member; null when not marked.
+             * @enum {string|null}
+             */
+            member_role?: "reconciling" | null;
+            /** @description Whether the segment measure reconciles to the consolidated metric; false forbids treating the components as its total, null means not established. */
+            reconciles_to_total?: boolean | null;
+            /** @description Proved predecessors of the displayed member; empty if none. Split links are described but never followed. */
+            predecessors?: Array<components["schemas"]["SegmentMemberLink"]>;
+            /** @description Proved successors of the displayed member; empty if none. */
+            successors?: Array<components["schemas"]["SegmentMemberLink"]>;
+        };
+        /**
+         * SegmentMemberLink
+         * @description A source-proved relationship to one member; not a fuzzy-name match.
+         */
+        SegmentMemberLink: {
+            /** @description Related local member on the same axis */
+            member: string;
+            /**
+             * @description Proved relationship
+             * @enum {string}
+             */
+            kind: "merged" | "renamed" | "split";
+            /**
+             * @description Proof source
+             * @enum {string}
+             */
+            evidence: "filer_statement" | "restated_values";
+            /**
+             * Format: date
+             * @description Earliest stored period end of the successor; predecessor copies are strictly earlier.
+             */
+            first_period_end: string;
+            /** @description Filed duration comparisons supporting the relationship */
+            matched_periods: Array<components["schemas"]["SegmentMatchedPeriod"]>;
+        };
+        /**
+         * SegmentMatchedPeriod
+         * @description One duration comparison proving a member relationship; no inference outside stored per-filing evidence.
+         */
+        SegmentMatchedPeriod: {
+            /**
+             * Format: date
+             * @description Start of the proved duration
+             */
+            start_date: string;
+            /**
+             * Format: date
+             * @description End of the proved duration
+             */
+            end_date: string;
+            /** @description Exact revenue concept QName */
+            concept: string;
+            /** @description Exact filed unit */
+            unit: string;
+            /** @description Earlier source filing */
+            from_accession: string;
+            /** @description Later restating filing */
+            to_accession: string;
+            /** @description Complete compatible dimension QName/member QName pairs, including additional qualifiers. */
+            qualifiers: Array<Array<string>>;
+            /** @description All predecessor components of this proof */
+            from_members: Array<string>;
+            /** @description All successor components of this proof */
+            to_members: Array<string>;
         };
         /**
          * FactExplanation
@@ -7650,10 +7748,10 @@ export interface components {
             /** @description The registration: its Securities Act file number (333-…), else the accession of its first registration statement */
             track_key: string;
             /**
-             * @description S-1 (domestic) or F-1 (foreign issuer)
+             * @description Registration family: S-1 (including DRS), F-1, S-11, Form 10, S-4 (including F-4), or Regulation A
              * @enum {string}
              */
-            form_family: "F-1" | "S-1";
+            form_family: "1-A" | "10-12" | "F-1" | "S-1" | "S-4" | "S-11";
             /**
              * @description registered → price_range (an amendment states the range) → exchange_approved (8-A12B / exchange certification) → effective (SEC EFFECT) → priced (final prospectus 424B4 / 424B1) → trading (a listing appeared); withdrawn (RW) ends a track
              * @enum {string}
@@ -33441,113 +33539,64 @@ export interface operations {
                      * @example {
                      *       "data": [
                      *         {
-                     *           "ipo_id": "r-0002130357-333-299633",
-                     *           "company": {
-                     *             "cik": "0002130357",
-                     *             "ticker": null
-                     *           },
-                     *           "issuer_name": "Anthropic, PBC",
-                     *           "stage": "price_range",
+                     *           "ipo_id": "l-EUEV",
+                     *           "company": null,
+                     *           "issuer_name": "Aiways Automobile Europe GmbH",
+                     *           "stage": "announced",
                      *           "is_spac": false,
-                     *           "exchange": "XNAS",
+                     *           "exchange": null,
                      *           "proposed_symbols": [
-                     *             "ANT"
+                     *             "EUEV"
                      *           ],
-                     *           "price_range_low": 70,
-                     *           "price_range_high": 78,
+                     *           "price_range_low": null,
+                     *           "price_range_high": null,
                      *           "final_price": null,
-                     *           "shares_offered": 825000000,
-                     *           "total_offer_size": 66000000000,
+                     *           "shares_offered": null,
+                     *           "total_offer_size": null,
                      *           "currency": "USD",
-                     *           "listing_date": "2026-11-19",
+                     *           "listing_date": "2026-11-24",
                      *           "sources": {
-                     *             "registration": {
-                     *               "cik": "0002130357",
-                     *               "company_name": "Anthropic, PBC",
-                     *               "track_key": "333-299633",
-                     *               "form_family": "S-1",
-                     *               "stage": "price_range",
-                     *               "is_spac": false,
-                     *               "proposed_symbols": [
-                     *                 {
-                     *                   "symbol": "ANT",
-                     *                   "exchange": "XNAS",
-                     *                   "security_class": "common",
-                     *                   "source": "regex",
-                     *                   "ipo_calendar_match": true
-                     *                 }
-                     *               ],
-                     *               "exchange": null,
-                     *               "price_range_low": "70.0000",
-                     *               "price_range_high": "78.0000",
-                     *               "shares_offered": 825000000,
-                     *               "final_offer_price": null,
-                     *               "final_shares_offered": null,
-                     *               "first_public_at": "2026-10-26T13:00:11.000Z",
-                     *               "price_range_at": "2026-11-10T11:29:24.000Z",
-                     *               "exchange_approved_at": null,
-                     *               "effective_at": null,
-                     *               "priced_at": null,
-                     *               "withdrawn_at": null,
-                     *               "first_trade_date": null,
-                     *               "filings": [
-                     *                 {
-                     *                   "accession_number": "0001628280-26-067168",
-                     *                   "form_type": "S-1",
-                     *                   "signal": "registration",
-                     *                   "filed_at": "2026-10-26T13:00:11.000Z",
-                     *                   "filing_date": "2026-10-26",
-                     *                   "html_url": "https://storage.invinite.com/filing_htmls/2130357_0001628280-26-067168_S-1_2026-10-26.html"
-                     *                 }
-                     *               ],
-                     *               "ipo_pending": {
-                     *                 "status": "open",
-                     *                 "open_reason": "ipo_calendar_match",
-                     *                 "opened_at": "2026-11-03T20:36:57.566Z",
-                     *                 "closed_at": null,
-                     *                 "close_reason": null,
-                     *                 "exchange": null
-                     *               }
-                     *             },
+                     *             "registration": null,
                      *             "listing": {
-                     *               "listing_date": "2026-11-19",
-                     *               "announced_date": "2026-10-26",
+                     *               "listing_date": "2026-11-24",
+                     *               "announced_date": "2026-11-10",
                      *               "currency_code": "USD",
                      *               "final_issue_price": null,
-                     *               "highest_offer_price": 80,
+                     *               "highest_offer_price": null,
                      *               "ipo_status": "pending",
-                     *               "isin": "US03703U1079",
+                     *               "isin": null,
                      *               "issue_end_date": null,
                      *               "issue_start_date": null,
-                     *               "issuer_name": "Anthropic PBC",
-                     *               "last_updated": "2026-11-12T00:00:00.000Z",
-                     *               "lot_size": 100,
-                     *               "lowest_offer_price": 70,
-                     *               "max_shares_offered": 825000000,
+                     *               "issuer_name": "Aiways Automobile Europe GmbH",
+                     *               "last_updated": "2026-11-24T11:06:00.896Z",
+                     *               "lot_size": null,
+                     *               "lowest_offer_price": null,
+                     *               "max_shares_offered": null,
                      *               "min_shares_offered": null,
-                     *               "primary_exchange": "XNAS",
-                     *               "security_description": "Ordinary Shares - Class A",
-                     *               "security_type": "CS",
-                     *               "shares_outstanding": 7427991791,
-                     *               "ticker": "ANT",
-                     *               "total_offer_size": 66000000000,
-                     *               "us_code": "03703U107"
+                     *               "primary_exchange": null,
+                     *               "security_description": null,
+                     *               "security_type": null,
+                     *               "shares_outstanding": null,
+                     *               "ticker": "EUEV",
+                     *               "total_offer_size": null,
+                     *               "us_code": null
                      *             }
                      *           }
                      *         }
                      *       ],
                      *       "has_more": true,
-                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTEwLTAxIiwibC1DSFdNIl0sImYiOiIxMzAzN2QwNGE4MTM0YTdkIn0",
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTEwLTE0Iiwici0wMDAyMTUzNTk4LTMzMy0yOTkxMDEiXSwiZiI6IjEzMDM3ZDA0YTgxMzRhN2QifQ",
                      *       "meta": {
                      *         "coverage": {
                      *           "state": "complete",
                      *           "through": null,
-                     *           "retry_after_s": null
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
                      *         },
                      *         "source": {
-                     *           "dataset_release": "2026q3",
+                     *           "dataset_release": null,
                      *           "version_id": null,
-                     *           "accession": "0000320193-26-000026",
+                     *           "accession": null,
                      *           "fetched_at": null
                      *         }
                      *       }
@@ -36371,10 +36420,20 @@ export interface operations {
                  */
                 "company": string;
                 /**
-                 * @description Metric id, comma list
+                 * @description Standardized metric_id comma list (for example is_operating_income). Use segment_id for seg_* catalog ids; both filters intersect.
                  * @example is_total_revenue
                  */
                 "metric"?: string;
+                /**
+                 * @description Segment catalog ids, comma list; unknown ids return 400. Absent means every segment id.
+                 * @example seg_operating_income_business_segment
+                 */
+                "segment_id"?: string;
+                /**
+                 * @description Include one-hop predecessor copies under successor dimensions before first_period_end. Renames and every merge component are followed; splits are never followed. Preserve source_row_id plus target dimensions when pivoting; do not sum non-additive metrics.
+                 * @example true
+                 */
+                "follow_links"?: boolean;
                 /**
                  * @description XBRL axis, comma list
                  * @example srt:ProductOrServiceAxis
@@ -36529,10 +36588,20 @@ export interface operations {
                  */
                 "company": string;
                 /**
-                 * @description Metric id, comma list
+                 * @description Standardized metric_id comma list (for example is_operating_income). Use segment_id for seg_* catalog ids; both filters intersect.
                  * @example is_total_revenue
                  */
                 "metric"?: string;
+                /**
+                 * @description Segment catalog ids, comma list; unknown ids return 400. Absent means every segment id.
+                 * @example seg_operating_income_business_segment
+                 */
+                "segment_id"?: string;
+                /**
+                 * @description Include one-hop predecessor copies under successor dimensions before first_period_end. Renames and every merge component are followed; splits are never followed. Preserve source_row_id plus target dimensions when pivoting; do not sum non-additive metrics.
+                 * @example true
+                 */
+                "follow_links"?: boolean;
                 /**
                  * @description XBRL axis, comma list
                  * @example srt:ProductOrServiceAxis

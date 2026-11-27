@@ -15938,6 +15938,11 @@ export const OPERATIONS = {
                     py: "fiscal_year_lte",
                     ts: "fiscalYearLte",
                 },
+                "follow_links": {
+                    kind: "boolean",
+                    py: "follow_links",
+                    ts: "followLinks",
+                },
                 "limit": {
                     kind: "number",
                     py: "limit",
@@ -15952,6 +15957,11 @@ export const OPERATIONS = {
                     kind: "string",
                     py: "period",
                     ts: "period",
+                },
+                "segment_id": {
+                    kind: "string",
+                    py: "segment_id",
+                    ts: "segmentId",
                 },
                 "sort": {
                     kind: "string",
@@ -16019,6 +16029,11 @@ export const OPERATIONS = {
                     py: "fiscal_year_lte",
                     ts: "fiscalYearLte",
                 },
+                "follow_links": {
+                    kind: "boolean",
+                    py: "follow_links",
+                    ts: "followLinks",
+                },
                 "limit": {
                     kind: "number",
                     py: "limit",
@@ -16033,6 +16048,11 @@ export const OPERATIONS = {
                     kind: "string",
                     py: "period",
                     ts: "period",
+                },
+                "segment_id": {
+                    kind: "string",
+                    py: "segment_id",
+                    ts: "segmentId",
                 },
                 "sort": {
                     kind: "string",
