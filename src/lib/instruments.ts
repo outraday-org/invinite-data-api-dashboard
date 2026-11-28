@@ -64,6 +64,11 @@ export function instrumentSubject(instrument: Pick<V2Instrument, "company" | "is
     return !instrument.is_active && instrument.company?.cik ? instrument.company.cik : instrument.symbol;
 }
 
+/** Keep historical event links under the current subject's URL; listed pages keep each event's own symbol. */
+export function historicalPageTicker(instrument: null | Pick<V2Instrument, "is_active"> | undefined, ticker: string): string | undefined {
+    return instrument?.is_active === false ? ticker : undefined;
+}
+
 /** The delisted state's sentence: only the historical families advertised by the API. */
 export function delistedText(instrument: Pick<V2Instrument, "company" | "datasets" | "symbol" | "type">): string {
     const filer = instrument.company ? " Its SEC filer record stays available." : "";

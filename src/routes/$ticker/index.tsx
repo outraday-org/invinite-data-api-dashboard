@@ -46,7 +46,8 @@ function TickerOverview() {
     // The layout renders the unknown / failed instrument states.
     if (!instrument) return null;
 
-    // A delisted symbol has no company or fund profile in the API: its listing, said to be delisted.
+    // Delisted overviews show the instrument record and history notice. Stocks have no company profile;
+    // verified fund profiles remain available from the API, while this overview keeps the same listing presentation.
     const overview = !instrument.is_active
         ? (
                 <>

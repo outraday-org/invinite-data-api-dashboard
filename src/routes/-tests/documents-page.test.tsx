@@ -282,6 +282,20 @@ describe("Documents page", () => {
         expect(useV2Company).toHaveBeenLastCalledWith("");
     });
 
+    it("historical call-tree links retain the scoped ticker when an event prints a different symbol", () => {
+        vi.mocked(useInstrument).mockReturnValue({ data: ACA_INSTRUMENT } as never);
+
+        mockLists(infinite([documentsPage([CALL_DOCUMENT])]), infinite([eventsPage([{ ...CALL_EVENT, symbol: "REUSED" }])]));
+
+        render(<DocumentsPage />);
+
+        const callRow = document.querySelector<HTMLElement>(`[data-event-id="${CALL_EVENT_ID}"]`)!;
+
+        expect(callRow).not.toBeNull();
+
+        for (const link of within(callRow).getAllByRole("link")) expect(link).toHaveAttribute("href", `/ACME/earnings-calls/${CALL_EVENT_ID}`);
+    });
+
     it("asks for the library with the call documents and every event", () => {
         mockLists(infinite([documentsPage(DOCUMENTS)]));
 

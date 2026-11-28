@@ -21,7 +21,7 @@ import { ApiRequestError } from "@/lib/api/errors";
 import { useInstrument, useV2EventsInfinite } from "@/lib/api/queries";
 import { eventLabel, isUpcoming } from "@/lib/earnings/format";
 import { DASH, formatInstantShort } from "@/lib/format";
-import { instrumentSubject } from "@/lib/instruments";
+import { historicalPageTicker, instrumentSubject } from "@/lib/instruments";
 import { tickerHead } from "@/lib/layout";
 import { IN_PLACE, optionalEnum } from "@/lib/url-state";
 import { DocumentSearch } from "@/routes/$ticker/documents/-components/document-search";
@@ -113,6 +113,8 @@ function EarningsCallsPage() {
 
     const subject = instrument ? instrumentSubject(instrument) : ticker;
 
+    const historicalTicker = historicalPageTicker(instrument, ticker);
+
     const { fiscalYear } = Route.useSearch();
 
     const navigate = Route.useNavigate();
@@ -172,7 +174,7 @@ function EarningsCallsPage() {
             {
                 cell: ({ row }) => (
                     <div className="flex items-center gap-2">
-                        <EventLink className="font-medium hover:underline" event={row.original}>
+                        <EventLink className="font-medium hover:underline" event={row.original} ticker={historicalTicker}>
                             {eventLabel(row.original)}
                         </EventLink>
                         <EventTypeBadge event={row.original} />
@@ -209,7 +211,7 @@ function EarningsCallsPage() {
             },
             {
                 cell: ({ row }) => (
-                    <EventLink className="underline-offset-4 hover:underline" event={row.original}>
+                    <EventLink className="underline-offset-4 hover:underline" event={row.original} ticker={historicalTicker}>
                         Open
                     </EventLink>
                 ),
@@ -217,7 +219,7 @@ function EarningsCallsPage() {
                 id: "link",
             },
         ],
-        [],
+        [historicalTicker],
     );
 
     const shownColumns = React.useMemo(() => columnsForTab(columns, tab), [columns, tab]);
@@ -257,7 +259,7 @@ function EarningsCallsPage() {
                 : (
                         <>
                             {/* Only while this company has an event live; nothing otherwise. */}
-                            <LiveNowStrip ticker={ticker} />
+                            {!historicalTicker && <LiveNowStrip ticker={ticker} />}
 
                             {/* Company-wide search: transcripts ("Search this call", hits link to their call) or documents. */}
                             <Section
@@ -317,12 +319,12 @@ function EarningsCallsPage() {
                                     onLoadMore={() => void fetchNextPage()}
                                     onRowClick={(event, click) => {
                                         if (click.metaKey || click.ctrlKey) {
-                                            window.open(`/${encodeURIComponent(event.symbol)}/earnings-calls/${encodeURIComponent(event.event_id)}`, "_blank", "noopener");
+                                            window.open(`/${encodeURIComponent(historicalTicker ?? event.symbol)}/earnings-calls/${encodeURIComponent(event.event_id)}`, "_blank", "noopener");
 
                                             return;
                                         }
 
-                                        void navigate({ params: { eventId: event.event_id, ticker: event.symbol }, to: "/$ticker/earnings-calls/$eventId" });
+                                        void navigate({ params: { eventId: event.event_id, ticker: historicalTicker ?? event.symbol }, to: "/$ticker/earnings-calls/$eventId" });
                                     }}
                                     operationId="listEvents"
                                     rows={events}

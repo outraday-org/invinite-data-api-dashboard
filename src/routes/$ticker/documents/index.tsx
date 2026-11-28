@@ -16,7 +16,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useInstrument, useV2Company, useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { buildDocumentTree, callEntries, eventTitleMap, filterCallEntries, validateDocumentsSearch } from "@/lib/earnings/documents";
-import { instrumentSubject } from "@/lib/instruments";
+import { historicalPageTicker, instrumentSubject } from "@/lib/instruments";
 import { tickerHead } from "@/lib/layout";
 import { IN_PLACE } from "@/lib/url-state";
 import { MEDIA_CODES } from "@/routes/$ticker/earnings-calls/-components/media-state";
@@ -199,6 +199,7 @@ function DocumentsPage() {
                             : (
                                     <DocumentTree
                                         filtering={Boolean(search.q)}
+                                        historicalTicker={historicalPageTicker(instrument, ticker)}
                                         onShowText={setTextOf}
                                         ticker={ticker}
                                         tree={tree}

@@ -130,11 +130,14 @@ function FilingsPage() {
 
     // Live: new filings whose primary ticker is this page's, on top of a newest-first list without a date / items
     // filter (a live frame carries no 8-K items and is filed today).
-    const liveApplies = sortDirection === "desc" && !search.to && items.length === 0;
+    // Historical pages never subscribe to a ticker feed: that symbol may belong to another registrant now.
+    const liveEligible = instrument?.is_active === true;
+
+    const liveApplies = liveEligible && sortDirection === "desc" && !search.to && items.length === 0;
 
     const liveByDefault = useLiveDefault();
 
-    const liveEnabled = liveOn(search.live, liveByDefault);
+    const liveEnabled = liveEligible && liveOn(search.live, liveByDefault);
 
     const live = useLiveFilingsFeed({
         enabled: liveEnabled,
@@ -232,16 +235,18 @@ function FilingsPage() {
                 actions={(
                     <>
                         <AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.filings} />
-                        <LiveToggle
-                            listening="Listening for new filings"
-                            live={liveEnabled}
-                            mode={live.mode}
-                            onChange={(on) => {
-                                live.clearStop();
+                        {liveEligible && (
+                            <LiveToggle
+                                listening="Listening for new filings"
+                                live={liveEnabled}
+                                mode={live.mode}
+                                onChange={(on) => {
+                                    live.clearStop();
 
-                                onChange({ live: liveParam(on, liveByDefault) });
-                            }}
-                        />
+                                    onChange({ live: liveParam(on, liveByDefault) });
+                                }}
+                            />
+                        )}
                     </>
                 )}
                 activeCount={activeCount}
