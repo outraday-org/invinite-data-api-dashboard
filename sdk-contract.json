@@ -4620,9 +4620,9 @@
   "provenance": {
     "repository": "https://github.com/outraday-org/invinite-data-api",
     "version": "1.0.0",
-    "specSha256": "8af0b9a4450c58018372ee15567d9abecb4ceea9e2a1c00dceb1f553c2027559",
+    "specSha256": "5a0f905f5e69ce076fc90303e71a84bbe51fc745422147958811c64811bd4e24",
     "sourceHashes": {
-      "openapi.json": "8af0b9a4450c58018372ee15567d9abecb4ceea9e2a1c00dceb1f553c2027559",
+      "openapi.json": "5a0f905f5e69ce076fc90303e71a84bbe51fc745422147958811c64811bd4e24",
       "openapitools.json": "0350a3db0a0a0adf49a7c7cdefe7eff466964480780e911b197763d202db1390",
       "package.json": "62dc9c98a97e546c4f2b86c7b579e545567de5ce5bab81cba28b3847e4574fc5",
       "scripts/check-data-sdk-names.ts": "b6a1d893085874a64f7b652c5c780add4d2adf503e63d4a851c2745159da9600",
@@ -4647,7 +4647,7 @@
       "sdks/data/templates/typescript/pagination.mustache": "190dc450794bc089117af5b5c2f7b2ff707dc2bf6175e49465c393cdba89b395",
       "sdks/data/templates/typescript/webhooks.mustache": "757001711eafe57e914c05cd6b2d86b5555c4d32d80bf3b1a94e4f570df0c20a"
     },
-    "revision": "e964aabe1cff81aae4abc7fe8004a536cf57abe6",
-    "fingerprint": "553c0e68b12e303eec551d7b633d33670f05cd99782015f5d058122fbb50e48e"
+    "revision": "19f86b6996bf9d5be77dee786f22c78a5385b9fa",
+    "fingerprint": "64688428bc6dbff9fd988232177a7ecf152df4f7e538bb0fb7f4015215f1446b"
   }
 }
