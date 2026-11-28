@@ -13,9 +13,7 @@ import {
     formatSignedNonGaap,
     RECONCILIATION_LABELS,
     reconciliationState,
-    sourceCellText,
 } from "@/lib/earnings/extraction";
-import { percent } from "@/lib/earnings/labels";
 import { formatDay } from "@/lib/format";
 
 import type { CallTabProps } from "../call-tabs";
@@ -91,17 +89,7 @@ function NonGaapFigure({ figure }: { figure: V2NonGaapMetric }) {
 
             <ReconciliationLines figure={figure} />
 
-            <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                {figure.prior_year_value !== null && <span>{`Prior year ${format(figure.prior_year_value)}`}</span>}
-                <span title="Calibrated confidence of the metric assignment, not a probability">{`Confidence ${percent(figure.confidence, 0)}`}</span>
-                <span>
-                    <a className="text-primary underline-offset-4 hover:underline" href={figure.source.url} rel="noopener noreferrer" target="_blank">
-                        Results release
-                    </a>
-                    {` · ${sourceCellText(figure.source)}`}
-                    {figure.source.accession && ` · ${figure.source.accession}`}
-                </span>
-            </div>
+            {figure.prior_year_value !== null && <p className="text-muted-foreground text-xs">{`Prior year ${format(figure.prior_year_value)}`}</p>}
         </article>
     );
 }

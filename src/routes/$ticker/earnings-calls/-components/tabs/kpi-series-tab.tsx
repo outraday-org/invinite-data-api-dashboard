@@ -16,7 +16,6 @@ import {
     EXTRACTION_PERIOD_KIND_LABELS,
     formatKpiValue,
     formatYoyChange,
-    KPI_SERIES_ORIGIN_LABELS,
     kpiSeriesGroups,
     kpiSeriesSegments,
     kpiUnitLabel,
@@ -33,22 +32,7 @@ export const KPI_SERIES_EMPTY_TITLE = "No KPI series for this company";
 /** The segment picker's value of the company-wide rows (`segment: null`). */
 const COMPANY_WIDE = "__company__";
 
-/** Where a point was read: the release link, else the sentence of a value from the call. */
-function PointSource({ point }: { point: V2KpiSeriesPoint }) {
-    if (point.source.url) {
-        return (
-            <a className="text-primary underline-offset-4 hover:underline" href={point.source.url} rel="noopener noreferrer" target="_blank" title={point.source.sentence ?? undefined}>
-                {point.source.accession ?? "Results release"}
-            </a>
-        );
-    }
-
-    if (point.source.sentence) return <span className="text-muted-foreground italic">{`“${point.source.sentence}”`}</span>;
-
-    return <span className="text-muted-foreground">—</span>;
-}
-
-/** One KPI: a line of its plotted period kind over `period_end`, then every point with its source. */
+/** One KPI: a line of its plotted period kind over `period_end`, then every point with its financial checks. */
 function KpiSeriesCard({ group }: { group: KpiSeriesGroup }) {
     const plotted = group.points.filter(point => point.period_kind === group.plottedKind);
 
@@ -85,9 +69,7 @@ function KpiSeriesCard({ group }: { group: KpiSeriesGroup }) {
                         <TableHead>Period</TableHead>
                         <TableHead className="text-right">Value</TableHead>
                         <TableHead className="text-right">YoY</TableHead>
-                        <TableHead>Read from</TableHead>
                         <TableHead>10-Q / 10-K</TableHead>
-                        <TableHead>Source</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -100,9 +82,7 @@ function KpiSeriesCard({ group }: { group: KpiSeriesGroup }) {
                                 <TableCell>{EXTRACTION_PERIOD_KIND_LABELS[point.period_kind]}</TableCell>
                                 <TableCell className="text-right tabular-nums">{formatKpiValue(point.value, point.unit)}</TableCell>
                                 <TableCell className="text-right tabular-nums">{formatYoyChange(point.yoy_change, point.unit)}</TableCell>
-                                <TableCell><Badge variant="outline">{KPI_SERIES_ORIGIN_LABELS[point.origin]}</Badge></TableCell>
                                 <TableCell><Badge className={check.className} variant="outline">{check.label}</Badge></TableCell>
-                                <TableCell className="max-w-[28rem] whitespace-normal"><PointSource point={point} /></TableCell>
                             </TableRow>
                         );
                     })}

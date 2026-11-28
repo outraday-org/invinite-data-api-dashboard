@@ -1,10 +1,8 @@
-import { ChartLine, Check, ChevronDown, ChevronRight } from "lucide-react";
-import * as React from "react";
+import { ChartLine } from "lucide-react";
 
 import type { V2GuidanceItem } from "@/lib/api/types";
 
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { LoadMoreButton } from "@/components/ui/load-more-button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -16,35 +14,15 @@ import {
     formatGuidanceRange,
     formatGuidanceValue,
     metricLabel,
-    ORIGIN_LABELS,
-    percent,
-    PERIOD_KIND_LABELS, REVIEW_STATUS_LABELS,
+    PERIOD_KIND_LABELS,
 } from "@/lib/earnings/labels";
 import { cn } from "@/lib/utils";
 
 import type { CallTabProps } from "../call-tabs";
 
 import { MediaState, NO_TRANSCRIPT_TITLE, Notice } from "../media-state";
-import { SeekButton } from "../seek-button";
 
 export const EXTRACTIONS_PAGE_LIMIT = 50;
-
-/** The dashboard asks every review state (`review=any`); "needs review" is a filter over the loaded rows. */
-type ReviewFilter = "all" | "needs_review";
-
-/** `confidence` (0–1, calibrated on spot checks, not a probability) as a small bar. */
-export function ConfidenceBar({ value }: { value: number }) {
-    const width = Math.round(Math.min(1, Math.max(0, value)) * 100);
-
-    return (
-        <div className="flex items-center gap-1.5" title={`Confidence ${percent(value, 0)}`}>
-            <div className="bg-muted h-1.5 w-12 overflow-hidden rounded-full">
-                <div className="bg-primary h-full" style={{ width: `${width}%` }} />
-            </div>
-            <span className="text-muted-foreground tabular-nums">{percent(value, 0)}</span>
-        </div>
-    );
-}
 
 export function DirectionChip({ direction }: { direction: V2GuidanceItem["direction"] }) {
     const style = DIRECTION_STYLES[direction];
@@ -81,133 +59,39 @@ export function GuidanceValue({ item }: { item: V2GuidanceItem }) {
     );
 }
 
-/** The results release the item was read from (`source_url`; null for an item from the call only). */
-function GuidanceReleaseLink({ item }: { item: V2GuidanceItem }) {
-    if (!item.source_url) return null;
-
+function GuidanceRow({ item, onMetricClick }: { item: V2GuidanceItem; onMetricClick: (item: V2GuidanceItem) => void }) {
     return (
-        <a
-            className="text-primary text-xs underline-offset-4 hover:underline"
-            href={item.source_url}
-            rel="noopener noreferrer"
-            target="_blank"
-            title={item.source_accession ? `Results release ${item.source_accession}` : "Results release"}
-        >
-            Release
-        </a>
-    );
-}
-
-function GuidanceSources({ item }: { item: V2GuidanceItem }) {
-    const sources = item.sources ?? [];
-
-    if (sources.length === 0) return <div className="text-muted-foreground">No citations.</div>;
-
-    return (
-        <div className="flex flex-col gap-2">
-            {sources.map((source, index) => (
-                // Sources have no id; their order within one item is stable.
-                <div className="flex flex-col gap-1" key={index}>
-                    <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="outline">{ORIGIN_LABELS[source.origin]}</Badge>
-                        {source.speaker.name && (
-                            <span className="font-medium">
-                                {source.speaker.name}
-                                {source.speaker.title && <span className="text-muted-foreground font-normal">{` · ${source.speaker.title}`}</span>}
-                            </span>
-                        )}
-                        <SeekButton startMs={source.start_ms} />
-                    </div>
-                    <p className="leading-relaxed">{source.sentence}</p>
+        <TableRow>
+            <TableCell>
+                <div className="flex flex-col items-start gap-1">
+                    {item.metric_normalized
+                        ? (
+                                <button
+                                    className="inline-flex items-center gap-1 hover:underline"
+                                    onClick={() => onMetricClick(item)}
+                                    title="Guidance history for this metric"
+                                    type="button"
+                                >
+                                    <Badge variant="secondary">{metricLabel(item.metric_normalized)}</Badge>
+                                    <ChartLine className="text-muted-foreground size-3" />
+                                </button>
+                            )
+                        : <Badge variant="secondary">—</Badge>}
+                    <span className="text-muted-foreground">{item.metric}</span>
                 </div>
-            ))}
-        </div>
-    );
-}
-
-const COLUMN_COUNT = 10;
-
-function GuidanceRow({
-    expanded,
-    item,
-    onMetricClick,
-    onToggle,
-}: {
-    expanded: boolean;
-    item: V2GuidanceItem;
-    onMetricClick: (item: V2GuidanceItem) => void;
-    onToggle: () => void;
-}) {
-    return (
-        <>
-            <TableRow className={cn(expanded && "border-b-0")}>
-                <TableCell>
-                    <Button
-                        aria-expanded={expanded}
-                        aria-label={expanded ? "Hide citations" : "Show citations"}
-                        onClick={onToggle}
-                        size="icon-xs"
-                        type="button"
-                        variant="ghost"
-                    >
-                        {expanded ? <ChevronDown /> : <ChevronRight />}
-                    </Button>
-                </TableCell>
-                <TableCell>
-                    <div className="flex flex-col items-start gap-1">
-                        {item.metric_normalized
-                            ? (
-                                    <button
-                                        className="inline-flex items-center gap-1 hover:underline"
-                                        onClick={() => onMetricClick(item)}
-                                        title="Guidance history for this metric"
-                                        type="button"
-                                    >
-                                        <Badge variant="secondary">{metricLabel(item.metric_normalized)}</Badge>
-                                        <ChartLine className="text-muted-foreground size-3" />
-                                    </button>
-                                )
-                            : <Badge variant="secondary">—</Badge>}
-                        <span className="text-muted-foreground">{item.metric}</span>
-                    </div>
-                </TableCell>
-                <TableCell>
-                    <div className="flex flex-col">
-                        <span>{item.period_label}</span>
-                        <span className="text-muted-foreground">{PERIOD_KIND_LABELS[item.period_kind]}</span>
-                    </div>
-                </TableCell>
-                <TableCell className={cn(isQualitativeGuidance(item) && "whitespace-normal")}>
-                    <GuidanceValue item={item} />
-                </TableCell>
-                <TableCell>{BASIS_LABELS[item.basis]}</TableCell>
-                <TableCell><DirectionChip direction={item.direction} /></TableCell>
-                <TableCell><ConfidenceBar value={item.confidence} /></TableCell>
-                <TableCell>
-                    {item.cross_validated
-                        ? <Check aria-label="Cross-validated (call and press release)" className="size-3.5 text-emerald-600" />
-                        : <span className="text-muted-foreground" title="One source only">—</span>}
-                </TableCell>
-                <TableCell>
-                    <Badge variant={item.review_status === "needs_review" ? "destructive" : "outline"}>
-                        {item.review_status ? REVIEW_STATUS_LABELS[item.review_status] : "—"}
-                    </Badge>
-                </TableCell>
-                <TableCell>
-                    <div className="flex flex-col items-start gap-0.5">
-                        <span className="text-muted-foreground tabular-nums">{item.sources?.length ?? 0}</span>
-                        <GuidanceReleaseLink item={item} />
-                    </div>
-                </TableCell>
-            </TableRow>
-            {expanded && (
-                <TableRow>
-                    <TableCell className="bg-muted/30 whitespace-normal" colSpan={COLUMN_COUNT}>
-                        <GuidanceSources item={item} />
-                    </TableCell>
-                </TableRow>
-            )}
-        </>
+            </TableCell>
+            <TableCell>
+                <div className="flex flex-col">
+                    <span>{item.period_label}</span>
+                    <span className="text-muted-foreground">{PERIOD_KIND_LABELS[item.period_kind]}</span>
+                </div>
+            </TableCell>
+            <TableCell className={cn(isQualitativeGuidance(item) && "whitespace-normal")}>
+                <GuidanceValue item={item} />
+            </TableCell>
+            <TableCell>{BASIS_LABELS[item.basis]}</TableCell>
+            <TableCell><DirectionChip direction={item.direction} /></TableCell>
+        </TableRow>
     );
 }
 
@@ -216,10 +100,6 @@ export function GuidanceTable({
     eventId,
     onMetricClick,
 }: Pick<CallTabProps, "eventId"> & { onMetricClick: (item: V2GuidanceItem) => void }) {
-    const [review, setReview] = React.useState<ReviewFilter>("all");
-
-    const [expandedId, setExpandedId] = React.useState<null | string>(null);
-
     const {
         data,
         error,
@@ -229,47 +109,25 @@ export function GuidanceTable({
         isLoading,
     } = useV2GuidanceInfinite({ event: eventId, limit: EXTRACTIONS_PAGE_LIMIT });
 
-    const all = data?.pages.flatMap(page => page.data) ?? [];
-
-    const items = review === "needs_review" ? all.filter(item => item.review_status === "needs_review") : all;
+    const items = data?.pages.flatMap(page => page.data) ?? [];
 
     if (error) return <MediaState error={error} notFound={NO_TRANSCRIPT_TITLE} operationId="listGuidance" title="Failed to load guidance" />;
 
     return (
         <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-1">
-                {(["all", "needs_review"] as const).map(value => (
-                    <Button
-                        aria-pressed={review === value}
-                        key={value}
-                        onClick={() => setReview(value)}
-                        size="xs"
-                        type="button"
-                        variant={review === value ? "default" : "outline"}
-                    >
-                        {value === "all" ? "All" : "Needs review"}
-                    </Button>
-                ))}
-            </div>
-
             {isLoading
                 ? <Skeleton className="h-40 w-full" />
                 : items.length === 0 && !hasNextPage
-                    ? <Notice title={review === "all" ? "No guidance extracted" : "No guidance needs review"} />
+                    ? <Notice title="No guidance extracted" />
                     : (
                             <Table>
                                 <TableHeader>
                                     <TableRow>
-                                        <TableHead className="w-8" />
                                         <TableHead>Metric</TableHead>
                                         <TableHead>Period</TableHead>
                                         <TableHead>Range</TableHead>
                                         <TableHead>Basis</TableHead>
                                         <TableHead>Direction</TableHead>
-                                        <TableHead>Confidence</TableHead>
-                                        <TableHead>Cross-validated</TableHead>
-                                        <TableHead>Review</TableHead>
-                                        <TableHead>Sources</TableHead>
                                     </TableRow>
                                 </TableHeader>
                                 <TableBody>
@@ -279,11 +137,9 @@ export function GuidanceTable({
 
                                         return (
                                             <GuidanceRow
-                                                expanded={expandedId === rowKey}
                                                 item={item}
                                                 key={rowKey}
                                                 onMetricClick={onMetricClick}
-                                                onToggle={() => setExpandedId(current => (current === rowKey ? null : rowKey))}
                                             />
                                         );
                                     })}

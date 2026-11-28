@@ -4,7 +4,6 @@ import { CartesianGrid, ResponsiveContainer, Scatter, ScatterChart, Tooltip, XAx
 import type { V2KpiMention } from "@/lib/api/types";
 
 import { AXIS_TICK } from "@/components/charts/chart-parts";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,7 +11,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useV2KpiHistoryInfinite } from "@/lib/api/queries";
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { kpiHistoryCallCount, kpiHistorySeries } from "@/lib/earnings/kpi-history";
-import { formatGuidanceValue, metricLabel, ORIGIN_LABELS } from "@/lib/earnings/labels";
+import { formatGuidanceValue, metricLabel } from "@/lib/earnings/labels";
 import { formatDay } from "@/lib/format";
 
 import { EventLink } from "../event-link";
@@ -142,8 +141,6 @@ export function KpiHistoryView({
                         <TableHead>Call</TableHead>
                         <TableHead>Period</TableHead>
                         <TableHead>Value</TableHead>
-                        <TableHead>Said in</TableHead>
-                        <TableHead>Filing</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -155,22 +152,7 @@ export function KpiHistoryView({
                                 </EventLink>
                             </TableCell>
                             <TableCell>{mention.period_label ?? "—"}</TableCell>
-                            <TableCell className="tabular-nums" title={mention.source_sentence}>{mention.value_text}</TableCell>
-                            <TableCell><Badge variant="outline">{ORIGIN_LABELS[mention.origin]}</Badge></TableCell>
-                            <TableCell>
-                                {mention.filing_link
-                                    ? (
-                                            <a
-                                                className="underline-offset-4 hover:underline"
-                                                href={mention.filing_link.document_url}
-                                                rel="noopener noreferrer"
-                                                target="_blank"
-                                            >
-                                                {mention.filing_link.form}
-                                            </a>
-                                        )
-                                    : <span className="text-muted-foreground">—</span>}
-                            </TableCell>
+                            <TableCell className="tabular-nums">{mention.value_text}</TableCell>
                         </TableRow>
                     ))}
                 </TableBody>

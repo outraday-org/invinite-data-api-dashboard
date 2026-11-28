@@ -125,7 +125,7 @@ export const QUALITATIVE_GUIDANCE: V2GuidanceItem = {
     review_status: "auto",
     source_accession: "0000320193-26-000070",
     source_url: RELEASE_URL,
-    sources: [],
+    sources: [{ origin: "transcript", sentence: "Hidden source evidence remains accessible.", speaker: { label: "A", name: "Example speaker", title: "CEO" }, start_ms: 120000 }],
     statement_text: "We expect revenue to grow year over year in the December quarter.",
     unit: null,
 };
@@ -134,3 +134,8 @@ export const KPI_CATALOG_ROWS: Array<V2KpiCatalogEntry> = [
     { kpi_key: "load_factor", label: "Load factor", period_kinds: ["quarter", "year"], sector: "airlines", unit: "pct" },
     { kpi_key: "net_interest_margin", label: "Net interest margin", period_kinds: ["quarter"], sector: "banks", unit: "pct" },
 ];
+
+/** Candidate API runtime fixture: review_status is genuinely absent; evidence is retained. */
+const { review_status: _legacyReviewStatus, ...candidateGuidance } = QUALITATIVE_GUIDANCE;
+
+export const CANDIDATE_GUIDANCE = candidateGuidance;

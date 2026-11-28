@@ -992,7 +992,7 @@ export type V2GuidanceInput = {
     sort?: "-conference_date" | "conference_date";
 };
 
-/** Guidance items of one event or one company (a metric's history); every review state (`review=any`). */
+/** Guidance items of one event or one company (a metric's history); the API default served population. */
 export function useV2GuidanceInfinite(input: V2GuidanceInput) {
     return useEarningsInfinite<V2GuidanceResponse>({
         enabled: Boolean(input.event || input.company?.trim()),

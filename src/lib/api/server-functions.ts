@@ -916,17 +916,14 @@ const v2GuidanceSchema = z.object({
     sort: z.enum(["conference_date", "-conference_date"]).optional(),
 });
 
-/**
- * `GET /v1/guidance` (`company` or `event`). Always `review=any`: the contract default `approved` matches no row
- * today (every item is `auto` or `needs_review`).
- */
+/** `GET /v1/guidance` (`company` or `event`), using the API default served population. */
 export const getV2Guidance = createServerFn({ method: "POST" })
     .inputValidator(v2GuidanceSchema)
     .handler(async ({ data }): Promise<V2GuidanceResponse> => {
         const { apiKey, basis, company, cursor, event, limit, metric, periodKind, sort } = data;
 
         const { data: res, error, response } = await createApiClient(apiKey).GET("/v1/guidance", {
-            params: { query: v2Query({ basis, company, cursor, event, limit, metric, period_kind: periodKind, review: "any" as const, sort }) },
+            params: { query: v2Query({ basis, company, cursor, event, limit, metric, period_kind: periodKind, sort }) },
         });
 
         if (error) throwApiError(error, response);

@@ -55,12 +55,15 @@ describe("KpiHistoryView", () => {
 
         expect(within(rows[0]).getByText("$96 billion")).toBeInTheDocument();
 
-        expect(within(rows[2]).getByText("Press release")).toBeInTheDocument();
+        expect(screen.queryByRole("columnheader", { name: "Said in" })).toBeNull();
 
-        // The same words as the KPI table beside it (ORIGIN_LABELS): a call mention is "Transcript".
-        expect(within(rows[0]).getByText("Transcript")).toBeInTheDocument();
+        expect(screen.queryByRole("columnheader", { name: "Filing" })).toBeNull();
 
-        expect(within(rows[2]).getByRole("link", { name: "8-K" })).toHaveAttribute("href", expect.stringContaining("sec.gov"));
+        expect(within(rows[0]).getByRole("link")).toBeInTheDocument();
+
+        expect(within(rows[0]).getByText("$96 billion")).not.toHaveAttribute("title");
+
+        expect(screen.queryByText("Revenue was a record.")).toBeNull();
     });
 
     it("sends the order through onSortChange", () => {
