@@ -244,6 +244,22 @@ describe("TranscriptTab", () => {
         expect(screen.getByText("· 9,000 words")).toBeInTheDocument();
     });
 
+    it.each(["current", "candidate"] as const)("keeps the reader-facing version note without correction workflow (%s)", (shape) => {
+        const version = { change_note: "Corrected the wording of the outlook.", published_at: "2026-11-20T21:00:00Z", version: 3, version_kind: "final", word_count: 9000 };
+
+        requests.versions = [shape === "current" ? { ...version, change_kind: "private_stage", corrected_by: "system:private_model_stage" } : version];
+
+        render(<TranscriptTab {...tabProps({})} />);
+
+        expect(screen.getByText("· Corrected the wording of the outlook.")).toBeInTheDocument();
+
+        expect(screen.getByText("· 9,000 words")).toBeInTheDocument();
+
+        expect(screen.queryByText(/private_model_stage|private_stage|corrected by/)).toBeNull();
+
+        expect(screen.getByRole("button", { name: "Download" })).toBeInTheDocument();
+    });
+
     it("uses current raw speaker turns only when the cleaned layer is not found", () => {
         requests.cleanedError = new ApiRequestError(404, { error: "not_found", message: "No cleaned layer" });
 

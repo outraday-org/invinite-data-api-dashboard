@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import type { AssetGroupCategory } from "@/lib/earnings/documents";
 import type { ValueLookup } from "@/lib/financials/value-ref";
 
-import { withoutReplayCaptures } from "@/lib/earnings/capture-mode";
+import { deniedAvailability } from "@/lib/earnings/event-availability";
 import { isSymbolParam } from "@/lib/instruments";
 import { marketWindowAnchor, marketWindowBounds, marketWindowProblem, newsSearchWindowProblem } from "@/lib/news/market-window";
 import { isOpenExport } from "@/lib/sec/bulk";
@@ -432,18 +432,6 @@ export function useEarningsInfinite<TPage extends { next_cursor?: null | string 
     };
 }
 
-// Pipeline capture states of a call that is (about to be) live or just ended without a transcript.
-const LIVE_CAPTURE_STATUSES = new Set(["armed", "captured", "capturing"]);
-
-/**
- * Whether a call may be live (or just ended) and not published yet: the call page then polls it. A replay capture
- * (`capture_mode` "replay") counts too, so its badge moves on; the live experience (player, live list, live minute
- * rows) asks `isReplayCapture` (`src/lib/earnings/capture-mode.ts`) on top.
- */
-export function isEarningsEventLiveish(event: Pick<V2Event, "capture_status" | "has_transcript">) {
-    return !event.has_transcript && LIVE_CAPTURE_STATUSES.has(event.capture_status);
-}
-
 // News (IDA `/v1/news*`, backend tasks/data-api-v2 task 8; the page since backend earnings inhouse-news-pipeline task 17)
 
 export type NewsListInput = {
@@ -857,43 +845,32 @@ export function useV2EventsInfinite(input: V2EventsInput) {
     });
 }
 
-/**
- * Events being captured LIVE right now (`status=live&type=all`, one page, replay captures dropped), refetched every 15 s. Status-aware (no toast: a
- * failing refetch would toast every 15 s; the strip shows a note). `enabled: false` keeps it idle.
- */
-export function useV2LiveEvents(enabled = true) {
+/** Authoritative live membership. The API already excludes replay captures; a partial page proves presence only. */
+export function useV2LiveEvents(enabled = true, company?: string) {
     return useEarningsQuery<V2EventsResponse>({
         enabled,
         errorMessage: null,
-        // The API's live list counts a capturing replay (README open decision 3 of backend capture-mode-on-events): every
-        // live surface (strip, /live-calls, landing, sidebar count, the call page's session) reads it without them.
-        load: apiKey => getV2Events({ data: { apiKey, limit: 200, status: ["live"], type: "all" } }).then(withoutReplayCaptures),
-        queryKey: ["v2", "events", "live"],
-        refetchInterval: 15 * 1000,
+        load: apiKey => getV2Events({ data: { apiKey, company, limit: 200, status: ["live"], type: "all" } }),
+        queryKey: ["v2", "events", "live", company ?? ""],
+        refetchInterval: query => deniedAvailability(query.state.error) ? false : 15 * 1000,
         staleTime: EARNINGS_LIST_STALE_MS,
     });
 }
 
-/**
- * One event with its calendar semantics and call-time observations. Status-aware: the call page renders a 404 as
- * `NotFound`. Refetched every 30 s while the call is live or just ended without a transcript
- * (`isEarningsEventLiveish`), so the live player appears when capture starts and the Transcript tab lights up.
- * `refetchInterval` (the call page, O4) decides when that rule does not poll: a call this page saw live keeps polling
- * until its recording is published (`has_audio`), which can come after `has_transcript`.
- */
-export function useV2Event(eventId: string, options?: { refetchInterval?: (event: V2Event) => false | number }) {
+/** One event, sharing its cache with list/navigation reads. Only the active detail opts into bounded polling. */
+export function useV2Event(eventId: string, options?: {
+    active?: boolean;
+    refetchInterval?: (event: V2Event, error: unknown) => false | number;
+    visible?: boolean;
+}) {
     return useEarningsQuery<V2Event>({
-        enabled: eventId.length > 0,
+        enabled: eventId.length > 0 && options?.active !== false && options?.visible !== false,
         errorMessage: null,
         load: apiKey => getV2Event({ data: { apiKey, eventId, expand: ["calendar", "observations"] } }),
         queryKey: ["v2", "event", eventId],
-        refetchInterval: (query) => {
-            const event = query.state.data;
-
-            if (!event) return false;
-
-            return isEarningsEventLiveish(event) ? 30 * 1000 : (options?.refetchInterval?.(event) ?? false);
-        },
+        refetchInterval: query => query.state.data ? (options?.refetchInterval?.(query.state.data, query.state.error) ?? false) : false,
+        refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
         staleTime: EARNINGS_EVENT_STALE_MS,
     });
 }
@@ -1092,7 +1069,7 @@ export function useV2Prosody(input: { eventId: string; section?: V2ProsodySectio
 
 /**
  * Status-aware: a 404 until the first minute row exists. While the call is live (`live: true` — the caller passes
- * `isEarningsEventLiveish`) the minute rows grow once a minute: refetched every 60 s (same query key, so the live
+ * the shared live session) the minute rows grow once a minute: refetched every 60 s (same query key, so the live
  * player's seed and the Price moves tab share the answer).
  */
 export function useV2PriceAttribution(eventId: string, { live = false }: { live?: boolean } = {}) {

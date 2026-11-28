@@ -39,7 +39,6 @@ export function recordingDetails(recording: V2AudioResponse): Array<PlayerDetail
         { label: "Duration", value: recording.duration_seconds === null ? "—" : formatMs(recording.duration_seconds * 1000) },
         { label: "Size", value: formatBytes(recording.bytes) },
         { label: "Codec", value: recording.codec ?? "—" },
-        { label: "Capture", value: recording.capture_path?.replaceAll("_", " ") ?? "—" },
     ];
 }
 

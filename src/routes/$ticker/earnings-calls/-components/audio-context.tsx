@@ -69,13 +69,15 @@ export type LiveCall = {
     audio: LiveAudio;
     /** The call ended (the socket said so). */
     callEnded: boolean;
+    /** Current membership or an authorized active live session, never a scheduled time. */
+    isLive: boolean;
     callT0: null | string;
     chooseMode: (mode: LiveAudioMode) => void;
     mode: LiveAudioMode;
     newestFinal: null | { endMs: number; startMs: number };
     /** The HLS engine is the page's engine (until the recording is published and takes over). */
     onAir: boolean;
-    /** After the end: the event is polled for the recording, or gave up after 60 min. */
+    /** After the end: the detail availability check is bounded; manual refresh remains available. */
     recordingWait: RecordingWait;
     stream: null | V2LiveAudioResponse;
     /** The `/live-audio` request: `null` = not asked (the recording took over) or still asking. */
@@ -216,7 +218,7 @@ export function CallAudioProvider({
 
     const [watch, setWatch] = React.useState<KeywordWatch>(NO_WATCH);
 
-    const transcript = useLiveTranscript({ apiKey: following ? apiKey : null, apiKeyUpdatedAt, baseUrl, eventId, watch });
+    const transcript = useLiveTranscript({ apiKey: following ? apiKey : null, apiKeyUpdatedAt, baseUrl, eventId, onAvailabilityChange: live?.reportEnded, watch });
 
     const [storedMode, setStoredMode] = React.useState(readStoredLiveMode);
 
@@ -232,10 +234,23 @@ export function CallAudioProvider({
 
     const newestFinal = newestReleasedFinal(transcript.state.finals);
 
-    const callEnded = transcript.state.ended || transcript.mode === "ended";
+    const callEnded = live?.ended === true || transcript.state.ended || transcript.mode === "ended";
+
+    const reportActive = live?.reportActive;
+    const reportEnded = live?.reportEnded;
+
+    React.useEffect(() => {
+        if (stream?.status === "ended") reportEnded?.();
+    }, [reportEnded, stream?.status]);
 
     // The ref apart from the state: the state is read during render, the ref only by `<audio>`.
     const { audioRef: liveAudioRef, ...liveAudio } = useLiveAudio({ callEnded, mode, newestFinal, refreshStream, stream });
+
+    React.useEffect(() => {
+        reportActive?.(following && !callEnded && ((transcript.mode === "live" && !transcript.reconnecting && !transcript.stalled) || liveAudio.phase === "playing"));
+
+        return () => reportActive?.(false);
+    }, [callEnded, following, liveAudio.phase, reportActive, transcript.mode, transcript.reconnecting, transcript.stalled]);
 
     const callT0 = stream?.call_t0 ?? null;
 
@@ -294,6 +309,7 @@ export function CallAudioProvider({
         ? {
                 audio: liveAudio,
                 callEnded,
+                isLive: live.isLive && !callEnded,
                 callT0,
                 chooseMode,
                 mode,

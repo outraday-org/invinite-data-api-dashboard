@@ -11,8 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { DropdownSelect } from "@/components/ui/dropdown-select";
 import { Input } from "@/components/ui/input";
 import { Section } from "@/components/ui/section";
-import { isEarningsEventLiveish, useV2PriceAttribution } from "@/lib/api/queries";
-import { isReplayCapture } from "@/lib/earnings/capture-mode";
+import { useV2PriceAttribution } from "@/lib/api/queries";
 import { formatInstant } from "@/lib/format";
 import { liveHighlightList, parseKeywords } from "@/lib/live/live-highlights";
 import { textBehindEdgeS } from "@/lib/live/live-sync";
@@ -180,7 +179,7 @@ function LiveCallCard({ event, historicalTicker, live }: { event: V2Event; histo
 
     // The price line's backlog: the live minute rows (a 404 = none yet). Settled rows of the post-call run use another
     // reference, so only live rows seed the line.
-    const minuteRows = useV2PriceAttribution(event.event_id, { live: isEarningsEventLiveish(event) && !isReplayCapture(event) }).data;
+    const minuteRows = useV2PriceAttribution(event.event_id, { live: live.isLive }).data;
 
     const priceSeed = minuteRows?.live ? minuteRows.buckets : [];
 
@@ -218,7 +217,7 @@ function LiveCallCard({ event, historicalTicker, live }: { event: V2Event; histo
                     <p className="bg-muted rounded-md p-3 text-sm" role="status">
                         {event.has_transcript
                             ? "Call ended — the final transcript is in the Transcript tab."
-                            : "Call ended — final transcript in progress; the live one stays in the Transcript tab."}
+                            : "Call ended — the transcript is not available; the live text stays in the Transcript tab."}
                     </p>
                 )}
 

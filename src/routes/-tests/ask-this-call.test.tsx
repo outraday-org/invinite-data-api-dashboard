@@ -10,8 +10,8 @@ import { useV2TranscriptSearch } from "@/lib/api/queries";
 import { AskResults, AskThisCall, SpanHighlightedText } from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
 
 vi.mock("@tanstack/react-router", () => ({
-    Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => (
-        <a href={Object.entries(params).reduce((path, [key, value]) => path.replace(`$${key}`, value), to)}>{children}</a>
+    Link: ({ children, params, search, to }: { search?: Record<string, unknown>; children: React.ReactNode; params: Record<string, string>; to: string }) => (
+        <a data-search={JSON.stringify(search)} href={Object.entries(params).reduce((path, [key, value]) => path.replace(`$${key}`, value), to)}>{children}</a>
     ),
 }));
 
@@ -284,6 +284,18 @@ describe("AskResults (company scope)", () => {
         for (const link of screen.getAllByRole("link")) expect(link).toHaveAttribute("href", `/REUSED/earnings-calls/${hit.event_id}`);
 
         expect(screen.getByRole("link", { name: /REUSED/ })).toBeInTheDocument();
+    });
+
+    it.each(["company", "market"] as const)("opens the matching transcript time and slide for %s searches", (kind) => {
+        const hit = { ...HIT, audio_url: "https://example.com/audio.mp3", slide: { image_url: "https://example.com/slide.png", page: 8 } };
+
+        const scope = kind === "company" ? { identifier: "ACME", kind } : { kind };
+
+        render(<AskResults data={answer(coverage("complete"), [hit])} error={null} isLoading={false} scope={scope} />);
+
+        expect(JSON.parse(screen.getByRole("link", { name: "Play from here" }).getAttribute("data-search")!)).toEqual({ play: true, t: 60, tab: "transcript" });
+
+        expect(JSON.parse(screen.getByRole("link", { name: "Open slide 8" }).getAttribute("data-search")!)).toEqual({ slide: 8, tab: "slides" });
     });
 
     it("renders hits without a call player, untimed ones too", () => {

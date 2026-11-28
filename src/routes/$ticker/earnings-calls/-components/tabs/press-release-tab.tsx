@@ -4,7 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2PressRelease } from "@/lib/api/queries";
 import { edgarFolderUrl } from "@/lib/earnings/edgar";
-import { pressReleaseOriginLabel, trustTierLabel } from "@/lib/earnings/labels";
+import { pressReleaseOriginLabel } from "@/lib/earnings/labels";
 import { formatInstant } from "@/lib/format";
 import { READING_COLUMN_CLASS } from "@/lib/layout";
 import { cn, paragraphs } from "@/lib/utils";
@@ -13,7 +13,7 @@ import type { CallTabProps } from "../call-tabs";
 
 import { MediaState, Notice } from "../media-state";
 
-/** Press release tab: title, provenance (origin, trust tier, EDGAR folder), participants and the body text. */
+/** Press release tab: title, semantic origin, source/EDGAR links, participants and the body text. */
 export function PressReleaseTab({ event, eventId, historicalTicker, newsAvailable = true }: CallTabProps) {
     const { data, error } = useV2PressRelease(eventId);
 
@@ -34,7 +34,6 @@ export function PressReleaseTab({ event, eventId, historicalTicker, newsAvailabl
                 <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-xs">
                     {data.published_at && <span>{formatInstant(data.published_at)}</span>}
                     <Badge variant="outline">{pressReleaseOriginLabel(data.origin)}</Badge>
-                    {data.trust_tier && <Badge variant="secondary">{trustTierLabel(data.trust_tier)}</Badge>}
                     {edgarUrl && (
                         <a className="underline underline-offset-4" href={edgarUrl} rel="noopener noreferrer" target="_blank">
                             EDGAR filing

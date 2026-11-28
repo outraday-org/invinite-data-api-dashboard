@@ -15,7 +15,6 @@ import { FilterBar, FilterField } from "@/components/ui/filter-bar";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { Input } from "@/components/ui/input";
 import { joinCompanyList, parseCompanyList } from "@/lib/company-list";
-import { isReplayCapture } from "@/lib/earnings/capture-mode";
 import { optionalCompanyList, orderedWindow } from "@/lib/url-state";
 
 const SESSIONS = ["bmo", "amc", "intraday"] as const satisfies ReadonlyArray<V2Session>;
@@ -124,16 +123,14 @@ const CALENDAR_STATUS_OPTIONS: Array<{ label: string; value: "all" | V2CalendarS
 
 /**
  * Whether a loaded row passes the filters `/v1/events` has no parameter for: the session and the event status
- * (`calendar.status`, `expand=calendar`). Call status "Live" also drops a replay capture (`capture_mode` `replay`): the
- * API's `status=live` counts a capturing replay, which the badge reads as "Replay", not live.
+ * (`calendar.status`, `expand=calendar`). The API itself excludes replays from its live collection.
  */
 export function matchesCalendarSearch(
-    event: Pick<V2Event, "capture_mode"> & { calendar?: null | { status: null | V2CalendarStatus }; session: null | V2Session },
+    event: { calendar?: null | { status: null | V2CalendarStatus }; session: null | V2Session },
     search: Pick<CalendarSearch, "calendarStatus" | "session" | "status">,
 ) {
     if (search.session && event.session !== search.session) return false;
 
-    if (search.status === "live" && isReplayCapture(event)) return false;
 
     return !search.calendarStatus || event.calendar?.status === search.calendarStatus;
 }

@@ -87,7 +87,7 @@ const props = {
     transcriptJump: null,
 } as unknown as CallTabProps;
 
-const mockDocuments = (documents: Array<V2InvestorDocument>) =>
+const mockDocuments = (documents: Array<Omit<V2InvestorDocument, "origin" | "trust_tier">>) =>
     vi.mocked(useV2InvestorDocumentsInfinite).mockReturnValue({
         data: { pageParams: [null], pages: [{ data: documents, has_more: false, meta: {}, next_cursor: null }] },
         error: null,
@@ -96,6 +96,44 @@ const mockDocuments = (documents: Array<V2InvestorDocument>) =>
     } as never);
 
 describe("DocumentsTab", () => {
+    it.each(["current", "candidate"] as const)("keeps document products and semantic sources without acquisition/trust (%s)", (shape) => {
+        const { origin: _origin, trust_tier: _trust, ...candidate } = base;
+
+        mockDocuments([shape === "candidate" ? candidate : base]);
+
+        render(<DocumentsTab {...props} />);
+
+        expect(screen.getAllByRole("columnheader")).toHaveLength(6);
+
+        expect(screen.queryByRole("columnheader", { name: "Trust" })).toBeNull();
+
+        expect(screen.getByText("CFO Commentary")).toBeInTheDocument();
+
+        expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute("href", base.url);
+
+        expect(screen.getByRole("button", { name: "Show text" })).toBeInTheDocument();
+
+        expect(screen.queryByText("Company domain")).toBeNull();
+
+        expect(screen.queryByText("Q4 reports")).toBeNull();
+
+        expect(candidate).not.toHaveProperty("origin");
+
+        expect(candidate).not.toHaveProperty("trust_tier");
+    });
+
+    it("uses semantic call source when an unlabelled link-only document has no producer", () => {
+        const { origin: _origin, trust_tier: _trust, ...candidate } = base;
+
+        mockDocuments([{ ...candidate, source_label: null, url: null }]);
+
+        render(<DocumentsTab {...props} />);
+
+        expect(screen.getByText("Call document")).toBeInTheDocument();
+
+        expect(screen.getByRole("link", { name: "Open" })).toHaveAttribute("href", base.source_url);
+    });
+
     it("asks the event's documents by id (`/v1/investor-documents?event=`), every page", () => {
         mockDocuments([base]);
 

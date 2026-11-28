@@ -1,0 +1,1886 @@
+{
+  "provenance": "Synthetic lifecycle variants of HEAD stored getEvent capture. Not live capture or production eligibility evidence. Explicit authoritative_live_member is a fixture input, never inferred from timestamps. Candidate differs only by four omitted keys.",
+  "observed_at": "2026-10-29T21:30:00.000Z",
+  "fixtures": [
+    {
+      "name": "upcoming",
+      "listed": true,
+      "authoritative_live_member": false,
+      "current": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000001",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "capture_status": "pending",
+        "expired_reason": null,
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        },
+        "capture_mode": null,
+        "awaiting_replay": false
+      },
+      "candidate": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000001",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        }
+      }
+    },
+    {
+      "name": "live",
+      "listed": true,
+      "authoritative_live_member": true,
+      "current": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000002",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": "2026-10-29T21:01:00.000Z",
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "capture_status": "capturing",
+        "expired_reason": null,
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        },
+        "capture_mode": "live",
+        "awaiting_replay": false
+      },
+      "candidate": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000002",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": "2026-10-29T21:01:00.000Z",
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        }
+      }
+    },
+    {
+      "name": "replay_pending",
+      "listed": true,
+      "authoritative_live_member": false,
+      "current": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000003",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "capture_status": "pending",
+        "expired_reason": null,
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        },
+        "capture_mode": "replay",
+        "awaiting_replay": false
+      },
+      "candidate": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000003",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        }
+      }
+    },
+    {
+      "name": "replay_capturing",
+      "listed": true,
+      "authoritative_live_member": false,
+      "current": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000004",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": "2026-10-29T21:01:00.000Z",
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "capture_status": "capturing",
+        "expired_reason": null,
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        },
+        "capture_mode": "replay",
+        "awaiting_replay": false
+      },
+      "candidate": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000004",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": "2026-10-29T21:01:00.000Z",
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        }
+      }
+    },
+    {
+      "name": "replay_handoff",
+      "listed": true,
+      "authoritative_live_member": false,
+      "current": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000005",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "capture_status": "missed",
+        "expired_reason": null,
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        },
+        "capture_mode": null,
+        "awaiting_replay": true
+      },
+      "candidate": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000005",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        }
+      }
+    },
+    {
+      "name": "published_without_run",
+      "listed": true,
+      "authoritative_live_member": false,
+      "current": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000006",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "capture_status": "published",
+        "expired_reason": null,
+        "reschedule_count": 0,
+        "has_transcript": true,
+        "has_audio": true,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        },
+        "capture_mode": null,
+        "awaiting_replay": false
+      },
+      "candidate": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000006",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "reschedule_count": 0,
+        "has_transcript": true,
+        "has_audio": true,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        }
+      }
+    },
+    {
+      "name": "final_miss",
+      "listed": true,
+      "authoritative_live_member": false,
+      "current": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000007",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "capture_status": "missed",
+        "expired_reason": null,
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        },
+        "capture_mode": null,
+        "awaiting_replay": false
+      },
+      "candidate": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000007",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        }
+      }
+    },
+    {
+      "name": "expired_estimate",
+      "listed": false,
+      "authoritative_live_member": false,
+      "current": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000008",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "estimated",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "capture_status": "expired",
+        "expired_reason": "agent_notice_pending",
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        },
+        "capture_mode": null,
+        "awaiting_replay": false
+      },
+      "candidate": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000008",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "estimated",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "announced",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        }
+      }
+    },
+    {
+      "name": "results_without_call",
+      "listed": true,
+      "authoritative_live_member": false,
+      "current": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000009",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "capture_status": "expired",
+        "expired_reason": "results_without_call",
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "not_expected",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        },
+        "capture_mode": null,
+        "awaiting_replay": false
+      },
+      "candidate": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000009",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "reported",
+          "call": {
+            "status": "not_expected",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        }
+      }
+    },
+    {
+      "name": "cancelled",
+      "listed": true,
+      "authoritative_live_member": false,
+      "current": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000010",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "cancelled",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "capture_status": "pending",
+        "expired_reason": null,
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "cancelled",
+          "call": {
+            "status": "cancelled",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        },
+        "capture_mode": null,
+        "awaiting_replay": false
+      },
+      "candidate": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000010",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "cancelled",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "cancelled",
+          "call": {
+            "status": "cancelled",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        }
+      }
+    },
+    {
+      "name": "postponed",
+      "listed": true,
+      "authoritative_live_member": false,
+      "current": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000011",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "capture_status": "pending",
+        "expired_reason": null,
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "postponed",
+          "call": {
+            "status": "postponed",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        },
+        "capture_mode": null,
+        "awaiting_replay": false
+      },
+      "candidate": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000011",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T21:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": "postponed",
+          "call": {
+            "status": "postponed",
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": [
+            "date_only_call"
+          ]
+        }
+      }
+    },
+    {
+      "name": "date_only_null_calendar",
+      "listed": true,
+      "authoritative_live_member": false,
+      "current": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000012",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T00:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "capture_status": "pending",
+        "expired_reason": null,
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": null,
+          "call": {
+            "status": null,
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": []
+        },
+        "capture_mode": null,
+        "awaiting_replay": false
+      },
+      "candidate": {
+        "event_id": "6f1c2b9e-0d4a-4c1b-9a6e-000000000012",
+        "source": "us",
+        "cik": "0000789019",
+        "symbol": "MSFT",
+        "company_name": "Microsoft Corp",
+        "exchange": "XNAS",
+        "event_type": "earnings_call",
+        "event_title": null,
+        "fiscal_year": 2026,
+        "fiscal_quarter": 4,
+        "scheduled_at": "2026-10-29T00:00:00.000Z",
+        "tz": "America/Los_Angeles",
+        "date_status": "confirmed",
+        "call_time_source": null,
+        "call_time_confidence": null,
+        "session": null,
+        "started_at": null,
+        "ended_at": null,
+        "results_released_at": "2026-07-29T20:04:53.000Z",
+        "reschedule_count": 0,
+        "has_transcript": false,
+        "has_audio": false,
+        "has_slides": true,
+        "has_press_release": true,
+        "has_documents": true,
+        "webcast_url": null,
+        "video": null,
+        "results_filing": {
+          "accession": "0001193125-26-323632",
+          "form": "8-K",
+          "accepted_at": "2026-07-29T20:04:53.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323632/0001193125-26-323632-index.htm"
+        },
+        "periodic_report": {
+          "accession": "0001193125-26-323660",
+          "form": "10-K",
+          "period_end": "2026-06-30",
+          "filing_date": "2026-07-29",
+          "accepted_at": "2026-07-29T20:08:01.000Z",
+          "edgar_index_url": "https://www.sec.gov/Archives/edgar/data/789019/000119312526323660/0001193125-26-323660-index.htm"
+        },
+        "calendar": {
+          "status": null,
+          "call": {
+            "status": null,
+            "date": "2026-07-29",
+            "at": null,
+            "time_quality": "date_only",
+            "date_basis": "first_party",
+            "source": {
+              "type": "edgar",
+              "ref": "0001193125-26-323632",
+              "observed_at": "2026-07-29T20:04:53.000Z",
+              "tz": "America/Los_Angeles",
+              "tz_inferred": false
+            }
+          },
+          "report": {
+            "date": "2026-07-29",
+            "time_kind": "amc",
+            "quality": "filing_acceptance",
+            "source": {
+              "accession": "0001193125-26-323632",
+              "form": "8-K",
+              "accepted_at": "2026-07-29T20:04:53.000Z"
+            }
+          },
+          "fiscal_period_quality": "stated",
+          "warnings": []
+        }
+      }
+    }
+  ]
+}

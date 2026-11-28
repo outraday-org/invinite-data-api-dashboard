@@ -5,17 +5,18 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { HistoricalSlideSelection } from "@/routes/$ticker/earnings-calls/-components/slide-history";
 
+import { availabilityInterval, useEventAvailability } from "@/lib/earnings/event-availability";
 import { AAPL_Q4_EVENT } from "@/lib/earnings/o7-earnings-fixtures";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
 import { HistorySlides, VerifiedHistoricalSlides } from "@/routes/$ticker/earnings-calls/-components/slide-history";
 
 import type { ApiRequestError } from "./errors";
 
-import { useV2Event, useV2EventsInfinite, useV2GuidanceInfinite, useV2InvestorDocument, useV2LiveAudio, useV2QaInfinite, useV2Slides } from "./queries";
+import { useV2Event, useV2EventsInfinite, useV2GuidanceInfinite, useV2InvestorDocument, useV2LiveAudio, useV2LiveEvents, useV2QaInfinite, useV2Slides } from "./queries";
 import { getV2Event, getV2Events, getV2Guidance, getV2InvestorDocument, getV2LiveAudio, getV2Qa, getV2Slides } from "./server-functions";
 
 vi.mock("./server-functions", () => ({
@@ -31,6 +32,100 @@ vi.mock("./server-functions", () => ({
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
 
 const EVENT_ID = "22056489-0000-4000-8000-000000000001";
+
+describe("public live reads and bounded detail polling", () => {
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.setSystemTime(1_000_000);
+        Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" });
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+        Object.defineProperty(document, "visibilityState", { configurable: true, value: "visible" });
+    });
+
+    function stableWrapper() {
+        const client = new QueryClient({ defaultOptions: { queries: { gcTime: Number.POSITIVE_INFINITY, retry: false } } });
+        return ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    }
+
+    const wire = { ...AAPL_Q4_EVENT, capture_status: "captured", event_id: EVENT_ID, has_transcript: false };
+
+    function useDetail() {
+        const availability = useEventAvailability(EVENT_ID);
+        const query = useV2Event(EVENT_ID, {
+            active: availability.active,
+            refetchInterval: (event, error) => availabilityInterval(event, {
+                error, nowMs: Date.now(), untilMs: availability.untilMs, visible: availability.visible,
+            }),
+            visible: availability.visible,
+        });
+        return { availability, query };
+    }
+
+    it("scopes detail live membership by issuer and shares a query without inspecting capture fields", async () => {
+        const page = { data: [wire], has_more: true, meta: {}, next_cursor: "more" };
+        vi.mocked(getV2Events).mockResolvedValue(page);
+        const { result, unmount } = renderHook(() => useV2LiveEvents(true, "0000320193"), { wrapper: stableWrapper() });
+        await act(() => vi.advanceTimersByTimeAsync(1));
+        expect(result.current.data).toEqual(page);
+        expect(getV2Events).toHaveBeenLastCalledWith({ data: { apiKey: "test-key", company: "0000320193", limit: 200, status: ["live"], type: "all" } });
+        unmount();
+    });
+
+    it("ordinary cached/member reads create no row polling even when the old response says captured", async () => {
+        vi.mocked(getV2Event).mockResolvedValue(wire);
+        const { unmount } = renderHook(() => { useV2Event(EVENT_ID); useV2Event(EVENT_ID); }, { wrapper: stableWrapper() });
+        await act(() => vi.advanceTimersByTimeAsync(1));
+        expect(getV2Event).toHaveBeenCalledTimes(1);
+        await act(() => vi.advanceTimersByTimeAsync(20 * 60_000));
+        expect(getV2Event).toHaveBeenCalledTimes(1);
+        unmount();
+    });
+
+    it("polls every thirty seconds within a fixed ten minutes and only manual refresh restarts it", async () => {
+        vi.mocked(getV2Event).mockResolvedValue(wire);
+        const { result, unmount } = renderHook(useDetail, { wrapper: stableWrapper() });
+        await act(() => vi.advanceTimersByTimeAsync(1));
+        for (let tick = 0; tick < 21; tick += 1) await act(() => vi.advanceTimersByTimeAsync(30_000));
+        expect(result.current.availability.active).toBe(false);
+        expect(getV2Event).toHaveBeenCalledTimes(20);
+        act(() => {
+            window.dispatchEvent(new Event("focus"));
+            document.dispatchEvent(new Event("visibilitychange"));
+        });
+        await act(() => vi.advanceTimersByTimeAsync(60_000));
+        expect(getV2Event).toHaveBeenCalledTimes(20);
+        await act(async () => { result.current.availability.restart(); await result.current.query.refetch(); });
+        expect(getV2Event).toHaveBeenCalledTimes(21);
+        unmount();
+    });
+
+    it("stops on publication and on a denied response, with no hidden or unmounted requests", async () => {
+        vi.mocked(getV2Event).mockResolvedValue(wire);
+        const { result, unmount } = renderHook(useDetail, { wrapper: stableWrapper() });
+        await act(() => vi.advanceTimersByTimeAsync(1));
+        vi.mocked(getV2Event).mockResolvedValue({ ...wire, has_transcript: true });
+        await act(() => vi.advanceTimersByTimeAsync(30_000));
+        expect(result.current.query.data?.has_transcript).toBe(true);
+        await act(() => vi.advanceTimersByTimeAsync(60_000));
+        expect(getV2Event).toHaveBeenCalledTimes(2);
+        vi.mocked(getV2Event).mockRejectedValue(problem(403, "plan_required", "Upgrade"));
+        await act(async () => { await result.current.query.refetch(); });
+        await act(() => vi.advanceTimersByTimeAsync(60_000));
+        expect(getV2Event).toHaveBeenCalledTimes(3);
+        act(() => {
+            Object.defineProperty(document, "visibilityState", { configurable: true, value: "hidden" });
+            document.dispatchEvent(new Event("visibilitychange"));
+        });
+        await act(() => vi.advanceTimersByTimeAsync(60_000));
+        expect(getV2Event).toHaveBeenCalledTimes(3);
+        unmount();
+        await act(() => vi.advanceTimersByTimeAsync(60_000));
+        expect(getV2Event).toHaveBeenCalledTimes(3);
+    });
+});
 
 function wrapper({ children }: { children: React.ReactNode }) {
     const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });

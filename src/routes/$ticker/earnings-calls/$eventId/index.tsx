@@ -1,14 +1,16 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useLocation } from "@tanstack/react-router";
 import * as React from "react";
 import { toast } from "sonner";
 import { z } from "zod";
 
 import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
+import { Button } from "@/components/ui/button";
 import { ErrorState } from "@/components/ui/error-state";
 import { NotFound } from "@/components/ui/not-found";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isNotFound } from "@/lib/api/errors";
 import { useInstrument, useV2Event } from "@/lib/api/queries";
+import { availabilityInterval, deniedAvailability, useEventAvailability } from "@/lib/earnings/event-availability";
 import { historicalPageTicker, servedDatasets } from "@/lib/instruments";
 import { tickerHead } from "@/lib/layout";
 import { IN_PLACE } from "@/lib/url-state";
@@ -16,16 +18,15 @@ import { IN_PLACE } from "@/lib/url-state";
 import type { JumpToTranscript } from "../-components/ask-this-call";
 import type { CallSearch } from "../-components/call-search";
 import type { CallTab, TranscriptJump } from "../-components/call-tabs";
-import type { LiveSessionClock } from "../-components/live/use-call-live-session";
 
 import { AskThisCall } from "../-components/ask-this-call";
-import { CallAudioProvider } from "../-components/audio-context";
+import { CallAudioProvider, useCallAudio } from "../-components/audio-context";
 import { CallHeader } from "../-components/call-header";
 import { callSearchSchema, copyCallLinkAt } from "../-components/call-search";
 import { CallTabs, DEFAULT_CALL_TAB } from "../-components/call-tabs";
 import { EventVideoSlot } from "../-components/event-video";
 import { LivePlayerSlot } from "../-components/live-player-slot";
-import { recordingWaitInterval, useCallLiveSession } from "../-components/live/use-call-live-session";
+import { useCallLiveSession } from "../-components/live/use-call-live-session";
 import { CallPlayerBar } from "../-components/player/live-call-player";
 
 const eventIdSchema = z.string().uuid();
@@ -36,6 +37,26 @@ export const Route = createFileRoute("/$ticker/earnings-calls/$eventId/")({
     // Every field optional (an `EventLink` passes no search); an unknown value falls back to its default.
     validateSearch: callSearchSchema,
 });
+
+/** A search-result playback request is consumed once after the call's audio host mounts. */
+function SearchHitPlayback({ enabled, timeMs }: { enabled: boolean; timeMs: number }) {
+    const { playUrl, seekMs } = useCallAudio();
+
+    const audioUrl = useLocation({ select: location => location.state.transcriptSearchAudioUrl });
+
+    const started = React.useRef(false);
+
+    React.useEffect(() => {
+        if (!enabled || started.current) return;
+
+        started.current = true;
+
+        if (audioUrl) playUrl(audioUrl);
+        else seekMs(timeMs);
+    }, [audioUrl, enabled, playUrl, seekMs, timeMs]);
+
+    return null;
+}
 
 function EarningsCallPage() {
     const { eventId, ticker } = Route.useParams();
@@ -64,19 +85,34 @@ function CallPage({ eventId, ticker }: { eventId: string; ticker: string }) {
 
     const validId = eventIdSchema.safeParse(eventId).success;
 
-    // What the live session knows, read by the event's poll (outside render): a call this page saw live is polled
-    // every 30 s until its recording is published, for at most an hour after the end (`recordingWaitInterval`).
-    const liveClockRef = React.useRef<LiveSessionClock>({ endedAtMs: null, sawLive: false });
+    const availability = useEventAvailability(validId ? eventId : "");
 
-    const { data: event, error, isLoading } = useV2Event(validId ? eventId : "", {
-        refetchInterval: current => recordingWaitInterval(current, liveClockRef.current, Date.now()),
+    const { data: event, error, isFetching, isLoading, refetch } = useV2Event(validId ? eventId : "", {
+        active: availability.active,
+        refetchInterval: (current, currentError) => availabilityInterval(current, {
+            error: currentError,
+            nowMs: Date.now(),
+            untilMs: availability.untilMs,
+            visible: availability.visible && availability.active,
+        }),
+        visible: availability.visible,
     });
 
-    const liveSession = useCallLiveSession(event);
+    const refreshAfterCompletion = React.useCallback(() => {
+        if (availability.visible && !deniedAvailability(error)) void refetch();
+    }, [availability.visible, error, refetch]);
 
-    React.useEffect(() => {
-        liveClockRef.current = liveSession.clock;
-    }, [liveSession.clock]);
+    const liveSession = useCallLiveSession(event, {
+        availabilityActive: availability.active,
+        onAvailabilityChange: refreshAfterCompletion,
+        visible: availability.visible && !deniedAvailability(error),
+    });
+
+    const refreshAvailability = () => {
+        availability.restart();
+
+        void refetch();
+    };
 
     const [transcriptJump, setTranscriptJump] = React.useState<null | TranscriptJump>(null);
 
@@ -142,15 +178,26 @@ function CallPage({ eventId, ticker }: { eventId: string; ticker: string }) {
         // The recording is requested on the first play or timestamp click (never on page load, an old `?tab=audio`
         // link included), then stays loaded so timestamps on any tab can play it.
         <CallAudioProvider eventId={event.event_id} hasAudio={event.has_audio} live={liveSession} startAtMs={linkTimeMs ?? undefined}>
+            <SearchHitPlayback enabled={search.play === true} timeMs={linkTimeMs ?? 0} />
             <div className="flex flex-col gap-4">
                 {/* "Create alert" for the call's company and its alerts link (alerts task 4) as the header's action. */}
-                <CallHeader actions={<AlertEntryPoints symbol={event.symbol} types={ENTRY_TYPES.calls} />} event={event} pageSymbol={ticker} />
+                <CallHeader
+                    actions={(
+                        <>
+                            <AlertEntryPoints symbol={event.symbol} types={ENTRY_TYPES.calls} />
+                            <Button disabled={isFetching} onClick={refreshAvailability} size="sm" type="button" variant="outline">Refresh availability</Button>
+                        </>
+                    )}
+                    event={event}
+                    live={liveSession.isLive}
+                    pageSymbol={ticker}
+                />
 
                 {/* The live call's notices, highlights, price and diagnostics (nothing for other calls). */}
                 <LivePlayerSlot event={event} historicalTicker={historicalTicker} session={liveSession} />
 
                 {/* The company's public broadcast (click-to-load), collapsed while the call is captured live. */}
-                <EventVideoSlot event={event} />
+                <EventVideoSlot event={event} live={liveSession.isLive} />
 
                 {/* The one player bar, sticky below the ticker header on every tab: the live stream while the call is */}
                 {/* followed live, the recording once it is published (nothing without either). Above the search since */}

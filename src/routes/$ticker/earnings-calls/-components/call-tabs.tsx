@@ -179,7 +179,7 @@ export function CallTabs({
                     : available
                         ? active.render(props)
                         : active.flag === "has_transcript"
-                            ? <NoTranscriptNotice captureStatus={event.capture_status} />
+                            ? <NoTranscriptNotice />
                             : <Notice title="Not available for this call" />}
             </TabsContent>
         </Tabs>

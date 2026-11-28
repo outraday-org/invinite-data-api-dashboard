@@ -95,7 +95,7 @@ export function TranscriptToolbar({
     downloads: TranscriptDownloads;
     onCopy: () => void;
     qaStartMs: null | number;
-    shownEntry: Pick<V2TranscriptVersion, "corrected_by" | "published_at" | "version_kind" | "word_count"> | undefined;
+    shownEntry: Pick<V2TranscriptVersion, "change_note" | "published_at" | "version_kind" | "word_count"> | undefined;
 }) {
     const [pdfOpen, setPdfOpen] = React.useState(false);
 
@@ -108,6 +108,7 @@ export function TranscriptToolbar({
                             <span>{versionKindText(shownEntry)}</span>
                             <span>{`· ${shownEntry.word_count.toLocaleString("en-US")} words`}</span>
                             <span>{`· published ${formatInstant(shownEntry.published_at)}`}</span>
+                            {shownEntry.change_note && <span>{`· ${shownEntry.change_note}`}</span>}
                         </>
                     )}
                     {qaStartMs !== null && (

@@ -14,7 +14,7 @@ import { DocumentTextView } from "@/routes/$ticker/earnings-calls/-components/ta
 import { KpiHistoryView } from "@/routes/$ticker/earnings-calls/-components/tabs/kpi-history-panel";
 import { ComparisonView, PriorPicker } from "@/routes/$ticker/earnings-calls/-components/tabs/metrics-diff-tab";
 import { SpeakerConfidenceBadge } from "@/routes/$ticker/earnings-calls/-components/tabs/transcript-turns";
-import { exactTooShort, TranscriptSearchView, windowText } from "@/routes/search";
+import { exactTooShort, TranscriptSearchView, windowText } from "@/routes/transcript-search";
 
 vi.mock("@tanstack/react-router", () => ({
     createFileRoute: () => () => ({}),
@@ -227,14 +227,16 @@ describe("CallHeader (O7 group 5 facts)", () => {
         expect(screen.getByTestId("sec-dialog")).toHaveTextContent("0000320193-26-000026");
     });
 
-    it("marks a low-confidence time and names why the row expired", () => {
+    it("keeps time certainty without exposing operational expiry reasons", () => {
         render(<CallHeader event={EXPIRED_ESTIMATE_EVENT} />);
 
         expect(screen.getByText("Estimate · low confidence")).toHaveAttribute("title", "The start time may still change");
 
         fireEvent.click(screen.getByRole("button", { name: "Details" }));
 
-        expect(screen.getByText("Estimate replaced by the confirmed date")).toBeInTheDocument();
+        expect(screen.queryByText("Estimate replaced by the confirmed date")).toBeNull();
+
+        expect(screen.queryByText("Expired")).toBeNull();
 
         expect(screen.queryByText("Results filing")).toBeNull();
     });

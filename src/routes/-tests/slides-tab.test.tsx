@@ -9,6 +9,8 @@ import type * as HistoryModule from "@/routes/$ticker/earnings-calls/-components
 
 import { SlidesTab } from "@/routes/$ticker/earnings-calls/-components/tabs/slides-tab";
 
+const metadata = vi.hoisted(() => ({ deck: null as unknown }));
+
 const slides = [
     { image_url: "https://example.com/revenue.webp", markdown: "# Revenue", page: 1, title: "Revenue" },
     { image_url: "https://example.com/margin.webp", markdown: "# Gross margin", page: 2, title: "Gross margin" },
@@ -17,7 +19,7 @@ const slides = [
 const historical = { slides: [{ image_url: "https://example.com/prior.webp", markdown: "# Revenue", page: 4, title: "Revenue" }] };
 
 vi.mock("@/lib/api/queries", () => ({
-    useV2Slides: ({ eventId }: { eventId: string }) => ({ data: { deck: null, slides: eventId === "prior" ? historical.slides : slides, timeline: [] }, error: null }),
+    useV2Slides: ({ eventId }: { eventId: string }) => ({ data: { deck: metadata.deck, slides: eventId === "prior" ? historical.slides : slides, timeline: [] }, error: null }),
 }));
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
@@ -41,7 +43,11 @@ vi.mock("@/routes/$ticker/earnings-calls/-components/slide-history", async impor
     ),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+    cleanup();
+
+    metadata.deck = null;
+});
 
 HTMLElement.prototype.scrollIntoView = vi.fn();
 
@@ -57,6 +63,24 @@ const props = {
 } as CallTabProps;
 
 describe("SlidesTab historical comparison", () => {
+    it.each(["current", "candidate"] as const)("keeps the real deck/source and viewer without trust workflow (%s)", (shape) => {
+        const candidate = { origin: "edgar", pages: 2, url: "https://storage.example/deck.pdf" };
+
+        metadata.deck = shape === "current" ? { ...candidate, trust_tier: "sec" } : candidate;
+
+        render(<TestSlides />);
+
+        expect(screen.getByRole("link", { name: "Download deck" })).toHaveAttribute("href", candidate.url);
+
+        expect(screen.getByText("Edgar")).toBeInTheDocument();
+
+        expect(screen.getByRole("img", { name: "Revenue" })).toHaveAttribute("src", slides[0].image_url);
+
+        expect(screen.queryByText("SEC filing")).toBeNull();
+
+        expect(candidate).not.toHaveProperty("trust_tier");
+    });
+
     it("does not restore a previous selection after URL navigation away and back", () => {
         const onSearchChange = vi.fn();
 

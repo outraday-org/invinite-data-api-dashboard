@@ -75,7 +75,6 @@ const DERIVED_TABS = ["guidance", "qa", "participants", "metrics", "prosody"] as
 
 function eventOf(overrides: Partial<V2Event>): V2Event {
     return {
-        capture_status: "pending",
         event_id: "9655a5db-8968-40be-8c79-7cd1a8aed8e9",
         event_type: "earnings_call",
         has_audio: false,
@@ -107,17 +106,16 @@ function renderTab(event: V2Event, tab: "kpi-series" | "non-gaap" | "price-moves
 
 describe("NoTranscriptNotice", () => {
     it("says the call has not been transcribed", () => {
-        render(<NoTranscriptNotice captureStatus="pending" />);
+        render(<NoTranscriptNotice />);
 
         expect(screen.getByRole("status")).toHaveTextContent(NO_TRANSCRIPT_TITLE);
 
-        expect(screen.getByText("The call has not been transcribed.")).toBeInTheDocument();
+        expect(screen.getByText("No transcript is currently available for this event.")).toBeInTheDocument();
     });
 
-    it.each(["missed", "expired"])("says no recording was captured for a %s capture", (status) => {
-        render(<NoTranscriptNotice captureStatus={status} />);
-
-        expect(screen.getByText("No recording was captured.")).toBeInTheDocument();
+    it("never infers a failed recording from a missing transcript", () => {
+        render(<NoTranscriptNotice />);
+        expect(screen.queryByText(/No recording was captured/)).toBeNull();
     });
 });
 
@@ -125,7 +123,7 @@ describe("Notice card edge", () => {
     // A ring paints outside the box, so the call page's scroll viewport clipped the card's left edge; a real border
     // stays inside it. Since ui-redesign task 6 a notice's edge is its left accent bar.
     it("draws its edge as a border, not an outside ring", () => {
-        render(<NoTranscriptNotice captureStatus="pending" />);
+        render(<NoTranscriptNotice />);
 
         const card = screen.getByRole("status");
 
@@ -259,7 +257,7 @@ describe("CallTabs on a live call (O4)", () => {
     it("the Transcript tab is the live transcript until has_transcript, then the final one", () => {
         live.call = {};
 
-        const view = renderTab(eventOf({ capture_status: "capturing" }), "transcript");
+        const view = renderTab(eventOf({}), "transcript");
 
         expect(screen.getByTestId("tab-live-transcript")).toBeInTheDocument();
 

@@ -17,7 +17,6 @@ import { useV2InvestorDocument, useV2InvestorDocumentsInfinite } from "@/lib/api
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { DOCUMENT_SORT_VALUES, pagesOf } from "@/lib/earnings/documents";
 import { formatBytes } from "@/lib/earnings/format";
-import { originCodeLabel, trustTierLabel } from "@/lib/earnings/labels";
 import { formatDay } from "@/lib/format";
 
 import type { CallTabProps } from "../call-tabs";
@@ -256,7 +255,6 @@ export function DocumentsTab({ event, eventId, onSearchChange, onTabChange, sear
                                         <TableHead>Kind</TableHead>
                                         <TableHead>Title</TableHead>
                                         <TableHead>Producer / source</TableHead>
-                                        <TableHead>Trust</TableHead>
                                         <TableHead>Type</TableHead>
                                         <TableHead className="text-right">Size</TableHead>
                                         <TableHead />
@@ -265,7 +263,7 @@ export function DocumentsTab({ event, eventId, onSearchChange, onTabChange, sear
                                 <TableBody>
                                     {isLoading && (
                                         <TableRow>
-                                            <TableCell colSpan={7}>
+                                            <TableCell colSpan={6}>
                                                 <Skeleton className="h-4 w-full" />
                                             </TableCell>
                                         </TableRow>
@@ -277,10 +275,7 @@ export function DocumentsTab({ event, eventId, onSearchChange, onTabChange, sear
                                             </TableCell>
                                             <TableCell className="max-w-xs truncate">{doc.title ?? "Untitled"}</TableCell>
                                             <TableCell className="text-muted-foreground">
-                                                {[doc.producer, doc.source_label].filter(Boolean).join(" · ") || originCodeLabel(doc.origin)}
-                                            </TableCell>
-                                            <TableCell>
-                                                {doc.trust_tier ? <Badge variant="secondary">{trustTierLabel(doc.trust_tier)}</Badge> : "—"}
+                                                {[doc.producer, doc.source_label].filter(Boolean).join(" · ") || (doc.source === "company" ? "Company document" : "Call document")}
                                             </TableCell>
                                             <TableCell className="text-muted-foreground">{doc.content_type ?? "—"}</TableCell>
                                             <TableCell className="text-right tabular-nums">{formatBytes(doc.bytes)}</TableCell>

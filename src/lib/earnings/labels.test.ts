@@ -15,7 +15,6 @@ import {
     percent,
     pressReleaseOriginLabel,
     roleGroup,
-    trustTierLabel,
 } from "./labels";
 
 describe("highlightTerms", () => {
@@ -178,13 +177,7 @@ describe("labels", () => {
 });
 
 describe("source codes in words (UI walk F062)", () => {
-    it("labels trust tiers, call-time sources and press release origins; an unknown code is sentence-cased", () => {
-        expect(trustTierLabel("confirmed_domain")).toBe("Company domain");
-
-        expect(trustTierLabel("sec")).toBe("SEC filing");
-
-        expect(trustTierLabel("new_tier")).toBe("New tier");
-
+    it("labels retained call-time sources and press release origins; an unknown code is sentence-cased", () => {
         expect(callTimeSourceLabel("ir_feed")).toBe("Company IR feed");
 
         expect(callTimeSourceLabel("edgar")).toBe("SEC filing");

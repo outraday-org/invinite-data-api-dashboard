@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ChevronDown, ExternalLink, FileText, ImageIcon, Play, X } from "lucide-react";
+import { ChevronDown, FileText, ImageIcon, Play, X } from "lucide-react";
 import * as React from "react";
 
 import type {
@@ -39,7 +39,7 @@ export { HighlightedText, SearchCoverageNote, SpanHighlightedText };
 export type JumpToTranscript = (startMs: number, options?: { quiet?: boolean }) => void;
 
 /**
- * One call (the call page), one company (its calls list, hits link to their call) or every company (`/search`: hits
+ * One call (the call page), one company (its calls list, hits link to their call) or every company (`/transcript-search`: hits
  * name their company too).
  */
 export type AskScope
@@ -57,6 +57,12 @@ export const TYPE_LABELS: Record<V2TranscriptSearchType, string> = {
 };
 
 export const TYPES = Object.keys(TYPE_LABELS) as Array<V2TranscriptSearchType>;
+
+declare module "@tanstack/react-router" {
+    interface HistoryState {
+        transcriptSearchAudioUrl?: string;
+    }
+}
 
 const linkClass = "inline-flex items-center gap-1 underline-offset-4 hover:underline";
 
@@ -240,32 +246,35 @@ function EventHitCard({ onJumpToSlide, onJumpToTranscript, onPlayed, ...props }:
     return <HitShell {...props} actions={actions} timestamp={timestamp} />;
 }
 
-/** Company calls list / `/search`: the hit's call page, the audio in a new tab; `market` names the company too. */
+/** Company calls list / `/transcript-search`: open the hit's passage or slide on its call page; `market` names the company too. */
 function CompanyHitCard({ historicalTicker, market = false, ...props }: Omit<HitCardProps, "onPlayed" | "scope"> & { market?: boolean }) {
     const { hit } = props;
 
     const actions = (
         <div className="flex flex-wrap items-center gap-3">
-            {hit.audio_url
-                ? (
-                        <a className={linkClass} href={hit.audio_url} rel="noopener noreferrer" target="_blank">
-                            <Play className="size-3" />
-                            Play from here
-                            <ExternalLink className="size-3" />
-                        </a>
-                    )
-                : hit.start_ms !== null && (
-                    <Link
-                        className={linkClass}
-                        params={{ eventId: hit.event_id, ticker: historicalTicker ?? hit.symbol }}
-                        search={{ tab: "transcript" }}
-                        to="/$ticker/earnings-calls/$eventId"
-                    >
-                        <FileText className="size-3" />
-                        Open transcript
-                    </Link>
-                )}
-            <SlideLink slide={hit.slide} />
+            {(hit.audio_url || hit.start_ms !== null) && (
+                <Link
+                    className={linkClass}
+                    params={{ eventId: hit.event_id, ticker: historicalTicker ?? hit.symbol }}
+                    search={{ play: hit.audio_url ? true : undefined, t: hit.start_ms === null ? undefined : Math.floor(hit.start_ms / 1000), tab: "transcript" }}
+                    state={{ transcriptSearchAudioUrl: hit.audio_url ?? undefined }}
+                    to="/$ticker/earnings-calls/$eventId"
+                >
+                    {hit.audio_url ? <Play className="size-3" /> : <FileText className="size-3" />}
+                    {hit.audio_url ? "Play from here" : "Open transcript"}
+                </Link>
+            )}
+            {hit.slide && (
+                <Link
+                    className={linkClass}
+                    params={{ eventId: hit.event_id, ticker: historicalTicker ?? hit.symbol }}
+                    search={{ slide: hit.slide.page, tab: "slides" }}
+                    to="/$ticker/earnings-calls/$eventId"
+                >
+                    <ImageIcon className="size-3" />
+                    { `Open slide ${hit.slide.page}` }
+                </Link>
+            )}
         </div>
     );
 

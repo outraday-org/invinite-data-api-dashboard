@@ -31,7 +31,6 @@ vi.mock("@/lib/player/player-context", () => ({
 
 // The view is rendered with its data directly: keep the server functions (TanStack Start) unloaded.
 vi.mock("@/lib/api/queries", () => ({
-    isEarningsEventLiveish: vi.fn(),
     useEarningsPriceAttribution: vi.fn(),
 }));
 

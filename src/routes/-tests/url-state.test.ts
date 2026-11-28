@@ -175,8 +175,8 @@ function navigateCalls(text: string): Array<string> {
     return calls;
 }
 
-/** Search changes that add a history entry on purpose: `/search`'s submitted query (O7 group 5). */
-const PUSH_ALLOWED = new Set(["routes/search.tsx", "routes/news-feed.tsx", "routes/$ticker/news/index.tsx"].map(path => path + ": { resetScroll: false, search: prev => ({ ...prev, q }) }"));
+/** Search changes that add a history entry on purpose: `/transcript-search`'s submitted query (O7 group 5). */
+const PUSH_ALLOWED = new Set(["routes/transcript-search.tsx", "routes/news-feed.tsx", "routes/$ticker/news/index.tsx"].map(path => path + ": { resetScroll: false, search: prev => ({ ...prev, q }) }"));
 
 describe("URL state rule: a filter, tab, sort or open item changes the URL in place", () => {
     it("every same-page search navigation replaces the history entry (F097)", () => {

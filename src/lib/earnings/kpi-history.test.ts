@@ -1,8 +1,7 @@
-import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { kpiHistoryCallCount, kpiHistorySeries } from "./kpi-history";
-import { EXPIRED_REASON_LABELS, isLowSpeakerConfidence, versionKindText } from "./labels";
+import { isLowSpeakerConfidence, versionKindText } from "./labels";
 import { NVDA_REVENUE_HISTORY } from "./o7-earnings-fixtures";
 
 describe("kpiHistorySeries", () => {
@@ -26,25 +25,9 @@ describe("kpiHistorySeries", () => {
 });
 
 describe("call header + transcript labels", () => {
-    type Spec = { components: { schemas: { Event: { properties: { expired_reason: { enum: Array<null | string> } } } } } };
-
-    // The pinned contract itself: a reason added to `openapi.json` fails here until it is labelled.
-    const spec = JSON.parse(readFileSync(new URL("../../../openapi.json", import.meta.url), "utf8")) as Spec;
-
-    it("labels every expired_reason of the contract", () => {
-        const reasons = spec.components.schemas.Event.properties.expired_reason.enum.filter((value): value is string => value !== null);
-
-        expect(Object.keys(EXPIRED_REASON_LABELS).sort()).toEqual([...reasons].sort());
-    });
-
-    it("names who corrected a version (corrected_by)", () => {
-        expect(versionKindText({ corrected_by: null, version_kind: "final" })).toBe("final");
-
-        expect(versionKindText({ corrected_by: "human", version_kind: "corrected" })).toBe("corrected by a person");
-
-        expect(versionKindText({ corrected_by: "system:company_text", version_kind: "corrected" })).toBe("corrected by the system (company text)");
-
-        expect(versionKindText({ corrected_by: "human", version_kind: "final" })).toBe("final, corrected by a person");
+    it("uses public version kind without correction workflow details", () => {
+        expect(versionKindText({ version_kind: "final" })).toBe("Final");
+        expect(versionKindText({ version_kind: "corrected" })).toBe("Corrected");
     });
 
     it("marks only a named turn below 0.8", () => {

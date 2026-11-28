@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2Slides } from "@/lib/api/queries";
 import { eventLabel } from "@/lib/earnings/format";
-import { originCodeLabel, trustTierLabel } from "@/lib/earnings/labels";
+import { originCodeLabel } from "@/lib/earnings/labels";
 
 import type { CallTabProps } from "../call-tabs";
 import type { HistoricalSlideSelection } from "../slide-history";
@@ -103,7 +103,6 @@ export function SlidesTab({ event, eventId, onSearchChange, search }: CallTabPro
                         </a>
                     )}
                     <Badge variant="outline">{originCodeLabel(deck.origin)}</Badge>
-                    {deck.trust_tier && <Badge variant="secondary">{trustTierLabel(deck.trust_tier)}</Badge>}
                 </div>
             )}
 

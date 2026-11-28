@@ -102,11 +102,16 @@ type UseLiveTranscriptInput = {
     eventId: string;
     /** Keywords to be told about (`keyword_hit`); a change re-subscribes on the open socket. */
     watch?: KeywordWatch;
+    onAvailabilityChange?: () => void;
 };
 
 const NO_WATCH: KeywordWatch = { keywords: [], match: "exact" };
 
-export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId, watch = NO_WATCH }: UseLiveTranscriptInput) {
+export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId, onAvailabilityChange, watch = NO_WATCH }: UseLiveTranscriptInput) {
+    const availabilityRef = useRef(onAvailabilityChange);
+
+    useEffect(() => { availabilityRef.current = onAvailabilityChange; }, [onAvailabilityChange]);
+
     const [state, dispatch] = useReducer(liveTranscriptReducer, INITIAL_LIVE_TRANSCRIPT);
 
     const [prices, dispatchPrice] = useReducer(livePricesReducer, INITIAL_LIVE_PRICES);
@@ -270,6 +275,8 @@ export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId, w
 
             switch (frame.type) {
                 case "call_ended": {
+                    availabilityRef.current?.();
+
                     dispatch({ atMs, ended: true, kind: "backlog", lastSeq: -1, segments: [] });
 
                     setMode("ended");
@@ -370,6 +377,8 @@ export function useLiveTranscript({ apiKey, apiKeyUpdatedAt, baseUrl, eventId, w
                 }
 
                 case "transcript_ready": {
+                    availabilityRef.current?.();
+
                     dispatch({ atMs, ended: true, kind: "backlog", lastSeq: -1, segments: [] });
 
                     finish("ended");

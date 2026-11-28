@@ -33,7 +33,7 @@ export const EXACT_MIN_UNSCOPED = 3;
 const TYPE_VALUES = ["transcript", "qa", "prepared", "presentation"] as const satisfies ReadonlyArray<V2TranscriptSearchType>;
 
 /**
- * `/search` URL state: `q` = the submitted query (written on submit, never per keystroke: a search costs 10 credits),
+ * `/transcript-search` URL state: `q` = the submitted query (written on submit, never per keystroke: a search costs 10 credits),
  * `mode` (absent = keyword), `type` (absent = every type), `company` (one ticker or CIK), `from` / `to` (call days).
  */
 const searchPageSchema = z.object({
@@ -47,7 +47,7 @@ const searchPageSchema = z.object({
 
 export type TranscriptSearchPageSearch = z.infer<typeof searchPageSchema>;
 
-export const Route = createFileRoute("/search")({
+export const Route = createFileRoute("/transcript-search")({
     component: SearchPage,
     head: () => titleHead("Transcript search"),
     validateSearch: searchPageSchema,

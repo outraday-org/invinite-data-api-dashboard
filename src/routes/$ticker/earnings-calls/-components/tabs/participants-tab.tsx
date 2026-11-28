@@ -48,7 +48,7 @@ function ParticipantRows({ group, participants }: { group: RoleGroup; participan
     return (
         <>
             <TableRow className="hover:bg-transparent">
-                <TableCell className="bg-muted/40 font-medium" colSpan={7}>
+                <TableCell className="bg-muted/40 font-medium" colSpan={6}>
                     {ROLE_GROUP_LABELS[group]}
                     {" "}
                     <span className="text-muted-foreground font-normal">{participants.length}</span>
@@ -68,7 +68,6 @@ function ParticipantRows({ group, participants }: { group: RoleGroup; participan
                     <TableCell className="whitespace-normal">{participant.firm ?? "—"}</TableCell>
                     <TableCell><Badge variant="outline">{participant.speaker_label}</Badge></TableCell>
                     <TableCell className="tabular-nums">{percent(participant.confidence, 0)}</TableCell>
-                    <TableCell className="text-muted-foreground">{participant.resolved_by?.replaceAll("_", " ") ?? "—"}</TableCell>
                     <TableCell><Evidence evidence={participant.evidence} /></TableCell>
                 </TableRow>
             ))}
@@ -91,7 +90,7 @@ export function PeopleSearchLinks({ company, eventId, symbol }: { company: strin
 
 /**
  * Participants tab: the call's speakers (`/v1/participants?event=`) grouped by role (management = executives + IR host)
- * with how each name was resolved and its evidence; a resolved speaker's name opens the person page (`person_id`), and
+ * with naming confidence and evidence; a resolved speaker's name opens the person page (`person_id`), and
  * the people search opens scoped to this call or the company. v2 serves no participation flags vs the prior call (new
  * CFO, first appearances): that section of v1 is gone.
  */
@@ -122,7 +121,6 @@ export function ParticipantsTab({ event, eventId }: CallTabProps) {
                         <TableHead>Firm</TableHead>
                         <TableHead>Speaker</TableHead>
                         <TableHead>Confidence</TableHead>
-                        <TableHead>Resolved by</TableHead>
                         <TableHead>Evidence</TableHead>
                     </TableRow>
                 </TableHeader>

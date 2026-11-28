@@ -15,10 +15,11 @@ import { Section } from "@/components/ui/section";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { isEarningsEventLiveish, useV2Participants, useV2PriceAttribution } from "@/lib/api/queries";
-import { isReplayCapture } from "@/lib/earnings/capture-mode";
+import { useV2Participants, useV2PriceAttribution } from "@/lib/api/queries";
 import { formatDecimal, formatSigned } from "@/lib/earnings/labels";
 import { speakerName } from "@/lib/earnings/transcript";
+
+import { useLiveCall } from "../audio-context";
 
 import type { CallTabProps } from "../call-tabs";
 
@@ -266,8 +267,10 @@ export function PriceAttributionView({ data, error, isLoading, speakerNames = NO
  * "Price moves" tab: minute returns of the call window next to the utterances spoken in each
  * minute; refetched every minute while the call may be live.
  */
-export function PriceAttributionTab({ event, eventId }: CallTabProps) {
-    const { data, error, isLoading } = useV2PriceAttribution(eventId, { live: isEarningsEventLiveish(event) && !isReplayCapture(event) });
+export function PriceAttributionTab({ eventId }: CallTabProps) {
+    const live = useLiveCall();
+
+    const { data, error, isLoading } = useV2PriceAttribution(eventId, { live: live?.isLive === true });
 
     // The Transcript tab's cached query (same key): asked only once there are utterances to name.
     const participants = useV2Participants(data && data.buckets.length > 0 ? eventId : "");

@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { cleanup, fireEvent, render, renderHook, screen, waitFor, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { act } from "react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -12,7 +12,6 @@ import { useApiKeyStore } from "@/lib/stores/api-key-store";
 import { CallAudioProvider } from "@/routes/$ticker/earnings-calls/-components/audio-context";
 import { LivePlayerSlot } from "@/routes/$ticker/earnings-calls/-components/live-player-slot";
 import { LiveTranscript } from "@/routes/$ticker/earnings-calls/-components/live/live-transcript-view";
-import { RECORDING_WAIT_MS, recordingWaitInterval, useCallLiveSession } from "@/routes/$ticker/earnings-calls/-components/live/use-call-live-session";
 import { CallPlayerBar, LIVE_WAITING_FOR_TEXT_TEXT, RECORDING_PREPARING_TEXT } from "@/routes/$ticker/earnings-calls/-components/player/live-call-player";
 
 const T0 = "2026-10-31T14:00:00.000Z";
@@ -89,7 +88,6 @@ vi.mock("@/lib/live/live-clients", async importOriginal => ({
 }));
 
 vi.mock("@/lib/api/queries", () => ({
-    isEarningsEventLiveish: () => true,
     useApiBaseUrl: () => "https://api.example.com",
     useV2Audio: (eventId: string) => {
         mocks.audioIds.push(eventId);
@@ -119,7 +117,7 @@ vi.mock("@tanstack/react-router", () => ({
     Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => <a href={Object.entries(params).reduce((path, [key, value]) => path.replace(`$${key}`, value), to)}>{children}</a>,
 }));
 
-const SESSION = { clock: { endedAtMs: null, sawLive: true }, ended: false, recordingWait: null, sawLive: true } as const;
+const SESSION = { ended: false, isLive: true, recordingWait: null, sawLive: true } as const;
 
 function eventOf(flags: { hasAudio?: boolean; hasTranscript?: boolean } = {}) {
     return { event_id: "evt", fiscal_quarter: 3, fiscal_year: 2026, has_audio: flags.hasAudio ?? false, has_transcript: flags.hasTranscript ?? false, symbol: "AAPL" } as unknown as V2Event;
@@ -703,7 +701,7 @@ describe("live → recording without a reload", () => {
         expect(screen.getByRole("button", { name: "Download the recording" })).toBeDefined();
     });
 
-    it("the call ended before the recording: the bar says it is being prepared, the transcript stays", () => {
+    it("the call ended before the recording: the bar neutrally reports unavailable audio, the transcript stays", () => {
         setTranscript([segment(0, 6_000, "Opening remarks.")], [], "ended", { state: { ...INITIAL_LIVE_TRANSCRIPT, ended: true, finals: [segment(0, 6_000, "Opening remarks.")] } });
 
         render(<Page />);
@@ -713,21 +711,7 @@ describe("live → recording without a reload", () => {
         expect(screen.getByText("Opening remarks.")).toBeDefined();
     });
 
-    it("keeps polling the event every 30 s until has_audio, for at most an hour after the end", () => {
-        const now = Date.parse("2026-11-21T15:00:00Z");
 
-        const seen = { endedAtMs: now - 10 * 60_000, sawLive: true };
-
-        expect(recordingWaitInterval({ has_audio: false }, seen, now)).toBe(30_000);
-
-        expect(recordingWaitInterval({ has_audio: true }, seen, now)).toBe(false);
-
-        expect(recordingWaitInterval({ has_audio: false }, { endedAtMs: null, sawLive: true }, now)).toBe(30_000);
-
-        expect(recordingWaitInterval({ has_audio: false }, { ...seen, endedAtMs: now - RECORDING_WAIT_MS }, now)).toBe(false);
-
-        expect(recordingWaitInterval({ has_audio: false }, { endedAtMs: null, sawLive: false }, now)).toBe(false);
-    });
 });
 
 describe("quality pass", () => {
@@ -763,53 +747,7 @@ describe("quality pass", () => {
         expect(mocks.audioIds.every(id => id === "")).toBe(true);
     });
 
-    it("the live session: a replay capture is never followed live, even capturing and listed", () => {
-        const replay = (capture_status: string) => ({ ...eventOf(), capture_mode: "replay", capture_status }) as V2Event;
 
-        mocks.liveList = [{ event_id: "evt" }];
-
-        const { rerender, result } = renderHook(({ current }: { current: V2Event }) => useCallLiveSession(current), { initialProps: { current: replay("armed") } });
-
-        expect(result.current.sawLive).toBe(false);
-
-        rerender({ current: replay("capturing") });
-
-        expect(result.current.sawLive).toBe(false);
-
-        rerender({ current: replay("captured") });
-
-        expect(result.current.ended).toBe(false);
-
-        expect(result.current.recordingWait).toBeNull();
-    });
-
-    it("the live session: armed + listed is not ended; the wait counts from the last end, a capture restart resets it", () => {
-        const event = (capture_status: string) => ({ ...eventOf(), capture_status }) as V2Event;
-
-        mocks.liveList = [{ event_id: "evt" }];
-
-        const { rerender, result } = renderHook(({ current }: { current: V2Event }) => useCallLiveSession(current), { initialProps: { current: event("armed") } });
-
-        expect(result.current.sawLive).toBe(true);
-
-        expect(result.current.ended).toBe(false);
-
-        expect(result.current.clock.endedAtMs).toBeNull();
-
-        rerender({ current: event("captured") });
-
-        expect(result.current.ended).toBe(true);
-
-        expect(result.current.recordingWait).toBe("waiting");
-
-        expect(result.current.clock.endedAtMs).not.toBeNull();
-
-        rerender({ current: event("capturing") });
-
-        expect(result.current.ended).toBe(false);
-
-        expect(result.current.clock.endedAtMs).toBeNull();
-    });
 });
 
 it("the rescheduled-call return link preserves historical parent scope and the default event symbol", () => {

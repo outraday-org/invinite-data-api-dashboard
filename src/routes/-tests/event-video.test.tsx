@@ -70,13 +70,13 @@ describe("EventVideo", () => {
 
 describe("EventVideoSlot", () => {
     it("shows the video before and after the call", () => {
-        render(<EventVideoSlot event={{ capture_status: "published", video: GTC }} />);
+        render(<EventVideoSlot event={{ video: GTC }} />);
 
         expect(screen.getByRole("button", { name: `Play video: ${GTC.title}` })).toBeInTheDocument();
     });
 
-    it("collapses the video under \"Watch the broadcast\" during a live capture", () => {
-        render(<EventVideoSlot event={{ capture_status: "capturing", video: GTC }} />);
+    it("collapses the video under \"Watch the broadcast\" with authoritative live membership", () => {
+        render(<EventVideoSlot event={{ video: GTC }} live />);
 
         expect(screen.queryByRole("button", { name: `Play video: ${GTC.title}` })).toBeNull();
 
@@ -86,7 +86,7 @@ describe("EventVideoSlot", () => {
     });
 
     it("a capturing REPLAY is no live capture: the video stays shown, no \"Watch the broadcast\"", () => {
-        render(<EventVideoSlot event={{ capture_mode: "replay", capture_status: "capturing", video: GTC }} />);
+        render(<EventVideoSlot event={{ video: GTC }} live={false} />);
 
         expect(screen.getByRole("button", { name: `Play video: ${GTC.title}` })).toBeInTheDocument();
 
@@ -94,11 +94,11 @@ describe("EventVideoSlot", () => {
     });
 
     it("keeps a playing video when a live capture starts (the 30-s refetch)", () => {
-        const { container, rerender } = render(<EventVideoSlot event={{ capture_status: "published", video: GTC }} />);
+        const { container, rerender } = render(<EventVideoSlot event={{ video: GTC }} />);
 
         fireEvent.click(screen.getByRole("button", { name: `Play video: ${GTC.title}` }));
 
-        rerender(<EventVideoSlot event={{ capture_status: "capturing", video: GTC }} />);
+        rerender(<EventVideoSlot event={{ video: GTC }} live />);
 
         expect(container.querySelector("iframe")).not.toBeNull();
     });

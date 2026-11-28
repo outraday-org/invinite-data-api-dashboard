@@ -11,7 +11,7 @@ import { usePageHeadingLevel } from "@/components/ui/page-header";
 import { Stat, StatGrid } from "@/components/ui/stat";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { eventLabel, formatInstant, SESSION_LABELS } from "@/lib/earnings/format";
-import { callTimeSourceLabel, EXPIRED_REASON_LABELS } from "@/lib/earnings/labels";
+import { callTimeSourceLabel } from "@/lib/earnings/labels";
 import { formatDay } from "@/lib/format";
 
 import { AvailabilityIcons } from "./availability-icons";
@@ -81,7 +81,7 @@ function callTimeText(event: Pick<V2Event, "call_time_source" | "scheduled_at" |
  * (with its copy button: every `/v1/events/{event_id}/…` request names it) and the API's call-time observations.
  * `pageSymbol` = the URL's ticker: a call of another symbol (the event id is authoritative) names its company first.
  */
-export function CallHeader({ actions, event, pageSymbol }: { actions?: React.ReactNode; event: V2Event; pageSymbol?: string }) {
+export function CallHeader({ actions, event, live = false, pageSymbol }: { actions?: React.ReactNode; event: V2Event; live?: boolean; pageSymbol?: string }) {
     const [showDetails, setShowDetails] = React.useState(false);
 
     const [secTarget, setSecTarget] = React.useState<null | SecPanelTarget>(null);
@@ -108,7 +108,7 @@ export function CallHeader({ actions, event, pageSymbol }: { actions?: React.Rea
                 <div className="flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
                     <Heading className="text-xl font-semibold tracking-tight">{callTitle(event)}</Heading>
                     <EventTypeBadge event={event} />
-                    <CallStatusBadge event={event} />
+                    <CallStatusBadge event={event} live={live} />
                 </div>
                 {actions && <div className="flex flex-wrap items-center gap-2 empty:hidden sm:shrink-0 sm:justify-end">{actions}</div>}
             </div>
@@ -165,7 +165,6 @@ export function CallHeader({ actions, event, pageSymbol }: { actions?: React.Rea
                             {event.started_at && <Stat label="Started" value={formatInstant(event.started_at)} />}
                             {event.ended_at && <Stat label="Ended" value={formatInstant(event.ended_at)} />}
                             {event.reschedule_count > 0 && <Stat label="Rescheduled" value={`${event.reschedule_count}×`} />}
-                            {event.expired_reason && <Stat label="Expired" value={EXPIRED_REASON_LABELS[event.expired_reason]} />}
                             {resultsFiling && (
                                 <Stat
                                     label="Results filing"

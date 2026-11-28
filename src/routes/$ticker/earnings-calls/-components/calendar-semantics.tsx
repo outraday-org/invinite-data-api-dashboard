@@ -56,15 +56,11 @@ export function CalendarStatusBadge({ calendar }: { calendar: null | undefined |
     return <Badge title="Event status (calendar)" variant="outline">{CALENDAR_STATUS_LABELS[calendar.status]}</Badge>;
 }
 
-/**
- * ONE status badge per calendar row (`callBadgeStatus`): the capture's outcome once there is one ("Live", "Processing",
- * "Published", "Replay", "Awaiting replay", "Missed", "No call", "Expired", …), else the call's date status; date, capture,
- * run kind and event status in its tooltip.
- */
-export function CalendarRowStatus({ event }: { event: Pick<V2Event, "awaiting_replay" | "calendar" | "capture_mode" | "capture_status" | "date_status" | "expired_reason" | "scheduled_at"> }) {
+/** Public calendar/availability status. A parent live collection may explicitly establish membership. */
+export function CalendarRowStatus({ event, live = false }: { event: Pick<V2Event, "calendar" | "date_status" | "has_transcript">; live?: boolean }) {
     const eventStatus = event.calendar?.status ? CALENDAR_STATUS_LABELS[event.calendar.status] : null;
 
-    return <CallStatusTag status={callBadgeStatus(event)} title={callStatusDetail(event, eventStatus)} />;
+    return <CallStatusTag status={callBadgeStatus(event, live)} title={callStatusDetail(event, eventStatus)} />;
 }
 
 /** The call's day (viewer's timezone; a date-only call its stated day). A report-only event keeps its day too. */

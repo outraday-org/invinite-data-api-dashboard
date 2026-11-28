@@ -198,7 +198,7 @@ export type V2InvestorDocumentResponse = SecJson<ApiResponse<"/v1/investor-docum
 export type V2InvestorDocumentSearchResponse = ApiResponse<"/v1/search/investor-documents", "get">;
 
 /** The contract's Event (`exchange` a MIC such as XNAS; `video` without a provider). */
-export type V2Event = V2EventResponse;
+export type V2Event = Omit<V2EventResponse, "awaiting_replay" | "capture_mode" | "capture_status" | "expired_reason">;
 /** The company's public broadcast on a video platform (`video` of every event; null = none known). */
 export type V2EventVideo = NonNullable<V2Event["video"]>;
 /** `expand=calendar`: the call / report semantics of the calendar. */

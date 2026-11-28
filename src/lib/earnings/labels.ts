@@ -1,4 +1,4 @@
-import type { HitMatch, MatchSpan, SearchMode, V2Event, V2GuidanceItem, V2TranscriptVersion } from "@/lib/api/types";
+import type { HitMatch, MatchSpan, SearchMode, V2GuidanceItem, V2TranscriptVersion } from "@/lib/api/types";
 
 import { formatMoneyCompact } from "@/lib/format";
 import { formatNumberEnCompact } from "@/lib/utils";
@@ -32,15 +32,6 @@ function sentenceCase(value: string) {
     return words.length === 0 ? words : words[0].toUpperCase() + words.slice(1);
 }
 
-/** How far a document / deck / press release is trusted (`trust_tier`, the contract's enum). */
-const TRUST_TIER_LABELS: Record<string, string> = {
-    confirmed_domain: "Company domain",
-    internal: "Internal",
-    sec: "SEC filing",
-    unconfirmed: "Unconfirmed (AI-approved)",
-    wire: "Newswire",
-};
-
 /** Where a call's start time came from (`call_time_source`, as the contract's description lists them). */
 const CALL_TIME_SOURCE_LABELS: Record<string, string> = {
     edgar: "SEC filing",
@@ -58,9 +49,6 @@ const PRESS_RELEASE_ORIGIN_LABELS: Record<string, string> = {
     ir_page: "Company IR site",
     wire: "Newswire",
 };
-
-/** "Company domain" for `confirmed_domain`; an unknown tier is sentence-cased, never shown as a code. */
-export const trustTierLabel = (tier: string) => TRUST_TIER_LABELS[tier] ?? sentenceCase(tier);
 
 /** "Company IR feed" for `ir_feed`; an unknown source is sentence-cased. */
 export const callTimeSourceLabel = (source: string) => CALL_TIME_SOURCE_LABELS[source] ?? sentenceCase(source);
@@ -371,38 +359,9 @@ export const MATCH_TYPE_LABELS: Record<HitMatch["type"], string> = {
 
 // O7 group 5 (backend tasks/data-api-dashboard 1-overhaul task 7): call header and transcript version facts.
 
-/** Why a calendar row expired (`expired_reason`, set only while `capture_status` is `expired`); exhaustive over the spec's enum. */
-export const EXPIRED_REASON_LABELS: Record<NonNullable<V2Event["expired_reason"]>, string> = {
-    agent_different_date: "Checked: the call is on another date",
-    agent_no_call: "Checked: no call scheduled",
-    agent_no_webcast: "Checked: no public webcast",
-    agent_notice_pending: "Being checked: a notice is pending",
-    date_passed: "The date passed without a call",
-    duplicate: "Duplicate of another event",
-    early_results_filing: "Results filed before the estimated date",
-    inactive_company: "Company inactive",
-    never_planned: "No call was planned",
-    non_call_issuer: "The company holds no calls",
-    release_names_no_call: "The results release names no call",
-    results_without_call: "Results without a call",
-    superseded_by_reschedule: "Replaced by the rescheduled event",
-    superseded_estimate: "Estimate replaced by the confirmed date",
-};
-
-/**
- * A version's kind with who corrected it: "corrected by a person", "corrected by the system (company text)"
- * (`corrected_by` = `human` | `system:<stage>`); without `corrected_by` the kind alone.
- */
-export function versionKindText(version: Pick<V2TranscriptVersion, "corrected_by" | "version_kind">): string {
-    const { corrected_by: correctedBy, version_kind: kind } = version;
-
-    if (!correctedBy) return kind;
-
-    const stage = correctedBy.startsWith("system:") ? correctedBy.slice("system:".length).replaceAll("_", " ") : null;
-
-    const by = correctedBy === "human" ? "by a person" : stage ? `by the system (${stage})` : "by the system";
-
-    return kind === "corrected" ? `corrected ${by}` : `${kind}, corrected ${by}`;
+/** Reader-facing version kind; correction authors and internal stages are not public. */
+export function versionKindText(version: Pick<V2TranscriptVersion, "version_kind">): string {
+    return sentenceCase(version.version_kind);
 }
 
 /**

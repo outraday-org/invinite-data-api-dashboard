@@ -51,6 +51,24 @@ async function pick(item: string) {
 }
 
 describe("TranscriptToolbar", () => {
+    it("shows public version metadata and its readable note without a correction method", () => {
+        const onCopy = vi.fn();
+
+        render(<TranscriptToolbar canCopy downloads={DOWNLOADS} onCopy={onCopy} qaStartMs={null} shownEntry={{ change_note: "Clarified the revenue comparison.", published_at: "2026-11-20T21:00:00Z", version_kind: "corrected", word_count: 1200 }} />);
+
+        expect(screen.getByText("· Clarified the revenue comparison.")).toBeInTheDocument();
+
+        expect(screen.getByText("· 1,200 words")).toBeInTheDocument();
+
+        expect(screen.getByText(/published/)).toBeInTheDocument();
+
+        expect(screen.queryByText(/by a person|by the system/)).toBeNull();
+
+        fireEvent.click(screen.getByRole("button", { name: "Copy" }));
+
+        expect(onCopy).toHaveBeenCalledOnce();
+    });
+
     it("saves the PDF, the plain text, the JSON and the recording under the call's file names", async () => {
         renderToolbar();
 

@@ -17,7 +17,7 @@ import { RecordingPlayer } from "./recording-player";
 
 export const LIVE_WAITING_FOR_TEXT_TEXT = "waiting for the transcript";
 
-export const RECORDING_PREPARING_TEXT = "Call ended — the recording is being prepared";
+export const RECORDING_PREPARING_TEXT = "Call ended — the recording is not available";
 
 const MODE_LABELS: Record<LiveAudioMode, string> = {
     live: "as live as possible",
@@ -34,7 +34,7 @@ function liveNotice(live: LiveCall): React.ReactNode {
                 <span className="inline-flex flex-wrap items-center gap-2">
                     {RECORDING_PREPARING_TEXT}
                     {" "}
-                    — not published within an hour; reload the page later.
+                    — refresh availability to check again.
                     <Button onClick={() => window.location.reload()} size="sm" type="button" variant="outline">
                         <RefreshCw />
                         Reload

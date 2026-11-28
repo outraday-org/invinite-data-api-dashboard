@@ -88,9 +88,7 @@ export const EXPIRED_ESTIMATE_EVENT: V2Event = {
     ...AAPL_Q4_EVENT,
     call_time_confidence: "low",
     call_time_source: "estimate",
-    capture_status: "expired",
     event_id: "9d047f98-db37-433b-862f-bf02269b62d3",
-    expired_reason: "superseded_estimate",
     periodic_report: null,
     results_filing: null,
 };

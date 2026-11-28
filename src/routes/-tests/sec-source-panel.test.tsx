@@ -39,6 +39,18 @@ const documentWith = (patch: DocumentPatch): V2DocumentVersionResponse => ({ ...
 const noop = () => undefined;
 
 describe("SecBlocksView", () => {
+    it.each([false, null, undefined] as const)("keeps printed labels untrusted for candidate false/null/missing (%s)", (value) => {
+        const quality = value === undefined ? {} : { printed_labels_trusted: value };
+
+        render(<SecBlocksView data={documentWith({ blocks: [block("b00010")], quality })} error={null} isLoading={false} onSelect={noop} renderFigure={() => null} />);
+
+        expect(screen.getByText("p. 9 (ordinal)")).toBeInTheDocument();
+
+        expect(screen.queryByText("p. F-7")).toBeNull();
+
+        expect(screen.getByText("Text of b00010")).toBeInTheDocument();
+    });
+
     it("a trusted printed label is shown exactly; an untrusted one falls back to the ordinal", () => {
         const trusted = documentWith({ blocks: [block("b00010")], quality: { printed_labels_trusted: true } });
 

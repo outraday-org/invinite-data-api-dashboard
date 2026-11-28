@@ -58,16 +58,24 @@ describe("PressReleaseTab", () => {
         expect(screen.getByRole("link", { name: "News item" })).toHaveAttribute("href", `/NVDA/news?item=${RELEASE.news_id}`);
     });
 
-    it("names the origin and trust tier in words, not codes (UI walk F062)", () => {
-        vi.mocked(useV2PressRelease).mockReturnValue({ data: RELEASE, error: null } as never);
+    it.each(["current", "candidate"] as const)("keeps semantic origin and actual source without a trust badge (%s)", (shape) => {
+        const { trust_tier: _trust, ...candidate } = RELEASE;
+
+        vi.mocked(useV2PressRelease).mockReturnValue({ data: shape === "candidate" ? candidate : RELEASE, error: null } as never);
 
         render(<PressReleaseTab {...props} />);
 
         expect(screen.getByText("Company IR site")).toBeInTheDocument();
 
-        expect(screen.getByText("Company domain")).toBeInTheDocument();
+        expect(screen.queryByText("Company domain")).toBeNull();
 
         expect(screen.queryByText("confirmed_domain")).toBeNull();
+
+        expect(screen.getByRole("link", { name: "Source" })).toHaveAttribute("href", RELEASE.url);
+
+        expect(screen.getByText(RELEASE.body_text)).toBeInTheDocument();
+
+        expect(candidate).not.toHaveProperty("trust_tier");
     });
 
     it("shows no news link without a news item", () => {

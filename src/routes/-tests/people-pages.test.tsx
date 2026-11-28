@@ -158,6 +158,32 @@ describe("/people/$personId", () => {
 describe("Participants tab", () => {
     const event: V2Event = { ...CALENDAR_EVENT, event_id: EVENT_IDS.aapl, symbol: "AAPL" };
 
+    it.each(["current", "candidate"] as const)("keeps naming confidence and evidence without resolver diagnostics (%s)", (shape) => {
+        const original = PERSON_PARTICIPATIONS.data[0];
+
+        const { resolved_by: _resolver, ...candidate } = original;
+
+        participants.data = { ...PERSON_PARTICIPATIONS, data: [shape === "candidate" ? candidate : original] };
+
+        const props = { event, eventId: event.event_id } as React.ComponentProps<typeof ParticipantsTab>;
+
+        render(<ParticipantsTab {...props} />);
+
+        expect(screen.getAllByRole("columnheader").map(header => header.textContent)).toEqual(["Name", "Title", "Firm", "Speaker", "Confidence", "Evidence"]);
+
+        expect(screen.getByRole("link", { name: "Richard Kramer" })).toHaveAttribute("href", `/people/${PERSON_ANALYST.person_id}`);
+
+        expect(screen.getByText("100%")).toBeInTheDocument();
+
+        expect(screen.getByText(/Our next question comes from Richard Kramer/)).toBeInTheDocument();
+
+        expect(screen.getByRole("cell", { name: /Analysts/ })).toHaveAttribute("colspan", "6");
+
+        expect(screen.queryByText("llm")).toBeNull();
+
+        expect(candidate).not.toHaveProperty("resolved_by");
+    });
+
     it("a resolved speaker links the person page; the people search opens scoped to the call and the company", () => {
         participants.data = {
             ...PERSON_PARTICIPATIONS,

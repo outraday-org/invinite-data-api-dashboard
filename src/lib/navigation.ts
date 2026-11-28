@@ -104,7 +104,7 @@ const FILINGS_NAV: NavPage = { description: "New SEC filings as they arrive, and
 
 const DATASETS_NAV: NavPage = { description: "SEC bulk files to download, company exports and the data set releases (Enterprise).", icon: DatabaseIcon, keywords: ["sec", "datasets", "data sets", "bulk", "releases", "13f", "n-port", "download", "parquet", "export"], label: "SEC bulk data", to: "/sec/datasets" };
 
-const TRANSCRIPT_SEARCH_NAV: NavPage = { description: "What was said on every company's earnings calls: passages from transcripts, Q&A and slides.", icon: SearchIcon, keywords: ["search", "transcripts", "transcript", "passages", "quotes", "calls", "full-text"], label: "Transcript search", to: "/search" };
+const TRANSCRIPT_SEARCH_NAV: NavPage = { description: "What was said on every company's earnings calls: passages from transcripts, Q&A and slides.", icon: SearchIcon, keywords: ["search", "transcripts", "transcript", "passages", "quotes", "calls", "full-text"], label: "Transcript search", to: "/transcript-search" };
 
 const CATALOG_NAV: NavPage = { description: "Metrics, mapping rules, SEC forms and sections, event types, document kinds.", icon: BookOpenIcon, keywords: ["catalog", "reference", "metrics", "definitions", "mapping", "forms", "sections", "glossary"], label: "Catalog", to: "/catalog" };
 

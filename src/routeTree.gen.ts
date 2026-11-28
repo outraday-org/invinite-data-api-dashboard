@@ -9,8 +9,8 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TranscriptSearchRouteImport } from './routes/transcript-search'
 import { Route as StatusRouteImport } from './routes/status'
-import { Route as SearchRouteImport } from './routes/search'
 import { Route as OwnershipFilingsRouteImport } from './routes/ownership-filings'
 import { Route as NewsFeedRouteImport } from './routes/news-feed'
 import { Route as MarketHolidaysRouteImport } from './routes/market-holidays'
@@ -71,14 +71,14 @@ import { Route as AlertsScriptsIdRouteImport } from './routes/alerts/scripts/$id
 import { Route as AlertsDestinationsIdRouteImport } from './routes/alerts/destinations/$id'
 import { Route as TickerEarningsCallsEventIdIndexRouteImport } from './routes/$ticker/earnings-calls/$eventId/index'
 
+const TranscriptSearchRoute = TranscriptSearchRouteImport.update({
+  id: '/transcript-search',
+  path: '/transcript-search',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StatusRoute = StatusRouteImport.update({
   id: '/status',
   path: '/status',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SearchRoute = SearchRouteImport.update({
-  id: '/search',
-  path: '/search',
   getParentRoute: () => rootRouteImport,
 } as any)
 const OwnershipFilingsRoute = OwnershipFilingsRouteImport.update({
@@ -405,8 +405,8 @@ export interface FileRoutesByFullPath {
   '/market-holidays': typeof MarketHolidaysRoute
   '/news-feed': typeof NewsFeedRoute
   '/ownership-filings': typeof OwnershipFilingsRoute
-  '/search': typeof SearchRoute
   '/status': typeof StatusRoute
+  '/transcript-search': typeof TranscriptSearchRoute
   '/alerts/$id': typeof AlertsIdRoute
   '/alerts/events': typeof AlertsEventsRoute
   '/alerts/new': typeof AlertsNewRoute
@@ -466,8 +466,8 @@ export interface FileRoutesByTo {
   '/market-holidays': typeof MarketHolidaysRoute
   '/news-feed': typeof NewsFeedRoute
   '/ownership-filings': typeof OwnershipFilingsRoute
-  '/search': typeof SearchRoute
   '/status': typeof StatusRoute
+  '/transcript-search': typeof TranscriptSearchRoute
   '/alerts/$id': typeof AlertsIdRoute
   '/alerts/events': typeof AlertsEventsRoute
   '/alerts/new': typeof AlertsNewRoute
@@ -530,8 +530,8 @@ export interface FileRoutesById {
   '/market-holidays': typeof MarketHolidaysRoute
   '/news-feed': typeof NewsFeedRoute
   '/ownership-filings': typeof OwnershipFilingsRoute
-  '/search': typeof SearchRoute
   '/status': typeof StatusRoute
+  '/transcript-search': typeof TranscriptSearchRoute
   '/alerts/$id': typeof AlertsIdRoute
   '/alerts/events': typeof AlertsEventsRoute
   '/alerts/new': typeof AlertsNewRoute
@@ -595,8 +595,8 @@ export interface FileRouteTypes {
     | '/market-holidays'
     | '/news-feed'
     | '/ownership-filings'
-    | '/search'
     | '/status'
+    | '/transcript-search'
     | '/alerts/$id'
     | '/alerts/events'
     | '/alerts/new'
@@ -656,8 +656,8 @@ export interface FileRouteTypes {
     | '/market-holidays'
     | '/news-feed'
     | '/ownership-filings'
-    | '/search'
     | '/status'
+    | '/transcript-search'
     | '/alerts/$id'
     | '/alerts/events'
     | '/alerts/new'
@@ -719,8 +719,8 @@ export interface FileRouteTypes {
     | '/market-holidays'
     | '/news-feed'
     | '/ownership-filings'
-    | '/search'
     | '/status'
+    | '/transcript-search'
     | '/alerts/$id'
     | '/alerts/events'
     | '/alerts/new'
@@ -783,8 +783,8 @@ export interface RootRouteChildren {
   MarketHolidaysRoute: typeof MarketHolidaysRoute
   NewsFeedRoute: typeof NewsFeedRoute
   OwnershipFilingsRoute: typeof OwnershipFilingsRoute
-  SearchRoute: typeof SearchRoute
   StatusRoute: typeof StatusRoute
+  TranscriptSearchRoute: typeof TranscriptSearchRoute
   FilingsAccessionRoute: typeof FilingsAccessionRoute
   OfferingsOfferingIdRoute: typeof OfferingsOfferingIdRoute
   PeoplePersonIdRoute: typeof PeoplePersonIdRoute
@@ -801,18 +801,18 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/transcript-search': {
+      id: '/transcript-search'
+      path: '/transcript-search'
+      fullPath: '/transcript-search'
+      preLoaderRoute: typeof TranscriptSearchRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/status': {
       id: '/status'
       path: '/status'
       fullPath: '/status'
       preLoaderRoute: typeof StatusRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/search': {
-      id: '/search'
-      path: '/search'
-      fullPath: '/search'
-      preLoaderRoute: typeof SearchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/ownership-filings': {
@@ -1332,8 +1332,8 @@ const rootRouteChildren: RootRouteChildren = {
   MarketHolidaysRoute: MarketHolidaysRoute,
   NewsFeedRoute: NewsFeedRoute,
   OwnershipFilingsRoute: OwnershipFilingsRoute,
-  SearchRoute: SearchRoute,
   StatusRoute: StatusRoute,
+  TranscriptSearchRoute: TranscriptSearchRoute,
   FilingsAccessionRoute: FilingsAccessionRoute,
   OfferingsOfferingIdRoute: OfferingsOfferingIdRoute,
   PeoplePersonIdRoute: PeoplePersonIdRoute,

@@ -8,18 +8,11 @@ import { RequestErrorState } from "@/components/ui/request-error-state";
 // Lifted to `src/components/ui/notice.tsx` (the SEC views use it too); re-exported for the existing importers.
 export { Notice };
 
-export const NO_TRANSCRIPT_TITLE = "No transcript yet";
+export const NO_TRANSCRIPT_TITLE = "Transcript is not available";
 
-// Capture statuses that end a call without a recording (`capture_status` is a plain string on the event).
-const NO_RECORDING_STATUSES = new Set(["expired", "missed"]);
-
-/** The state of a transcript-derived tab of an event without a transcript (`has_transcript: false`). */
-export function NoTranscriptNotice({ captureStatus }: { captureStatus: string }) {
-    const reason = NO_RECORDING_STATUSES.has(captureStatus)
-        ? "No recording was captured."
-        : "The call has not been transcribed.";
-
-    return <Notice title={NO_TRANSCRIPT_TITLE}>{reason}</Notice>;
+/** Missing transcript data says nothing about an internal capture or a call having occurred. */
+export function NoTranscriptNotice() {
+    return <Notice title={NO_TRANSCRIPT_TITLE}>No transcript is currently available for this event.</Notice>;
 }
 
 // The answers IDA's v2 media operations give by design (`code` = the problem's `code`). The REST plan gate is a 403

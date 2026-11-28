@@ -5,7 +5,7 @@ import type { TranscriptFormat } from "@/lib/earnings/transcript";
 
 import { DOCUMENT_SORT_VALUES } from "@/lib/earnings/documents";
 import { formatMs } from "@/lib/earnings/format";
-import { optionalEnum, optionalInt } from "@/lib/url-state";
+import { optionalEnum, optionalFlag, optionalInt } from "@/lib/url-state";
 
 /**
  * Every tab of the call page, in bar order (`?tab=`; the route's `validateSearch` reads this list). No Audio tab since
@@ -49,6 +49,7 @@ export const callSearchSchema = z.object({
     docSort: optionalEnum(DOCUMENT_SORT_VALUES),
     format: optionalEnum(TRANSCRIPT_FORMAT_VALUES),
     /** Metrics & diff: the `prior` call of `/comparison` (absent = the derived previous call). */
+    play: optionalFlag(),
     prior: z.uuid().optional().catch(undefined),
     /** Slides tab: the 1-based page selected in the presentation viewer. */
     slide: optionalInt(1, 100_000),

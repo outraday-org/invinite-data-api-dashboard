@@ -239,7 +239,7 @@ function infinite<TPage>(pages: Array<TPage>, overrides: Record<string, unknown>
     };
 }
 
-const documentsPage = (documents: Array<V2InvestorDocument>) => ({ data: documents, has_more: false, meta: {}, next_cursor: null });
+const documentsPage = (documents: Array<Omit<V2InvestorDocument, "origin" | "trust_tier">>) => ({ data: documents, has_more: false, meta: {}, next_cursor: null });
 
 const eventsPage = (events: Array<V2Event>) => ({ data: events, has_more: false, meta: {}, next_cursor: null });
 
@@ -265,6 +265,24 @@ describe("Documents page", () => {
         vi.mocked(useV2Company).mockClear();
 
         route.search = {};
+    });
+
+    it.each(["current", "candidate"] as const)("keeps public document navigation when acquisition metadata is absent (%s)", (shape) => {
+        const { origin: _origin, trust_tier: _trust, ...candidate } = base;
+
+        mockLists(infinite([documentsPage([shape === "candidate" ? candidate : base])]), infinite([eventsPage([])]));
+
+        render(<DocumentsPage />);
+
+        const row = screen.getByText(base.title ?? "").closest("li")!;
+
+        expect(within(row).getByRole("link", { name: "Open" })).toHaveAttribute("href", PUBLIC_URL);
+
+        expect(within(row).getByRole("button", { name: "Show text" })).toBeInTheDocument();
+
+        expect(candidate).not.toHaveProperty("origin");
+
+        expect(candidate).not.toHaveProperty("trust_tier");
     });
 
     it("uses the historical CIK for documents/events and skips the delisted company profile", () => {

@@ -40,7 +40,7 @@ function TranscriptBody({
         return (
             <MediaState
                 error={error}
-                notFound="Transcript is being prepared"
+                notFound="Transcript is not available"
                 operationId="getTranscript"
                 title="Failed to load the transcript"
             />
@@ -49,7 +49,7 @@ function TranscriptBody({
 
     if (!view) return <Skeleton className="h-40 w-full" />;
 
-    if (view.kind === "empty") return <Notice title="Transcript is being prepared" />;
+    if (view.kind === "empty") return <Notice title="Transcript is not available" />;
 
     return <TranscriptTurns qaStartMs={qaStartMs} speakerImages={speakerImages} view={view} words={words} />;
 }
@@ -127,7 +127,7 @@ export function TranscriptTab({ event, eventId, onTranscriptJumpHandled, transcr
 
     const listedEntry = versions.data?.data.find(version => version.version === shownVersion);
 
-    const shownEntry = shown ? { ...shown, corrected_by: listedEntry?.corrected_by ?? null } : undefined;
+    const shownEntry = shown ? { ...shown, change_note: listedEntry?.change_note ?? null } : undefined;
 
     const { recording } = useCallAudio();
 

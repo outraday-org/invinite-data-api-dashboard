@@ -56,6 +56,24 @@ describe("blocks and page labels", () => {
         expect(printedLabelsTrusted(null)).toBe(false);
     });
 
+    it.each([
+        [{ printed_labels_trusted: true }, true],
+        [{ printed_labels_trusted: false }, false],
+        [{ printed_labels_trusted: null }, false],
+        [{}, false],
+        [null, false],
+        [undefined, false],
+        [{ decoding: "old diagnostic", printed_labels_trusted: "true" }, false],
+        [{ printed_labels_trusted: 1 }, false],
+        [{ decoding: "ignored", printed_labels_trusted: true, toc: { agrees: false } }, true],
+    ] as const)("trusts only literal true and keeps the ordinal otherwise (%j)", (quality, trusted) => {
+        const actual = printedLabelsTrusted(quality);
+
+        expect(actual).toBe(trusted);
+
+        expect(pageLabel({ ordinal: 9, printed: "F-7" }, actual)).toBe(trusted ? "p. F-7" : "p. 9 (ordinal)");
+    });
+
     it("a citation is version + block (+ page), never a URL", () => {
         const text = citationText({ blockId: "b00002", page: 1, printed: null, versionId: "v1" }, true);
 

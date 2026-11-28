@@ -96,9 +96,9 @@ describe("/calendar (`/v1/events`, grouped by New York day)", () => {
     });
 
     it("every call status has its own colour; Published is green", () => {
-        const published: V2Event = { ...CALENDAR_EVENT, capture_status: "published", event_id: "pub", symbol: "PUB" };
+        const published: V2Event = { ...CALENDAR_EVENT, event_id: "pub", symbol: "PUB" };
 
-        const estimated: V2Event = { ...CALENDAR_EVENT, capture_status: "scheduled", date_status: "estimated", event_id: "est", symbol: "EST" };
+        const estimated: V2Event = { ...CALENDAR_EVENT, date_status: "estimated", event_id: "est", symbol: "EST" };
 
         render(<CalendarView {...view} events={[published, estimated]} />);
 
