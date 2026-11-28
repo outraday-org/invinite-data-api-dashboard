@@ -23,8 +23,8 @@ function headlineLines(markdown: string) {
         const marker = /^\s*(`{3,}|~{3,})/u.exec(raw);
 
         if (marker) {
-            if (!fence) fence = marker[1][0];
-            else if (marker[1][0] === fence) fence = "";
+            if (!fence) fence = marker[1];
+            else if (marker[1][0] === fence[0] && marker[1].length >= fence.length && raw.trim() === marker[1]) fence = "";
 
             continue;
         }
@@ -72,7 +72,7 @@ export function slideHeadlineEvidence(slide: V2Slide): "conflict" | "insufficien
 
     if (!usable(first.text) || /[.!?:]$/u.test(first.text) || first.text.split(/\s/u).length > 12) return "insufficient";
 
-    const next = lines[first.index + 1];
+    const next = lines.at(first.index + 1);
 
     const roleLine = cleanHeadline(next ?? "");
 
@@ -82,12 +82,19 @@ export function slideHeadlineEvidence(slide: V2Slide): "conflict" | "insufficien
 
     const key = slideTitleKey(slide.title);
 
-    if (key && slideTitleKey(first.text) === key) return "verified";
+    const plainContinuation = next && !/^[#*$€£|\d]/u.test(next) && usable(next)
+        && next.length <= 120 && first.text.length <= 80;
+
+    if (key && slideTitleKey(first.text) === key) {
+        // Two concise unstyled lines give no layout proof which is the headline.
+        if (headings.length === 0 && !lines[0].startsWith("**") && plainContinuation && !/[.!?]$/u.test(next)) return "insufficient";
+
+        return "verified";
+    }
 
     // Legacy multi-line titles may include a short ordinary subtitle. Never append a table,
     // numeric forecast or a different styled heading to manufacture agreement.
-    if (strongest.length <= 1 && next && !/^[#*$€£|\d]/u.test(next) && usable(next)
-        && next.length <= 120 && first.text.length <= 80
+    if (strongest.length <= 1 && plainContinuation
         && slideTitleKey(`${first.text} ${cleanHeadline(next)}`) === key) return "verified";
 
     return "conflict";

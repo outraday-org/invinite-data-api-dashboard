@@ -57,6 +57,22 @@ const props = {
 } as CallTabProps;
 
 describe("SlidesTab historical comparison", () => {
+    it("does not restore a previous selection after URL navigation away and back", () => {
+        const onSearchChange = vi.fn();
+
+        const view = render(<SlidesTab {...props} onSearchChange={onSearchChange} search={{ slide: 1 }} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Compare Q3 FY2025" }));
+
+        expect(screen.getByRole("region", { name: "Historical comparison" })).toBeInTheDocument();
+
+        view.rerender(<SlidesTab {...props} onSearchChange={onSearchChange} search={{ slide: 2 }} />);
+
+        view.rerender(<SlidesTab {...props} onSearchChange={onSearchChange} search={{ slide: 1 }} />);
+
+        expect(screen.queryByRole("region", { name: "Historical comparison" })).toBeNull();
+    });
+
     it("browses fresh historical pages independently while preserving a valid anchor", () => {
         const original = historical.slides;
 

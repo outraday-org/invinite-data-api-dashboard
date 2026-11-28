@@ -200,6 +200,52 @@ describe("useV2LiveAudio", () => {
 });
 
 describe("slide cache retention", () => {
+    it("revalidates a selected comparison after actual same-key historical refetches", async () => {
+        const current = { image_url: "https://example.com/current.webp", markdown: "# Revenue", page: 3, title: "Revenue" };
+
+        const prior = { ...current, image_url: "https://example.com/prior.webp", page: 12 };
+
+        const response = { deck: null, event: { cik: "123", conference_date: "2023-11-21", event_id: EVENT_ID, symbol: "TEST" }, slides: [prior] };
+
+        vi.mocked(getV2Slides).mockResolvedValue(response);
+
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+        const view = render(
+            <QueryClientProvider client={client}>
+                <VerifiedHistoricalSlides currentSlide={current} currentSlides={[current]} selection={{ eventId: EVENT_ID, label: "Prior", slide: prior, slides: [prior] }}>
+                    {fresh => <img alt="Verified comparison" src={fresh.slides[0].image_url} />}
+                </VerifiedHistoricalSlides>
+            </QueryClientProvider>,
+        );
+
+        await waitFor(() => expect(screen.getByAltText("Verified comparison")).toHaveAttribute("src", prior.image_url));
+
+        vi.mocked(getV2Slides).mockResolvedValue({ ...response, slides: [] });
+
+        await act(() => client.invalidateQueries({ queryKey: ["v2", "slides", EVENT_ID] }));
+
+        await waitFor(() => expect(screen.queryByAltText("Verified comparison")).toBeNull());
+
+        vi.mocked(getV2Slides).mockResolvedValue({ ...response, slides: [{ ...prior, markdown: "Revenue\n#### **Q4 FY24 Outlook**" }] });
+
+        await act(() => client.invalidateQueries({ queryKey: ["v2", "slides", EVENT_ID] }));
+
+        await waitFor(() => expect(screen.getByText("The slide headings do not support this comparison.")).toBeInTheDocument());
+
+        vi.mocked(getV2Slides).mockResolvedValue({ ...response, slides: [{ ...prior, image_url: "https://example.com/fresh.webp" }] });
+
+        await act(() => client.invalidateQueries({ queryKey: ["v2", "slides", EVENT_ID] }));
+
+        await waitFor(() => expect(screen.getByAltText("Verified comparison")).toHaveAttribute("src", "https://example.com/fresh.webp"));
+
+        expect(getV2Slides).toHaveBeenCalledTimes(4);
+
+        view.unmount();
+
+        client.clear();
+    });
+
     it("bounds cold reads, pages the event list only explicitly and reuses warm historical decks", async () => {
         const current = { ...AAPL_Q4_EVENT, fiscal_quarter: 4, fiscal_year: 2027, scheduled_at: "2026-11-20T20:00:00Z" };
 

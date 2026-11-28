@@ -25,8 +25,12 @@ type HistoryProps = {
     currentSlides: ReadonlyArray<V2Slide>;
     event: V2Event;
     onSelect: (selection: HistoricalSlideSelection) => void;
+    onSelectionInvalidated?: () => void;
     selectedEventId?: string;
+    selectedLabel?: string;
 };
+
+const historicalEventLabel = (event: V2Event) => event.fiscal_year === null ? event.scheduled_at.slice(0, 4) : formatFiscalPeriod(event);
 
 const matchExplanation = {
     conflict: "The slide headings do not support this comparison.",
@@ -63,7 +67,7 @@ function HistoricalDeck({ currentSlide, currentSlides, event, onSelect, selected
 
     const [failedImage, setFailedImage] = React.useState("");
 
-    const label = event.fiscal_year === null ? event.scheduled_at.slice(0, 4) : formatFiscalPeriod(event);
+    const label = historicalEventLabel(event);
 
     if (error) {
         return (
@@ -111,7 +115,7 @@ function HistoricalDeck({ currentSlide, currentSlides, event, onSelect, selected
 
 /** History reads start on demand. At most four decks are read, with explicit cursor paging for more calls. */
 export function HistorySlides(props: HistoryProps) {
-    const { currentSlide, currentSlides, event, onSelect, selectedEventId } = props;
+    const { currentSlide, currentSlides, event, onSelect, onSelectionInvalidated, selectedEventId, selectedLabel } = props;
 
     const [enabledEvent, setEnabledEvent] = React.useState("");
 
@@ -131,6 +135,14 @@ export function HistorySlides(props: HistoryProps) {
     const events = query.data?.pages.flatMap(page => page.data) ?? [];
 
     const candidates = historicalSlideEvents(event, events);
+
+    React.useEffect(() => {
+        if (!enabled || !query.data || query.error || !selectedEventId) return;
+
+        const selected = candidates.find(candidate => candidate.event_id === selectedEventId);
+
+        if (!selected || (selectedLabel && historicalEventLabel(selected) !== selectedLabel)) onSelectionInvalidated?.();
+    }, [candidates, enabled, onSelectionInvalidated, query.data, query.error, selectedEventId, selectedLabel]);
 
     return (
         <section aria-label="Historical slides" className="flex flex-col gap-3 rounded-lg border bg-muted/10 p-3 sm:p-4">

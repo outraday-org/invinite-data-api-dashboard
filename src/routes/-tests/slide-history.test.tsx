@@ -56,6 +56,30 @@ function earlierEvent(year: number): V2Event {
 }
 
 describe("historical slide discovery", () => {
+    it("invalidates a selected event when fresh event data no longer satisfies the fiscal rules", () => {
+        const event = earlierEvent(2026);
+
+        api.events.push(event);
+
+        api.decks[event.event_id] = [slide(7, "Revenue")];
+
+        const onSelectionInvalidated = vi.fn();
+
+        const props = { currentSlide: revenue, currentSlides: [revenue], event: current, onSelect: vi.fn(), onSelectionInvalidated, selectedEventId: event.event_id };
+
+        const view = render(<HistorySlides {...props} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Find historical slides" }));
+
+        expect(onSelectionInvalidated).not.toHaveBeenCalled();
+
+        api.events[0] = { ...event, fiscal_quarter: 3 };
+
+        view.rerender(<HistorySlides {...props} />);
+
+        expect(onSelectionInvalidated).toHaveBeenCalledOnce();
+    });
+
     it("keeps historical loading and API-error states honest", () => {
         api.events.push(earlierEvent(2026));
 

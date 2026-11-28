@@ -137,7 +137,9 @@ export function SlidesTab({ event, eventId, onSearchChange, search }: CallTabPro
 
                                         setComparisonFor(selectionKey);
                                     }}
+                                    onSelectionInvalidated={() => setComparison(null)}
                                     selectedEventId={visibleComparison?.eventId}
+                                    selectedLabel={visibleComparison?.label}
                                 />
                             )}
                             {visibleComparison && (
