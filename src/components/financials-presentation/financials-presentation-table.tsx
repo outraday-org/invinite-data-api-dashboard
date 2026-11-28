@@ -142,7 +142,7 @@ export function FinancialsPresentationTable({
                                     onClick={() => setSelectedRow(row)}
                                 >
                                     <TableCell className={cn(STICKY_FIRST_CELL, STATEMENT_LABEL_CELL)}>
-                                        <div className="flex min-w-0 items-center gap-1">
+                                        <div className="flex min-w-0 items-center gap-1" style={{ paddingLeft: row.depth * 12 }}>
                                             {isCollapsible
                                                 ? (
                                                         row.hasChildren
@@ -150,7 +150,7 @@ export function FinancialsPresentationTable({
                                                                     <button
                                                                         aria-expanded={expanded.has(row.metricId)}
                                                                         aria-label={`${expanded.has(row.metricId) ? "Collapse" : "Expand"} ${row.label}`}
-                                                                        className="text-muted-foreground hover:text-foreground inline-flex size-6 items-center justify-center rounded"
+                                                                        className="text-muted-foreground hover:text-foreground inline-flex size-6 shrink-0 items-center justify-center rounded"
                                                                         onClick={(event) => {
                                                                             event.stopPropagation();
 
@@ -174,7 +174,7 @@ export function FinancialsPresentationTable({
                                                                             : <ChevronRight className="h-4 w-4" />}
                                                                     </button>
                                                                 )
-                                                            : <span className="inline-block h-6 w-6" />
+                                                            : <span className="inline-block h-6 w-6 shrink-0" />
                                                     )
                                                 : null}
 
@@ -183,7 +183,6 @@ export function FinancialsPresentationTable({
                                                     "min-w-0 flex-1 truncate",
                                                     row.isTotal ? "font-semibold" : row.hasChildren ? "font-medium" : null,
                                                 )}
-                                                style={{ paddingLeft: row.depth * 12 }}
                                                 title={row.label}
                                             >
                                                 {row.label}
