@@ -13,7 +13,7 @@ export const ME_PRO: V2Me = {
 export const ME_PAYG: V2Me = {
     account: { id: "acct_2b81d07e", name: "Example Research" },
     allowed_families: ["Companies", "Earnings calls", "SEC Filings"],
-    credits: { included: 100, prepaid_balance_usd: 25, remaining: 98, resets_at: "2026-12-01T00:00:00.000Z", used: 2 },
+    credits: { included: 500, prepaid_balance_usd: 25, remaining: 498, resets_at: "2026-12-01T00:00:00.000Z", used: 2 },
     limits: { requests_per_minute: 100, requests_per_second: 10 },
     plan: "payg",
 };

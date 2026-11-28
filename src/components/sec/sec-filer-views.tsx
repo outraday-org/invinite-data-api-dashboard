@@ -2,7 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { ReactNode } from "react";
 
 import { Link } from "@tanstack/react-router";
-import { FileText } from "lucide-react";
+import { ArrowRightIcon, FileText } from "lucide-react";
 
 import type {
     JsonValue,
@@ -114,7 +114,16 @@ export function SecFilerHeader({ cik, data, error, isLoading }: { cik: string; d
                 <h1 className="min-w-0 text-xl font-bold tracking-tight wrap-break-word lg:text-2xl">{name}</h1>
                 <div className="flex flex-wrap items-center gap-1.5">
                     {data?.listing
-                        ? <Badge variant="secondary">{data.listing.exchange ? `${data.listing.ticker} · ${data.listing.exchange}` : data.listing.ticker}</Badge>
+                        ? (
+                                <Badge
+                                    className="[a]:hover:bg-primary [a]:hover:text-primary-foreground"
+                                    render={<Link params={{ ticker: data.listing.ticker }} to="/$ticker" />}
+                                    variant="secondary"
+                                >
+                                    {data.listing.exchange ? `${data.listing.ticker} · ${data.listing.exchange}` : data.listing.ticker}
+                                    <ArrowRightIcon aria-hidden data-icon="inline-end" />
+                                </Badge>
+                            )
                         : <Badge variant="outline">No ticker</Badge>}
                     {data?.phase && <Badge variant="outline">{PHASE_LABELS[data.phase]}</Badge>}
                 </div>
@@ -124,28 +133,6 @@ export function SecFilerHeader({ cik, data, error, isLoading }: { cik: string; d
                 <Facts entries={facts} />
             </div>
         </header>
-    );
-}
-
-/**
- * The filer page's blocks as an in-page tab row under its header (ui-redesign task 9): the same list as the sidebar's
- * filer context (`filerContextAnchors`), plain `#id` links (no scroll tracking).
- */
-export function FilerAnchorRow({ anchors }: { anchors: ReadonlyArray<{ id: string; label: string }> }) {
-    if (anchors.length < 2) return null;
-
-    return (
-        <nav aria-label="On this page" className="-mx-4 flex gap-1 overflow-x-auto border-b px-4 sm:mx-0 sm:px-0" data-testid="filer-anchors">
-            {anchors.map(anchor => (
-                <a
-                    className="text-muted-foreground hover:text-foreground flex h-9 shrink-0 items-center rounded-sm px-2.5 whitespace-nowrap transition-colors max-sm:h-10"
-                    href={`#${anchor.id}`}
-                    key={anchor.id}
-                >
-                    {anchor.label}
-                </a>
-            ))}
-        </nav>
     );
 }
 

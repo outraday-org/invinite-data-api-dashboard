@@ -6,7 +6,6 @@ import type { V2CagrHorizon, V2CagrPeriod, V2CagrResponse } from "@/lib/api/type
 
 import { FinancialMetricsTable } from "@/components/financial-metrics/financial-metrics-table";
 import { MetricsListBody } from "@/components/financial-metrics/metrics-list-body";
-import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
 import { FilterField } from "@/components/ui/filter-bar";
 import { FilterSelect } from "@/components/ui/filter-select";
 import { useV2CagrInfinite } from "@/lib/api/queries";
@@ -16,7 +15,7 @@ import { formatFractionPercentCompact, formatMetricId } from "@/lib/utils";
 import type { FinancialsTabProps } from "./financials-frame";
 
 import { financialsFilterCount, FinancialsFrame, FISCAL_YEAR_FILTER } from "./financials-frame";
-import { defaultPeriodOf, useFinancialsSearch } from "./financials-search";
+import { useFinancialsSearch } from "./financials-search";
 import { FiscalYearRange } from "./fiscal-year-range";
 
 /** Periods per page of `/v1/metrics/cagr`: one row per period and horizon (every horizon = three rows per period). */
@@ -92,17 +91,14 @@ export function CagrFinancials({ tabs, ticker }: FinancialsTabProps) {
 
     const horizon: HorizonFilter = search.horizon ?? "all";
 
-    // CAGR's default period is annual (the other tabs default to quarterly; a tab change carries the shown period).
-    const periodType = search.period ?? defaultPeriodOf("cagr");
-
-    // `/v1/metrics/cagr?company=<ticker>&period=<type>[&horizon=3|5|10]` (v1 `period_years`).
+    // The API computes CAGR from annual periods only, regardless of the other tabs' period filter.
     const { data, error, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading } = useV2CagrInfinite({
         company: ticker,
         fiscalYearGte: search.fyFrom,
         fiscalYearLte: search.fyTo,
         horizon: HORIZONS[horizon],
         limit: horizon === "all" ? CAGR_PERIODS * 3 : CAGR_PERIODS,
-        period: periodType,
+        period: "annual",
     });
 
     return (
@@ -117,10 +113,7 @@ export function CagrFinancials({ tabs, ticker }: FinancialsTabProps) {
             onReset={() => update({ fyFrom: undefined, fyTo: undefined })}
             tabs={tabs}
             what={(
-                <>
-                    <FilterSelect aria-label="Horizon" className="w-[160px]" onValueChange={value => update({ horizon: value === "all" ? undefined : value })} options={cagrPeriodOptions} value={horizon} />
-                    <PeriodTypeButtons onValueChange={value => update({ period: value === defaultPeriodOf("cagr") ? undefined : value })} value={periodType} />
-                </>
+                <FilterSelect aria-label="Horizon" className="w-[160px]" onValueChange={value => update({ horizon: value === "all" ? undefined : value })} options={cagrPeriodOptions} value={horizon} />
             )}
         >
             <CagrView

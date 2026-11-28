@@ -2,7 +2,7 @@ import type { LucideIcon } from "lucide-react";
 
 import {
     ActivityIcon,
-    ArrowUpRightIcon,
+    ArrowRightIcon,
     BarChart3Icon,
     BellIcon,
     BookOpenIcon,
@@ -312,7 +312,7 @@ export function filerContextAnchors(filer: null | Pick<V2FilerResponse, "fund" |
 }
 
 /** The icon of the filer context's "Open <TICKER>" link. */
-export const OPEN_LISTING_ICON = ArrowUpRightIcon;
+export const OPEN_LISTING_ICON = ArrowRightIcon;
 
 /** The blocks of `/people/$personId` (in-page anchors of the sidebar's person context), in page order. */
 export const PERSON_CONTEXT_ANCHORS: ReadonlyArray<FilerAnchor> = [

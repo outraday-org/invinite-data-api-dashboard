@@ -1,17 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import * as React from "react";
 
-import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 import type { V2InvestorDocument } from "@/lib/api/types";
 import type { DocumentsSearch } from "@/lib/earnings/documents";
 
-import { SecFilingSearch } from "@/components/sec/sec-filing-search";
-import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { tierLabel } from "@/components/ui/credit-hint";
 import { PageHeader } from "@/components/ui/page-header";
 import { RequestErrorState } from "@/components/ui/request-error-state";
 import { Section } from "@/components/ui/section";
-import { SegmentedButtons } from "@/components/ui/segmented-buttons";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useInstrument, useV2Company, useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
@@ -51,24 +47,6 @@ function LibraryError({ error }: { error: unknown }) {
     );
 }
 
-/** The search sources: the company's own documents (`/v1/search/investor-documents`) or its SEC filings (`/v1/search/filings`). */
-const SEARCH_SOURCES = [
-    { label: "Company documents", value: "company" },
-    { label: "SEC filings", value: "sec" },
-] as const;
-
-type SearchSource = (typeof SEARCH_SOURCES)[number]["value"];
-
-/** SEC filing search scoped to the company (`symbol=<ticker>`). */
-function SecFilingsSource({ onOpen, target, ticker }: { onOpen: (target: null | SecPanelTarget) => void; target: null | SecPanelTarget; ticker: string }) {
-    return (
-        <>
-            <SecFilingSearch onOpen={onOpen} symbol={ticker} />
-            <SecSourceDialog onClose={() => onOpen(null)} target={target} />
-        </>
-    );
-}
-
 function DocumentsPage() {
     const { ticker } = Route.useParams();
 
@@ -81,22 +59,6 @@ function DocumentsPage() {
     const navigate = Route.useNavigate();
 
     const [textOf, setTextOf] = React.useState<null | V2InvestorDocument>(null);
-
-    const searchSource: SearchSource = search.searchIn === "sec" ? "sec" : "company";
-
-    // `?source=<version id>&block=<block id>`: the cited block of an SEC hit in the source panel (a shareable link).
-    const secTarget: null | SecPanelTarget = search.source && search.block
-        ? { blockId: search.block, kind: "citation", title: `${ticker} · SEC filing`, versionId: search.source }
-        : null;
-
-    const openSecTarget = (target: null | SecPanelTarget) => void navigate({
-        ...IN_PLACE,
-        search: prev => ({
-            ...prev,
-            block: target?.kind === "citation" ? target.blockId : undefined,
-            source: target?.kind === "citation" ? target.versionId : undefined,
-        }),
-    });
 
     // The IR library and every call's documents in one list (`source: company | call`).
     const library = useV2InvestorDocumentsInfinite({
@@ -167,18 +129,8 @@ function DocumentsPage() {
                 title="Documents"
             />
 
-            <Section
-                actions={(
-                    <SegmentedButtons
-                        aria-label="Search source"
-                        onChange={value => void navigate({ ...IN_PLACE, search: prev => ({ ...prev, block: undefined, searchIn: value === "sec" ? "sec" : undefined, source: undefined }) })}
-                        options={SEARCH_SOURCES}
-                        value={searchSource}
-                    />
-                )}
-                title="Search"
-            >
-                {searchSource === "company" ? <DocumentSearch historicalTicker={historicalPageTicker(instrument, ticker)} identifier={subject} /> : <SecFilingsSource onOpen={openSecTarget} target={secTarget} ticker={subject} />}
+            <Section title="Search">
+                <DocumentSearch historicalTicker={historicalPageTicker(instrument, ticker)} identifier={subject} />
             </Section>
 
             <Section title="Library">

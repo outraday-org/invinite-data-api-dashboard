@@ -43,7 +43,7 @@ export type JumpToTranscript = (startMs: number, options?: { quiet?: boolean }) 
  * name their company too).
  */
 export type AskScope
-    = | { eventId: string; kind: "event"; onJumpToTranscript: JumpToTranscript }
+    = | { eventId: string; kind: "event"; onJumpToSlide?: (page: number) => void; onJumpToTranscript: JumpToTranscript }
         | { identifier: string; kind: "company" }
         | { kind: "market" };
 
@@ -85,8 +85,17 @@ export function SearchEmptyState({ coverage }: { coverage: null | SearchCoverage
     return coverage === null || coverage.completeness === "complete" ? <div className="text-muted-foreground">No passages found</div> : null;
 }
 
-function SlideLink({ slide }: { slide: V2TranscriptSearchHit["slide"] }) {
+function SlideLink({ onOpen, slide }: { onOpen?: (page: number) => void; slide: V2TranscriptSearchHit["slide"] }) {
     if (!slide) return null;
+
+    if (onOpen) {
+        return (
+            <button className={linkClass} onClick={() => onOpen(slide.page)} type="button">
+                <ImageIcon className="size-3" />
+                {`Open slide ${slide.page}`}
+            </button>
+        );
+    }
 
     if (!slide.image_url) return <span className="text-muted-foreground">{`Slide ${slide.page}`}</span>;
 
@@ -170,7 +179,7 @@ function HitShell({
 const timeText = (startMs: null | number) => (startMs === null ? null : <span className="text-muted-foreground tabular-nums">{formatMs(startMs)}</span>);
 
 /** Call page: ▷ m:ss and "Play from here" play the hit and scroll the transcript to it; without audio "Jump to transcript". */
-function EventHitCard({ onJumpToTranscript, onPlayed, ...props }: Omit<HitCardProps, "scope"> & { onJumpToTranscript: JumpToTranscript }) {
+function EventHitCard({ onJumpToSlide, onJumpToTranscript, onPlayed, ...props }: Omit<HitCardProps, "scope"> & { onJumpToSlide?: (page: number) => void; onJumpToTranscript: JumpToTranscript }) {
     const { hit } = props;
 
     const play = useHitPlay(hit, onJumpToTranscript, onPlayed);
@@ -215,7 +224,16 @@ function EventHitCard({ onJumpToTranscript, onPlayed, ...props }: Omit<HitCardPr
                         Jump to transcript
                     </Button>
                 )}
-            <SlideLink slide={hit.slide} />
+            <SlideLink
+                onOpen={onJumpToSlide
+                    ? (page) => {
+                            onJumpToSlide(page);
+
+                            onPlayed();
+                        }
+                    : undefined}
+                slide={hit.slide}
+            />
         </div>
     );
 
@@ -262,7 +280,7 @@ function CompanyHitCard({ historicalTicker, market = false, ...props }: Omit<Hit
 
 function HitCard({ onPlayed, scope, ...props }: HitCardProps) {
     return scope.kind === "event"
-        ? <EventHitCard {...props} onJumpToTranscript={scope.onJumpToTranscript} onPlayed={onPlayed} />
+        ? <EventHitCard {...props} onJumpToSlide={scope.onJumpToSlide} onJumpToTranscript={scope.onJumpToTranscript} onPlayed={onPlayed} />
         : <CompanyHitCard {...props} market={scope.kind === "market"} />;
 }
 

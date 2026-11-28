@@ -1,8 +1,10 @@
 import { ExternalLink } from "lucide-react";
 import * as React from "react";
 
+import type { FilingDocumentTarget } from "@/components/sec/filing-document-dialog";
 import type { V2InvestorDocument, V2InvestorDocumentResponse } from "@/lib/api/types";
 
+import { FilingDocumentDialog } from "@/components/sec/filing-document-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -43,8 +45,14 @@ function documentHref(doc: V2InvestorDocument) {
     return doc.url ?? doc.source_url;
 }
 
-/** The call's SEC filing links (10-Q / 10-K), shown apart under "Filings": they are no call material. */
+/** The call's SEC filings (10-Q / 10-K), opened from the document store only on a click. */
 function FilingsTable({ filings }: { filings: Array<V2InvestorDocument> }) {
+    const [target, setTarget] = React.useState<FilingDocumentTarget | null>(null);
+
+    const openFiling = (doc: V2InvestorDocument) => {
+        if (doc.accession_number) setTarget({ accession: doc.accession_number, elementId: null, title: doc.title ?? "Filing" });
+    };
+
     return (
         <Section aria-label="Filings" title="Filings">
             <Table>
@@ -53,32 +61,39 @@ function FilingsTable({ filings }: { filings: Array<V2InvestorDocument> }) {
                         <TableHead>Title</TableHead>
                         <TableHead>Filed</TableHead>
                         <TableHead>Accession</TableHead>
-                        <TableHead />
                     </TableRow>
                 </TableHeader>
                 <TableBody>
                     {filings.map(doc => (
-                        <TableRow key={doc.document_id}>
-                            <TableCell className="max-w-xs truncate">{doc.title ?? "Untitled"}</TableCell>
+                        <TableRow
+                            className={doc.accession_number ? "cursor-pointer hover:bg-primary/10 focus-within:bg-primary/10" : undefined}
+                            key={doc.document_id}
+                            onClick={doc.accession_number ? () => openFiling(doc) : undefined}
+                        >
+                            <TableCell className="max-w-xs truncate">
+                                {doc.accession_number
+                                    ? (
+                                            <button
+                                                className="hover:text-primary focus-visible:ring-ring rounded-sm text-left focus-visible:outline-none focus-visible:ring-2"
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+
+                                                    openFiling(doc);
+                                                }}
+                                                type="button"
+                                            >
+                                                {doc.title ?? "Untitled"}
+                                            </button>
+                                        )
+                                    : doc.title ?? "Untitled"}
+                            </TableCell>
                             <TableCell className="tabular-nums whitespace-nowrap">{formatDay(doc.filing_date)}</TableCell>
                             <TableCell className="text-muted-foreground tabular-nums">{doc.accession_number ?? "—"}</TableCell>
-                            <TableCell>
-                                <div className="flex items-center justify-end">
-                                    <a
-                                        className="inline-flex items-center gap-1 underline underline-offset-4"
-                                        href={documentHref(doc)}
-                                        rel="noopener noreferrer"
-                                        target="_blank"
-                                    >
-                                        <ExternalLink className="size-3" />
-                                        EDGAR
-                                    </a>
-                                </div>
-                            </TableCell>
                         </TableRow>
                     ))}
                 </TableBody>
             </Table>
+            <FilingDocumentDialog onClose={() => setTarget(null)} target={target} />
         </Section>
     );
 }

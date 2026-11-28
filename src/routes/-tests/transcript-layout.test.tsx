@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { V2QaPair } from "@/lib/api/types";
 
+import { ApiRequestError } from "@/lib/api/errors";
 import { followWordDelta, useFollowScroll } from "@/lib/player/use-follow-scroll";
 import { QaScoreBadges, qaSegments } from "@/routes/$ticker/earnings-calls/-components/tabs/qa-tab";
 import { TranscriptTab } from "@/routes/$ticker/earnings-calls/-components/tabs/transcript-tab";
@@ -40,19 +41,19 @@ vi.mock("@/lib/player/player-context", () => ({
 
 // The Q&A tab module also imports the hooks and the audio host; nothing of them runs here.
 // The Transcript tab's requests, stubbed: each call is recorded to check what is asked.
-const requests = vi.hoisted(() => ({ transcript: [] as Array<unknown>, versions: [] as Array<unknown> | null, versionsError: null as Error | null }));
+const requests = vi.hoisted(() => ({ cleanedError: null as Error | null, transcript: [] as Array<unknown>, versions: [] as Array<unknown> | null, versionsError: null as Error | null }));
 
 vi.mock("@/lib/api/queries", () => ({
     useV2Participants: () => ({ data: null }),
     useV2QaInfinite: vi.fn(),
-    useV2Transcript: (input: { eventId: string }) => {
+    useV2Transcript: (input: { eventId: string; layer?: string }) => {
         requests.transcript.push(input);
 
         return {
             data: input.eventId
-                ? { event: { symbol: "NVDA" }, qa_start_ms: null, turns: [{ ...TURNS_FIXTURE[0], words: [] }], version: 3 }
+                ? { event: { symbol: "NVDA" }, pdf: null, published_at: "2026-11-20T21:00:00Z", qa_start_ms: null, turns: [{ ...TURNS_FIXTURE[0], words: [] }], version: 3, version_kind: "final", word_count: 9000 }
                 : null,
-            error: null,
+            error: input.layer === "cleaned" ? requests.cleanedError : null,
         };
     },
     useV2TranscriptDiff: () => ({ data: null, error: null, isLoading: false }),
@@ -143,6 +144,18 @@ describe("TranscriptTurns (playback)", () => {
         expect(screen.getByText("question").className).toContain("text-muted-foreground/40");
     });
 
+    it("marks prepared remarks and Q&A within the same speaker transcript", () => {
+        render(<TranscriptTurns qaStartMs={10_000} view={view} />);
+
+        expect(screen.getByRole("heading", { name: "Prepared remarks" })).toBeInTheDocument();
+
+        expect(screen.getByRole("heading", { name: /Q&A/ })).toBeInTheDocument();
+
+        expect(screen.getByText("Ann Lee")).toBeInTheDocument();
+
+        expect(screen.getByText("Bo Chan")).toBeInTheDocument();
+    });
+
     it("paused: nothing is faded", () => {
         player.positionMs = 11_000;
 
@@ -184,8 +197,6 @@ function tabProps(search: Record<string, unknown>, onSearchChange = vi.fn(), jum
     return { event: TAB_EVENT, eventId: "e1", onSearchChange, onTranscriptJumpHandled, search, transcriptJump: jump } as unknown as React.ComponentProps<typeof TranscriptTab>;
 }
 
-const versionEntry = (version: number) => ({ change_note: null, pdf: null, published_at: "2026-11-20T21:00:00Z", version, version_kind: "final", word_count: 9_000 });
-
 describe("TranscriptTab", () => {
     beforeEach(() => {
         requests.transcript.length = 0;
@@ -193,107 +204,78 @@ describe("TranscriptTab", () => {
         requests.versions = [];
 
         requests.versionsError = null;
+
+        requests.cleanedError = null;
     });
 
-    it("reads ?format= and ?version= from the URL (O6-final): the cleaned layer of version 2", () => {
-        requests.versions = [versionEntry(3), versionEntry(2)];
+    it("always reads current cleaned speaker turns, ignoring legacy format and version parameters", () => {
+        render(<TranscriptTab {...tabProps({ format: "text", version: 2 })} />);
 
-        render(<TranscriptTab {...tabProps({ format: "cleaned", version: 2 })} />);
+        expect(requests.transcript).toContainEqual({ eventId: "e1", layer: "cleaned" });
 
-        expect(requests.transcript.at(-1)).toEqual({ eventId: "e1", layer: "cleaned", version: 2, words: undefined });
+        expect(requests.transcript).not.toContainEqual(expect.objectContaining({ eventId: "e1", words: true }));
 
-        expect(screen.getByRole("button", { name: "Cleaned", pressed: true })).toBeInTheDocument();
-    });
+        expect(screen.getByText("Ann Lee")).toBeInTheDocument();
 
-    it("a ?version= the published list does not name reads as the current version", () => {
-        requests.versions = [versionEntry(3)];
+        expect(screen.getByText("Good morning everyone")).toBeInTheDocument();
 
-        render(<TranscriptTab {...tabProps({ version: 9 })} />);
+        expect(screen.queryByRole("group", { name: "Transcript format" })).toBeNull();
 
-        expect(requests.transcript.at(-1)).toEqual({ eventId: "e1", layer: undefined, version: undefined, words: true });
-    });
+        expect(screen.queryByRole("button", { name: "Cleaned" })).toBeNull();
 
-    it("a ?version= asks nothing until the published list is in (an unlisted version is never requested)", () => {
-        requests.versions = null;
+        expect(screen.queryByRole("button", { name: /Transcript version/ })).toBeNull();
 
-        const { rerender } = render(<TranscriptTab {...tabProps({ format: "cleaned", version: 9 })} />);
-
-        expect(requests.transcript.filter(input => (input as { eventId: string }).eventId === "e1")).toEqual([]);
-
-        requests.versions = [versionEntry(3)];
-
-        rerender(<TranscriptTab {...tabProps({ format: "cleaned", version: 9 })} />);
-
-        expect(requests.transcript.filter(input => (input as { eventId: string }).eventId === "e1"))
-            .toEqual([{ eventId: "e1", layer: "cleaned", version: undefined, words: undefined }]);
-    });
-
-    it("a ?version= naming the newest version asks the current one (the player's very query, no second copy)", () => {
-        requests.versions = [versionEntry(3), versionEntry(2)];
-
-        render(<TranscriptTab {...tabProps({ version: 3 })} />);
-
-        expect(requests.transcript.at(-1)).toEqual({ eventId: "e1", layer: undefined, version: undefined, words: true });
-    });
-
-    it("a failed versions list asks the link's version as it is", () => {
-        requests.versions = null;
-
-        requests.versionsError = new Error("503");
-
-        render(<TranscriptTab {...tabProps({ version: 2 })} />);
-
-        expect(requests.transcript.at(-1)).toEqual({ eventId: "e1", layer: undefined, version: 2, words: true });
-    });
-
-    it("a link's ?t= keeps the URL's format (plain text opens at the top); a passage jump switches to Speakers", () => {
-        const onSearchChange = vi.fn();
-
-        const handled = vi.fn();
-
-        const { rerender } = render(<TranscriptTab {...tabProps({ format: "text" }, onSearchChange, { fromLink: true, ms: 754_000, nonce: 1 }, handled)} />);
-
-        expect(onSearchChange).not.toHaveBeenCalled();
-
-        expect(handled).toHaveBeenCalled();
-
-        rerender(<TranscriptTab {...tabProps({ format: "text" }, onSearchChange, { ms: 754_000, nonce: 2 }, handled)} />);
-
-        expect(onSearchChange).toHaveBeenCalledWith({ format: undefined });
-    });
-
-    it("a format pick writes the URL; Speakers (the default) is written as no parameter", () => {
-        const onSearchChange = vi.fn();
-
-        const { rerender } = render(<TranscriptTab {...tabProps({}, onSearchChange)} />);
-
-        fireEvent.click(screen.getByRole("button", { name: "Plain text" }));
-
-        expect(onSearchChange).toHaveBeenLastCalledWith({ format: "text" });
-
-        rerender(<TranscriptTab {...tabProps({ format: "text" }, onSearchChange)} />);
-
-        fireEvent.click(screen.getByRole("button", { name: "Speakers" }));
-
-        expect(onSearchChange).toHaveBeenLastCalledWith({ format: undefined });
-    });
-
-    it("asks the Speakers format of the current version once, with its words (the player provider's very query)", () => {
-        render(<TranscriptTab {...tabProps({})} />);
-
-        const asked = requests.transcript.filter(input => (input as { eventId: string }).eventId === "e1");
-
-        // `useV2Transcript`'s key = id, layer, version, words: the provider asks `{ eventId, words: true }` → same key.
-        expect(new Set(asked.map(input => JSON.stringify(input)))).toEqual(new Set([JSON.stringify({ eventId: "e1", words: true })]));
-
-        // One toolbar row: format switch (a segmented control: `aria-pressed` buttons), Download, Copy.
-        expect(screen.getByRole("button", { name: "Speakers", pressed: true })).toBeInTheDocument();
+        expect(screen.queryByRole("button", { name: "Compare" })).toBeNull();
 
         expect(screen.getByRole("button", { name: "Download" })).toBeInTheDocument();
 
         expect(screen.getByRole("button", { name: "Copy" })).toBeInTheDocument();
 
-        expect(screen.getByText("Good morning everyone".split(" ")[0])).toBeInTheDocument();
+        expect(screen.getByText("· 9,000 words")).toBeInTheDocument();
+    });
+
+    it("does not wait for the versions list to read the transcript or show its metadata", () => {
+        requests.versions = null;
+
+        render(<TranscriptTab {...tabProps({ version: 9 })} />);
+
+        expect(requests.transcript).toContainEqual({ eventId: "e1", layer: "cleaned" });
+
+        expect(screen.getByText("· 9,000 words")).toBeInTheDocument();
+    });
+
+    it("uses current raw speaker turns only when the cleaned layer is not found", () => {
+        requests.cleanedError = new ApiRequestError(404, { error: "not_found", message: "No cleaned layer" });
+
+        render(<TranscriptTab {...tabProps({})} />);
+
+        expect(requests.transcript).toContainEqual({ eventId: "e1", words: true });
+
+        expect(screen.getByText("Ann Lee")).toBeInTheDocument();
+    });
+
+    it("keeps an API refusal visible instead of falling back to raw", () => {
+        requests.cleanedError = new ApiRequestError(503, { error: "unavailable", message: "Unavailable" });
+
+        render(<TranscriptTab {...tabProps({})} />);
+
+        expect(requests.transcript).not.toContainEqual(expect.objectContaining({ eventId: "e1", words: true }));
+
+        expect(screen.getByText("Media temporarily unavailable")).toBeInTheDocument();
+    });
+
+    it("a timestamp jump locates a turn without changing the format", () => {
+        const onSearchChange = vi.fn();
+
+        const handled = vi.fn();
+
+        render(<TranscriptTab {...tabProps({ format: "text" }, onSearchChange, { fromLink: true, ms: 0, nonce: 1 }, handled)} />);
+
+        expect(onSearchChange).not.toHaveBeenCalled();
+
+        expect(handled).toHaveBeenCalled();
+
+        expect(Element.prototype.scrollIntoView).toHaveBeenCalled();
     });
 });
 

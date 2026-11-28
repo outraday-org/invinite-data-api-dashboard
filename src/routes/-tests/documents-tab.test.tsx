@@ -1,7 +1,8 @@
 // @vitest-environment jsdom
-import { cleanup, render, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import type { FilingDocumentTarget } from "@/components/sec/filing-document-dialog";
 import type { V2InvestorDocument } from "@/lib/api/types";
 import type { CallTabProps } from "@/routes/$ticker/earnings-calls/-components/call-tabs";
 
@@ -11,6 +12,15 @@ import { DocumentsTab } from "@/routes/$ticker/earnings-calls/-components/tabs/d
 vi.mock("@/lib/api/queries", () => ({ useV2InvestorDocument: vi.fn(), useV2InvestorDocumentsInfinite: vi.fn() }));
 
 vi.mock("@/lib/api/use-auto-load-pages", () => ({ useAutoLoadPages: vi.fn() }));
+
+vi.mock("@/components/sec/filing-document-dialog", () => ({
+    FilingDocumentDialog: ({ onClose, target }: { onClose: () => void; target: FilingDocumentTarget | null }) => target && (
+        <div aria-label={target.title} role="dialog">
+            {target.accession}
+            <button onClick={onClose} type="button">Close filing</button>
+        </div>
+    ),
+}));
 
 afterEach(cleanup);
 
@@ -119,12 +129,54 @@ describe("DocumentsTab", () => {
         // A formatted day, never the raw ISO date (UI walk F068).
         expect(within(filings).getByText("Nov 3, 2026")).toBeInTheDocument();
 
-        expect(within(filings).getByText("EDGAR").closest("a")).toHaveAttribute("href", tenK.source_url);
+        expect(within(filings).queryByRole("link")).toBeNull();
+
+        expect(within(filings).getAllByRole("columnheader")).toHaveLength(3);
 
         // The documents table above holds only the call material.
         expect(screen.getAllByText("FY2026 Form 10-K")).toHaveLength(1);
 
         expect(screen.getByText("CFO Commentary Q4 FY2026").closest("section")).toBeNull();
+    });
+
+    it("opens the stored filing from any cell, with a native button for keyboard access, and closes it", () => {
+        mockDocuments([tenK]);
+
+        render(<DocumentsTab {...props} />);
+
+        expect(screen.queryByRole("dialog")).toBeNull();
+
+        fireEvent.click(screen.getByText("Nov 3, 2026"));
+
+        expect(screen.getByRole("dialog", { name: tenK.title ?? "" })).toHaveTextContent(tenK.accession_number ?? "");
+
+        fireEvent.click(screen.getByRole("button", { name: "Close filing" }));
+
+        expect(screen.queryByRole("dialog")).toBeNull();
+
+        const button = screen.getByRole("button", { name: "FY2026 Form 10-K" });
+
+        expect(button.tagName).toBe("BUTTON");
+
+        fireEvent.click(button);
+
+        expect(screen.getByRole("dialog")).toHaveTextContent(tenK.accession_number ?? "");
+    });
+
+    it("keeps a filing without an accession noninteractive", () => {
+        mockDocuments([{ ...tenK, accession_number: null }]);
+
+        render(<DocumentsTab {...props} />);
+
+        const filings = screen.getByRole("region", { name: "Filings" });
+
+        expect(within(filings).queryByRole("button")).toBeNull();
+
+        fireEvent.click(within(filings).getByText("FY2026 Form 10-K"));
+
+        expect(screen.queryByRole("dialog")).toBeNull();
+
+        expect(within(filings).getByText("—")).toBeInTheDocument();
     });
 
     it("no Filings section without a filing; a call with only a filing says there is nothing else", () => {

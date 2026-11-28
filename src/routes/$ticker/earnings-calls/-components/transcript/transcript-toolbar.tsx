@@ -1,8 +1,7 @@
-import { Copy, Download, FileText, GitCompare } from "lucide-react";
+import { Copy, Download, FileText } from "lucide-react";
 import * as React from "react";
 
 import type { V2TranscriptVersion } from "@/lib/api/types";
-import type { TranscriptFormat } from "@/lib/earnings/transcript";
 
 import { PdfInlineViewer } from "@/components/pdf/pdf-inline-viewer";
 import { Button } from "@/components/ui/button";
@@ -16,29 +15,11 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { DropdownSelect } from "@/components/ui/dropdown-select";
-import { SegmentedButtons } from "@/components/ui/segmented-buttons";
 import { saveJsonFile, savePublicFile, saveTextFile } from "@/lib/download";
 import { formatInstant } from "@/lib/earnings/format";
 import { versionKindText } from "@/lib/earnings/labels";
 
 import { QaStart } from "../tabs/transcript-turns";
-
-export const TRANSCRIPT_FORMATS: Array<{ label: string; value: TranscriptFormat }> = [
-    { label: "Speakers", value: "speakers" },
-    { label: "Sections", value: "sections" },
-    { label: "Cleaned", value: "cleaned" },
-    { label: "Plain text", value: "text" },
-];
-
-export function versionLabel(version: V2TranscriptVersion) {
-    return [
-        `Version ${version.version}`,
-        versionKindText(version),
-        formatInstant(version.published_at),
-        version.change_note,
-    ].filter(Boolean).join(" · ");
-}
 
 /** What the Download menu saves; each entry is absent when there is nothing to save. */
 export type TranscriptDownloads = {
@@ -102,87 +83,49 @@ function DownloadMenu({ downloads, onViewPdf }: { downloads: TranscriptDownloads
     );
 }
 
-/**
- * The Transcript tab's toolbar, ONE row (task O3): format switch (`SegmentedButtons`, ui-redesign task 10) · version
- * select · compare · `⤓ Download` · Copy;
- * under it one muted stats line (`final · 6,798 words · published … · Q&A starts at ▷ 20:54`). The PDF opens from the
- * Download menu in a dialog instead of a permanent row.
- */
+/** Download and copy actions with the current transcript's publication details and Q&A start. */
 export function TranscriptToolbar({
     canCopy,
     downloads,
-    format,
-    onCompare,
     onCopy,
-    onFormatChange,
-    onVersionChange,
     qaStartMs,
-    shownVersion,
-    versions,
+    shownEntry,
 }: {
     canCopy: boolean;
     downloads: TranscriptDownloads;
-    format: TranscriptFormat;
-    /** null = nothing to compare (one version). */
-    onCompare: (() => void) | null;
     onCopy: () => void;
-    onFormatChange: (format: TranscriptFormat) => void;
-    onVersionChange: (version: number) => void;
     qaStartMs: null | number;
-    shownVersion: null | number;
-    /** Newest first. */
-    versions: ReadonlyArray<V2TranscriptVersion>;
+    shownEntry: Pick<V2TranscriptVersion, "corrected_by" | "published_at" | "version_kind" | "word_count"> | undefined;
 }) {
     const [pdfOpen, setPdfOpen] = React.useState(false);
 
-    const shownEntry = versions.find(version => version.version === shownVersion);
-
     return (
-        <div className="flex flex-col gap-1">
-            <div className="flex flex-wrap items-center gap-2">
-                <SegmentedButtons aria-label="Transcript format" onChange={onFormatChange} options={TRANSCRIPT_FORMATS} value={format} />
-
-                {versions.length > 0 && (
-                    <DropdownSelect
-                        aria-label="Transcript version"
-                        className="max-w-64"
-                        label={shownEntry ? versionLabel(shownEntry) : "Version"}
-                        onValueChange={value => onVersionChange(Number(value))}
-                        options={versions.map(version => ({ label: versionLabel(version), value: String(version.version) }))}
-                        size="sm"
-                        value={shownVersion === null ? undefined : String(shownVersion)}
-                    />
-                )}
-
-                {onCompare && (
-                    <Button onClick={onCompare} size="sm" type="button" variant="outline">
-                        <GitCompare />
-                        Compare
-                    </Button>
-                )}
-
-                <div className="ml-auto flex items-center gap-1">
-                    <DownloadMenu downloads={downloads} onViewPdf={() => setPdfOpen(true)} />
-                    <Button disabled={!canCopy} onClick={onCopy} size="sm" type="button" variant="ghost">
-                        <Copy />
-                        Copy
-                    </Button>
-                </div>
-            </div>
-
-            {shownEntry && (
-                <div className="text-muted-foreground flex flex-wrap items-baseline gap-x-1 text-xs">
-                    <span>{versionKindText(shownEntry)}</span>
-                    <span>{`· ${shownEntry.word_count.toLocaleString("en-US")} words`}</span>
-                    <span>{`· published ${formatInstant(shownEntry.published_at)}`}</span>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+            {(shownEntry || qaStartMs !== null) && (
+                <div className="text-muted-foreground flex min-w-0 flex-1 basis-80 flex-wrap items-baseline gap-x-1 text-xs">
+                    {shownEntry && (
+                        <>
+                            <span>{versionKindText(shownEntry)}</span>
+                            <span>{`· ${shownEntry.word_count.toLocaleString("en-US")} words`}</span>
+                            <span>{`· published ${formatInstant(shownEntry.published_at)}`}</span>
+                        </>
+                    )}
                     {qaStartMs !== null && (
                         <span className="inline-flex items-baseline gap-1">
-                            ·
+                            {shownEntry && "·"}
                             <QaStart qaStartMs={qaStartMs} />
                         </span>
                     )}
                 </div>
             )}
+
+            <div className="ml-auto flex shrink-0 items-center gap-1">
+                <DownloadMenu downloads={downloads} onViewPdf={() => setPdfOpen(true)} />
+                <Button disabled={!canCopy} onClick={onCopy} size="sm" type="button" variant="ghost">
+                    <Copy />
+                    Copy
+                </Button>
+            </div>
 
             {downloads.pdf && (
                 <Dialog onOpenChange={setPdfOpen} open={pdfOpen}>

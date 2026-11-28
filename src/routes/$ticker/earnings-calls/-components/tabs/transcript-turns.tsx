@@ -119,6 +119,7 @@ function Turns({
 
     return (
         <PlaybackTurns className="flex flex-col gap-4" segments={segments}>
+            {qaIndex > 0 && <h3 className="text-sm font-medium">Prepared remarks</h3>}
             {turns.map((turn, index) => (
                 // Turns have no id; their order within one answer is stable.
                 <React.Fragment key={index}>

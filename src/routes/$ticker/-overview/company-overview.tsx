@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
 
 import type { V2CompanyResponse, V2Dataset, V2Event, V2Filing } from "@/lib/api/types";
@@ -20,11 +21,11 @@ import { formatDay, formatMoneyCompact, formatNumber, formatShares } from "@/lib
 import { formatNumberEn } from "@/lib/utils";
 import { EventLink } from "@/routes/$ticker/earnings-calls/-components/event-link";
 
-import { CoverageSection, ExternalLink, httpsHref, OverviewColumns, OverviewSkeleton } from "./overview-parts";
+import { ExternalLink, httpsHref, OverviewSkeleton } from "./overview-parts";
 
 /**
  * A stock's overview (ui-redesign task 8; `GET /v1/companies/{company}?expand=coverage,former_tickers`): the description first, key
- * facts as a stat grid, "Next up" (next call, latest filing) and "Identifiers" beside them, the data families, the
+ * facts as a full-width stat grid, "Next up" (next call, latest filing) and "Identifiers" below it, the
  * fiscal periods. Requests as before: the company, one upcoming event, one filing, the fiscal periods.
  */
 export function CompanyOverview({ datasets, ticker }: { datasets: ReadonlyArray<V2Dataset>; ticker: string }) {
@@ -49,28 +50,19 @@ export function CompanyOverview({ datasets, ticker }: { datasets: ReadonlyArray<
     return (
         <>
             {company.description && <CompanyDescription text={company.description} />}
-            <OverviewColumns
-                lead={(
-                    <Section title="Key facts">
-                        <KeyFactsView company={company} />
+            <div className="flex min-w-0 flex-col gap-8">
+                <Section title="Key facts">
+                    <KeyFactsView company={company} />
+                </Section>
+                <div className="grid min-w-0 gap-8 sm:grid-cols-2">
+                    <NextUp datasets={datasets} ticker={ticker} />
+                    <Section title="Identifiers">
+                        <IdentifiersView company={company} />
                     </Section>
-                )}
-                rest={(
-                    <>
-                        <CoverageSection coverage={company.coverage} ticker={ticker} />
-                        {/* O7 group 7: the fiscal calendar (asked only when the instrument has the dataset, as the filings list does). */}
-                        {datasets.includes("fiscal_periods") && <FiscalPeriodsCard ticker={ticker} />}
-                    </>
-                )}
-                side={(
-                    <>
-                        <NextUp datasets={datasets} ticker={ticker} />
-                        <Section title="Identifiers">
-                            <IdentifiersView company={company} />
-                        </Section>
-                    </>
-                )}
-            />
+                </div>
+                {/* O7 group 7: the fiscal calendar (asked only when the instrument has the dataset, as the filings list does). */}
+                {datasets.includes("fiscal_periods") && <FiscalPeriodsCard ticker={ticker} />}
+            </div>
         </>
     );
 }
@@ -85,11 +77,12 @@ export function CompanyDescription({ text }: { text: string }) {
     const long = text.length > DESCRIPTION_CLAMP_CHARACTERS;
 
     return (
-        <div className="flex max-w-[75ch] flex-col items-start gap-1" data-testid="company-description">
+        <div className="flex flex-col items-start gap-1" data-testid="company-description">
             <p className={long && !expanded ? "text-muted-foreground line-clamp-2 text-sm" : "text-muted-foreground text-sm"}>{text}</p>
             {long && (
                 <Button aria-expanded={expanded} className="-ml-2" onClick={() => setExpanded(value => !value)} size="sm" type="button" variant="ghost">
                     {expanded ? "Less" : "More"}
+                    {expanded ? <ChevronUp aria-hidden className="size-3.5" /> : <ChevronDown aria-hidden className="size-3.5" />}
                 </Button>
             )}
         </div>

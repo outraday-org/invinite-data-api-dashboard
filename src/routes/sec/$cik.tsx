@@ -7,7 +7,6 @@ import type { SecPanelTarget } from "@/components/sec/sec-source-panel";
 import { HolderChangesList } from "@/components/sec/holder-views";
 import { ChangeTypeChips } from "@/components/sec/ownership-views";
 import {
-    FilerAnchorRow,
     SecFilerHeader,
     SecFilingsView,
     SecFundView,
@@ -28,7 +27,7 @@ import { useFilerHoldingChangesInfinite, useFilerHoldingsInfinite, useV2Filer, u
 import { V2_FILER_EXPANDS } from "@/lib/api/v2";
 import { formatDay } from "@/lib/format";
 import { titleHead } from "@/lib/layout";
-import { FILER_ANCHORS, FILER_FILINGS_PAGE, filerContextAnchors, isManagerFiler } from "@/lib/navigation";
+import { FILER_ANCHORS, FILER_FILINGS_PAGE, isManagerFiler } from "@/lib/navigation";
 import { recentFiler, useRecordRecent } from "@/lib/recents";
 import { changeTypesParam, INSTRUMENT_OPTIONS, parseChangeTypes } from "@/lib/sec/ownership";
 import { latest13fPeriodEnd, QUARTER_PICKER_COUNT, quarterPickerOptions } from "@/lib/sec/source";
@@ -167,9 +166,8 @@ function SecFilerPage() {
 
     return (
         <PageContainer>
-            <div className="flex scroll-mt-20 flex-col gap-3" id={FILER_ANCHORS.profile}>
+            <div className="scroll-mt-20" id={FILER_ANCHORS.profile}>
                 <SecFilerHeader cik={cik} data={filer.data} error={filer.error} isLoading={filer.isLoading} />
-                <FilerAnchorRow anchors={filerContextAnchors(filer.data ?? null, isManager)} />
             </div>
 
             <Section title="Lifecycle">

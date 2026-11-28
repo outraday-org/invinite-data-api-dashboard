@@ -251,11 +251,11 @@ export function CallPlayer({
         <div
             aria-label="Call player"
             className={cn(
-                // No box (ui-redesign task 10): a top hairline; once pinned a bottom hairline and a shadow part it from the
-                // text scrolling under it. The background stays opaque enough to read the controls over the transcript.
-                "bg-background/95 sticky z-20 flex flex-col border-t backdrop-blur transition-[padding]",
+                // Once pinned, the ticker header supplies the top separator; the bottom hairline and shadow separate
+                // the player from the scrolling text. Otherwise the player has its own top hairline.
+                "bg-background/95 sticky z-20 flex flex-col backdrop-blur transition-[padding]",
                 STICKY_TOP_CLASS,
-                compact ? "gap-0.5 border-b py-1 shadow-sm" : "gap-2 py-2.5",
+                compact ? "gap-0.5 border-b py-1 shadow-sm" : "gap-2 border-t py-2.5",
             )}
             data-compact={compact || undefined}
             ref={barRef}

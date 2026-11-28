@@ -13,7 +13,7 @@ import type { PresentationPeriod, TreeRow } from "./types";
 
 import { ExpandCollapseButtons } from "./expand-collapse-buttons";
 import { PeriodHeadLabel } from "./period-head";
-import { addFactTypes, buildTreeRows, flattenToValueMap } from "./utils";
+import { addFactTypes, flattenToValueMap, mergedTreeRows } from "./utils";
 
 /**
  * The presentation tree of a statement (one column per period, newest first): group rows medium weight, totals
@@ -38,14 +38,7 @@ export function FinancialsPresentationTable({
         }));
     }, [periods]);
 
-    const canonicalTree = React.useMemo(() => {
-        const out: Array<Omit<TreeRow, "values">> = [];
-
-        // The tree of the newest period that states one: an as-reported Q4 (filed only inside the 10-K) is empty (F037).
-        buildTreeRows(typedPeriods.find(period => period.facts.length > 0)?.facts ?? [], 0, null, out);
-
-        return out;
-    }, [typedPeriods]);
+    const canonicalTree = React.useMemo(() => mergedTreeRows(typedPeriods), [typedPeriods]);
 
     const parentById = React.useMemo(() => {
         const m = new Map<string, null | string>();
@@ -149,7 +142,7 @@ export function FinancialsPresentationTable({
                                     onClick={() => setSelectedRow(row)}
                                 >
                                     <TableCell className={cn(STICKY_FIRST_CELL, STATEMENT_LABEL_CELL)}>
-                                        <div className="flex min-w-0 items-center gap-1">
+                                        <div className="flex min-w-0 items-center gap-1" style={{ paddingLeft: row.depth * 12 }}>
                                             {isCollapsible
                                                 ? (
                                                         row.hasChildren
@@ -157,7 +150,7 @@ export function FinancialsPresentationTable({
                                                                     <button
                                                                         aria-expanded={expanded.has(row.metricId)}
                                                                         aria-label={`${expanded.has(row.metricId) ? "Collapse" : "Expand"} ${row.label}`}
-                                                                        className="text-muted-foreground hover:text-foreground inline-flex size-6 items-center justify-center rounded"
+                                                                        className="text-muted-foreground hover:text-foreground inline-flex size-6 shrink-0 items-center justify-center rounded"
                                                                         onClick={(event) => {
                                                                             event.stopPropagation();
 
@@ -181,7 +174,7 @@ export function FinancialsPresentationTable({
                                                                             : <ChevronRight className="h-4 w-4" />}
                                                                     </button>
                                                                 )
-                                                            : <span className="inline-block h-6 w-6" />
+                                                            : <span className="inline-block h-6 w-6 shrink-0" />
                                                     )
                                                 : null}
 
@@ -190,7 +183,6 @@ export function FinancialsPresentationTable({
                                                     "min-w-0 flex-1 truncate",
                                                     row.isTotal ? "font-semibold" : row.hasChildren ? "font-medium" : null,
                                                 )}
-                                                style={{ paddingLeft: row.depth * 12 }}
                                                 title={row.label}
                                             >
                                                 {row.label}

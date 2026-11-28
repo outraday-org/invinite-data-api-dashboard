@@ -173,6 +173,32 @@ describe("AskResults", () => {
         expect(onJumpToTranscript).toHaveBeenCalledTimes(2);
     });
 
+    it("opens a search hit in the Slides tab at its page and collapses results, even without an image URL", () => {
+        const onJumpToSlide = vi.fn();
+
+        const onPlayed = vi.fn();
+
+        const hit = { ...HIT, slide: { image_url: null, page: 8 }, type: "presentation" as const };
+
+        render(
+            <AskResults
+                data={answer(coverage("complete"), [hit])}
+                error={null}
+                isLoading={false}
+                onPlayed={onPlayed}
+                scope={{ ...SCOPE, onJumpToSlide }}
+            />,
+        );
+
+        fireEvent.click(screen.getByRole("button", { name: "Open slide 8" }));
+
+        expect(onJumpToSlide).toHaveBeenCalledWith(8);
+
+        expect(onPlayed).toHaveBeenCalledOnce();
+
+        expect(screen.queryByRole("link", { name: "Open slide 8" })).toBeNull();
+    });
+
     it("guesses the highlight from the query for a keyword hit without spans (an attached answer)", () => {
         const attachedAnswer = { ...HIT, match: { lexical_rank: 2, spans: [], type: "lexical" as const } };
 
