@@ -13,7 +13,7 @@ import type { PresentationPeriod, TreeRow } from "./types";
 
 import { ExpandCollapseButtons } from "./expand-collapse-buttons";
 import { PeriodHeadLabel } from "./period-head";
-import { addFactTypes, buildTreeRows, flattenToValueMap } from "./utils";
+import { addFactTypes, flattenToValueMap, mergedTreeRows } from "./utils";
 
 /**
  * The presentation tree of a statement (one column per period, newest first): group rows medium weight, totals
@@ -38,14 +38,7 @@ export function FinancialsPresentationTable({
         }));
     }, [periods]);
 
-    const canonicalTree = React.useMemo(() => {
-        const out: Array<Omit<TreeRow, "values">> = [];
-
-        // The tree of the newest period that states one: an as-reported Q4 (filed only inside the 10-K) is empty (F037).
-        buildTreeRows(typedPeriods.find(period => period.facts.length > 0)?.facts ?? [], 0, null, out);
-
-        return out;
-    }, [typedPeriods]);
+    const canonicalTree = React.useMemo(() => mergedTreeRows(typedPeriods), [typedPeriods]);
 
     const parentById = React.useMemo(() => {
         const m = new Map<string, null | string>();
