@@ -174,6 +174,6 @@ describe("Participants tab", () => {
 
         expect(screen.getByRole("link", { name: "on this call" })).toHaveAttribute("href", `/people?event=${EVENT_IDS.aapl}`);
 
-        expect(screen.getByRole("link", { name: "on every AAPL call" })).toHaveAttribute("href", "/people?company=AAPL");
+        expect(screen.getByRole("link", { name: "on every AAPL call" })).toHaveAttribute("href", `/people?company=${event.cik}`);
     });
 });

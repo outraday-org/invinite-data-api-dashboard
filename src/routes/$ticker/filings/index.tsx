@@ -14,6 +14,7 @@ import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
 import { Button } from "@/components/ui/button";
 import { useCompanyFiscalPeriods, useInstrument, useV2FilingsInfinite } from "@/lib/api/queries";
+import { instrumentSubject } from "@/lib/instruments";
 import { tickerHead } from "@/lib/layout";
 import { liveOn, liveParam, useLiveDefault } from "@/lib/live/live-default";
 import { commaList, hasLiveForm, isFilingOf, mergeLiveRows, toLiveFilingRow } from "@/lib/live/live-filings";
@@ -75,6 +76,10 @@ const detailsLink = (filing: FilingListRow) => (
 function FilingsPage() {
     const { ticker } = Route.useParams();
 
+    const { data: instrument } = useInstrument(ticker);
+
+    const subject = instrument ? instrumentSubject(instrument) : ticker;
+
     const search = Route.useSearch();
 
     const navigate = Route.useNavigate();
@@ -102,14 +107,12 @@ function FilingsPage() {
         items: items.length > 0 ? items : undefined,
         limit: FILINGS_PAGE,
         sort: sortDirection === "desc" ? "-filed_at" : "filed_at",
-        symbol: ticker,
+        symbol: subject,
         to: search.to,
     });
 
     // Fiscal / calendar quarters by `report_date` = `period_end` (one request set per company, never per row); only for
     // an instrument that has fiscal periods (a fund's filings stay unlabelled, no 404 per page view).
-    const { data: instrument } = useInstrument(ticker);
-
     const { data: fiscalPeriods } = useCompanyFiscalPeriods(instrument?.datasets.includes("fiscal_periods") ? ticker : "");
 
     const periods = React.useMemo(() => fiscalPeriodIndex(fiscalPeriods ?? []), [fiscalPeriods]);
@@ -127,11 +130,14 @@ function FilingsPage() {
 
     // Live: new filings whose primary ticker is this page's, on top of a newest-first list without a date / items
     // filter (a live frame carries no 8-K items and is filed today).
-    const liveApplies = sortDirection === "desc" && !search.to && items.length === 0;
+    // Historical pages never subscribe to a ticker feed: that symbol may belong to another registrant now.
+    const liveEligible = instrument?.is_active === true;
+
+    const liveApplies = liveEligible && sortDirection === "desc" && !search.to && items.length === 0;
 
     const liveByDefault = useLiveDefault();
 
-    const liveEnabled = liveOn(search.live, liveByDefault);
+    const liveEnabled = liveEligible && liveOn(search.live, liveByDefault);
 
     const live = useLiveFilingsFeed({
         enabled: liveEnabled,
@@ -229,16 +235,18 @@ function FilingsPage() {
                 actions={(
                     <>
                         <AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.filings} />
-                        <LiveToggle
-                            listening="Listening for new filings"
-                            live={liveEnabled}
-                            mode={live.mode}
-                            onChange={(on) => {
-                                live.clearStop();
+                        {liveEligible && (
+                            <LiveToggle
+                                listening="Listening for new filings"
+                                live={liveEnabled}
+                                mode={live.mode}
+                                onChange={(on) => {
+                                    live.clearStop();
 
-                                onChange({ live: liveParam(on, liveByDefault) });
-                            }}
-                        />
+                                    onChange({ live: liveParam(on, liveByDefault) });
+                                }}
+                            />
+                        )}
                     </>
                 )}
                 activeCount={activeCount}
@@ -278,7 +286,7 @@ function FilingsPage() {
                             Filing details
                         </Link>
                     )}
-                    symbol={ticker}
+                    symbol={subject}
                 />
             )}
 

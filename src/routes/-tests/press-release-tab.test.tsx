@@ -36,6 +36,20 @@ const RELEASE = {
 const props = { event: { cik: "1045810", symbol: "NVDA" }, eventId: "e1" } as unknown as CallTabProps;
 
 describe("PressReleaseTab", () => {
+    it("hides unsupported historical news navigation while retaining its external source", () => {
+        vi.mocked(useV2PressRelease).mockReturnValue({ data: RELEASE, error: null } as never);
+
+        const { rerender } = render(<PressReleaseTab {...props} historicalTicker="OLDCO" newsAvailable={false} />);
+
+        expect(screen.queryByRole("link", { name: "News item" })).toBeNull();
+
+        expect(screen.getByRole("link", { name: "Source" })).toHaveAttribute("href", RELEASE.url);
+
+        rerender(<PressReleaseTab {...props} historicalTicker="OLDCO" newsAvailable />);
+
+        expect(screen.getByRole("link", { name: "News item" })).toHaveAttribute("href", `/OLDCO/news?item=${RELEASE.news_id}`);
+    });
+
     it("links the archival news item (the News page's item panel) when the release has one", () => {
         vi.mocked(useV2PressRelease).mockReturnValue({ data: RELEASE, error: null } as never);
 

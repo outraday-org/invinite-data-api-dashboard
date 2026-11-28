@@ -132,10 +132,10 @@ function CallLink({
 }
 
 /** One call of the folder: its label and date (→ call page), what it holds, links to its press release / slides / documents. */
-function CallRow({ call }: { call: CallEntry }) {
+function CallRow({ call, historicalTicker }: { call: CallEntry; historicalTicker?: string }) {
     const { event } = call;
 
-    const ticker = event.symbol;
+    const ticker = historicalTicker ?? event.symbol;
 
     return (
         <li className={itemRowClass} data-event-id={event.event_id}>
@@ -170,6 +170,7 @@ function CallRow({ call }: { call: CallEntry }) {
 
 function FolderNode({
     depth,
+    historicalTicker,
     isOpen,
     node,
     onShowText,
@@ -177,6 +178,7 @@ function FolderNode({
     ticker,
 }: {
     depth: number;
+    historicalTicker?: string;
     isOpen: (key: string) => boolean;
     node: TreeNode<V2InvestorDocument>;
     onShowText: (doc: V2InvestorDocument) => void;
@@ -207,6 +209,7 @@ function FolderNode({
                     {node.children.map(child => (
                         <FolderNode
                             depth={depth + 1}
+                            historicalTicker={historicalTicker}
                             isOpen={isOpen}
                             key={child.key}
                             node={child}
@@ -215,7 +218,7 @@ function FolderNode({
                             ticker={ticker}
                         />
                     ))}
-                    {node.calls.map(call => <CallRow call={call} key={call.event.event_id} />)}
+                    {node.calls.map(call => <CallRow call={call} historicalTicker={historicalTicker} key={call.event.event_id} />)}
                     {node.documents.map(doc => (
                         <DocumentRow doc={doc} key={doc.document_id} onShowText={onShowText} ticker={ticker} />
                     ))}
@@ -233,11 +236,13 @@ function FolderNode({
  */
 export function DocumentTree({
     filtering = false,
+    historicalTicker,
     onShowText,
     ticker,
     tree,
 }: {
     filtering?: boolean;
+    historicalTicker?: string;
     onShowText: (doc: V2InvestorDocument) => void;
     ticker: string;
     tree: ReadonlyArray<TreeNode<V2InvestorDocument>>;
@@ -258,7 +263,7 @@ export function DocumentTree({
     return (
         <ul className="text-sm">
             {tree.map(node => (
-                <FolderNode depth={0} isOpen={isOpen} key={node.key} node={node} onShowText={onShowText} onToggle={toggle} ticker={ticker} />
+                <FolderNode depth={0} historicalTicker={historicalTicker} isOpen={isOpen} key={node.key} node={node} onShowText={onShowText} onToggle={toggle} ticker={ticker} />
             ))}
         </ul>
     );

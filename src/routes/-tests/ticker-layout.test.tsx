@@ -8,7 +8,7 @@ import type { V2Instrument } from "@/lib/api/types";
 
 import { ApiRequestError } from "@/lib/api/errors";
 import { useInstrument } from "@/lib/api/queries";
-import { AAPL_INSTRUMENT, GLD_INSTRUMENT, SPY_INSTRUMENT, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
+import { AAPL_INSTRUMENT, ACA_INSTRUMENT, GLD_INSTRUMENT, MBSX_INSTRUMENT, REUSED_DELISTED_INSTRUMENT, SPY_INSTRUMENT, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { Route } from "@/routes/$ticker/route";
 
 const route = vi.hoisted(() => ({ linkProps: [] as Array<Record<string, unknown>>, pathname: "/AAPL", ticker: "AAPL" }));
@@ -149,21 +149,24 @@ describe("$ticker layout (the sidebar's sections: app-sidebar.test.tsx)", () => 
         expect(screen.queryByTestId("outlet")).toBeNull();
     });
 
-    it("a delisted stock's section says it is delisted (no page, no Not covered) and links its listing and SEC filer record", () => {
-        show({ ...AAPL_INSTRUMENT, is_active: false }, "/AAPL/filings");
+    it("a delisted stock's supported direct URL mounts its section with eligible tabs", () => {
+        show(ACA_INSTRUMENT, "/ACA/filings");
 
-        expect(screen.queryByTestId("outlet")).toBeNull();
+        expect(screen.getByTestId("outlet")).toBeInTheDocument();
 
-        expect(screen.getByText("AAPL is delisted")).toBeInTheDocument();
+        expect(tabLabels()).toEqual(["Overview", "Calls", "Documents", "Filings"]);
+    });
 
-        expect(screen.queryByText(/not covered/i)).toBeNull();
+    it("unsupported historical direct URLs never mount or request a section", () => {
+        for (const [instrument, section] of [[ACA_INSTRUMENT, "financials"], [ACA_INSTRUMENT, "insider-trades"], [ACA_INSTRUMENT, "stock-splits"], [REUSED_DELISTED_INSTRUMENT, "dividends"], [MBSX_INSTRUMENT, "holdings"]] as const) {
+            show(instrument, `/${instrument.symbol}/${section}`);
 
-        expect(screen.getByRole("link", { name: "The listing" })).toHaveAttribute("href", "/AAPL");
+            expect(screen.queryByTestId("outlet")).toBeNull();
 
-        expect(screen.getByRole("link", { name: "SEC filer record" })).toHaveAttribute("href", "/sec/0000320193");
+            expect(screen.getByText("Not served")).toBeInTheDocument();
 
-        // Its only tab is the Overview (the API answers no other read for a delisted symbol).
-        expect(tabLabels()).toEqual(["Overview"]);
+            cleanup();
+        }
     });
 
     it("a delisted symbol's Overview mounts (its listing)", () => {

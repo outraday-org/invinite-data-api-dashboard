@@ -174,7 +174,7 @@ export function KpiSeriesView({
 export function KpiSeriesTab({ event }: CallTabProps) {
     const [segment, setSegment] = React.useState<null | string>(null);
 
-    const query = useV2KpiSeriesInfinite({ company: event.symbol });
+    const query = useV2KpiSeriesInfinite({ company: event.cik });
 
     useAutoLoadPages({ ...query, hasNextPage: Boolean(query.hasNextPage) });
 

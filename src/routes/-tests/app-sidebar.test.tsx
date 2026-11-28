@@ -9,7 +9,7 @@ import { ME_PRO } from "@/lib/account-fixtures";
 import { ApiRequestError } from "@/lib/api/errors";
 import { useInstrument, useKeyState, useV2Filer, useV2FilingsInfinite, useV2LiveEvents, useV2Person } from "@/lib/api/queries";
 import { CALENDAR_EVENT } from "@/lib/earnings/calendar-fixtures";
-import { AAPL_INSTRUMENT, SPY_INSTRUMENT, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
+import { AAPL_INSTRUMENT, ACA_INSTRUMENT, MBSX_INSTRUMENT, REUSED_DELISTED_INSTRUMENT, SPY_INSTRUMENT, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { PERSON_ANALYST } from "@/lib/people-fixtures";
 import { useSidebarGroupsStore } from "@/lib/stores/sidebar-groups-store";
 import { useTickerStore } from "@/lib/stores/ticker-store";
@@ -294,6 +294,20 @@ describe("the sidebar on every page (context, groups, footer)", () => {
         expect(contextLinks()).not.toContain("Financials");
 
         expect(contextLinks()).not.toContain("Holdings");
+    });
+
+    it("delisted contexts show exactly eligible history, excluding unsafe reused dividends", () => {
+        for (const [instrument, expected] of [[ACA_INSTRUMENT, ["Overview", "Calls", "Investor documents", "Filings"]], [MBSX_INSTRUMENT, ["Overview", "Dividends"]], [REUSED_DELISTED_INSTRUMENT, ["Overview", "Calls", "Investor documents", "Filings"]]] as const) {
+            route.params = { ticker: instrument.symbol };
+
+            vi.mocked(useInstrument).mockReturnValue({ data: instrument, error: null, isLoading: false } as never);
+
+            render(<AppSidebar />);
+
+            expect(contextLinks()).toEqual(expected);
+
+            cleanup();
+        }
     });
 
     it("no context for an unknown symbol or a segment no symbol can be (as the layout)", () => {

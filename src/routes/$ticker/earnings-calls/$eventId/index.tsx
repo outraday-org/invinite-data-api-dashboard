@@ -8,7 +8,8 @@ import { ErrorState } from "@/components/ui/error-state";
 import { NotFound } from "@/components/ui/not-found";
 import { Skeleton } from "@/components/ui/skeleton";
 import { isNotFound } from "@/lib/api/errors";
-import { useV2Event } from "@/lib/api/queries";
+import { useInstrument, useV2Event } from "@/lib/api/queries";
+import { historicalPageTicker, servedDatasets } from "@/lib/instruments";
 import { tickerHead } from "@/lib/layout";
 import { IN_PLACE } from "@/lib/url-state";
 
@@ -48,6 +49,13 @@ function EarningsCallPage() {
  * symbol differs from the URL's ticker still renders (no redirect).
  */
 function CallPage({ eventId, ticker }: { eventId: string; ticker: string }) {
+    // Reuse the parent layout's cached instrument; never resolve the historical event's printed ticker.
+    const { data: instrument } = useInstrument(ticker);
+
+    const historicalTicker = historicalPageTicker(instrument, ticker);
+
+    const newsAvailable = instrument ? servedDatasets(instrument).includes("news") : false;
+
     const search = Route.useSearch();
 
     const { tab = DEFAULT_CALL_TAB } = search;
@@ -139,7 +147,7 @@ function CallPage({ eventId, ticker }: { eventId: string; ticker: string }) {
                 <CallHeader actions={<AlertEntryPoints symbol={event.symbol} types={ENTRY_TYPES.calls} />} event={event} pageSymbol={ticker} />
 
                 {/* The live call's notices, highlights, price and diagnostics (nothing for other calls). */}
-                <LivePlayerSlot event={event} session={liveSession} />
+                <LivePlayerSlot event={event} historicalTicker={historicalTicker} session={liveSession} />
 
                 {/* The company's public broadcast (click-to-load), collapsed while the call is captured live. */}
                 <EventVideoSlot event={event} />
@@ -159,6 +167,8 @@ function CallPage({ eventId, ticker }: { eventId: string; ticker: string }) {
 
                 <CallTabs
                     event={event}
+                    historicalTicker={historicalTicker}
+                    newsAvailable={newsAvailable}
                     onSearchChange={onSearchChange}
                     onTabChange={onTabChange}
                     onTranscriptJumpHandled={() => setTranscriptJump(null)}

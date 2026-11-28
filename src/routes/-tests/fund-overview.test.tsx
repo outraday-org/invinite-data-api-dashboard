@@ -6,7 +6,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { HeadingLevelProvider } from "@/components/ui/page-header";
 import { useFund, useFundPositionsInfinite, useInstrument, useV2Company } from "@/lib/api/queries";
-import { AAPL_INSTRUMENT, GLD_INSTRUMENT, VOO_FUND, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
+import { ACA_INSTRUMENT, GLD_INSTRUMENT, VOO_FUND, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { V2_FUND_POSITIONS } from "@/lib/sec/v2-fixtures";
 import { CompositionMeta, FundProfileView, netAssetsParts } from "@/routes/$ticker/-overview/fund-overview";
 import { Route } from "@/routes/$ticker/index";
@@ -165,7 +165,7 @@ describe("fund overview (`/v1/funds/{fund}`)", () => {
         vi.mocked(useV2Company).mockClear();
 
         vi.mocked(useInstrument).mockReturnValue({
-            data: { ...AAPL_INSTRUMENT, company: { cik: "0001739445" }, is_active: false, name: "Arcosa, Inc.", symbol: "ACA" },
+            data: ACA_INSTRUMENT,
             isLoading: false,
         } as never);
 
@@ -173,7 +173,7 @@ describe("fund overview (`/v1/funds/{fund}`)", () => {
 
         expect(screen.getByText("ACA is delisted")).toBeInTheDocument();
 
-        expect(screen.getByText(/for ACA it serves the listing\. Its SEC filer record stays available\./)).toBeInTheDocument();
+        expect(screen.getByText(/ACA is delisted\. Its eligible history .*Its SEC filer record stays available\./)).toBeInTheDocument();
 
         expect(screen.getByRole("link", { name: "SEC filer record" })).toHaveAttribute("href", "/sec/0001739445");
 

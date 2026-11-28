@@ -175,7 +175,7 @@ function Diagnostics({ live, priceRows }: { live: LiveCall; priceRows: number })
 }
 
 /** The live call's extras above the tabs; the audio controls are the player's, the transcript the Transcript tab's. */
-function LiveCallCard({ event, live }: { event: V2Event; live: LiveCall }) {
+function LiveCallCard({ event, historicalTicker, live }: { event: V2Event; historicalTicker?: string; live: LiveCall }) {
     const { audio, callEnded, callT0, transcript } = live;
 
     // The price line's backlog: the live minute rows (a 404 = none yet). Settled rows of the post-call run use another
@@ -206,7 +206,7 @@ function LiveCallCard({ event, live }: { event: V2Event; live: LiveCall }) {
                         {formatInstant(transcript.rescheduledTo)}
                         .
                         {" "}
-                        <Link className="text-primary underline-offset-4 hover:underline" params={{ ticker: event.symbol }} to="/$ticker/earnings-calls">
+                        <Link className="text-primary underline-offset-4 hover:underline" params={{ ticker: historicalTicker ?? event.symbol }} to="/$ticker/earnings-calls">
                             All calls of
                             {" "}
                             {event.symbol}
@@ -242,7 +242,7 @@ function LiveCallCard({ event, live }: { event: V2Event; live: LiveCall }) {
  * page follows the call live (`useCallLiveSession`: capturing or in `/v1/events?status=live`; sticky for the page's
  * life, so the ended note stays). No stored key → "Enter your API key to follow this call live".
  */
-export function LivePlayerSlot({ event, session }: { event: V2Event; session: CallLiveSession }) {
+export function LivePlayerSlot({ event, historicalTicker, session }: { event: V2Event; historicalTicker?: string; session: CallLiveSession }) {
     const live = useLiveCall();
 
     const apiKey = useApiKeyStore(s => s.apiKey);
@@ -259,5 +259,5 @@ export function LivePlayerSlot({ event, session }: { event: V2Event; session: Ca
         );
     }
 
-    return live === null ? null : <LiveCallCard event={event} live={live} />;
+    return live === null ? null : <LiveCallCard event={event} historicalTicker={historicalTicker} live={live} />;
 }

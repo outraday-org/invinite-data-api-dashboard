@@ -7,8 +7,9 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { V2Event, V2InvestorDocument } from "@/lib/api/types";
 import type { DocumentsSearch } from "@/lib/earnings/documents";
 
-import { useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
+import { useInstrument, useV2Company, useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
 import { buildDocumentTree } from "@/lib/earnings/documents";
+import { ACA_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { Route } from "@/routes/$ticker/documents";
 import { DocumentTree } from "@/routes/$ticker/documents/-components/document-tree";
 
@@ -38,6 +39,7 @@ vi.mock("@tanstack/react-router", () => ({
 
 // Keep the server functions (TanStack Start) unloaded; the page's two lists are set per test.
 vi.mock("@/lib/api/queries", () => ({
+    useInstrument: vi.fn(() => ({ data: null })),
     useV2Company: vi.fn(() => ({ data: { cik: "0000000001", name: "Acme Corp" } })),
     useV2EventsInfinite: vi.fn(),
     useV2InvestorDocument: vi.fn(() => ({ data: null, error: null, isLoading: false })),
@@ -258,7 +260,40 @@ describe("Documents page", () => {
     beforeEach(() => {
         route.navigate.mockReset();
 
+        vi.mocked(useInstrument).mockReturnValue({ data: null } as never);
+
+        vi.mocked(useV2Company).mockClear();
+
         route.search = {};
+    });
+
+    it("uses the historical CIK for documents/events and skips the delisted company profile", () => {
+        vi.mocked(useInstrument).mockReturnValue({ data: ACA_INSTRUMENT } as never);
+
+        mockLists(infinite([documentsPage(DOCUMENTS)]));
+
+        render(<DocumentsPage />);
+
+        expect(useV2InvestorDocumentsInfinite).toHaveBeenLastCalledWith(expect.objectContaining({ company: "0001739445" }));
+
+        expect(useV2EventsInfinite).toHaveBeenLastCalledWith(expect.objectContaining({ company: "0001739445" }));
+
+        // The hook's empty input is disabled before any server request.
+        expect(useV2Company).toHaveBeenLastCalledWith("");
+    });
+
+    it("historical call-tree links retain the scoped ticker when an event prints a different symbol", () => {
+        vi.mocked(useInstrument).mockReturnValue({ data: ACA_INSTRUMENT } as never);
+
+        mockLists(infinite([documentsPage([CALL_DOCUMENT])]), infinite([eventsPage([{ ...CALL_EVENT, symbol: "REUSED" }])]));
+
+        render(<DocumentsPage />);
+
+        const callRow = document.querySelector<HTMLElement>(`[data-event-id="${CALL_EVENT_ID}"]`)!;
+
+        expect(callRow).not.toBeNull();
+
+        for (const link of within(callRow).getAllByRole("link")) expect(link).toHaveAttribute("href", `/ACME/earnings-calls/${CALL_EVENT_ID}`);
     });
 
     it("asks for the library with the call documents and every event", () => {

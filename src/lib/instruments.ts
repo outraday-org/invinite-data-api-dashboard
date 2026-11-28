@@ -51,24 +51,35 @@ export function instrumentBadges(instrument: Pick<V2Instrument, "is_active" | "s
 
 export const isFundType = (type: V2InstrumentType): boolean => type === "etf" || type === "closed_end_fund";
 
-/** A delisted symbol's only section: its listing (`GET /v1/instruments/{symbol}`). */
-const DELISTED_DATASETS: ReadonlyArray<V2Dataset> = ["profile"];
-
 /**
- * The datasets the API answers for an instrument: its `datasets`, or for a delisted symbol only its listing. Data API 12
- * resolves no `company=` / `symbol=` / `{fund}` read for a delisted symbol (checked 2026-11-26: ACA, ADBU answer 404
- * "No instrument is known"), although `datasets` still names its type's families. Every navigation reads this, never
- * `datasets` directly.
+ * The API's `datasets`: for a delisted symbol the families that hold its history (Data API 13.3.0).
+ * Every navigation reads this authoritative list.
  */
-export function servedDatasets(instrument: Pick<V2Instrument, "datasets" | "is_active">): ReadonlyArray<V2Dataset> {
-    return instrument.is_active ? instrument.datasets : DELISTED_DATASETS;
+export function servedDatasets(instrument: Pick<V2Instrument, "datasets">): ReadonlyArray<V2Dataset> {
+    return instrument.datasets;
 }
 
-/** The delisted state's sentence: what the API still answers for the symbol (`DelistedNotice`). */
-export function delistedText(instrument: Pick<V2Instrument, "company" | "symbol">): string {
+/** Stable company identity for historical reads; listed requests keep their existing ticker. */
+export function instrumentSubject(instrument: Pick<V2Instrument, "company" | "is_active" | "symbol">): string {
+    return !instrument.is_active && instrument.company?.cik ? instrument.company.cik : instrument.symbol;
+}
+
+/** Keep historical event links under the current subject's URL; listed pages keep each event's own symbol. */
+export function historicalPageTicker(instrument: null | Pick<V2Instrument, "is_active"> | undefined, ticker: string): string | undefined {
+    return instrument?.is_active === false ? ticker : undefined;
+}
+
+/** The delisted state's sentence: only the historical families advertised by the API. */
+export function delistedText(instrument: Pick<V2Instrument, "company" | "datasets" | "symbol" | "type">): string {
     const filer = instrument.company ? " Its SEC filer record stays available." : "";
 
-    return `The Invinite API serves company, fund and market data for symbols listed today; for ${instrument.symbol} it serves the listing.${filer}`;
+    const families = instrument.datasets.filter(dataset => dataset !== "profile").map(dataset => DATASET_WORDS[dataset] ?? dataset.replaceAll("_", " "));
+
+    const history = families.length > 0 ? `Its eligible history (${families.join(", ")}) is still served` : "No eligible historical data is served";
+
+    const profile = instrument.type === "stock" ? "; the company profile is not." : ". Its instrument record stays available.";
+
+    return `${instrument.symbol} is delisted. ${history}${profile}${filer}`;
 }
 
 /**

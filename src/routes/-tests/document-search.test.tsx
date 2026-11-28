@@ -77,6 +77,18 @@ const answer = (
 ): V2InvestorDocumentSearchResponse => ({ data: hits, has_more: false, meta: { index: coverage, query }, next_cursor: null });
 
 describe("DocumentSearchResults", () => {
+    it("keeps a historical result's event action under the parent ticker and preserves the default hit symbol", () => {
+        const hit = { ...HIT, event_id: "11111111-1111-4111-8111-111111111111", symbol: "REUSED" };
+
+        const { rerender } = render(<DocumentSearchResults data={answer([hit], "dividends")} error={null} historicalTicker="OLDCO" isLoading={false} mode="lexical" />);
+
+        expect(screen.getByRole("link", { name: "Open event" })).toHaveAttribute("href", `/OLDCO/earnings-calls/${hit.event_id}`);
+
+        rerender(<DocumentSearchResults data={answer([hit], "dividends")} error={null} isLoading={false} mode="lexical" />);
+
+        expect(screen.getByRole("link", { name: "Open event" })).toHaveAttribute("href", `/REUSED/earnings-calls/${hit.event_id}`);
+    });
+
     it("shows each passage with its document, year and page and opens the PDF at that page", () => {
         render(<DocumentSearchResults data={answer([HIT], "capital allocation")} error={null} isLoading={false} mode="lexical" />);
 

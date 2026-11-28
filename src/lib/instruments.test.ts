@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
-import { AAPL_INSTRUMENT, GLD_INSTRUMENT, PDI_INSTRUMENT, SPY_INSTRUMENT, TQQQ_INSTRUMENT, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
+import { AAPL_INSTRUMENT, ACA_INSTRUMENT, GLD_INSTRUMENT, MBSX_INSTRUMENT, PDI_INSTRUMENT, REUSED_DELISTED_INSTRUMENT, SPY_INSTRUMENT, TQQQ_INSTRUMENT, VXX_INSTRUMENT } from "@/lib/instruments-fixtures";
 
-import { datasetGateText, instrumentBadges, isSymbolParam, sectionOf, servesSection } from "./instruments";
+import { datasetGateText, delistedText, instrumentBadges, instrumentSubject, isSymbolParam, sectionOf, servedDatasets, servesSection } from "./instruments";
 
 describe("instrument badges", () => {
     it("one type badge; an exchange-traded trust adds Trust; a delisted symbol says so", () => {
@@ -74,5 +74,47 @@ describe("isSymbolParam", () => {
         expect(isSymbolParam("ABCDEFGHIJKLMNOP")).toBe(false);
 
         expect(isSymbolParam("  ")).toBe(false);
+    });
+});
+
+describe("released delisted history", () => {
+    it("keeps every instrument's exact API datasets, including reused symbols", () => {
+        for (const instrument of [AAPL_INSTRUMENT, ACA_INSTRUMENT, REUSED_DELISTED_INSTRUMENT, MBSX_INSTRUMENT]) {
+            expect(servedDatasets(instrument)).toBe(instrument.datasets);
+        }
+
+        expect(servesSection(servedDatasets(ACA_INSTRUMENT), "filings")).toBe(true);
+
+        expect(servesSection(servedDatasets(ACA_INSTRUMENT), "financials")).toBe(false);
+
+        expect(servesSection(servedDatasets(ACA_INSTRUMENT), "insider-trades")).toBe(false);
+
+        expect(servesSection(servedDatasets(MBSX_INSTRUMENT), "dividends")).toBe(true);
+
+        expect(servesSection(servedDatasets(MBSX_INSTRUMENT), "holdings")).toBe(false);
+
+        expect(servesSection(servedDatasets(REUSED_DELISTED_INSTRUMENT), "dividends")).toBe(false);
+    });
+
+    it("names only eligible history using labels and fallback words, plus its filer", () => {
+        expect(delistedText(ACA_INSTRUMENT)).toContain("ACA is delisted. Its eligible history (filings, earnings calls and events, transcripts, guidance, beneficial ownership, insider sale notices, people, company documents, ipos) is still served; the company profile is not. Its SEC filer record stays available.");
+
+        expect(delistedText(ACA_INSTRUMENT)).not.toMatch(/financial|insider trades|insider holdings/);
+
+        expect(delistedText(MBSX_INSTRUMENT)).toBe("MBSX is delisted. Its eligible history (dividends) is still served. Its instrument record stays available.");
+
+        expect(delistedText({ ...MBSX_INSTRUMENT, datasets: ["profile"] })).toBe("MBSX is delisted. No eligible historical data is served. Its instrument record stays available.");
+    });
+
+    it("prefers a delisted CIK, preserving listed tickers and keyless historical subjects", () => {
+        expect(instrumentSubject(ACA_INSTRUMENT)).toBe("0001739445");
+
+        expect(instrumentSubject(REUSED_DELISTED_INSTRUMENT)).toBe("0001739445");
+
+        expect(instrumentSubject(AAPL_INSTRUMENT)).toBe("AAPL");
+
+        expect(instrumentSubject(MBSX_INSTRUMENT)).toBe("MBSX");
+
+        expect(instrumentSubject({ ...ACA_INSTRUMENT, company: { cik: null } })).toBe("ACA");
     });
 });

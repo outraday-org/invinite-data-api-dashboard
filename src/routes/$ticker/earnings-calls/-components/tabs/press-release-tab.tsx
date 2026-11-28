@@ -14,7 +14,7 @@ import type { CallTabProps } from "../call-tabs";
 import { MediaState, Notice } from "../media-state";
 
 /** Press release tab: title, provenance (origin, trust tier, EDGAR folder), participants and the body text. */
-export function PressReleaseTab({ event, eventId }: CallTabProps) {
+export function PressReleaseTab({ event, eventId, historicalTicker, newsAvailable = true }: CallTabProps) {
     const { data, error } = useV2PressRelease(eventId);
 
     const notFound = "No press release stored for this call";
@@ -45,9 +45,9 @@ export function PressReleaseTab({ event, eventId }: CallTabProps) {
                     <a className="underline underline-offset-4" href={data.url} rel="noopener noreferrer" target="_blank">
                         Source
                     </a>
-                    {data.news_id && (
+                    {data.news_id && newsAvailable && (
                         // The archival news item: the News page with its item panel open (summary, attribution, PDF).
-                        <Link className="underline underline-offset-4" params={{ ticker: event.symbol }} search={{ item: data.news_id }} to="/$ticker/news">
+                        <Link className="underline underline-offset-4" params={{ ticker: historicalTicker ?? event.symbol }} search={{ item: data.news_id }} to="/$ticker/news">
                             News item
                         </Link>
                     )}

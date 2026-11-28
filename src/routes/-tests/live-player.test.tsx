@@ -115,7 +115,9 @@ vi.mock("@/lib/live/use-live-transcript", () => ({ useLiveTranscript: () => mock
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/live/live-price-chart", () => ({ LivePriceChart: () => null }));
 
-vi.mock("@tanstack/react-router", () => ({ Link: () => null }));
+vi.mock("@tanstack/react-router", () => ({
+    Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => <a href={Object.entries(params).reduce((path, [key, value]) => path.replace(`$${key}`, value), to)}>{children}</a>,
+}));
 
 const SESSION = { clock: { endedAtMs: null, sawLive: true }, ended: false, recordingWait: null, sawLive: true } as const;
 
@@ -150,12 +152,12 @@ function setTranscript(
     };
 }
 
-function Page({ hasAudio = false, hasTranscript = false }: { hasAudio?: boolean; hasTranscript?: boolean }) {
+function Page({ hasAudio = false, hasTranscript = false, historicalTicker }: { hasAudio?: boolean; hasTranscript?: boolean; historicalTicker?: string }) {
     const event = eventOf({ hasAudio, hasTranscript });
 
     return (
         <CallAudioProvider eventId="evt" hasAudio={hasAudio} live={SESSION}>
-            <LivePlayerSlot event={event} session={SESSION} />
+            <LivePlayerSlot event={event} historicalTicker={historicalTicker} session={SESSION} />
             <CallPlayerBar event={event} />
             <LiveTranscript eventId="evt" />
         </CallAudioProvider>
@@ -808,4 +810,16 @@ describe("quality pass", () => {
 
         expect(result.current.clock.endedAtMs).toBeNull();
     });
+});
+
+it("the rescheduled-call return link preserves historical parent scope and the default event symbol", () => {
+    setTranscript([], [], "live", { rescheduledTo: "2026-12-01T12:00:00Z" });
+
+    const { rerender } = render(<Page historicalTicker="OLDCO" />);
+
+    expect(screen.getByRole("link", { name: /All calls of/ })).toHaveAttribute("href", "/OLDCO/earnings-calls");
+
+    rerender(<Page />);
+
+    expect(screen.getByRole("link", { name: /All calls of/ })).toHaveAttribute("href", `/${eventOf({}).symbol}/earnings-calls`);
 });

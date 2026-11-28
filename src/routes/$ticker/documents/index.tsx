@@ -13,9 +13,10 @@ import { RequestErrorState } from "@/components/ui/request-error-state";
 import { Section } from "@/components/ui/section";
 import { SegmentedButtons } from "@/components/ui/segmented-buttons";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useV2Company, useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
+import { useInstrument, useV2Company, useV2EventsInfinite, useV2InvestorDocumentsInfinite } from "@/lib/api/queries";
 import { useAutoLoadPages } from "@/lib/api/use-auto-load-pages";
 import { buildDocumentTree, callEntries, eventTitleMap, filterCallEntries, validateDocumentsSearch } from "@/lib/earnings/documents";
+import { historicalPageTicker, instrumentSubject } from "@/lib/instruments";
 import { tickerHead } from "@/lib/layout";
 import { IN_PLACE } from "@/lib/url-state";
 import { MEDIA_CODES } from "@/routes/$ticker/earnings-calls/-components/media-state";
@@ -71,6 +72,10 @@ function SecFilingsSource({ onOpen, target, ticker }: { onOpen: (target: null | 
 function DocumentsPage() {
     const { ticker } = Route.useParams();
 
+    const { data: instrument } = useInstrument(ticker);
+
+    const subject = instrument ? instrumentSubject(instrument) : ticker;
+
     const search = Route.useSearch();
 
     const navigate = Route.useNavigate();
@@ -96,15 +101,15 @@ function DocumentsPage() {
     // The IR library and every call's documents in one list (`source: company | call`).
     const library = useV2InvestorDocumentsInfinite({
         category: search.category,
-        company: ticker,
+        company: subject,
         fiscalYear: search.year,
         kind: search.kind ? [search.kind] : undefined,
         limit: PAGE_SIZE,
     });
 
-    const events = useV2EventsInfinite({ company: ticker, limit: EVENTS_PAGE_SIZE, sort: "-scheduled_at", type: "all" });
+    const events = useV2EventsInfinite({ company: subject, limit: EVENTS_PAGE_SIZE, sort: "-scheduled_at", type: "all" });
 
-    const { data: details } = useV2Company(ticker);
+    const { data: details } = useV2Company(instrument?.is_active === false ? "" : ticker);
 
     // No totals in the API: load every page of both, so the counts and the text filter see everything.
     useAutoLoadPages({ ...library, hasNextPage: Boolean(library.hasNextPage) });
@@ -132,7 +137,7 @@ function DocumentsPage() {
     );
 
     // v2 lists name no company: its name comes from the company details the layout already loads.
-    const companyName = details?.name ?? null;
+    const companyName = details?.name ?? instrument?.name ?? null;
 
     const onFilterChange = (patch: Partial<DocumentsSearch>) => {
         // In place (URL state rule): no history entry per keystroke or pick, and the filters sit above the tree, so the page
@@ -173,7 +178,7 @@ function DocumentsPage() {
                 )}
                 title="Search"
             >
-                {searchSource === "company" ? <DocumentSearch identifier={ticker} /> : <SecFilingsSource onOpen={openSecTarget} target={secTarget} ticker={ticker} />}
+                {searchSource === "company" ? <DocumentSearch historicalTicker={historicalPageTicker(instrument, ticker)} identifier={subject} /> : <SecFilingsSource onOpen={openSecTarget} target={secTarget} ticker={subject} />}
             </Section>
 
             <Section title="Library">
@@ -194,6 +199,7 @@ function DocumentsPage() {
                             : (
                                     <DocumentTree
                                         filtering={Boolean(search.q)}
+                                        historicalTicker={historicalPageTicker(instrument, ticker)}
                                         onShowText={setTextOf}
                                         ticker={ticker}
                                         tree={tree}

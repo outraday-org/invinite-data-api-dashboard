@@ -17,7 +17,7 @@ type Kind = "guidance" | "kpi";
  * history) or every reported KPI with its SEC filing link and a per-KPI history across the company's calls
  * (`/v1/guidance?event=` | `/v1/kpis?event=`; histories `/v1/guidance?company=` | `/v1/kpis?company=&metric=`).
  */
-export function GuidanceTab({ event, eventId }: CallTabProps) {
+export function GuidanceTab({ event, eventId, historicalTicker }: CallTabProps) {
     const [kind, setKind] = React.useState<Kind>("guidance");
 
     const [history, setHistory] = React.useState<GuidanceHistoryTarget | null>(null);
@@ -47,8 +47,8 @@ export function GuidanceTab({ event, eventId }: CallTabProps) {
                     )
                 : <KpiTable eventId={eventId} onMetricClick={setKpiHistory} />}
 
-            <GuidanceHistoryPanel company={event.symbol} onClose={() => setHistory(null)} target={history} />
-            <KpiHistoryPanel company={event.symbol} metric={kpiHistory} onClose={() => setKpiHistory(null)} />
+            <GuidanceHistoryPanel company={event.cik} historicalTicker={historicalTicker} onClose={() => setHistory(null)} target={history} />
+            <KpiHistoryPanel company={event.cik} historicalTicker={historicalTicker} metric={kpiHistory} onClose={() => setKpiHistory(null)} />
         </div>
     );
 }
