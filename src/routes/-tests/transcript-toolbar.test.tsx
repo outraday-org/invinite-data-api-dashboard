@@ -37,14 +37,9 @@ function renderToolbar(downloads: TranscriptDownloads = DOWNLOADS) {
         <TranscriptToolbar
             canCopy
             downloads={downloads}
-            format="speakers"
-            onCompare={null}
             onCopy={() => {}}
-            onFormatChange={() => {}}
-            onVersionChange={() => {}}
             qaStartMs={null}
-            shownVersion={3}
-            versions={[]}
+            shownEntry={undefined}
         />,
     );
 }

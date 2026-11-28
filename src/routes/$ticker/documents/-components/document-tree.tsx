@@ -30,9 +30,11 @@ const itemRowClass = `${rowClass} group/row flex-wrap sm:flex-nowrap`;
 const KIND_TAG_CLASS = "rounded-sm font-normal";
 
 // A row's actions wait for hover / focus on a hover-capable pointer from `lg` up; on touch they always show.
-const actionsClass = cn("flex items-center justify-end gap-2.5", ROW_ACTION_REVEAL_CLASS);
+const actionsClass = cn("flex flex-wrap items-center justify-end gap-x-2.5 gap-y-1", ROW_ACTION_REVEAL_CLASS);
 
-const rowMetaClass = "text-muted-foreground ml-auto flex w-full shrink-0 items-center justify-end gap-3 text-xs tabular-nums sm:w-auto sm:justify-start sm:pl-3";
+// Calls and documents reserve identical tracks, including an empty size cell for calls. Nesting only indents the
+// title; the metadata stays aligned at the tree's right edge. On mobile, actions wrap in the remaining space.
+const rowMetaClass = "text-muted-foreground ml-auto grid w-full shrink-0 grid-cols-[6rem_minmax(0,1fr)] items-center gap-3 text-xs tabular-nums sm:w-auto sm:grid-cols-[6rem_4rem_12rem] sm:pl-3";
 
 /** "Q3 2025" / "2025"; "Undated" without a year. */
 function periodLabel(doc: V2InvestorDocument) {
@@ -80,11 +82,11 @@ function DocumentRow({
             <Badge className={KIND_TAG_CLASS} variant="outline">{documentKindLabel(doc.kind)}</Badge>
             {doc.link_status === "expired" && <Badge className="rounded-sm" variant="secondary">replay expired</Badge>}
             <div className={rowMetaClass}>
-                <span className="w-24" title={filing && doc.filing_date ? "Filed on EDGAR" : undefined}>
+                <span className="whitespace-nowrap" title={filing && doc.filing_date ? "Filed on EDGAR" : undefined}>
                     {documentDate(doc)}
                 </span>
-                <span className="hidden w-16 text-right sm:inline">{doc.bytes !== null ? formatBytes(doc.bytes) : ""}</span>
-                <div className={cn(actionsClass, "w-36")}>
+                <span className="hidden text-right sm:inline">{doc.bytes !== null ? formatBytes(doc.bytes) : ""}</span>
+                <div className={actionsClass}>
                     {callEventId && (
                         <CallLink aria-label="Call documents" className={actionClass} eventId={callEventId} tab="documents" ticker={ticker}>
                             Call
@@ -153,7 +155,8 @@ function CallRow({ call, historicalTicker }: { call: CallEntry; historicalTicker
                 <AvailabilityIcons event={event} />
             </span>
             <div className={rowMetaClass}>
-                <span className="w-24">{formatDay(call.date)}</span>
+                <span className="whitespace-nowrap">{formatDay(call.date)}</span>
+                <span aria-hidden className="hidden sm:inline" />
                 <div className={actionsClass}>
                     {event.has_press_release && (
                         <CallLink className={actionClass} eventId={event.event_id} tab="press-release" ticker={ticker}>Press release</CallLink>

@@ -10,8 +10,8 @@ export type SegmentedOption<T extends string> = {
     value: T;
 };
 
-/** The quiet segmented control's frame (`SegmentedButtons`, `TabStrip`): a muted pill holding its segments. */
-export const SEGMENTED_GROUP_CLASS = "bg-muted text-muted-foreground inline-flex w-fit items-center gap-0.5 rounded-lg p-[3px]";
+/** The quiet segmented control's frame (`SegmentedButtons`, `TabStrip`): 32 px tall, 40 px below 640 px. */
+export const SEGMENTED_GROUP_CLASS = "bg-muted text-muted-foreground inline-flex w-fit items-center gap-0.5 rounded-lg p-0.5";
 
 /** One segment of the quiet segmented control (28 px, 36 px below 640 px); the selected one is raised. */
 export function segmentClass(selected: boolean) {

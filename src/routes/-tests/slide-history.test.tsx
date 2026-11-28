@@ -47,7 +47,7 @@ beforeEach(() => {
 
 const current: V2Event = { ...AAPL_Q4_EVENT, fiscal_quarter: 4, fiscal_year: 2027, scheduled_at: "2026-11-20T20:00:00Z" };
 
-const slide = (page: number, title: null | string): V2Slide => ({ image_url: `https://example.com/page-${page}.webp`, page, title });
+const slide = (page: number, title: null | string): V2Slide => ({ image_url: `https://example.com/page-${page}.webp`, markdown: title ? `# ${title}` : null, page, title });
 
 const revenue = slide(3, "Revenue");
 
@@ -56,6 +56,60 @@ function earlierEvent(year: number): V2Event {
 }
 
 describe("historical slide discovery", () => {
+    it("keeps historical loading and API-error states honest", () => {
+        api.events.push(earlierEvent(2026));
+
+        api.useV2Slides.mockReturnValueOnce({ data: undefined, error: null } as never);
+
+        const { rerender } = render(<HistorySlides currentSlide={revenue} currentSlides={[revenue]} event={current} onSelect={vi.fn()} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Find historical slides" }));
+
+        expect(screen.getByLabelText("Loading Q4 FY2026 slides")).toBeInTheDocument();
+
+        api.useV2Slides.mockReturnValueOnce({ data: undefined, error: new Error("Network unavailable") } as never);
+
+        rerender(<HistorySlides currentSlide={revenue} currentSlides={[revenue]} event={current} onSelect={vi.fn()} />);
+
+        expect(screen.getByText("Failed to load historical slides")).toBeInTheDocument();
+
+        expect(screen.queryByRole("button", { name: /^Compare/ })).toBeNull();
+    });
+
+    it("explains conflicting and missing evidence separately and preserves image failure", () => {
+        const event = earlierEvent(2026);
+
+        api.events.push(event);
+
+        api.decks[event.event_id] = [{ ...slide(12, "Revenue"), markdown: "Revenue\n#### **Q4 FY24 Outlook**\n**$20 billion**" }];
+
+        const props = { currentSlide: revenue, currentSlides: [revenue], event: current, onSelect: vi.fn() };
+
+        const { rerender } = render(<HistorySlides {...props} />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Find historical slides" }));
+
+        expect(api.useV2Slides).toHaveBeenCalledWith({ eventId: event.event_id, include: ["markdown"] });
+
+        expect(screen.getByText("The slide headings do not support this comparison.")).toBeInTheDocument();
+
+        api.decks[event.event_id] = [{ ...slide(7, "Revenue"), markdown: null }];
+
+        rerender(<HistorySlides {...props} />);
+
+        expect(screen.getByText("There is not enough slide text to verify this comparison.")).toBeInTheDocument();
+
+        api.decks[event.event_id] = [slide(7, "Revenue")];
+
+        rerender(<HistorySlides {...props} />);
+
+        fireEvent.error(screen.getByRole("button", { name: /^Compare/ }).querySelector("img")!);
+
+        expect(screen.getByText("Preview unavailable")).toBeInTheDocument();
+
+        expect(screen.getByRole("button", { name: /^Compare/ })).toBeEnabled();
+    });
+
     it("reads no earlier decks before opting in and caps discovery at four distinct years", () => {
         for (let year = 2026; year >= 2020; year--) {
             const event = earlierEvent(year);

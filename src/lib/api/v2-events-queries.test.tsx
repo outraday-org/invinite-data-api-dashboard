@@ -2,11 +2,16 @@
 import type * as React from "react";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, renderHook, screen, waitFor } from "@testing-library/react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { HistoricalSlideSelection } from "@/routes/$ticker/earnings-calls/-components/slide-history";
+
+import { AAPL_Q4_EVENT } from "@/lib/earnings/o7-earnings-fixtures";
 import { useApiKeyStore } from "@/lib/stores/api-key-store";
+import { HistorySlides, VerifiedHistoricalSlides } from "@/routes/$ticker/earnings-calls/-components/slide-history";
 
 import type { ApiRequestError } from "./errors";
 
@@ -195,6 +200,121 @@ describe("useV2LiveAudio", () => {
 });
 
 describe("slide cache retention", () => {
+    it("bounds cold reads, pages the event list only explicitly and reuses warm historical decks", async () => {
+        const current = { ...AAPL_Q4_EVENT, fiscal_quarter: 4, fiscal_year: 2027, scheduled_at: "2026-11-20T20:00:00Z" };
+
+        const events = Array.from({ length: 5 }, (_, index) => ({ ...current, event_id: `history-${index}`, fiscal_year: 2026 - index, has_slides: true, scheduled_at: `${2025 - index}-11-20T20:00:00Z` }));
+
+        const slide = { image_url: "https://example.com/revenue.webp", markdown: "# Revenue\nGuidance is discussed in body text.", page: 3, title: "Revenue" };
+
+        const data = { deck: null, event: { cik: "123", conference_date: "2026-11-01", event_id: EVENT_ID, symbol: "TEST" }, slides: [slide] };
+
+        vi.mocked(getV2Events)
+            .mockResolvedValueOnce({ data: events.slice(0, 2), has_more: true, meta: {}, next_cursor: "older" })
+            .mockResolvedValue({ data: events.slice(2), has_more: false, meta: {}, next_cursor: null });
+
+        vi.mocked(getV2Slides).mockResolvedValue(data);
+
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+        function View({ page = 3 }: { page?: number }) {
+            useV2Slides({ eventId: EVENT_ID, include: ["markdown", "timeline"] });
+
+            const [selection, setSelection] = useState<HistoricalSlideSelection | null>(null);
+
+            return (
+                <>
+                    <HistorySlides currentSlide={{ ...slide, page }} currentSlides={[{ ...slide, page }]} event={current} onSelect={setSelection} />
+                    {selection && <VerifiedHistoricalSlides currentSlide={{ ...slide, page }} currentSlides={[{ ...slide, page }]} selection={selection}>{() => <span>Verified comparison</span>}</VerifiedHistoricalSlides>}
+                </>
+            );
+        }
+
+        const mount = (page = 3) => <QueryClientProvider client={client}><View page={page} /></QueryClientProvider>;
+
+        const view = render(mount());
+
+        await waitFor(() => expect(getV2Slides).toHaveBeenCalledTimes(1));
+
+        expect(getV2Events).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getByRole("button", { name: "Find historical slides" }));
+
+        await waitFor(() => expect(screen.getAllByRole("button", { name: /^Compare/ })).toHaveLength(2));
+
+        expect(getV2Events).toHaveBeenCalledTimes(1);
+
+        expect(getV2Slides).toHaveBeenCalledTimes(3);
+
+        fireEvent.click(screen.getByRole("button", { name: "Load more calls" }));
+
+        await waitFor(() => expect(screen.getAllByRole("button", { name: /^Compare/ })).toHaveLength(4));
+
+        expect(getV2Events).toHaveBeenCalledTimes(2);
+
+        expect(getV2Slides).toHaveBeenCalledTimes(5);
+
+        expect(vi.mocked(getV2Slides).mock.calls.slice(1).every(([args]) => args.data.include?.join() === "markdown")).toBe(true);
+
+        fireEvent.click(screen.getAllByRole("button", { name: /^Compare/ })[0]);
+
+        expect(screen.getByText("Verified comparison")).toBeInTheDocument();
+
+        expect(getV2Slides).toHaveBeenCalledTimes(5);
+
+        view.rerender(mount(9));
+
+        expect(getV2Slides).toHaveBeenCalledTimes(5);
+
+        view.unmount();
+
+        const warm = render(mount());
+
+        fireEvent.click(screen.getByRole("button", { name: "Find historical slides" }));
+
+        await waitFor(() => expect(screen.getAllByRole("button", { name: /^Compare/ })).toHaveLength(4));
+
+        expect(getV2Events).toHaveBeenCalledTimes(2);
+
+        expect(getV2Slides).toHaveBeenCalledTimes(5);
+
+        warm.unmount();
+
+        client.clear();
+    });
+
+    it("separates markdown/page variants and key context without reusing another account's deck", async () => {
+        const data = { deck: null, event: { cik: "123", conference_date: "2026-11-01", event_id: EVENT_ID, symbol: "TEST" }, slides: [] };
+
+        vi.mocked(getV2Slides).mockResolvedValue(data);
+
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+        const cachedWrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+
+        const view = renderHook(({ include, pages }: { include?: Array<"markdown">; pages?: string }) => useV2Slides({ eventId: EVENT_ID, include, pages }), { initialProps: {} as { include?: Array<"markdown">; pages?: string }, wrapper: cachedWrapper });
+
+        await waitFor(() => expect(view.result.current.data).toEqual(data));
+
+        view.rerender({ include: ["markdown"] });
+
+        await waitFor(() => expect(getV2Slides).toHaveBeenCalledTimes(2));
+
+        view.rerender({ include: ["markdown"], pages: "1-3" });
+
+        await waitFor(() => expect(getV2Slides).toHaveBeenCalledTimes(3));
+
+        act(() => useApiKeyStore.setState({ apiKey: "another-test-key", apiKeyUpdatedAt: 999 }));
+
+        await waitFor(() => expect(getV2Slides).toHaveBeenCalledTimes(4));
+
+        expect(getV2Slides).toHaveBeenLastCalledWith({ data: { apiKey: "another-test-key", eventId: EVENT_ID, include: ["markdown"], pages: "1-3" } });
+
+        view.unmount();
+
+        client.clear();
+    });
+
     it("reopens a still-fresh deck after six minutes away without another request", async () => {
         const data = { deck: null, event: { cik: "123", conference_date: "2026-11-01", event_id: EVENT_ID, symbol: "TEST" }, slides: [] };
 

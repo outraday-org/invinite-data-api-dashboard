@@ -1,7 +1,7 @@
 ## Run
 
 `pnpm run dev` starts the Vite dev server. Open the printed local URL (usually
-`http://localhost:3001`).
+`http://127.0.0.1:3002`).
 
 Live: https://data-api-dashboard.netlify.app/ (Netlify builds `main` on push). Keys, usage and billing
 live in the Invinite Data app, https://data.invinite.com (docs: https://data.invinite.com/docs).
@@ -44,6 +44,12 @@ and operation metadata.
 `pnpm-workspace.yaml` records pnpm 11's `allowBuilds` decisions (esbuild's postinstall
 runs, the others are skipped) so `pnpm install` / `pnpm run` do not stop on
 `ERR_PNPM_IGNORED_BUILDS`.
+
+## Slides
+
+Open a call’s Slides tab to browse its presentation, zoom, or show the extracted text. “Find historical slides” looks for the same fiscal quarter in up to four earlier years. A comparison needs a unique matching title supported by both slides’ headings. Conflicting headings or insufficient text show an explanation instead of a guessed counterpart. After selecting a match, browse the historical deck independently.
+
+Discovery requests an earlier-call list and at most four slide decks, only after activation. Historical reads include slide text in the existing request, with no extra title-only read. Changing the current page reuses those decks. Fresh cached data is reused for ten minutes; a later refresh can remove a comparison whose evidence changed. Markdown increases response size; normal API billing still applies.
 
 ## Routes
 

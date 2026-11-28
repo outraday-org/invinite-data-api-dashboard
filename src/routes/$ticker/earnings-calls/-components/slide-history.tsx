@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2EventsInfinite, useV2Slides } from "@/lib/api/queries";
 import { formatFiscalPeriod } from "@/lib/earnings/format";
-import { historicalSlideEvents, matchingHistoricalSlide } from "@/lib/earnings/slide-history";
+import { historicalSlideEvents, historicalSlideMatch } from "@/lib/earnings/slide-history";
 import { cn } from "@/lib/utils";
 
-import { MediaState } from "./media-state";
+import { MediaState, Notice } from "./media-state";
 
 export type HistoricalSlideSelection = {
     deckUrl?: string;
@@ -28,8 +28,38 @@ type HistoryProps = {
     selectedEventId?: string;
 };
 
+const matchExplanation = {
+    conflict: "The slide headings do not support this comparison.",
+    insufficient: "There is not enough slide text to verify this comparison.",
+    non_unique: "No unique matching slide title.",
+};
+
+/** Same query as the discovery card: cached/deduplicated, never a separate title-only read.
+ * Re-derive on every current/historical refetch instead of trusting the selected array copy.
+ */
+export function VerifiedHistoricalSlides({ children, currentSlide, currentSlides, selection }: {
+    children: (selection: HistoricalSlideSelection) => React.ReactNode;
+    currentSlide: V2Slide;
+    currentSlides: ReadonlyArray<V2Slide>;
+    selection: HistoricalSlideSelection;
+}) {
+    const { data, error } = useV2Slides({ eventId: selection.eventId, include: ["markdown"] });
+
+    if (error) return <MediaState error={error} operationId="getSlides" title="Failed to load historical slides" />;
+
+    if (!data) return <Skeleton aria-label="Loading comparison slides" className="h-32 w-full" />;
+
+    const result = historicalSlideMatch(currentSlide, currentSlides, data.slides);
+
+    if (result.reason !== "match") return <Notice title={matchExplanation[result.reason]} />;
+
+    if (result.slide.page !== selection.slide.page) return <Notice title="The historical slide changed. Select the comparison again." />;
+
+    return children({ ...selection, deckUrl: data.deck?.origin !== "player" ? data.deck?.url : undefined, slide: result.slide, slides: data.slides });
+}
+
 function HistoricalDeck({ currentSlide, currentSlides, event, onSelect, selectedEventId }: HistoryProps) {
-    const { data, error } = useV2Slides({ eventId: event.event_id });
+    const { data, error } = useV2Slides({ eventId: event.event_id, include: ["markdown"] });
 
     const [failedImage, setFailedImage] = React.useState("");
 
@@ -46,16 +76,18 @@ function HistoricalDeck({ currentSlide, currentSlides, event, onSelect, selected
 
     if (!data) return <Skeleton aria-label={`Loading ${label} slides`} className="h-32 w-full" />;
 
-    const match = matchingHistoricalSlide(currentSlide, currentSlides, data.slides);
+    const result = historicalSlideMatch(currentSlide, currentSlides, data.slides);
 
-    if (!match) {
+    if (result.reason !== "match") {
         return (
             <div className="flex min-h-24 flex-col justify-center gap-1 rounded-md border border-dashed p-3 text-xs">
                 <span className="font-medium">{label}</span>
-                <span className="text-muted-foreground">{data.slides.length === 0 ? "Slide images are not available yet." : "No unique matching slide title."}</span>
+                <span className="text-muted-foreground">{data.slides.length === 0 ? "Slide images are not available yet." : matchExplanation[result.reason]}</span>
             </div>
         );
     }
+
+    const match = result.slide;
 
     return (
         <button
@@ -108,7 +140,7 @@ export function HistorySlides(props: HistoryProps) {
                     <div className="flex flex-col gap-1">
                         <h3 className="text-sm font-medium">This slide in earlier years</h3>
                         <p className="text-muted-foreground text-xs">
-                            Same slide title
+                            Same slide title, supported by both slide headings
                             {event.event_type === "earnings_call" && event.fiscal_quarter !== null ? ", same fiscal quarter" : ""}
                             . Select a slide to compare below.
                         </p>

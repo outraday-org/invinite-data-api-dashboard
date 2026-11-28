@@ -161,6 +161,7 @@ function CallPage({ eventId, ticker }: { eventId: string; ticker: string }) {
                     scope={{
                         eventId: event.event_id,
                         kind: "event",
+                        onJumpToSlide: page => onSearchChange({ slide: page, tab: "slides" }),
                         onJumpToTranscript,
                     }}
                 />

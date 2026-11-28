@@ -2,11 +2,76 @@ import { describe, expect, it } from "vitest";
 
 import type { V2Slide } from "@/lib/api/types";
 
-import { historicalSlideEvents, matchingHistoricalSlide, slideTitleKey } from "./slide-history";
+import { historicalSlideEvents, historicalSlideMatch, matchingHistoricalSlide, slideHeadlineEvidence, slideTitleKey } from "./slide-history";
 
-const slide = (page: number, title: null | string): V2Slide => ({ image_url: `https://example.com/${page}.webp`, page, title });
+const slide = (page: number, title: null | string): V2Slide => ({ image_url: `https://example.com/${page}.webp`, markdown: title ? `# ${title}` : null, page, title });
 
 describe("slide title correspondence", () => {
+    it("rejects stale Revenue metadata on either page, even when both decks share the error", () => {
+        // backend pdf-parser/tests/fixtures/slide_headline_evidence.json: NVIDIA FY24 Q3 p12.
+        const stale = { ...slide(12, "Revenue"), markdown: "Revenue\n#### **Q4 FY24 Outlook**\n**$20.0 billion**, plus or minus 2%" };
+
+        const valid = slide(3, "Revenue");
+
+        for (const [current, prior] of [[valid, stale], [stale, valid], [stale, stale]]) {
+            expect(historicalSlideMatch(current, [current], [prior]).reason).toBe("conflict");
+        }
+    });
+
+    it("requires usable evidence and refuses competing main headings", () => {
+        const current = slide(3, "Revenue");
+
+        for (const markdown of [null, "", " ", "| Revenue | Forecast |", "$20 billion"]) {
+            expect(historicalSlideMatch(current, [current], [{ ...current, markdown }]).reason).toBe("insufficient");
+        }
+
+        expect(slideHeadlineEvidence({ ...current, markdown: "# Revenue\n# Outlook" })).toBe("conflict");
+
+        expect(slideHeadlineEvidence({ ...current, markdown: "# Revenue\n# revenue" })).toBe("verified");
+    });
+
+    it("accepts plain, bold and strongest-heading titles without classifying body keywords", () => {
+        const current = slide(3, "Revenue");
+
+        for (const markdown of ["Revenue\nGuidance and outlook are discussed here.", "**Revenue**\nA revenue forecast follows.", "# Revenue\n## Outlook\nForecast", "# Revenue\n[…] More\n[...] More"]) {
+            expect(slideHeadlineEvidence({ ...current, markdown })).toBe("verified");
+        }
+
+        expect(slideHeadlineEvidence({ ...slide(7, "Consumer & Community Banking [1]"), markdown: "**CCB** **CIB** **CB**\n#### Consumer & Community Banking [1]\n**SELECTED INCOME STATEMENT DATA ($MM)**" })).toBe("verified");
+
+        expect(slideHeadlineEvidence({ ...slide(3, "3Q23 Financial results [1]"), markdown: "#### 3Q23 Financial results [1]\n**$B, EXCEPT PER SHARE DATA**\nManaged revenue" })).toBe("verified");
+
+        expect(slideHeadlineEvidence({ ...slide(1, "Content Q3 FY24 Earnings Summary"), markdown: "# **Content**\nQ3 FY24 Earnings Summary\nKey Announcements" })).toBe("verified");
+    });
+
+    it("withholds speaker labels, numeric callouts, footer and body-like titles", () => {
+        for (const title of ["Jane Doe:", "$20 billion", "Copyright 2026", "www.example.com", "This is a very long sentence containing thirteen separate words about the financial results"]) {
+            expect(slideHeadlineEvidence({ ...slide(1, title), markdown: `# ${title}` })).toBe("insufficient");
+        }
+
+        expect(slideHeadlineEvidence({ ...slide(1, "Jane Doe"), markdown: "# Jane Doe\nChief Financial Officer" })).toBe("insufficient");
+    });
+
+    it("does not use literal code headings as main-heading evidence", () => {
+        const revenue = slide(3, "Revenue");
+
+        expect(slideHeadlineEvidence({ ...revenue, markdown: "```markdown\n# Revenue\n```" })).toBe("insufficient");
+
+        expect(slideHeadlineEvidence({ ...revenue, markdown: "# Revenue\n```markdown\n# Outlook\n```" })).toBe("verified");
+
+        expect(slideHeadlineEvidence({ ...revenue, markdown: "# Revenue\n    # Outlook" })).toBe("verified");
+
+        expect(slideHeadlineEvidence({ ...slide(3, "# Revenue"), markdown: "# Revenue" })).toBe("conflict");
+    });
+
+    it("withholds an ambiguous unstyled leading label instead of treating it as proved", () => {
+        const revenue = slide(3, "Revenue");
+
+        expect(slideHeadlineEvidence({ ...revenue, markdown: "Revenue\nQ4 FY24 Outlook\n$20 billion" })).toBe("insufficient");
+
+        expect(slideHeadlineEvidence({ ...revenue, markdown: "Revenue\nOur chief financial officer discussed guidance." })).toBe("verified");
+    });
+
     it("matches unique titles regardless of page position, casing and spacing", () => {
         const current = slide(5, " Gross   Margin ");
 

@@ -5,23 +5,27 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import type { CallTabProps } from "@/routes/$ticker/earnings-calls/-components/call-tabs";
 import type { HistoricalSlideSelection } from "@/routes/$ticker/earnings-calls/-components/slide-history";
+import type * as HistoryModule from "@/routes/$ticker/earnings-calls/-components/slide-history";
 
 import { SlidesTab } from "@/routes/$ticker/earnings-calls/-components/tabs/slides-tab";
 
 const slides = [
-    { image_url: "https://example.com/revenue.webp", markdown: null, page: 1, title: "Revenue" },
-    { image_url: "https://example.com/margin.webp", markdown: null, page: 2, title: "Gross margin" },
+    { image_url: "https://example.com/revenue.webp", markdown: "# Revenue", page: 1, title: "Revenue" },
+    { image_url: "https://example.com/margin.webp", markdown: "# Gross margin", page: 2, title: "Gross margin" },
 ];
 
+const historical = { slides: [{ image_url: "https://example.com/prior.webp", markdown: "# Revenue", page: 4, title: "Revenue" }] };
+
 vi.mock("@/lib/api/queries", () => ({
-    useV2Slides: () => ({ data: { deck: null, slides, timeline: [] }, error: null }),
+    useV2Slides: ({ eventId }: { eventId: string }) => ({ data: { deck: null, slides: eventId === "prior" ? historical.slides : slides, timeline: [] }, error: null }),
 }));
 
 vi.mock("@/routes/$ticker/earnings-calls/-components/audio-context", () => ({
     useCallAudio: () => ({ setSlideMarkers: vi.fn() }),
 }));
 
-vi.mock("@/routes/$ticker/earnings-calls/-components/slide-history", () => ({
+vi.mock("@/routes/$ticker/earnings-calls/-components/slide-history", async importOriginal => ({
+    ...await importOriginal<typeof HistoryModule>(),
     HistorySlides: ({ onSelect }: { onSelect: (selection: HistoricalSlideSelection) => void }) => (
         <button
             onClick={() => onSelect({
@@ -53,6 +57,60 @@ const props = {
 } as CallTabProps;
 
 describe("SlidesTab historical comparison", () => {
+    it("browses fresh historical pages independently while preserving a valid anchor", () => {
+        const original = historical.slides;
+
+        historical.slides = [...original, { image_url: "https://example.com/prior-margin.webp", markdown: "# Gross margin", page: 5, title: "Gross margin" }];
+
+        render(<TestSlides />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Compare Q3 FY2025" }));
+
+        const comparison = screen.getByRole("region", { name: "Historical comparison" });
+
+        fireEvent.click(within(comparison).getByRole("button", { name: "Next slide in Q3 FY2025" }));
+
+        expect(within(comparison).getByRole("img", { name: "Gross margin" })).toHaveAttribute("src", "https://example.com/prior-margin.webp");
+
+        expect(screen.getByRole("img", { name: "Revenue" })).toHaveAttribute("src", slides[0].image_url);
+
+        historical.slides = original;
+    });
+
+    it("revalidates either side on same-key refresh and uses fresh historical pages", () => {
+        const { rerender } = render(<TestSlides />);
+
+        fireEvent.click(screen.getByRole("button", { name: "Compare Q3 FY2025" }));
+
+        expect(screen.getByRole("region", { name: "Historical comparison" })).toBeInTheDocument();
+
+        const original = historical.slides;
+
+        historical.slides = [];
+
+        rerender(<TestSlides />);
+
+        expect(screen.queryByRole("region", { name: "Historical comparison" })).toBeNull();
+
+        historical.slides = [{ ...original[0], markdown: "# Q4 FY24 Outlook" }];
+
+        rerender(<TestSlides />);
+
+        expect(screen.getByText("The slide headings do not support this comparison.")).toBeInTheDocument();
+
+        historical.slides = original;
+
+        const oldMarkdown = slides[0].markdown;
+
+        slides[0].markdown = "# Outlook";
+
+        rerender(<TestSlides />);
+
+        expect(screen.queryByRole("region", { name: "Historical comparison" })).toBeNull();
+
+        slides[0].markdown = oldMarkdown;
+    });
+
     it("opens the requested slide from the URL and scrolls to the viewer", () => {
         render(<TestSlides initialSlide={2} />);
 

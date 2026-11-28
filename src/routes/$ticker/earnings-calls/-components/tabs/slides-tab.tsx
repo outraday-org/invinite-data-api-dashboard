@@ -14,7 +14,7 @@ import type { HistoricalSlideSelection } from "../slide-history";
 import { useCallAudio } from "../audio-context";
 import { MediaState, Notice } from "../media-state";
 import { SlidePageViewer } from "../slide-deck-viewer";
-import { HistorySlides } from "../slide-history";
+import { HistorySlides, VerifiedHistoricalSlides } from "../slide-history";
 import { SlideTimeline } from "../slide-timeline";
 
 // `react-pdf` pulls its CSS and pdf.js; load it only when a deck is shown.
@@ -43,6 +43,10 @@ export function SlidesTab({ event, eventId, onSearchChange, search }: CallTabPro
     const [comparisonPage, setComparisonPage] = React.useState(1);
 
     const [comparisonFor, setComparisonFor] = React.useState("");
+
+    React.useEffect(() => {
+        setComparison(null);
+    }, [eventId, page]);
 
     const { setSlideMarkers } = useCallAudio();
 
@@ -137,26 +141,30 @@ export function SlidesTab({ event, eventId, onSearchChange, search }: CallTabPro
                                 />
                             )}
                             {visibleComparison && (
-                                <section aria-label="Historical comparison" className="border-primary/30 flex flex-col gap-3 border-t pt-4">
-                                    <div className="flex items-center justify-between gap-3">
-                                        <div className="flex flex-col gap-1">
-                                            <h3 className="text-sm font-semibold">{visibleComparison.label}</h3>
-                                            <p className="text-muted-foreground text-xs">Compare with the current slide above. Matched by slide title.</p>
-                                        </div>
-                                        <Button onClick={() => setComparison(null)} size="sm" variant="ghost">
-                                            <XIcon />
-                                            Close comparison
-                                        </Button>
-                                    </div>
-                                    <SlidePageViewer
-                                        deckUrl={visibleComparison.deckUrl}
-                                        key={`${selectionKey}:${visibleComparison.eventId}`}
-                                        label={visibleComparison.label}
-                                        onPageChange={setComparisonPage}
-                                        selectedPage={comparisonPage}
-                                        slides={visibleComparison.slides}
-                                    />
-                                </section>
+                                <VerifiedHistoricalSlides currentSlide={selectedSlide} currentSlides={slides} selection={visibleComparison}>
+                                    {freshComparison => (
+                                        <section aria-label="Historical comparison" className="border-primary/30 flex flex-col gap-3 border-t pt-4">
+                                            <div className="flex items-center justify-between gap-3">
+                                                <div className="flex flex-col gap-1">
+                                                    <h3 className="text-sm font-semibold">{freshComparison.label}</h3>
+                                                    <p className="text-muted-foreground text-xs">Compare with the current slide above. Both slide headings support this match.</p>
+                                                </div>
+                                                <Button onClick={() => setComparison(null)} size="sm" variant="ghost">
+                                                    <XIcon />
+                                                    Close comparison
+                                                </Button>
+                                            </div>
+                                            <SlidePageViewer
+                                                deckUrl={freshComparison.deckUrl}
+                                                key={`${selectionKey}:${visibleComparison.eventId}`}
+                                                label={visibleComparison.label}
+                                                onPageChange={setComparisonPage}
+                                                selectedPage={comparisonPage}
+                                                slides={freshComparison.slides}
+                                            />
+                                        </section>
+                                    )}
+                                </VerifiedHistoricalSlides>
                             )}
                         </>
                     )
