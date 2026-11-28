@@ -1125,6 +1125,8 @@ export function useV2Slides(input: { eventId: string; include?: Array<V2SlidesIn
     return useEarningsQuery<V2SlidesResponse>({
         enabled: input.eventId.length > 0,
         errorMessage: null,
+        // Keep decks across tab changes; the default 5-minute GC discarded still-fresh slide data.
+        gcTime: 30 * 60 * 1000,
         load: apiKey => getV2Slides({ data: { ...input, apiKey } }),
         queryKey: ["v2", "slides", input.eventId, key(input.include), input.pages ?? ""],
         staleTime: EARNINGS_EVENT_STALE_MS,

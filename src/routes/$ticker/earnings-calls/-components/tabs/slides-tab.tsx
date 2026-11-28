@@ -1,18 +1,20 @@
-import { Download } from "lucide-react";
+import { Download, XIcon } from "lucide-react";
 import * as React from "react";
 
-import type { V2Slide } from "@/lib/api/types";
-
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useV2Slides } from "@/lib/api/queries";
+import { eventLabel } from "@/lib/earnings/format";
 import { originCodeLabel, trustTierLabel } from "@/lib/earnings/labels";
 
 import type { CallTabProps } from "../call-tabs";
+import type { HistoricalSlideSelection } from "../slide-history";
 
 import { useCallAudio } from "../audio-context";
 import { MediaState, Notice } from "../media-state";
+import { SlidePageViewer } from "../slide-deck-viewer";
+import { HistorySlides } from "../slide-history";
 import { SlideTimeline } from "../slide-timeline";
 
 // `react-pdf` pulls its CSS and pdf.js; load it only when a deck is shown.
@@ -27,18 +29,20 @@ function DeckViewer({ url }: { url: string }) {
     );
 }
 
-/**
- * Slides tab: the deck PDF (unless the slides are captured player images, `origin: "player"`)
- * with a download link, and a page strip of the slide images with their extracted text. Above
- * them the player slides on the audio's clock (`timeline`, `SlideTimeline`), when there are any.
- * Every URL is a permanent public one, used as the API answered it (a failing image shows the
- * browser's broken image; nothing is refetched).
- */
-export function SlidesTab({ eventId }: CallTabProps) {
+/** Slide pages with an optional historical comparison; the original PDF remains available to download. */
+export function SlidesTab({ event, eventId, onSearchChange, search }: CallTabProps) {
     // `timeline` is opt-in in v2 (v1 always sent it).
     const { data, error } = useV2Slides({ eventId, include: ["markdown", "timeline"] });
 
-    const [openSlide, setOpenSlide] = React.useState<null | V2Slide>(null);
+    const page = search.slide ?? 1;
+
+    const viewerRef = React.useRef<HTMLDivElement>(null);
+
+    const [comparison, setComparison] = React.useState<HistoricalSlideSelection | null>(null);
+
+    const [comparisonPage, setComparisonPage] = React.useState(1);
+
+    const [comparisonFor, setComparisonFor] = React.useState("");
 
     const { setSlideMarkers } = useCallAudio();
 
@@ -51,6 +55,12 @@ export function SlidesTab({ eventId }: CallTabProps) {
         }
     }, [setSlideMarkers, timelineAnswer]);
 
+    React.useEffect(() => {
+        if (search.slide !== undefined && data?.slides.some(slide => slide.page === search.slide)) {
+            viewerRef.current?.scrollIntoView({ block: "start" });
+        }
+    }, [data?.slides, eventId, search.slide]);
+
     if (error) return <MediaState error={error} notFound="No slides stored for this call" operationId="getSlides" title="Failed to load the slides" />;
 
     if (!data) return <Skeleton className="h-40 w-full" />;
@@ -62,87 +72,97 @@ export function SlidesTab({ eventId }: CallTabProps) {
 
     if (!deck && slides.length === 0 && timeline.length === 0) return <Notice title="No slides stored for this call" />;
 
+    const selectedSlide = slides.find(slide => slide.page === page) ?? slides.at(0);
+
+    const selectionKey = `${eventId}:${selectedSlide?.page ?? ""}`;
+
+    const visibleComparison = comparisonFor === selectionKey ? comparison : null;
+
+    const label = eventLabel(event);
+
     return (
         <div className="flex flex-col gap-4">
             {timeline.length > 0 && <SlideTimeline timeline={timeline} />}
 
             {deck && (
-                <div className="flex flex-col gap-2">
-                    <div className="flex flex-wrap items-center gap-2 text-xs">
-                        {deck.origin !== "player" && (
-                            <a
-                                className="inline-flex items-center gap-1 underline underline-offset-4"
-                                download
-                                href={deck.url}
-                                rel="noreferrer"
-                                target="_blank"
-                            >
-                                <Download className="size-3.5" />
-                                Download deck
-                            </a>
-                        )}
-                        <span className="text-muted-foreground">
-                            {deck.pages === null ? "Pages —" : `${deck.pages} pages`}
-                        </span>
-                        <Badge variant="outline">{originCodeLabel(deck.origin)}</Badge>
-                        {deck.trust_tier && <Badge variant="secondary">{trustTierLabel(deck.trust_tier)}</Badge>}
-                    </div>
-                    {deck.origin !== "player" && <DeckViewer url={deck.url} />}
-                </div>
-            )}
-
-            {slides.length > 0 && (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
-                    {slides.map(slide => (
-                        <button
-                            className="flex flex-col gap-1 rounded-md border p-1 text-left hover:bg-muted/50"
-                            key={slide.page}
-                            onClick={() => setOpenSlide(slide)}
-                            type="button"
+                <div className="flex flex-wrap items-center gap-2 text-xs">
+                    {deck.origin !== "player" && (
+                        <a
+                            className="text-muted-foreground hover:text-primary inline-flex items-center gap-1 underline-offset-4 hover:underline"
+                            download
+                            href={deck.url}
+                            rel="noreferrer"
+                            target="_blank"
                         >
-                            <img
-                                alt={slide.title ?? `Slide ${slide.page}`}
-                                className="aspect-video w-full rounded-sm object-contain bg-muted/30"
-                                loading="lazy"
-                                src={slide.image_url}
-                            />
-                            <span className="truncate text-[0.625rem] text-muted-foreground">
-                                {slide.page}
-                                {". "}
-                                {slide.title ?? "Untitled"}
-                            </span>
-                        </button>
-                    ))}
+                            <Download className="size-3.5" />
+                            Download deck
+                        </a>
+                    )}
+                    <Badge variant="outline">{originCodeLabel(deck.origin)}</Badge>
+                    {deck.trust_tier && <Badge variant="secondary">{trustTierLabel(deck.trust_tier)}</Badge>}
                 </div>
             )}
 
-            <Dialog onOpenChange={open => !open && setOpenSlide(null)} open={openSlide !== null}>
-                <DialogContent className="sm:max-w-4xl">
-                    {openSlide && (
+            {selectedSlide
+                ? (
                         <>
-                            <DialogHeader>
-                                <DialogTitle>
-                                    Slide
-                                    {" "}
-                                    {openSlide.page}
-                                    {openSlide.title ? ` · ${openSlide.title}` : ""}
-                                </DialogTitle>
-                            </DialogHeader>
-                            <img
-                                alt={openSlide.title ?? `Slide ${openSlide.page}`}
-                                className="max-h-[60vh] w-full object-contain"
-                                src={openSlide.image_url}
-                            />
-                            {openSlide.markdown && (
-                                // Extracted markdown shown as plain text (no markdown renderer in this app).
-                                <div className="max-h-[25vh] overflow-auto whitespace-pre-wrap rounded-md bg-muted/30 p-2">
-                                    {openSlide.markdown}
-                                </div>
+                            <div className="scroll-mt-24" ref={viewerRef}>
+                                <SlidePageViewer
+                                    deckUrl={deck?.origin !== "player" ? deck?.url : undefined}
+                                    key={`viewer:${eventId}`}
+                                    label={label}
+                                    onPageChange={(nextPage) => {
+                                        onSearchChange({ slide: nextPage });
+
+                                        setComparison(null);
+                                    }}
+                                    selectedPage={selectedSlide.page}
+                                    slides={slides}
+                                />
+                            </div>
+                            {(event.symbol || event.cik) && (
+                                <HistorySlides
+                                    currentSlide={selectedSlide}
+                                    currentSlides={slides}
+                                    event={event}
+                                    key={`history:${eventId}`}
+                                    onSelect={(selection) => {
+                                        setComparison(selection);
+
+                                        setComparisonPage(selection.slide.page);
+
+                                        setComparisonFor(selectionKey);
+                                    }}
+                                    selectedEventId={visibleComparison?.eventId}
+                                />
+                            )}
+                            {visibleComparison && (
+                                <section aria-label="Historical comparison" className="border-primary/30 flex flex-col gap-3 border-t pt-4">
+                                    <div className="flex items-center justify-between gap-3">
+                                        <div className="flex flex-col gap-1">
+                                            <h3 className="text-sm font-semibold">{visibleComparison.label}</h3>
+                                            <p className="text-muted-foreground text-xs">Compare with the current slide above. Matched by slide title.</p>
+                                        </div>
+                                        <Button onClick={() => setComparison(null)} size="sm" variant="ghost">
+                                            <XIcon />
+                                            Close comparison
+                                        </Button>
+                                    </div>
+                                    <SlidePageViewer
+                                        deckUrl={visibleComparison.deckUrl}
+                                        key={`${selectionKey}:${visibleComparison.eventId}`}
+                                        label={visibleComparison.label}
+                                        onPageChange={setComparisonPage}
+                                        selectedPage={comparisonPage}
+                                        slides={visibleComparison.slides}
+                                    />
+                                </section>
                             )}
                         </>
-                    )}
-                </DialogContent>
-            </Dialog>
+                    )
+                : deck && deck.origin !== "player"
+                    ? <DeckViewer url={deck.url} />
+                    : null}
         </div>
     );
 }

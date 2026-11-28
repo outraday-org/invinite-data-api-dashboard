@@ -10,8 +10,8 @@ import { useApiKeyStore } from "@/lib/stores/api-key-store";
 
 import type { ApiRequestError } from "./errors";
 
-import { useV2Event, useV2EventsInfinite, useV2GuidanceInfinite, useV2InvestorDocument, useV2LiveAudio, useV2QaInfinite } from "./queries";
-import { getV2Event, getV2Events, getV2Guidance, getV2InvestorDocument, getV2LiveAudio, getV2Qa } from "./server-functions";
+import { useV2Event, useV2EventsInfinite, useV2GuidanceInfinite, useV2InvestorDocument, useV2LiveAudio, useV2QaInfinite, useV2Slides } from "./queries";
+import { getV2Event, getV2Events, getV2Guidance, getV2InvestorDocument, getV2LiveAudio, getV2Qa, getV2Slides } from "./server-functions";
 
 vi.mock("./server-functions", () => ({
     getV2Event: vi.fn(),
@@ -20,6 +20,7 @@ vi.mock("./server-functions", () => ({
     getV2InvestorDocument: vi.fn(),
     getV2LiveAudio: vi.fn(),
     getV2Qa: vi.fn(),
+    getV2Slides: vi.fn(),
 }));
 
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
@@ -49,6 +50,8 @@ beforeEach(() => {
     vi.mocked(getV2LiveAudio).mockReset();
 
     vi.mocked(getV2Qa).mockReset();
+
+    vi.mocked(getV2Slides).mockReset();
 
     vi.mocked(toast.error).mockReset();
 
@@ -188,5 +191,46 @@ describe("useV2LiveAudio", () => {
         expect(result.current.fetchStatus).toBe("idle");
 
         expect(getV2LiveAudio).not.toHaveBeenCalled();
+    });
+});
+
+describe("slide cache retention", () => {
+    it("reopens a still-fresh deck after six minutes away without another request", async () => {
+        const data = { deck: null, event: { cik: "123", conference_date: "2026-11-01", event_id: EVENT_ID, symbol: "TEST" }, slides: [] };
+
+        vi.mocked(getV2Slides).mockResolvedValue(data);
+
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+        const cachedWrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+
+        const input = { eventId: EVENT_ID };
+
+        const first = renderHook(() => useV2Slides(input), { wrapper: cachedWrapper });
+
+        await waitFor(() => expect(first.result.current.data).toEqual(data));
+
+        vi.useFakeTimers();
+
+        try {
+            first.unmount();
+
+            await vi.advanceTimersByTimeAsync(6 * 60 * 1000);
+
+            const reopened = renderHook(() => useV2Slides(input), { wrapper: cachedWrapper });
+
+            expect(reopened.result.current.data).toEqual(data);
+
+            expect(reopened.result.current.isFetching).toBe(false);
+
+            expect(getV2Slides).toHaveBeenCalledTimes(1);
+
+            reopened.unmount();
+        }
+        finally {
+            client.clear();
+
+            vi.useRealTimers();
+        }
     });
 });

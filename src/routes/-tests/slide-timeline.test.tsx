@@ -154,7 +154,7 @@ describe("SlideTimeline", () => {
 
 describe("SlidesTab", () => {
     it("renders the page strip when the API answers no timeline", () => {
-        const props = { eventId: "e1" } as CallTabProps;
+        const props = { event: { event_type: "earnings_call", fiscal_quarter: 3, fiscal_year: 2026 }, eventId: "e1", search: {} } as CallTabProps;
 
         render(<SlidesTab {...props} />);
 
@@ -171,7 +171,7 @@ describe("SlidesTab", () => {
     it("publishes the slide changes as the seek bar's markers once the timeline is in", () => {
         slides.timeline = TIMELINE;
 
-        render(<SlidesTab {...({ eventId: "e1" } as CallTabProps)} />);
+        render(<SlidesTab {...({ event: { event_type: "earnings_call", fiscal_quarter: 3, fiscal_year: 2026 }, eventId: "e1", search: {} } as CallTabProps)} />);
 
         expect(markers.set).toHaveBeenCalledWith([
             { label: "Slide 1", ms: 0 },
@@ -181,7 +181,7 @@ describe("SlidesTab", () => {
     });
 
     it("shows the stored public URLs as they are, with no expiry text", () => {
-        const props = { eventId: "e1" } as CallTabProps;
+        const props = { event: { event_type: "earnings_call", fiscal_quarter: 3, fiscal_year: 2026 }, eventId: "e1", search: {} } as CallTabProps;
 
         render(<SlidesTab {...props} />);
 

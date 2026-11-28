@@ -50,6 +50,8 @@ export const callSearchSchema = z.object({
     format: optionalEnum(TRANSCRIPT_FORMAT_VALUES),
     /** Metrics & diff: the `prior` call of `/comparison` (absent = the derived previous call). */
     prior: z.uuid().optional().catch(undefined),
+    /** Slides tab: the 1-based page selected in the presentation viewer. */
+    slide: optionalInt(1, 100_000),
     t: optionalInt(0, MAX_CALL_SECONDS),
     tab: optionalEnum(CALL_TAB_VALUES),
     version: optionalInt(1, 100_000),
