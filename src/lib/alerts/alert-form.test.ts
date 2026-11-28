@@ -315,3 +315,53 @@ describe("SDK 13 per-type form contract", () => {
         expect(switchAlertType(state, "macro").condition).toEqual({ macro_events: ["macro.released", "macro.revised"] });
     });
 });
+
+describe("filed-row and IPO alert controls", () => {
+    it("retains combined insider filters, nullable defaults and exact decimal threshold inputs", () => {
+        const state = emptyAlertForm("insider_trade");
+
+        state.condition = { include_derivatives: "false", min_value_usd: "1234.5", owners: "0001214156", roles: "officer", sides: "buy", symbols: "AAPL" };
+
+        const { body, errors } = toCreateBody(state);
+
+        expect(errors).toEqual({});
+
+        expect(body).toMatchObject({ condition: { include_derivatives: false, min_value_usd: 1234.5, owners: ["0001214156"], roles: ["officer"], sides: ["buy"], symbols: ["AAPL"] }, type: "insider_trade" });
+    });
+
+    it("keeps market-wide IPO optional subjects and SPAC unknown selection unset", () => {
+        const state = emptyAlertForm("ipo_stage");
+
+        state.condition = { is_spac: "", stages: "registered,priced" };
+
+        expect(toCreateBody(state)).toMatchObject({ body: { condition: { stages: ["registered", "priced"] }, type: "ipo_stage" }, errors: {} });
+
+        expect(toCreateBody(state).body?.condition).not.toHaveProperty("is_spac");
+    });
+
+    it("refuses an empty holder subject rule and preserves ownership crossing fields", () => {
+        expect(toCreateBody(emptyAlertForm("holder_change")).body).toBeNull();
+
+        const missingThreshold = emptyAlertForm("beneficial_ownership");
+
+        missingThreshold.condition = { crossing: "up" };
+
+        expect(toCreateBody(missingThreshold).body).toBeNull();
+
+        const state = emptyAlertForm("beneficial_ownership");
+
+        state.condition = { ciks: "320193", crossing: "down", include_amendments: "true", min_percent_of_class: "5.5", schedule: "13D" };
+
+        expect(toCreateBody(state)).toMatchObject({ body: { condition: { ciks: ["320193"], crossing: "down", include_amendments: true, min_percent_of_class: 5.5, schedule: "13D" }, type: "beneficial_ownership" }, errors: {} });
+    });
+});
+
+it.each(["insider_trade", "holder_change", "ipo_stage", "beneficial_ownership", "insider_sale_notice"] as const)("%s edit retains type, version, condition and delivery", (type) => {
+    const alert = fixtureAlert(type);
+
+    const result = toUpdateBody(fromAlert(alert), 7);
+
+    expect(result.errors).toEqual({});
+
+    expect(result.body).toMatchObject({ condition: alert.condition, destination_ids: alert.destination_ids, type, version: 7 });
+});

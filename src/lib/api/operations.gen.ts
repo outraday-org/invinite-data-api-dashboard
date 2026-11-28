@@ -5,6 +5,456 @@ import type { WebhookEntry, WebhookSchema } from "../../../scripts/webhooks.mjs"
 import type { AlertType } from "./types";
 
 export const ALERT_TYPE_FIELDS = {
+    beneficial_ownership: {
+        condition: [
+            {
+                description: "Companies by CIK.",
+                kind: "string-list",
+                maxItems: 100,
+                name: "ciks",
+                required: false,
+            },
+            {
+                description: "Companies by ticker; a US ETF ticker for the types that take ETFs.",
+                kind: "string-list",
+                maxItems: 100,
+                name: "symbols",
+                required: false,
+            },
+            {
+                description: "",
+                enum: [
+                    "13D",
+                    "13G",
+                ],
+                kind: "enum",
+                name: "schedule",
+                required: false,
+            },
+            {
+                description: "Include amendments (default true).",
+                kind: "boolean",
+                name: "include_amendments",
+                required: false,
+            },
+            {
+                description: "",
+                kind: "number",
+                max: 100,
+                min: 0,
+                name: "min_percent_of_class",
+                required: false,
+            },
+            {
+                description: "",
+                enum: [
+                    "up",
+                    "down",
+                ],
+                kind: "enum",
+                name: "crossing",
+                required: false,
+            },
+        ],
+        example: {
+            condition: {
+                ciks: [
+                    "320193",
+                ],
+                include_amendments: true,
+                min_percent_of_class: 5,
+            },
+            type: "beneficial_ownership",
+        },
+        firedDetails: [
+            {
+                description: "",
+                kind: "string",
+                name: "accession_number",
+                required: true,
+            },
+            {
+                description: "",
+                enum: [
+                    "13D",
+                    "13G",
+                ],
+                kind: "enum",
+                name: "schedule",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "boolean",
+                name: "is_amendment",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "supersedes_accession",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "json",
+                name: "holder",
+                required: true,
+            },
+        ],
+        firedExample: {
+            alert: {
+                client_reference_id: "example-alert",
+                external_user_id: null,
+                id: "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+                metadata: {},
+                type: "beneficial_ownership",
+            },
+            alert_type: "beneficial_ownership",
+            event_id: "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+            fired_at: "2026-11-16T09:00:06.067Z",
+            reason: {
+                details: {
+                    accession_number: "0000320193-26-000001",
+                    holder: {
+                        aggregateAmount: "100000",
+                        filerCik: null,
+                        filerName: "Example Fund",
+                        ordinal: 1,
+                        percentOfClass: "5.5",
+                        previousAggregateAmount: null,
+                        previousPercentOfClass: null,
+                    },
+                    is_amendment: true,
+                    schedule: "13G",
+                    supersedes_accession: null,
+                },
+                summary: "A matching filing event.",
+            },
+            source: {
+                key: "ownership:0000320193-26-000001:part:1",
+                kind: "ownership.filed",
+            },
+            subject: {
+                cik: "320193",
+                symbol: null,
+            },
+        },
+        requestSchema: {
+            additionalProperties: false,
+            description: "beneficial_ownership: see BeneficialOwnershipAlertConditionInput for the condition and cross-field rules. US ETF subjects are refused; use a company subject.",
+            properties: {
+                client_reference_id: {
+                    description: "Your id; a second create with it returns the live alert",
+                    maxLength: 200,
+                    type: "string",
+                },
+                condition: {
+                    "additionalProperties": false,
+                    "allOf": [
+                        {
+                            "anyOf": [
+                                {
+                                    properties: {
+                                        crossing: {
+                                            not: {},
+                                        },
+                                    },
+                                    type: "object",
+                                },
+                                {
+                                    properties: {
+                                        min_percent_of_class: {
+                                            maximum: 100,
+                                            minimum: 0,
+                                            type: "number",
+                                        },
+                                    },
+                                    required: [
+                                        "min_percent_of_class",
+                                    ],
+                                    type: "object",
+                                },
+                            ],
+                            "x-field-dependency": true,
+                        },
+                    ],
+                    "description": "The beneficial_ownership alert condition.",
+                    "properties": {
+                        ciks: {
+                            description: "Companies by CIK.",
+                            items: {
+                                description: "Company CIK, 1–10 digits.",
+                                pattern: "^\\d{1,10}$",
+                                type: "string",
+                            },
+                            maxItems: 100,
+                            minItems: 1,
+                            type: "array",
+                        },
+                        crossing: {
+                            enum: [
+                                "up",
+                                "down",
+                            ],
+                            type: "string",
+                        },
+                        include_amendments: {
+                            default: true,
+                            description: "Include amendments (default true).",
+                            type: "boolean",
+                        },
+                        min_percent_of_class: {
+                            maximum: 100,
+                            minimum: 0,
+                            type: "number",
+                        },
+                        schedule: {
+                            enum: [
+                                "13D",
+                                "13G",
+                            ],
+                            type: "string",
+                        },
+                        symbols: {
+                            description: "Companies by ticker; a US ETF ticker for the types that take ETFs.",
+                            items: {
+                                description: "Company ticker symbol.",
+                                pattern: "^[A-Za-z][A-Za-z0-9.\\-/]{0,11}$",
+                                type: "string",
+                            },
+                            maxItems: 100,
+                            minItems: 1,
+                            type: "array",
+                        },
+                    },
+                    "title": "BeneficialOwnershipAlertConditionInput",
+                    "type": "object",
+                    "x-field-dependencies": {
+                        requiredWith: {
+                            crossing: "min_percent_of_class",
+                        },
+                    },
+                },
+                destination_ids: {
+                    description: "Destination ids (≤ 10)",
+                    items: {
+                        maxLength: 64,
+                        type: "string",
+                    },
+                    maxItems: 10,
+                    type: "array",
+                },
+                external_user_id: {
+                    description: "Your end user's id (filters lists and events; 1–200 characters, not . or .., which no URL path can name)",
+                    maxLength: 200,
+                    type: "string",
+                },
+                metadata: {
+                    additionalProperties: true,
+                    description: "Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event",
+                    type: "object",
+                },
+                trigger: {
+                    additionalProperties: false,
+                    description: "max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.",
+                    properties: {
+                        activate_at: {
+                            description: "The alert is `scheduled` until then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                        active_window: {
+                            additionalProperties: false,
+                            description: "Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds.",
+                            properties: {
+                                active_duration_seconds: {
+                                    description: "Window length (every)",
+                                    maximum: 9007199254740991,
+                                    minimum: 60,
+                                    type: "integer",
+                                },
+                                anchor_at: {
+                                    description: "Start of the first window (every)",
+                                    format: "date-time",
+                                    pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                    type: "string",
+                                },
+                                days: {
+                                    description: "Weekdays of a weekly window.",
+                                    items: {
+                                        enum: [
+                                            "mo",
+                                            "tu",
+                                            "we",
+                                            "th",
+                                            "fr",
+                                            "sa",
+                                            "su",
+                                        ],
+                                        type: "string",
+                                    },
+                                    maxItems: 7,
+                                    minItems: 1,
+                                    type: "array",
+                                },
+                                from: {
+                                    description: "HH:MM (weekly) (HH:MM, 24 h)",
+                                    pattern: "^([01]\\d|2[0-3]):[0-5]\\d$",
+                                    type: "string",
+                                },
+                                interval: {
+                                    description: "Number of units between recurring windows.",
+                                    maximum: 1000000,
+                                    minimum: 1,
+                                    type: "integer",
+                                },
+                                timezone: {
+                                    description: "IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime.",
+                                    type: "string",
+                                },
+                                to: {
+                                    description: "HH:MM (weekly) (HH:MM, 24 h)",
+                                    pattern: "^([01]\\d|2[0-3]):[0-5]\\d$",
+                                    type: "string",
+                                },
+                                type: {
+                                    description: "Weekly hours or a recurring window.",
+                                    enum: [
+                                        "weekly",
+                                        "every",
+                                    ],
+                                    type: "string",
+                                },
+                                unit: {
+                                    description: "Unit of the schedule interval.",
+                                    enum: [
+                                        "hours",
+                                        "days",
+                                        "weeks",
+                                    ],
+                                    type: "string",
+                                },
+                            },
+                            required: [
+                                "type",
+                            ],
+                            type: "object",
+                        },
+                        cooldown_seconds: {
+                            description: "Minimum seconds between fires (at most 366 days)",
+                            maximum: 31622400,
+                            minimum: 0,
+                            type: "integer",
+                        },
+                        delete_on_expiry: {
+                            description: "Delete instead of `expired` (needs expires_at)",
+                            type: "boolean",
+                        },
+                        expires_at: {
+                            description: "The alert becomes `expired` then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                        max_fires: {
+                            description: "The alert becomes `triggered` after this many fires",
+                            maximum: 1000000,
+                            minimum: 1,
+                            type: "integer",
+                        },
+                        mode: {
+                            default: "every_time",
+                            description: "Repeat mode; once becomes triggered after the first fire (default every_time).",
+                            enum: [
+                                "once",
+                                "every_time",
+                            ],
+                            type: "string",
+                        },
+                        pause_until: {
+                            description: "No fires until then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                    },
+                    title: "BeneficialOwnershipAlertTriggerInput",
+                    type: "object",
+                },
+                type: {
+                    enum: [
+                        "beneficial_ownership",
+                    ],
+                    type: "string",
+                },
+            },
+            required: [
+                "type",
+                "condition",
+            ],
+            type: "object",
+        },
+        trigger: [
+            {
+                description: "Repeat mode; once becomes triggered after the first fire (default every_time).",
+                enum: [
+                    "once",
+                    "every_time",
+                ],
+                kind: "enum",
+                name: "mode",
+                required: false,
+            },
+            {
+                description: "Minimum seconds between fires (at most 366 days)",
+                kind: "integer",
+                max: 31622400,
+                min: 0,
+                name: "cooldown_seconds",
+                required: false,
+            },
+            {
+                description: "The alert becomes `triggered` after this many fires",
+                kind: "integer",
+                max: 1000000,
+                min: 1,
+                name: "max_fires",
+                required: false,
+            },
+            {
+                description: "The alert becomes `expired` then",
+                kind: "datetime",
+                name: "expires_at",
+                required: false,
+            },
+            {
+                description: "Delete instead of `expired` (needs expires_at)",
+                kind: "boolean",
+                name: "delete_on_expiry",
+                required: false,
+            },
+            {
+                description: "The alert is `scheduled` until then",
+                kind: "datetime",
+                name: "activate_at",
+                required: false,
+            },
+            {
+                description: "No fires until then",
+                kind: "datetime",
+                name: "pause_until",
+                required: false,
+            },
+            {
+                description: "Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds.",
+                kind: "json",
+                name: "active_window",
+                required: false,
+            },
+        ],
+    },
     dividend: {
         condition: [
             {
@@ -4236,6 +4686,503 @@ export const ALERT_TYPE_FIELDS = {
             },
         ],
     },
+    holder_change: {
+        condition: [
+            {
+                description: "Companies by CIK.",
+                kind: "string-list",
+                maxItems: 100,
+                name: "ciks",
+                required: false,
+            },
+            {
+                description: "Companies by ticker; a US ETF ticker for the types that take ETFs.",
+                kind: "string-list",
+                maxItems: 100,
+                name: "symbols",
+                required: false,
+            },
+            {
+                description: "",
+                kind: "string-list",
+                maxItems: 100,
+                name: "managers",
+                required: false,
+            },
+            {
+                description: "",
+                enum: [
+                    "new",
+                    "increased",
+                    "decreased",
+                    "sold_out",
+                ],
+                kind: "enum-list",
+                maxItems: 4,
+                name: "kinds",
+                required: false,
+            },
+            {
+                description: "",
+                kind: "number",
+                min: 0,
+                name: "min_value_usd",
+                required: false,
+            },
+            {
+                description: "",
+                kind: "number",
+                min: 0,
+                name: "min_change_pct",
+                required: false,
+            },
+        ],
+        example: {
+            condition: {
+                ciks: [
+                    "320193",
+                ],
+                kinds: [
+                    "increased",
+                ],
+                min_change_pct: 10,
+            },
+            type: "holder_change",
+        },
+        firedDetails: [
+            {
+                description: "",
+                kind: "string",
+                name: "accession_number",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "manager_cik",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "manager_name",
+                required: true,
+            },
+            {
+                description: "Current holding period end.",
+                kind: "string",
+                name: "period_end",
+                required: true,
+            },
+            {
+                description: "Current holding period end.",
+                kind: "string",
+                name: "prior_period_end",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "current_snapshot_id",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "prior_snapshot_id",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "json",
+                name: "position",
+                required: true,
+            },
+        ],
+        firedExample: {
+            alert: {
+                client_reference_id: "example-alert",
+                external_user_id: null,
+                id: "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+                metadata: {},
+                type: "holder_change",
+            },
+            alert_type: "holder_change",
+            event_id: "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+            fired_at: "2026-11-16T09:00:06.067Z",
+            reason: {
+                details: {
+                    accession_number: "0000001004-26-000010",
+                    current_snapshot_id: "11111111-1111-5111-8111-111111111111",
+                    manager_cik: "1004",
+                    manager_name: "MANAGER 1004",
+                    period_end: "2026-06-30",
+                    position: {
+                        cik: "320193",
+                        currentShares: "90",
+                        currentValueUsd: "900",
+                        cusip: "037833100",
+                        kind: "increased",
+                        positionKey: "037833100|position|SH",
+                        priorShares: "80",
+                        priorValueUsd: "800",
+                        symbol: "AAPL",
+                    },
+                    prior_period_end: "2026-03-31",
+                    prior_snapshot_id: "22222222-2222-5222-8222-222222222222",
+                },
+                summary: "A matching filing event.",
+            },
+            source: {
+                key: "holders:1004:2026-06-30:0000001004-26-000010:1",
+                kind: "holders.changed",
+            },
+            subject: {
+                cik: "320193",
+                symbol: "AAPL",
+            },
+        },
+        requestSchema: {
+            additionalProperties: false,
+            description: "holder_change: see HolderChangeAlertConditionInput for the condition and cross-field rules. US ETF subjects are refused; use a company subject.",
+            properties: {
+                client_reference_id: {
+                    description: "Your id; a second create with it returns the live alert",
+                    maxLength: 200,
+                    type: "string",
+                },
+                condition: {
+                    "additionalProperties": false,
+                    "allOf": [
+                        {
+                            "anyOf": [
+                                {
+                                    properties: {
+                                        ciks: {
+                                            description: "Companies by CIK.",
+                                            items: {
+                                                description: "Company CIK, 1–10 digits.",
+                                                pattern: "^\\d{1,10}$",
+                                                type: "string",
+                                            },
+                                            maxItems: 100,
+                                            minItems: 1,
+                                            type: "array",
+                                        },
+                                    },
+                                    required: [
+                                        "ciks",
+                                    ],
+                                    type: "object",
+                                },
+                                {
+                                    properties: {
+                                        symbols: {
+                                            description: "Companies by ticker; a US ETF ticker for the types that take ETFs.",
+                                            items: {
+                                                description: "Company ticker symbol.",
+                                                pattern: "^[A-Za-z][A-Za-z0-9.\\-/]{0,11}$",
+                                                type: "string",
+                                            },
+                                            maxItems: 100,
+                                            minItems: 1,
+                                            type: "array",
+                                        },
+                                    },
+                                    required: [
+                                        "symbols",
+                                    ],
+                                    type: "object",
+                                },
+                            ],
+                            "x-field-dependency": true,
+                        },
+                    ],
+                    "description": "The holder_change alert condition.",
+                    "properties": {
+                        ciks: {
+                            description: "Companies by CIK.",
+                            items: {
+                                description: "Company CIK, 1–10 digits.",
+                                pattern: "^\\d{1,10}$",
+                                type: "string",
+                            },
+                            maxItems: 100,
+                            minItems: 1,
+                            type: "array",
+                        },
+                        kinds: {
+                            items: {
+                                enum: [
+                                    "new",
+                                    "increased",
+                                    "decreased",
+                                    "sold_out",
+                                ],
+                                type: "string",
+                            },
+                            maxItems: 4,
+                            minItems: 1,
+                            type: "array",
+                        },
+                        managers: {
+                            items: {
+                                description: "Company CIK, 1–10 digits.",
+                                pattern: "^\\d{1,10}$",
+                                type: "string",
+                            },
+                            maxItems: 100,
+                            minItems: 1,
+                            type: "array",
+                        },
+                        min_change_pct: {
+                            minimum: 0,
+                            type: "number",
+                        },
+                        min_value_usd: {
+                            minimum: 0,
+                            type: "number",
+                        },
+                        symbols: {
+                            description: "Companies by ticker; a US ETF ticker for the types that take ETFs.",
+                            items: {
+                                description: "Company ticker symbol.",
+                                pattern: "^[A-Za-z][A-Za-z0-9.\\-/]{0,11}$",
+                                type: "string",
+                            },
+                            maxItems: 100,
+                            minItems: 1,
+                            type: "array",
+                        },
+                    },
+                    "title": "HolderChangeAlertConditionInput",
+                    "type": "object",
+                    "x-field-dependencies": {
+                        requiredAny: [
+                            "ciks",
+                            "symbols",
+                        ],
+                    },
+                },
+                destination_ids: {
+                    description: "Destination ids (≤ 10)",
+                    items: {
+                        maxLength: 64,
+                        type: "string",
+                    },
+                    maxItems: 10,
+                    type: "array",
+                },
+                external_user_id: {
+                    description: "Your end user's id (filters lists and events; 1–200 characters, not . or .., which no URL path can name)",
+                    maxLength: 200,
+                    type: "string",
+                },
+                metadata: {
+                    additionalProperties: true,
+                    description: "Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event",
+                    type: "object",
+                },
+                trigger: {
+                    additionalProperties: false,
+                    description: "max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.",
+                    properties: {
+                        activate_at: {
+                            description: "The alert is `scheduled` until then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                        active_window: {
+                            additionalProperties: false,
+                            description: "Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds.",
+                            properties: {
+                                active_duration_seconds: {
+                                    description: "Window length (every)",
+                                    maximum: 9007199254740991,
+                                    minimum: 60,
+                                    type: "integer",
+                                },
+                                anchor_at: {
+                                    description: "Start of the first window (every)",
+                                    format: "date-time",
+                                    pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                    type: "string",
+                                },
+                                days: {
+                                    description: "Weekdays of a weekly window.",
+                                    items: {
+                                        enum: [
+                                            "mo",
+                                            "tu",
+                                            "we",
+                                            "th",
+                                            "fr",
+                                            "sa",
+                                            "su",
+                                        ],
+                                        type: "string",
+                                    },
+                                    maxItems: 7,
+                                    minItems: 1,
+                                    type: "array",
+                                },
+                                from: {
+                                    description: "HH:MM (weekly) (HH:MM, 24 h)",
+                                    pattern: "^([01]\\d|2[0-3]):[0-5]\\d$",
+                                    type: "string",
+                                },
+                                interval: {
+                                    description: "Number of units between recurring windows.",
+                                    maximum: 1000000,
+                                    minimum: 1,
+                                    type: "integer",
+                                },
+                                timezone: {
+                                    description: "IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime.",
+                                    type: "string",
+                                },
+                                to: {
+                                    description: "HH:MM (weekly) (HH:MM, 24 h)",
+                                    pattern: "^([01]\\d|2[0-3]):[0-5]\\d$",
+                                    type: "string",
+                                },
+                                type: {
+                                    description: "Weekly hours or a recurring window.",
+                                    enum: [
+                                        "weekly",
+                                        "every",
+                                    ],
+                                    type: "string",
+                                },
+                                unit: {
+                                    description: "Unit of the schedule interval.",
+                                    enum: [
+                                        "hours",
+                                        "days",
+                                        "weeks",
+                                    ],
+                                    type: "string",
+                                },
+                            },
+                            required: [
+                                "type",
+                            ],
+                            type: "object",
+                        },
+                        cooldown_seconds: {
+                            description: "Minimum seconds between fires (at most 366 days)",
+                            maximum: 31622400,
+                            minimum: 0,
+                            type: "integer",
+                        },
+                        delete_on_expiry: {
+                            description: "Delete instead of `expired` (needs expires_at)",
+                            type: "boolean",
+                        },
+                        expires_at: {
+                            description: "The alert becomes `expired` then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                        max_fires: {
+                            description: "The alert becomes `triggered` after this many fires",
+                            maximum: 1000000,
+                            minimum: 1,
+                            type: "integer",
+                        },
+                        mode: {
+                            default: "every_time",
+                            description: "Repeat mode; once becomes triggered after the first fire (default every_time).",
+                            enum: [
+                                "once",
+                                "every_time",
+                            ],
+                            type: "string",
+                        },
+                        pause_until: {
+                            description: "No fires until then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                    },
+                    title: "HolderChangeAlertTriggerInput",
+                    type: "object",
+                },
+                type: {
+                    enum: [
+                        "holder_change",
+                    ],
+                    type: "string",
+                },
+            },
+            required: [
+                "type",
+                "condition",
+            ],
+            type: "object",
+        },
+        trigger: [
+            {
+                description: "Repeat mode; once becomes triggered after the first fire (default every_time).",
+                enum: [
+                    "once",
+                    "every_time",
+                ],
+                kind: "enum",
+                name: "mode",
+                required: false,
+            },
+            {
+                description: "Minimum seconds between fires (at most 366 days)",
+                kind: "integer",
+                max: 31622400,
+                min: 0,
+                name: "cooldown_seconds",
+                required: false,
+            },
+            {
+                description: "The alert becomes `triggered` after this many fires",
+                kind: "integer",
+                max: 1000000,
+                min: 1,
+                name: "max_fires",
+                required: false,
+            },
+            {
+                description: "The alert becomes `expired` then",
+                kind: "datetime",
+                name: "expires_at",
+                required: false,
+            },
+            {
+                description: "Delete instead of `expired` (needs expires_at)",
+                kind: "boolean",
+                name: "delete_on_expiry",
+                required: false,
+            },
+            {
+                description: "The alert is `scheduled` until then",
+                kind: "datetime",
+                name: "activate_at",
+                required: false,
+            },
+            {
+                description: "No fires until then",
+                kind: "datetime",
+                name: "pause_until",
+                required: false,
+            },
+            {
+                description: "Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds.",
+                kind: "json",
+                name: "active_window",
+                required: false,
+            },
+        ],
+    },
     indicator: {
         condition: [
             {
@@ -5398,6 +6345,1271 @@ export const ALERT_TYPE_FIELDS = {
                 max: 1000000,
                 min: 1,
                 name: "cooldown_bars",
+                required: false,
+            },
+        ],
+    },
+    insider_sale_notice: {
+        condition: [
+            {
+                description: "Companies by CIK.",
+                kind: "string-list",
+                maxItems: 100,
+                name: "ciks",
+                required: false,
+            },
+            {
+                description: "Companies by ticker; a US ETF ticker for the types that take ETFs.",
+                kind: "string-list",
+                maxItems: 100,
+                name: "symbols",
+                required: false,
+            },
+            {
+                description: "",
+                kind: "number",
+                min: 0,
+                name: "min_market_value_usd",
+                required: false,
+            },
+            {
+                description: "",
+                kind: "string-list",
+                maxItems: 50,
+                name: "relationships",
+                required: false,
+            },
+        ],
+        example: {
+            condition: {
+                ciks: [
+                    "320193",
+                ],
+                min_market_value_usd: 1000,
+            },
+            type: "insider_sale_notice",
+        },
+        firedDetails: [
+            {
+                description: "",
+                kind: "string",
+                name: "accession_number",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "boolean",
+                name: "is_amendment",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "seller_cik",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "seller_name",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string-list",
+                name: "relationships",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "shares_to_sell",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "market_value_usd",
+                required: true,
+            },
+            {
+                description: "Common proposed sale date when the lines agree.",
+                kind: "string",
+                name: "approximate_sale_date",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "replaces_accession",
+                required: true,
+            },
+        ],
+        firedExample: {
+            alert: {
+                client_reference_id: "example-alert",
+                external_user_id: null,
+                id: "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+                metadata: {},
+                type: "insider_sale_notice",
+            },
+            alert_type: "insider_sale_notice",
+            event_id: "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+            fired_at: "2026-11-16T09:00:06.067Z",
+            reason: {
+                details: {
+                    accession_number: "0000320193-26-000001",
+                    approximate_sale_date: "2026-12-01",
+                    is_amendment: true,
+                    market_value_usd: "1250",
+                    relationships: [
+                        "Officer",
+                    ],
+                    replaces_accession: "0000320193-26-000000",
+                    seller_cik: null,
+                    seller_name: "Example Person",
+                    shares_to_sell: "100",
+                },
+                summary: "A matching filing event.",
+            },
+            source: {
+                key: "sale_notice:0000320193-26-000001",
+                kind: "sale_notice.filed",
+            },
+            subject: {
+                cik: "320193",
+                symbol: null,
+            },
+        },
+        requestSchema: {
+            additionalProperties: false,
+            description: "insider_sale_notice: see InsiderSaleNoticeAlertConditionInput for the condition and cross-field rules. US ETF subjects are refused; use a company subject.",
+            properties: {
+                client_reference_id: {
+                    description: "Your id; a second create with it returns the live alert",
+                    maxLength: 200,
+                    type: "string",
+                },
+                condition: {
+                    additionalProperties: false,
+                    description: "The insider_sale_notice alert condition.",
+                    properties: {
+                        ciks: {
+                            description: "Companies by CIK.",
+                            items: {
+                                description: "Company CIK, 1–10 digits.",
+                                pattern: "^\\d{1,10}$",
+                                type: "string",
+                            },
+                            maxItems: 100,
+                            minItems: 1,
+                            type: "array",
+                        },
+                        min_market_value_usd: {
+                            minimum: 0,
+                            type: "number",
+                        },
+                        relationships: {
+                            items: {
+                                maxLength: 200,
+                                minLength: 1,
+                                type: "string",
+                            },
+                            maxItems: 50,
+                            minItems: 1,
+                            type: "array",
+                        },
+                        symbols: {
+                            description: "Companies by ticker; a US ETF ticker for the types that take ETFs.",
+                            items: {
+                                description: "Company ticker symbol.",
+                                pattern: "^[A-Za-z][A-Za-z0-9.\\-/]{0,11}$",
+                                type: "string",
+                            },
+                            maxItems: 100,
+                            minItems: 1,
+                            type: "array",
+                        },
+                    },
+                    title: "InsiderSaleNoticeAlertConditionInput",
+                    type: "object",
+                },
+                destination_ids: {
+                    description: "Destination ids (≤ 10)",
+                    items: {
+                        maxLength: 64,
+                        type: "string",
+                    },
+                    maxItems: 10,
+                    type: "array",
+                },
+                external_user_id: {
+                    description: "Your end user's id (filters lists and events; 1–200 characters, not . or .., which no URL path can name)",
+                    maxLength: 200,
+                    type: "string",
+                },
+                metadata: {
+                    additionalProperties: true,
+                    description: "Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event",
+                    type: "object",
+                },
+                trigger: {
+                    additionalProperties: false,
+                    description: "max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.",
+                    properties: {
+                        activate_at: {
+                            description: "The alert is `scheduled` until then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                        active_window: {
+                            additionalProperties: false,
+                            description: "Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds.",
+                            properties: {
+                                active_duration_seconds: {
+                                    description: "Window length (every)",
+                                    maximum: 9007199254740991,
+                                    minimum: 60,
+                                    type: "integer",
+                                },
+                                anchor_at: {
+                                    description: "Start of the first window (every)",
+                                    format: "date-time",
+                                    pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                    type: "string",
+                                },
+                                days: {
+                                    description: "Weekdays of a weekly window.",
+                                    items: {
+                                        enum: [
+                                            "mo",
+                                            "tu",
+                                            "we",
+                                            "th",
+                                            "fr",
+                                            "sa",
+                                            "su",
+                                        ],
+                                        type: "string",
+                                    },
+                                    maxItems: 7,
+                                    minItems: 1,
+                                    type: "array",
+                                },
+                                from: {
+                                    description: "HH:MM (weekly) (HH:MM, 24 h)",
+                                    pattern: "^([01]\\d|2[0-3]):[0-5]\\d$",
+                                    type: "string",
+                                },
+                                interval: {
+                                    description: "Number of units between recurring windows.",
+                                    maximum: 1000000,
+                                    minimum: 1,
+                                    type: "integer",
+                                },
+                                timezone: {
+                                    description: "IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime.",
+                                    type: "string",
+                                },
+                                to: {
+                                    description: "HH:MM (weekly) (HH:MM, 24 h)",
+                                    pattern: "^([01]\\d|2[0-3]):[0-5]\\d$",
+                                    type: "string",
+                                },
+                                type: {
+                                    description: "Weekly hours or a recurring window.",
+                                    enum: [
+                                        "weekly",
+                                        "every",
+                                    ],
+                                    type: "string",
+                                },
+                                unit: {
+                                    description: "Unit of the schedule interval.",
+                                    enum: [
+                                        "hours",
+                                        "days",
+                                        "weeks",
+                                    ],
+                                    type: "string",
+                                },
+                            },
+                            required: [
+                                "type",
+                            ],
+                            type: "object",
+                        },
+                        cooldown_seconds: {
+                            description: "Minimum seconds between fires (at most 366 days)",
+                            maximum: 31622400,
+                            minimum: 0,
+                            type: "integer",
+                        },
+                        delete_on_expiry: {
+                            description: "Delete instead of `expired` (needs expires_at)",
+                            type: "boolean",
+                        },
+                        expires_at: {
+                            description: "The alert becomes `expired` then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                        max_fires: {
+                            description: "The alert becomes `triggered` after this many fires",
+                            maximum: 1000000,
+                            minimum: 1,
+                            type: "integer",
+                        },
+                        mode: {
+                            default: "every_time",
+                            description: "Repeat mode; once becomes triggered after the first fire (default every_time).",
+                            enum: [
+                                "once",
+                                "every_time",
+                            ],
+                            type: "string",
+                        },
+                        pause_until: {
+                            description: "No fires until then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                    },
+                    title: "InsiderSaleNoticeAlertTriggerInput",
+                    type: "object",
+                },
+                type: {
+                    enum: [
+                        "insider_sale_notice",
+                    ],
+                    type: "string",
+                },
+            },
+            required: [
+                "type",
+                "condition",
+            ],
+            type: "object",
+        },
+        trigger: [
+            {
+                description: "Repeat mode; once becomes triggered after the first fire (default every_time).",
+                enum: [
+                    "once",
+                    "every_time",
+                ],
+                kind: "enum",
+                name: "mode",
+                required: false,
+            },
+            {
+                description: "Minimum seconds between fires (at most 366 days)",
+                kind: "integer",
+                max: 31622400,
+                min: 0,
+                name: "cooldown_seconds",
+                required: false,
+            },
+            {
+                description: "The alert becomes `triggered` after this many fires",
+                kind: "integer",
+                max: 1000000,
+                min: 1,
+                name: "max_fires",
+                required: false,
+            },
+            {
+                description: "The alert becomes `expired` then",
+                kind: "datetime",
+                name: "expires_at",
+                required: false,
+            },
+            {
+                description: "Delete instead of `expired` (needs expires_at)",
+                kind: "boolean",
+                name: "delete_on_expiry",
+                required: false,
+            },
+            {
+                description: "The alert is `scheduled` until then",
+                kind: "datetime",
+                name: "activate_at",
+                required: false,
+            },
+            {
+                description: "No fires until then",
+                kind: "datetime",
+                name: "pause_until",
+                required: false,
+            },
+            {
+                description: "Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds.",
+                kind: "json",
+                name: "active_window",
+                required: false,
+            },
+        ],
+    },
+    insider_trade: {
+        condition: [
+            {
+                description: "Companies by CIK.",
+                kind: "string-list",
+                maxItems: 100,
+                name: "ciks",
+                required: false,
+            },
+            {
+                description: "Companies by ticker; a US ETF ticker for the types that take ETFs.",
+                kind: "string-list",
+                maxItems: 100,
+                name: "symbols",
+                required: false,
+            },
+            {
+                description: "",
+                enum: [
+                    "buy",
+                    "sell",
+                ],
+                kind: "enum-list",
+                maxItems: 2,
+                name: "sides",
+                required: false,
+            },
+            {
+                description: "",
+                kind: "string-list",
+                maxItems: 50,
+                name: "codes",
+                required: false,
+            },
+            {
+                description: "",
+                enum: [
+                    "director",
+                    "officer",
+                    "ten_percent_owner",
+                ],
+                kind: "enum-list",
+                maxItems: 3,
+                name: "roles",
+                required: false,
+            },
+            {
+                description: "",
+                kind: "number",
+                min: 0,
+                name: "min_value_usd",
+                required: false,
+            },
+            {
+                description: "Include derivative transactions (default false).",
+                kind: "boolean",
+                name: "include_derivatives",
+                required: false,
+            },
+            {
+                description: "",
+                kind: "string-list",
+                maxItems: 100,
+                name: "owners",
+                required: false,
+            },
+        ],
+        example: {
+            condition: {
+                ciks: [
+                    "320193",
+                ],
+                include_derivatives: false,
+                min_value_usd: 1000,
+                sides: [
+                    "buy",
+                ],
+            },
+            type: "insider_trade",
+        },
+        firedDetails: [
+            {
+                description: "",
+                kind: "string",
+                name: "accession_number",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "form_type",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "json",
+                name: "transaction",
+                required: true,
+            },
+        ],
+        firedExample: {
+            alert: {
+                client_reference_id: "example-alert",
+                external_user_id: null,
+                id: "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+                metadata: {},
+                type: "insider_trade",
+            },
+            alert_type: "insider_trade",
+            event_id: "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+            fired_at: "2026-11-16T09:00:06.067Z",
+            reason: {
+                details: {
+                    accession_number: "0000320193-26-000001",
+                    form_type: "4",
+                    transaction: {
+                        acquiredDisposed: "A",
+                        code: "P",
+                        id: "trade:1",
+                        isDerivative: false,
+                        isDirector: false,
+                        isOfficer: true,
+                        isTenPercentOwner: false,
+                        ownerCik: "12345",
+                        ownerName: "Example Person",
+                        price: "12.5",
+                        shares: "100",
+                        value: "1250",
+                    },
+                },
+                summary: "A matching filing event.",
+            },
+            source: {
+                key: "insider:0000320193-26-000001:part:1",
+                kind: "insider.filed",
+            },
+            subject: {
+                cik: "320193",
+                symbol: null,
+            },
+        },
+        requestSchema: {
+            additionalProperties: false,
+            description: "insider_trade: see InsiderTradeAlertConditionInput for the condition and cross-field rules. US ETF subjects are refused; use a company subject.",
+            properties: {
+                client_reference_id: {
+                    description: "Your id; a second create with it returns the live alert",
+                    maxLength: 200,
+                    type: "string",
+                },
+                condition: {
+                    additionalProperties: false,
+                    description: "The insider_trade alert condition.",
+                    properties: {
+                        ciks: {
+                            description: "Companies by CIK.",
+                            items: {
+                                description: "Company CIK, 1–10 digits.",
+                                pattern: "^\\d{1,10}$",
+                                type: "string",
+                            },
+                            maxItems: 100,
+                            minItems: 1,
+                            type: "array",
+                        },
+                        codes: {
+                            items: {
+                                pattern: "^[A-Z]$",
+                                type: "string",
+                            },
+                            maxItems: 50,
+                            minItems: 1,
+                            type: "array",
+                        },
+                        include_derivatives: {
+                            default: false,
+                            description: "Include derivative transactions (default false).",
+                            type: "boolean",
+                        },
+                        min_value_usd: {
+                            minimum: 0,
+                            type: "number",
+                        },
+                        owners: {
+                            items: {
+                                description: "Company CIK, 1–10 digits.",
+                                pattern: "^\\d{1,10}$",
+                                type: "string",
+                            },
+                            maxItems: 100,
+                            minItems: 1,
+                            type: "array",
+                        },
+                        roles: {
+                            items: {
+                                enum: [
+                                    "director",
+                                    "officer",
+                                    "ten_percent_owner",
+                                ],
+                                type: "string",
+                            },
+                            maxItems: 3,
+                            minItems: 1,
+                            type: "array",
+                        },
+                        sides: {
+                            items: {
+                                enum: [
+                                    "buy",
+                                    "sell",
+                                ],
+                                type: "string",
+                            },
+                            maxItems: 2,
+                            minItems: 1,
+                            type: "array",
+                        },
+                        symbols: {
+                            description: "Companies by ticker; a US ETF ticker for the types that take ETFs.",
+                            items: {
+                                description: "Company ticker symbol.",
+                                pattern: "^[A-Za-z][A-Za-z0-9.\\-/]{0,11}$",
+                                type: "string",
+                            },
+                            maxItems: 100,
+                            minItems: 1,
+                            type: "array",
+                        },
+                    },
+                    title: "InsiderTradeAlertConditionInput",
+                    type: "object",
+                },
+                destination_ids: {
+                    description: "Destination ids (≤ 10)",
+                    items: {
+                        maxLength: 64,
+                        type: "string",
+                    },
+                    maxItems: 10,
+                    type: "array",
+                },
+                external_user_id: {
+                    description: "Your end user's id (filters lists and events; 1–200 characters, not . or .., which no URL path can name)",
+                    maxLength: 200,
+                    type: "string",
+                },
+                metadata: {
+                    additionalProperties: true,
+                    description: "Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event",
+                    type: "object",
+                },
+                trigger: {
+                    additionalProperties: false,
+                    description: "max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.",
+                    properties: {
+                        activate_at: {
+                            description: "The alert is `scheduled` until then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                        active_window: {
+                            additionalProperties: false,
+                            description: "Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds.",
+                            properties: {
+                                active_duration_seconds: {
+                                    description: "Window length (every)",
+                                    maximum: 9007199254740991,
+                                    minimum: 60,
+                                    type: "integer",
+                                },
+                                anchor_at: {
+                                    description: "Start of the first window (every)",
+                                    format: "date-time",
+                                    pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                    type: "string",
+                                },
+                                days: {
+                                    description: "Weekdays of a weekly window.",
+                                    items: {
+                                        enum: [
+                                            "mo",
+                                            "tu",
+                                            "we",
+                                            "th",
+                                            "fr",
+                                            "sa",
+                                            "su",
+                                        ],
+                                        type: "string",
+                                    },
+                                    maxItems: 7,
+                                    minItems: 1,
+                                    type: "array",
+                                },
+                                from: {
+                                    description: "HH:MM (weekly) (HH:MM, 24 h)",
+                                    pattern: "^([01]\\d|2[0-3]):[0-5]\\d$",
+                                    type: "string",
+                                },
+                                interval: {
+                                    description: "Number of units between recurring windows.",
+                                    maximum: 1000000,
+                                    minimum: 1,
+                                    type: "integer",
+                                },
+                                timezone: {
+                                    description: "IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime.",
+                                    type: "string",
+                                },
+                                to: {
+                                    description: "HH:MM (weekly) (HH:MM, 24 h)",
+                                    pattern: "^([01]\\d|2[0-3]):[0-5]\\d$",
+                                    type: "string",
+                                },
+                                type: {
+                                    description: "Weekly hours or a recurring window.",
+                                    enum: [
+                                        "weekly",
+                                        "every",
+                                    ],
+                                    type: "string",
+                                },
+                                unit: {
+                                    description: "Unit of the schedule interval.",
+                                    enum: [
+                                        "hours",
+                                        "days",
+                                        "weeks",
+                                    ],
+                                    type: "string",
+                                },
+                            },
+                            required: [
+                                "type",
+                            ],
+                            type: "object",
+                        },
+                        cooldown_seconds: {
+                            description: "Minimum seconds between fires (at most 366 days)",
+                            maximum: 31622400,
+                            minimum: 0,
+                            type: "integer",
+                        },
+                        delete_on_expiry: {
+                            description: "Delete instead of `expired` (needs expires_at)",
+                            type: "boolean",
+                        },
+                        expires_at: {
+                            description: "The alert becomes `expired` then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                        max_fires: {
+                            description: "The alert becomes `triggered` after this many fires",
+                            maximum: 1000000,
+                            minimum: 1,
+                            type: "integer",
+                        },
+                        mode: {
+                            default: "every_time",
+                            description: "Repeat mode; once becomes triggered after the first fire (default every_time).",
+                            enum: [
+                                "once",
+                                "every_time",
+                            ],
+                            type: "string",
+                        },
+                        pause_until: {
+                            description: "No fires until then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                    },
+                    title: "InsiderTradeAlertTriggerInput",
+                    type: "object",
+                },
+                type: {
+                    enum: [
+                        "insider_trade",
+                    ],
+                    type: "string",
+                },
+            },
+            required: [
+                "type",
+                "condition",
+            ],
+            type: "object",
+        },
+        trigger: [
+            {
+                description: "Repeat mode; once becomes triggered after the first fire (default every_time).",
+                enum: [
+                    "once",
+                    "every_time",
+                ],
+                kind: "enum",
+                name: "mode",
+                required: false,
+            },
+            {
+                description: "Minimum seconds between fires (at most 366 days)",
+                kind: "integer",
+                max: 31622400,
+                min: 0,
+                name: "cooldown_seconds",
+                required: false,
+            },
+            {
+                description: "The alert becomes `triggered` after this many fires",
+                kind: "integer",
+                max: 1000000,
+                min: 1,
+                name: "max_fires",
+                required: false,
+            },
+            {
+                description: "The alert becomes `expired` then",
+                kind: "datetime",
+                name: "expires_at",
+                required: false,
+            },
+            {
+                description: "Delete instead of `expired` (needs expires_at)",
+                kind: "boolean",
+                name: "delete_on_expiry",
+                required: false,
+            },
+            {
+                description: "The alert is `scheduled` until then",
+                kind: "datetime",
+                name: "activate_at",
+                required: false,
+            },
+            {
+                description: "No fires until then",
+                kind: "datetime",
+                name: "pause_until",
+                required: false,
+            },
+            {
+                description: "Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds.",
+                kind: "json",
+                name: "active_window",
+                required: false,
+            },
+        ],
+    },
+    ipo_stage: {
+        condition: [
+            {
+                description: "Companies by CIK.",
+                kind: "string-list",
+                maxItems: 100,
+                name: "ciks",
+                required: false,
+            },
+            {
+                description: "Companies by ticker; a US ETF ticker for the types that take ETFs.",
+                kind: "string-list",
+                maxItems: 100,
+                name: "symbols",
+                required: false,
+            },
+            {
+                description: "",
+                enum: [
+                    "draft",
+                    "registered",
+                    "price_range",
+                    "exchange_approved",
+                    "effective",
+                    "priced",
+                    "withdrawn",
+                ],
+                kind: "enum-list",
+                maxItems: 7,
+                name: "stages",
+                required: false,
+            },
+            {
+                description: "",
+                kind: "boolean",
+                name: "is_spac",
+                required: false,
+            },
+        ],
+        example: {
+            condition: {
+                stages: [
+                    "registered",
+                ],
+            },
+            type: "ipo_stage",
+        },
+        firedDetails: [
+            {
+                description: "",
+                kind: "string",
+                name: "track_key",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "transition_id",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "previous_stage",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "stage",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "json",
+                name: "proposed_symbols",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "boolean",
+                name: "is_spac",
+                required: true,
+            },
+            {
+                description: "",
+                kind: "string",
+                name: "issuer_name",
+                required: true,
+            },
+        ],
+        firedExample: {
+            alert: {
+                client_reference_id: "example-alert",
+                external_user_id: null,
+                id: "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+                metadata: {},
+                type: "ipo_stage",
+            },
+            alert_type: "ipo_stage",
+            event_id: "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+            fired_at: "2026-11-16T09:00:06.067Z",
+            reason: {
+                details: {
+                    is_spac: null,
+                    issuer_name: "Issuer",
+                    previous_stage: null,
+                    proposed_symbols: [
+                        {
+                            exchange: "Nasdaq",
+                            ipo_calendar_match: false,
+                            security_class: "common",
+                            source: "regex",
+                            symbol: "NEWIPO",
+                        },
+                    ],
+                    stage: "registered",
+                    track_key: "333-1",
+                    transition_id: "00000000000000000000000000000000",
+                },
+                summary: "A matching filing event.",
+            },
+            source: {
+                key: "ipo:1:333-1:registered:00000000000000000000000000000000",
+                kind: "ipo.stage",
+            },
+            subject: {
+                cik: "1",
+                symbol: null,
+            },
+        },
+        requestSchema: {
+            additionalProperties: false,
+            description: "ipo_stage: see IpoStageAlertConditionInput for the condition and cross-field rules. US ETF subjects are refused; use a company subject.",
+            properties: {
+                client_reference_id: {
+                    description: "Your id; a second create with it returns the live alert",
+                    maxLength: 200,
+                    type: "string",
+                },
+                condition: {
+                    additionalProperties: false,
+                    description: "The ipo_stage alert condition.",
+                    properties: {
+                        ciks: {
+                            description: "Companies by CIK.",
+                            items: {
+                                description: "Company CIK, 1–10 digits.",
+                                pattern: "^\\d{1,10}$",
+                                type: "string",
+                            },
+                            maxItems: 100,
+                            minItems: 1,
+                            type: "array",
+                        },
+                        is_spac: {
+                            type: "boolean",
+                        },
+                        stages: {
+                            items: {
+                                enum: [
+                                    "draft",
+                                    "registered",
+                                    "price_range",
+                                    "exchange_approved",
+                                    "effective",
+                                    "priced",
+                                    "withdrawn",
+                                ],
+                                type: "string",
+                            },
+                            maxItems: 7,
+                            minItems: 1,
+                            type: "array",
+                        },
+                        symbols: {
+                            description: "Companies by ticker; a US ETF ticker for the types that take ETFs.",
+                            items: {
+                                description: "Company ticker symbol.",
+                                pattern: "^[A-Za-z][A-Za-z0-9.\\-/]{0,11}$",
+                                type: "string",
+                            },
+                            maxItems: 100,
+                            minItems: 1,
+                            type: "array",
+                        },
+                    },
+                    title: "IpoStageAlertConditionInput",
+                    type: "object",
+                },
+                destination_ids: {
+                    description: "Destination ids (≤ 10)",
+                    items: {
+                        maxLength: 64,
+                        type: "string",
+                    },
+                    maxItems: 10,
+                    type: "array",
+                },
+                external_user_id: {
+                    description: "Your end user's id (filters lists and events; 1–200 characters, not . or .., which no URL path can name)",
+                    maxLength: 200,
+                    type: "string",
+                },
+                metadata: {
+                    additionalProperties: true,
+                    description: "Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event",
+                    type: "object",
+                },
+                trigger: {
+                    additionalProperties: false,
+                    description: "max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.",
+                    properties: {
+                        activate_at: {
+                            description: "The alert is `scheduled` until then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                        active_window: {
+                            additionalProperties: false,
+                            description: "Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds.",
+                            properties: {
+                                active_duration_seconds: {
+                                    description: "Window length (every)",
+                                    maximum: 9007199254740991,
+                                    minimum: 60,
+                                    type: "integer",
+                                },
+                                anchor_at: {
+                                    description: "Start of the first window (every)",
+                                    format: "date-time",
+                                    pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                                    type: "string",
+                                },
+                                days: {
+                                    description: "Weekdays of a weekly window.",
+                                    items: {
+                                        enum: [
+                                            "mo",
+                                            "tu",
+                                            "we",
+                                            "th",
+                                            "fr",
+                                            "sa",
+                                            "su",
+                                        ],
+                                        type: "string",
+                                    },
+                                    maxItems: 7,
+                                    minItems: 1,
+                                    type: "array",
+                                },
+                                from: {
+                                    description: "HH:MM (weekly) (HH:MM, 24 h)",
+                                    pattern: "^([01]\\d|2[0-3]):[0-5]\\d$",
+                                    type: "string",
+                                },
+                                interval: {
+                                    description: "Number of units between recurring windows.",
+                                    maximum: 1000000,
+                                    minimum: 1,
+                                    type: "integer",
+                                },
+                                timezone: {
+                                    description: "IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime.",
+                                    type: "string",
+                                },
+                                to: {
+                                    description: "HH:MM (weekly) (HH:MM, 24 h)",
+                                    pattern: "^([01]\\d|2[0-3]):[0-5]\\d$",
+                                    type: "string",
+                                },
+                                type: {
+                                    description: "Weekly hours or a recurring window.",
+                                    enum: [
+                                        "weekly",
+                                        "every",
+                                    ],
+                                    type: "string",
+                                },
+                                unit: {
+                                    description: "Unit of the schedule interval.",
+                                    enum: [
+                                        "hours",
+                                        "days",
+                                        "weeks",
+                                    ],
+                                    type: "string",
+                                },
+                            },
+                            required: [
+                                "type",
+                            ],
+                            type: "object",
+                        },
+                        cooldown_seconds: {
+                            description: "Minimum seconds between fires (at most 366 days)",
+                            maximum: 31622400,
+                            minimum: 0,
+                            type: "integer",
+                        },
+                        delete_on_expiry: {
+                            description: "Delete instead of `expired` (needs expires_at)",
+                            type: "boolean",
+                        },
+                        expires_at: {
+                            description: "The alert becomes `expired` then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                        max_fires: {
+                            description: "The alert becomes `triggered` after this many fires",
+                            maximum: 1000000,
+                            minimum: 1,
+                            type: "integer",
+                        },
+                        mode: {
+                            default: "every_time",
+                            description: "Repeat mode; once becomes triggered after the first fire (default every_time).",
+                            enum: [
+                                "once",
+                                "every_time",
+                            ],
+                            type: "string",
+                        },
+                        pause_until: {
+                            description: "No fires until then",
+                            format: "date-time",
+                            pattern: "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                            type: "string",
+                        },
+                    },
+                    title: "IpoStageAlertTriggerInput",
+                    type: "object",
+                },
+                type: {
+                    enum: [
+                        "ipo_stage",
+                    ],
+                    type: "string",
+                },
+            },
+            required: [
+                "type",
+                "condition",
+            ],
+            type: "object",
+        },
+        trigger: [
+            {
+                description: "Repeat mode; once becomes triggered after the first fire (default every_time).",
+                enum: [
+                    "once",
+                    "every_time",
+                ],
+                kind: "enum",
+                name: "mode",
+                required: false,
+            },
+            {
+                description: "Minimum seconds between fires (at most 366 days)",
+                kind: "integer",
+                max: 31622400,
+                min: 0,
+                name: "cooldown_seconds",
+                required: false,
+            },
+            {
+                description: "The alert becomes `triggered` after this many fires",
+                kind: "integer",
+                max: 1000000,
+                min: 1,
+                name: "max_fires",
+                required: false,
+            },
+            {
+                description: "The alert becomes `expired` then",
+                kind: "datetime",
+                name: "expires_at",
+                required: false,
+            },
+            {
+                description: "Delete instead of `expired` (needs expires_at)",
+                kind: "boolean",
+                name: "delete_on_expiry",
+                required: false,
+            },
+            {
+                description: "The alert is `scheduled` until then",
+                kind: "datetime",
+                name: "activate_at",
+                required: false,
+            },
+            {
+                description: "No fires until then",
+                kind: "datetime",
+                name: "pause_until",
+                required: false,
+            },
+            {
+                description: "Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds.",
+                kind: "json",
+                name: "active_window",
                 required: false,
             },
         ],
@@ -17722,6 +19934,7 @@ export const PLAN_ORDER = ["free", "lite", "standard", "pro", "enterprise"] as c
 
 /** The webhook payloads of `x-webhooks` in the spec's order (`scripts/webhooks.mjs`). */
 const SHARED_WEBHOOK_2 = {
+    beneficial_ownership: "#/components/schemas/BeneficialOwnershipAlertFiredData",
     dividend: "#/components/schemas/DividendAlertFiredData",
     earnings_call: "#/components/schemas/EarningsCallAlertFiredData",
     earnings_call_keyword: "#/components/schemas/EarningsCallKeywordAlertFiredData",
@@ -17731,7 +19944,11 @@ const SHARED_WEBHOOK_2 = {
     filing_keyword: "#/components/schemas/FilingKeywordAlertFiredData",
     fundamental_metric: "#/components/schemas/FundamentalMetricAlertFiredData",
     halt: "#/components/schemas/HaltAlertFiredData",
+    holder_change: "#/components/schemas/HolderChangeAlertFiredData",
     indicator: "#/components/schemas/IndicatorAlertFiredData",
+    insider_sale_notice: "#/components/schemas/InsiderSaleNoticeAlertFiredData",
+    insider_trade: "#/components/schemas/InsiderTradeAlertFiredData",
+    ipo_stage: "#/components/schemas/IpoStageAlertFiredData",
     macro: "#/components/schemas/MacroAlertFiredData",
     news: "#/components/schemas/NewsAlertFiredData",
     news_keyword: "#/components/schemas/NewsKeywordAlertFiredData",
@@ -17780,6 +19997,11 @@ const SHARED_WEBHOOK_6 = [
                 "indicator",
                 "script",
                 "macro",
+                "insider_trade",
+                "holder_change",
+                "ipo_stage",
+                "beneficial_ownership",
+                "insider_sale_notice",
             ],
             type: "string",
         },
@@ -17857,6 +20079,11 @@ const SHARED_WEBHOOK_3 = [
                 "indicator",
                 "script",
                 "macro",
+                "insider_trade",
+                "holder_change",
+                "ipo_stage",
+                "beneficial_ownership",
+                "insider_sale_notice",
             ],
             type: "string",
         },
@@ -18019,6 +20246,11 @@ const SHARED_WEBHOOK_14 = [
                 "indicator",
                 "script",
                 "macro",
+                "insider_trade",
+                "holder_change",
+                "ipo_stage",
+                "beneficial_ownership",
+                "insider_sale_notice",
             ],
             type: "string",
         },
@@ -23468,6 +25700,1456 @@ const SHARED_WEBHOOK_198 = {
     value: "macro",
 };
 
+const SHARED_WEBHOOK_220 = {
+    alert: {
+        client_reference_id: "example-alert",
+        external_user_id: null,
+        id: "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+        metadata: {},
+        type: "insider_trade",
+    },
+    alert_type: "insider_trade",
+    event_id: "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+    fired_at: "2026-11-16T09:00:06.067Z",
+    reason: {
+        details: {
+            accession_number: "0000320193-26-000001",
+            form_type: "4",
+            transaction: {
+                acquiredDisposed: "A",
+                code: "P",
+                id: "trade:1",
+                isDerivative: false,
+                isDirector: false,
+                isOfficer: true,
+                isTenPercentOwner: false,
+                ownerCik: "12345",
+                ownerName: "Example Person",
+                price: "12.5",
+                shares: "100",
+                value: "1250",
+            },
+        },
+        summary: "A matching filing event.",
+    },
+    source: {
+        key: "insider:0000320193-26-000001:part:1",
+        kind: "insider.filed",
+    },
+    subject: {
+        cik: "320193",
+        symbol: null,
+    },
+};
+
+const SHARED_WEBHOOK_230 = [
+    {
+        name: "id",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "ownerCik",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "ownerName",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "isDirector",
+        required: true,
+        schema: {
+            type: "boolean",
+        },
+    },
+    {
+        name: "isOfficer",
+        required: true,
+        schema: {
+            type: "boolean",
+        },
+    },
+    {
+        name: "isTenPercentOwner",
+        required: true,
+        schema: {
+            type: "boolean",
+        },
+    },
+    {
+        name: "code",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "acquiredDisposed",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "shares",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "price",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "value",
+        required: false,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "isDerivative",
+        required: true,
+        schema: {
+            type: "boolean",
+        },
+    },
+];
+
+const SHARED_WEBHOOK_229 = {
+    additionalProperties: false,
+    fields: SHARED_WEBHOOK_230,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_228 = {
+    name: "transaction",
+    required: true,
+    schema: SHARED_WEBHOOK_229,
+};
+
+const SHARED_WEBHOOK_227 = [
+    {
+        name: "accession_number",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "form_type",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_228,
+];
+
+const SHARED_WEBHOOK_226 = {
+    additionalProperties: false,
+    description: "Facts emitted by insider_trade alerts, including historical optional fields.",
+    fields: SHARED_WEBHOOK_227,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_225 = {
+    name: "details",
+    required: true,
+    schema: SHARED_WEBHOOK_226,
+};
+
+const SHARED_WEBHOOK_224 = [
+    {
+        name: "summary",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_225,
+];
+
+const SHARED_WEBHOOK_223 = {
+    additionalProperties: false,
+    fields: SHARED_WEBHOOK_224,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_222 = {
+    name: "reason",
+    required: true,
+    schema: SHARED_WEBHOOK_223,
+};
+
+const SHARED_WEBHOOK_221 = [
+    {
+        name: "event_id",
+        required: true,
+        schema: {
+            description: "Account event id; deduplicate on this value.",
+            type: "string",
+        },
+    },
+    {
+        name: "alert_type",
+        required: true,
+        schema: {
+            enum: [
+                "insider_trade",
+            ],
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_12,
+    {
+        name: "fired_at",
+        required: true,
+        schema: {
+            format: "date-time",
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_222,
+    {
+        name: "source",
+        required: false,
+        schema: {
+            additionalProperties: false,
+            fields: [
+                {
+                    name: "kind",
+                    required: true,
+                    schema: {
+                        description: "Source event kind.",
+                        type: "string",
+                    },
+                },
+                {
+                    name: "key",
+                    required: true,
+                    schema: {
+                        description: "Stable upstream deduplication key.",
+                        type: "string",
+                    },
+                },
+            ],
+            type: "object",
+        },
+    },
+    {
+        name: "suppressed_since_last",
+        required: false,
+        schema: {
+            description: "Fires suppressed since the prior delivered fire.",
+            minimum: 1,
+            type: "integer",
+        },
+    },
+    {
+        name: "delivery_skipped",
+        required: false,
+        schema: {
+            enum: [
+                "fire_cap",
+                "alert_user_fire_cap",
+            ],
+            type: "string",
+        },
+    },
+    {
+        name: "test",
+        required: false,
+        schema: {
+            description: "Synthetic test delivery with representative example facts.",
+            enum: [
+                true,
+            ],
+            type: "boolean",
+        },
+    },
+    SHARED_WEBHOOK_21,
+];
+
+const SHARED_WEBHOOK_219 = {
+    additionalProperties: false,
+    description: "A insider_trade fire: its reason details follow InsiderTradeFireDetails. Synthetic tests use representative example facts.",
+    example: SHARED_WEBHOOK_220,
+    fields: SHARED_WEBHOOK_221,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_218 = {
+    schema: SHARED_WEBHOOK_219,
+    value: "insider_trade",
+};
+
+const SHARED_WEBHOOK_234 = {
+    details: {
+        accession_number: "0000001004-26-000010",
+        current_snapshot_id: "11111111-1111-5111-8111-111111111111",
+        manager_cik: "1004",
+        manager_name: "MANAGER 1004",
+        period_end: "2026-06-30",
+        position: {
+            cik: "320193",
+            currentShares: "90",
+            currentValueUsd: "900",
+            cusip: "037833100",
+            kind: "increased",
+            positionKey: "037833100|position|SH",
+            priorShares: "80",
+            priorValueUsd: "800",
+            symbol: "AAPL",
+        },
+        prior_period_end: "2026-03-31",
+        prior_snapshot_id: "22222222-2222-5222-8222-222222222222",
+    },
+    summary: "A matching filing event.",
+};
+
+const SHARED_WEBHOOK_233 = {
+    alert: {
+        client_reference_id: "example-alert",
+        external_user_id: null,
+        id: "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+        metadata: {},
+        type: "holder_change",
+    },
+    alert_type: "holder_change",
+    event_id: "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+    fired_at: "2026-11-16T09:00:06.067Z",
+    reason: SHARED_WEBHOOK_234,
+    source: {
+        key: "holders:1004:2026-06-30:0000001004-26-000010:1",
+        kind: "holders.changed",
+    },
+    subject: {
+        cik: "320193",
+        symbol: "AAPL",
+    },
+};
+
+const SHARED_WEBHOOK_244 = [
+    {
+        name: "positionKey",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "cusip",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "cik",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "symbol",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "kind",
+        required: true,
+        schema: {
+            enum: [
+                "new",
+                "increased",
+                "decreased",
+                "sold_out",
+            ],
+            type: "string",
+        },
+    },
+    {
+        name: "currentShares",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "priorShares",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "currentValueUsd",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "priorValueUsd",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+];
+
+const SHARED_WEBHOOK_243 = {
+    additionalProperties: false,
+    fields: SHARED_WEBHOOK_244,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_242 = {
+    name: "position",
+    required: true,
+    schema: SHARED_WEBHOOK_243,
+};
+
+const SHARED_WEBHOOK_241 = [
+    {
+        name: "accession_number",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "manager_cik",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "manager_name",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "period_end",
+        required: true,
+        schema: {
+            description: "Current holding period end.",
+            format: "date",
+            type: "string",
+        },
+    },
+    {
+        name: "prior_period_end",
+        required: true,
+        schema: {
+            description: "Current holding period end.",
+            format: "date",
+            type: "string",
+        },
+    },
+    {
+        name: "current_snapshot_id",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "prior_snapshot_id",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_242,
+];
+
+const SHARED_WEBHOOK_240 = {
+    additionalProperties: false,
+    description: "Facts emitted by holder_change alerts, including historical optional fields.",
+    fields: SHARED_WEBHOOK_241,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_239 = {
+    name: "details",
+    required: true,
+    schema: SHARED_WEBHOOK_240,
+};
+
+const SHARED_WEBHOOK_238 = [
+    {
+        name: "summary",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_239,
+];
+
+const SHARED_WEBHOOK_237 = {
+    additionalProperties: false,
+    fields: SHARED_WEBHOOK_238,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_236 = {
+    name: "reason",
+    required: true,
+    schema: SHARED_WEBHOOK_237,
+};
+
+const SHARED_WEBHOOK_235 = [
+    {
+        name: "event_id",
+        required: true,
+        schema: {
+            description: "Account event id; deduplicate on this value.",
+            type: "string",
+        },
+    },
+    {
+        name: "alert_type",
+        required: true,
+        schema: {
+            enum: [
+                "holder_change",
+            ],
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_12,
+    {
+        name: "fired_at",
+        required: true,
+        schema: {
+            format: "date-time",
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_236,
+    {
+        name: "source",
+        required: false,
+        schema: {
+            additionalProperties: false,
+            fields: [
+                {
+                    name: "kind",
+                    required: true,
+                    schema: {
+                        description: "Source event kind.",
+                        type: "string",
+                    },
+                },
+                {
+                    name: "key",
+                    required: true,
+                    schema: {
+                        description: "Stable upstream deduplication key.",
+                        type: "string",
+                    },
+                },
+            ],
+            type: "object",
+        },
+    },
+    {
+        name: "suppressed_since_last",
+        required: false,
+        schema: {
+            description: "Fires suppressed since the prior delivered fire.",
+            minimum: 1,
+            type: "integer",
+        },
+    },
+    {
+        name: "delivery_skipped",
+        required: false,
+        schema: {
+            enum: [
+                "fire_cap",
+                "alert_user_fire_cap",
+            ],
+            type: "string",
+        },
+    },
+    {
+        name: "test",
+        required: false,
+        schema: {
+            description: "Synthetic test delivery with representative example facts.",
+            enum: [
+                true,
+            ],
+            type: "boolean",
+        },
+    },
+    SHARED_WEBHOOK_21,
+];
+
+const SHARED_WEBHOOK_232 = {
+    additionalProperties: false,
+    description: "A holder_change fire: its reason details follow HolderChangeFireDetails. Synthetic tests use representative example facts.",
+    example: SHARED_WEBHOOK_233,
+    fields: SHARED_WEBHOOK_235,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_231 = {
+    schema: SHARED_WEBHOOK_232,
+    value: "holder_change",
+};
+
+const SHARED_WEBHOOK_247 = {
+    alert: {
+        client_reference_id: "example-alert",
+        external_user_id: null,
+        id: "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+        metadata: {},
+        type: "ipo_stage",
+    },
+    alert_type: "ipo_stage",
+    event_id: "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+    fired_at: "2026-11-16T09:00:06.067Z",
+    reason: {
+        details: {
+            is_spac: null,
+            issuer_name: "Issuer",
+            previous_stage: null,
+            proposed_symbols: [
+                {
+                    exchange: "Nasdaq",
+                    ipo_calendar_match: false,
+                    security_class: "common",
+                    source: "regex",
+                    symbol: "NEWIPO",
+                },
+            ],
+            stage: "registered",
+            track_key: "333-1",
+            transition_id: "00000000000000000000000000000000",
+        },
+        summary: "A matching filing event.",
+    },
+    source: {
+        key: "ipo:1:333-1:registered:00000000000000000000000000000000",
+        kind: "ipo.stage",
+    },
+    subject: {
+        cik: "1",
+        symbol: null,
+    },
+};
+
+const SHARED_WEBHOOK_254 = [
+    {
+        name: "track_key",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "transition_id",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "previous_stage",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "stage",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "proposed_symbols",
+        required: true,
+        schema: {
+            items: {
+                additionalProperties: false,
+                fields: [
+                    {
+                        name: "symbol",
+                        required: true,
+                        schema: {
+                            type: "string",
+                        },
+                    },
+                    {
+                        name: "exchange",
+                        required: true,
+                        schema: {
+                            nullable: true,
+                            type: "string",
+                        },
+                    },
+                    {
+                        name: "security_class",
+                        required: true,
+                        schema: {
+                            type: "string",
+                        },
+                    },
+                    {
+                        name: "source",
+                        required: true,
+                        schema: {
+                            type: "string",
+                        },
+                    },
+                    {
+                        name: "ipo_calendar_match",
+                        required: true,
+                        schema: {
+                            type: "boolean",
+                        },
+                    },
+                ],
+                type: "object",
+            },
+            type: "array",
+        },
+    },
+    {
+        name: "is_spac",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "boolean",
+        },
+    },
+    {
+        name: "issuer_name",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+];
+
+const SHARED_WEBHOOK_253 = {
+    additionalProperties: false,
+    description: "Facts emitted by ipo_stage alerts, including historical optional fields.",
+    fields: SHARED_WEBHOOK_254,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_252 = {
+    name: "details",
+    required: true,
+    schema: SHARED_WEBHOOK_253,
+};
+
+const SHARED_WEBHOOK_251 = [
+    {
+        name: "summary",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_252,
+];
+
+const SHARED_WEBHOOK_250 = {
+    additionalProperties: false,
+    fields: SHARED_WEBHOOK_251,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_249 = {
+    name: "reason",
+    required: true,
+    schema: SHARED_WEBHOOK_250,
+};
+
+const SHARED_WEBHOOK_248 = [
+    {
+        name: "event_id",
+        required: true,
+        schema: {
+            description: "Account event id; deduplicate on this value.",
+            type: "string",
+        },
+    },
+    {
+        name: "alert_type",
+        required: true,
+        schema: {
+            enum: [
+                "ipo_stage",
+            ],
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_12,
+    {
+        name: "fired_at",
+        required: true,
+        schema: {
+            format: "date-time",
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_249,
+    {
+        name: "source",
+        required: false,
+        schema: {
+            additionalProperties: false,
+            fields: [
+                {
+                    name: "kind",
+                    required: true,
+                    schema: {
+                        description: "Source event kind.",
+                        type: "string",
+                    },
+                },
+                {
+                    name: "key",
+                    required: true,
+                    schema: {
+                        description: "Stable upstream deduplication key.",
+                        type: "string",
+                    },
+                },
+            ],
+            type: "object",
+        },
+    },
+    {
+        name: "suppressed_since_last",
+        required: false,
+        schema: {
+            description: "Fires suppressed since the prior delivered fire.",
+            minimum: 1,
+            type: "integer",
+        },
+    },
+    {
+        name: "delivery_skipped",
+        required: false,
+        schema: {
+            enum: [
+                "fire_cap",
+                "alert_user_fire_cap",
+            ],
+            type: "string",
+        },
+    },
+    {
+        name: "test",
+        required: false,
+        schema: {
+            description: "Synthetic test delivery with representative example facts.",
+            enum: [
+                true,
+            ],
+            type: "boolean",
+        },
+    },
+    SHARED_WEBHOOK_21,
+];
+
+const SHARED_WEBHOOK_246 = {
+    additionalProperties: false,
+    description: "A ipo_stage fire: its reason details follow IpoStageFireDetails. Synthetic tests use representative example facts.",
+    example: SHARED_WEBHOOK_247,
+    fields: SHARED_WEBHOOK_248,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_245 = {
+    schema: SHARED_WEBHOOK_246,
+    value: "ipo_stage",
+};
+
+const SHARED_WEBHOOK_257 = {
+    alert: {
+        client_reference_id: "example-alert",
+        external_user_id: null,
+        id: "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+        metadata: {},
+        type: "beneficial_ownership",
+    },
+    alert_type: "beneficial_ownership",
+    event_id: "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+    fired_at: "2026-11-16T09:00:06.067Z",
+    reason: {
+        details: {
+            accession_number: "0000320193-26-000001",
+            holder: {
+                aggregateAmount: "100000",
+                filerCik: null,
+                filerName: "Example Fund",
+                ordinal: 1,
+                percentOfClass: "5.5",
+                previousAggregateAmount: null,
+                previousPercentOfClass: null,
+            },
+            is_amendment: true,
+            schedule: "13G",
+            supersedes_accession: null,
+        },
+        summary: "A matching filing event.",
+    },
+    source: {
+        key: "ownership:0000320193-26-000001:part:1",
+        kind: "ownership.filed",
+    },
+    subject: {
+        cik: "320193",
+        symbol: null,
+    },
+};
+
+const SHARED_WEBHOOK_267 = [
+    {
+        name: "ordinal",
+        required: true,
+        schema: {
+            maximum: 9007199254740991,
+            minimum: 1,
+            type: "integer",
+        },
+    },
+    {
+        name: "filerCik",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "filerName",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "percentOfClass",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "aggregateAmount",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "previousPercentOfClass",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "previousAggregateAmount",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+];
+
+const SHARED_WEBHOOK_266 = {
+    additionalProperties: false,
+    fields: SHARED_WEBHOOK_267,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_265 = {
+    name: "holder",
+    required: true,
+    schema: SHARED_WEBHOOK_266,
+};
+
+const SHARED_WEBHOOK_264 = [
+    {
+        name: "accession_number",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "schedule",
+        required: true,
+        schema: {
+            enum: [
+                "13D",
+                "13G",
+            ],
+            type: "string",
+        },
+    },
+    {
+        name: "is_amendment",
+        required: true,
+        schema: {
+            type: "boolean",
+        },
+    },
+    {
+        name: "supersedes_accession",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_265,
+];
+
+const SHARED_WEBHOOK_263 = {
+    additionalProperties: false,
+    description: "Facts emitted by beneficial_ownership alerts, including historical optional fields.",
+    fields: SHARED_WEBHOOK_264,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_262 = {
+    name: "details",
+    required: true,
+    schema: SHARED_WEBHOOK_263,
+};
+
+const SHARED_WEBHOOK_261 = [
+    {
+        name: "summary",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_262,
+];
+
+const SHARED_WEBHOOK_260 = {
+    additionalProperties: false,
+    fields: SHARED_WEBHOOK_261,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_259 = {
+    name: "reason",
+    required: true,
+    schema: SHARED_WEBHOOK_260,
+};
+
+const SHARED_WEBHOOK_258 = [
+    {
+        name: "event_id",
+        required: true,
+        schema: {
+            description: "Account event id; deduplicate on this value.",
+            type: "string",
+        },
+    },
+    {
+        name: "alert_type",
+        required: true,
+        schema: {
+            enum: [
+                "beneficial_ownership",
+            ],
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_12,
+    {
+        name: "fired_at",
+        required: true,
+        schema: {
+            format: "date-time",
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_259,
+    {
+        name: "source",
+        required: false,
+        schema: {
+            additionalProperties: false,
+            fields: [
+                {
+                    name: "kind",
+                    required: true,
+                    schema: {
+                        description: "Source event kind.",
+                        type: "string",
+                    },
+                },
+                {
+                    name: "key",
+                    required: true,
+                    schema: {
+                        description: "Stable upstream deduplication key.",
+                        type: "string",
+                    },
+                },
+            ],
+            type: "object",
+        },
+    },
+    {
+        name: "suppressed_since_last",
+        required: false,
+        schema: {
+            description: "Fires suppressed since the prior delivered fire.",
+            minimum: 1,
+            type: "integer",
+        },
+    },
+    {
+        name: "delivery_skipped",
+        required: false,
+        schema: {
+            enum: [
+                "fire_cap",
+                "alert_user_fire_cap",
+            ],
+            type: "string",
+        },
+    },
+    {
+        name: "test",
+        required: false,
+        schema: {
+            description: "Synthetic test delivery with representative example facts.",
+            enum: [
+                true,
+            ],
+            type: "boolean",
+        },
+    },
+    SHARED_WEBHOOK_21,
+];
+
+const SHARED_WEBHOOK_256 = {
+    additionalProperties: false,
+    description: "A beneficial_ownership fire: its reason details follow BeneficialOwnershipFireDetails. Synthetic tests use representative example facts.",
+    example: SHARED_WEBHOOK_257,
+    fields: SHARED_WEBHOOK_258,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_255 = {
+    schema: SHARED_WEBHOOK_256,
+    value: "beneficial_ownership",
+};
+
+const SHARED_WEBHOOK_270 = {
+    alert: {
+        client_reference_id: "example-alert",
+        external_user_id: null,
+        id: "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+        metadata: {},
+        type: "insider_sale_notice",
+    },
+    alert_type: "insider_sale_notice",
+    event_id: "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+    fired_at: "2026-11-16T09:00:06.067Z",
+    reason: {
+        details: {
+            accession_number: "0000320193-26-000001",
+            approximate_sale_date: "2026-12-01",
+            is_amendment: true,
+            market_value_usd: "1250",
+            relationships: [
+                "Officer",
+            ],
+            replaces_accession: "0000320193-26-000000",
+            seller_cik: null,
+            seller_name: "Example Person",
+            shares_to_sell: "100",
+        },
+        summary: "A matching filing event.",
+    },
+    source: {
+        key: "sale_notice:0000320193-26-000001",
+        kind: "sale_notice.filed",
+    },
+    subject: {
+        cik: "320193",
+        symbol: null,
+    },
+};
+
+const SHARED_WEBHOOK_277 = [
+    {
+        name: "accession_number",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    {
+        name: "is_amendment",
+        required: true,
+        schema: {
+            type: "boolean",
+        },
+    },
+    {
+        name: "seller_cik",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "seller_name",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "relationships",
+        required: true,
+        schema: {
+            items: {
+                type: "string",
+            },
+            nullable: true,
+            type: "array",
+        },
+    },
+    {
+        name: "shares_to_sell",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "market_value_usd",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "approximate_sale_date",
+        required: true,
+        schema: {
+            description: "Common proposed sale date when the lines agree.",
+            format: "date",
+            nullable: true,
+            type: "string",
+        },
+    },
+    {
+        name: "replaces_accession",
+        required: true,
+        schema: {
+            nullable: true,
+            type: "string",
+        },
+    },
+];
+
+const SHARED_WEBHOOK_276 = {
+    additionalProperties: false,
+    description: "Facts emitted by insider_sale_notice alerts, including historical optional fields.",
+    fields: SHARED_WEBHOOK_277,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_275 = {
+    name: "details",
+    required: true,
+    schema: SHARED_WEBHOOK_276,
+};
+
+const SHARED_WEBHOOK_274 = [
+    {
+        name: "summary",
+        required: true,
+        schema: {
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_275,
+];
+
+const SHARED_WEBHOOK_273 = {
+    additionalProperties: false,
+    fields: SHARED_WEBHOOK_274,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_272 = {
+    name: "reason",
+    required: true,
+    schema: SHARED_WEBHOOK_273,
+};
+
+const SHARED_WEBHOOK_271 = [
+    {
+        name: "event_id",
+        required: true,
+        schema: {
+            description: "Account event id; deduplicate on this value.",
+            type: "string",
+        },
+    },
+    {
+        name: "alert_type",
+        required: true,
+        schema: {
+            enum: [
+                "insider_sale_notice",
+            ],
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_12,
+    {
+        name: "fired_at",
+        required: true,
+        schema: {
+            format: "date-time",
+            type: "string",
+        },
+    },
+    SHARED_WEBHOOK_272,
+    {
+        name: "source",
+        required: false,
+        schema: {
+            additionalProperties: false,
+            fields: [
+                {
+                    name: "kind",
+                    required: true,
+                    schema: {
+                        description: "Source event kind.",
+                        type: "string",
+                    },
+                },
+                {
+                    name: "key",
+                    required: true,
+                    schema: {
+                        description: "Stable upstream deduplication key.",
+                        type: "string",
+                    },
+                },
+            ],
+            type: "object",
+        },
+    },
+    {
+        name: "suppressed_since_last",
+        required: false,
+        schema: {
+            description: "Fires suppressed since the prior delivered fire.",
+            minimum: 1,
+            type: "integer",
+        },
+    },
+    {
+        name: "delivery_skipped",
+        required: false,
+        schema: {
+            enum: [
+                "fire_cap",
+                "alert_user_fire_cap",
+            ],
+            type: "string",
+        },
+    },
+    {
+        name: "test",
+        required: false,
+        schema: {
+            description: "Synthetic test delivery with representative example facts.",
+            enum: [
+                true,
+            ],
+            type: "boolean",
+        },
+    },
+    SHARED_WEBHOOK_21,
+];
+
+const SHARED_WEBHOOK_269 = {
+    additionalProperties: false,
+    description: "A insider_sale_notice fire: its reason details follow InsiderSaleNoticeFireDetails. Synthetic tests use representative example facts.",
+    example: SHARED_WEBHOOK_270,
+    fields: SHARED_WEBHOOK_271,
+    type: "object",
+};
+
+const SHARED_WEBHOOK_268 = {
+    schema: SHARED_WEBHOOK_269,
+    value: "insider_sale_notice",
+};
+
 const SHARED_WEBHOOK_7 = [
     SHARED_WEBHOOK_8,
     SHARED_WEBHOOK_24,
@@ -23487,6 +27169,11 @@ const SHARED_WEBHOOK_7 = [
     SHARED_WEBHOOK_179,
     SHARED_WEBHOOK_189,
     SHARED_WEBHOOK_198,
+    SHARED_WEBHOOK_218,
+    SHARED_WEBHOOK_231,
+    SHARED_WEBHOOK_245,
+    SHARED_WEBHOOK_255,
+    SHARED_WEBHOOK_268,
 ];
 
 const SHARED_WEBHOOK_0 = {
@@ -23496,13 +27183,13 @@ const SHARED_WEBHOOK_0 = {
     variants: SHARED_WEBHOOK_7,
 };
 
-const SHARED_WEBHOOK_227 = {
+const SHARED_WEBHOOK_287 = {
     name: "data",
     required: true,
     schema: SHARED_WEBHOOK_0,
 };
 
-const SHARED_WEBHOOK_226 = [
+const SHARED_WEBHOOK_286 = [
     {
         name: "type",
         required: true,
@@ -23521,21 +27208,21 @@ const SHARED_WEBHOOK_226 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_227,
+    SHARED_WEBHOOK_287,
 ];
 
-const SHARED_WEBHOOK_225 = {
+const SHARED_WEBHOOK_285 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_226,
+    fields: SHARED_WEBHOOK_286,
     type: "object",
 };
 
-const SHARED_WEBHOOK_224 = {
-    schema: SHARED_WEBHOOK_225,
+const SHARED_WEBHOOK_284 = {
+    schema: SHARED_WEBHOOK_285,
     value: "alert.fired",
 };
 
-const SHARED_WEBHOOK_233 = [
+const SHARED_WEBHOOK_293 = [
     {
         name: "event_id",
         required: true,
@@ -23618,19 +27305,19 @@ const SHARED_WEBHOOK_233 = [
     },
 ];
 
-const SHARED_WEBHOOK_232 = {
+const SHARED_WEBHOOK_292 = {
     description: "An alert changed status on its own: it expired (`expires_at`), triggered and stopped (`once` / `max_fires`), became active (`activate_at` / the end of `pause_until`), or — a script / indicator alert — was disabled because its script failed 3 bars in a row (`script_error`, with `error_class` and `error`)",
-    fields: SHARED_WEBHOOK_233,
+    fields: SHARED_WEBHOOK_293,
     type: "object",
 };
 
-const SHARED_WEBHOOK_231 = {
+const SHARED_WEBHOOK_291 = {
     name: "data",
     required: true,
-    schema: SHARED_WEBHOOK_232,
+    schema: SHARED_WEBHOOK_292,
 };
 
-const SHARED_WEBHOOK_230 = [
+const SHARED_WEBHOOK_290 = [
     {
         name: "type",
         required: true,
@@ -23649,21 +27336,21 @@ const SHARED_WEBHOOK_230 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_231,
+    SHARED_WEBHOOK_291,
 ];
 
-const SHARED_WEBHOOK_229 = {
+const SHARED_WEBHOOK_289 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_230,
+    fields: SHARED_WEBHOOK_290,
     type: "object",
 };
 
-const SHARED_WEBHOOK_228 = {
-    schema: SHARED_WEBHOOK_229,
+const SHARED_WEBHOOK_288 = {
+    schema: SHARED_WEBHOOK_289,
     value: "alert.status_changed",
 };
 
-const SHARED_WEBHOOK_239 = [
+const SHARED_WEBHOOK_299 = [
     {
         name: "event_id",
         required: true,
@@ -23720,19 +27407,19 @@ const SHARED_WEBHOOK_239 = [
     },
 ];
 
-const SHARED_WEBHOOK_238 = {
+const SHARED_WEBHOOK_298 = {
     description: "A destination was disabled: it answered 410 (`gone`) or only failures for 72 h with at least 10 failed attempts in a row (`failing`). Its open deliveries are dead. Recorded on the pull feed (GET /v1/alert-events) and mailed to the account; never sent to a webhook (the destination is the one that failed)",
-    fields: SHARED_WEBHOOK_239,
+    fields: SHARED_WEBHOOK_299,
     type: "object",
 };
 
-const SHARED_WEBHOOK_237 = {
+const SHARED_WEBHOOK_297 = {
     name: "data",
     required: true,
-    schema: SHARED_WEBHOOK_238,
+    schema: SHARED_WEBHOOK_298,
 };
 
-const SHARED_WEBHOOK_236 = [
+const SHARED_WEBHOOK_296 = [
     {
         name: "type",
         required: true,
@@ -23751,21 +27438,21 @@ const SHARED_WEBHOOK_236 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_237,
+    SHARED_WEBHOOK_297,
 ];
 
-const SHARED_WEBHOOK_235 = {
+const SHARED_WEBHOOK_295 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_236,
+    fields: SHARED_WEBHOOK_296,
     type: "object",
 };
 
-const SHARED_WEBHOOK_234 = {
-    schema: SHARED_WEBHOOK_235,
+const SHARED_WEBHOOK_294 = {
+    schema: SHARED_WEBHOOK_295,
     value: "destination.disabled",
 };
 
-const SHARED_WEBHOOK_245 = [
+const SHARED_WEBHOOK_305 = [
     {
         name: "event_id",
         required: true,
@@ -23821,19 +27508,19 @@ const SHARED_WEBHOOK_245 = [
     },
 ];
 
-const SHARED_WEBHOOK_244 = {
+const SHARED_WEBHOOK_304 = {
     description: "`POST /v1/destinations/{id}:test`: one event to that destination only",
-    fields: SHARED_WEBHOOK_245,
+    fields: SHARED_WEBHOOK_305,
     type: "object",
 };
 
-const SHARED_WEBHOOK_243 = {
+const SHARED_WEBHOOK_303 = {
     name: "data",
     required: true,
-    schema: SHARED_WEBHOOK_244,
+    schema: SHARED_WEBHOOK_304,
 };
 
-const SHARED_WEBHOOK_242 = [
+const SHARED_WEBHOOK_302 = [
     {
         name: "type",
         required: true,
@@ -23852,21 +27539,21 @@ const SHARED_WEBHOOK_242 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_243,
+    SHARED_WEBHOOK_303,
 ];
 
-const SHARED_WEBHOOK_241 = {
+const SHARED_WEBHOOK_301 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_242,
+    fields: SHARED_WEBHOOK_302,
     type: "object",
 };
 
-const SHARED_WEBHOOK_240 = {
-    schema: SHARED_WEBHOOK_241,
+const SHARED_WEBHOOK_300 = {
+    schema: SHARED_WEBHOOK_301,
     value: "destination.test",
 };
 
-const SHARED_WEBHOOK_251 = [
+const SHARED_WEBHOOK_311 = [
     {
         name: "event_id",
         required: true,
@@ -23909,19 +27596,19 @@ const SHARED_WEBHOOK_251 = [
     },
 ];
 
-const SHARED_WEBHOOK_250 = {
+const SHARED_WEBHOOK_310 = {
     description: "The account reached the daily fire cap of its Enterprise deal (`fires_per_day`; no plan has a daily cap), once per UTC day, to every active destination. Further fires of the day stay on the pull feed with `delivery_skipped: fire_cap`; deliveries resume at 00:00 UTC. An end user's own cap has its own event, `alert_user.fire_cap_reached`",
-    fields: SHARED_WEBHOOK_251,
+    fields: SHARED_WEBHOOK_311,
     type: "object",
 };
 
-const SHARED_WEBHOOK_249 = {
+const SHARED_WEBHOOK_309 = {
     name: "data",
     required: true,
-    schema: SHARED_WEBHOOK_250,
+    schema: SHARED_WEBHOOK_310,
 };
 
-const SHARED_WEBHOOK_248 = [
+const SHARED_WEBHOOK_308 = [
     {
         name: "type",
         required: true,
@@ -23940,21 +27627,21 @@ const SHARED_WEBHOOK_248 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_249,
+    SHARED_WEBHOOK_309,
 ];
 
-const SHARED_WEBHOOK_247 = {
+const SHARED_WEBHOOK_307 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_248,
+    fields: SHARED_WEBHOOK_308,
     type: "object",
 };
 
-const SHARED_WEBHOOK_246 = {
-    schema: SHARED_WEBHOOK_247,
+const SHARED_WEBHOOK_306 = {
+    schema: SHARED_WEBHOOK_307,
     value: "account.fire_cap_reached",
 };
 
-const SHARED_WEBHOOK_256 = {
+const SHARED_WEBHOOK_316 = {
     description: "An end user reached its daily fire cap (`max_fires_per_day` of the user, else the account default; once per user and UTC day, to every active destination of the account). Its further fires of the day stay on the pull feed with `delivery_skipped: alert_user_fire_cap` and do not count against the account's cap; deliveries resume at 00:00 UTC",
     fields: [
         {
@@ -23994,13 +27681,13 @@ const SHARED_WEBHOOK_256 = {
     type: "object",
 };
 
-const SHARED_WEBHOOK_255 = {
+const SHARED_WEBHOOK_315 = {
     name: "data",
     required: true,
-    schema: SHARED_WEBHOOK_256,
+    schema: SHARED_WEBHOOK_316,
 };
 
-const SHARED_WEBHOOK_254 = [
+const SHARED_WEBHOOK_314 = [
     {
         name: "type",
         required: true,
@@ -24019,30 +27706,30 @@ const SHARED_WEBHOOK_254 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_255,
+    SHARED_WEBHOOK_315,
 ];
 
-const SHARED_WEBHOOK_253 = {
+const SHARED_WEBHOOK_313 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_254,
+    fields: SHARED_WEBHOOK_314,
     type: "object",
 };
 
-const SHARED_WEBHOOK_252 = {
-    schema: SHARED_WEBHOOK_253,
+const SHARED_WEBHOOK_312 = {
+    schema: SHARED_WEBHOOK_313,
     value: "alert_user.fire_cap_reached",
 };
 
-const SHARED_WEBHOOK_223 = [
-    SHARED_WEBHOOK_224,
-    SHARED_WEBHOOK_228,
-    SHARED_WEBHOOK_234,
-    SHARED_WEBHOOK_240,
-    SHARED_WEBHOOK_246,
-    SHARED_WEBHOOK_252,
+const SHARED_WEBHOOK_283 = [
+    SHARED_WEBHOOK_284,
+    SHARED_WEBHOOK_288,
+    SHARED_WEBHOOK_294,
+    SHARED_WEBHOOK_300,
+    SHARED_WEBHOOK_306,
+    SHARED_WEBHOOK_312,
 ];
 
-const SHARED_WEBHOOK_222 = {
+const SHARED_WEBHOOK_282 = {
     discriminator: {
         mapping: {
             "account.fire_cap_reached": "#/components/schemas/AccountFireCapReachedWebhookEvent",
@@ -24096,23 +27783,23 @@ const SHARED_WEBHOOK_222 = {
         },
     ],
     type: "object",
-    variants: SHARED_WEBHOOK_223,
+    variants: SHARED_WEBHOOK_283,
 };
 
-const SHARED_WEBHOOK_221 = {
-    items: SHARED_WEBHOOK_222,
+const SHARED_WEBHOOK_281 = {
+    items: SHARED_WEBHOOK_282,
     maxItems: 500,
     minItems: 1,
     type: "array",
 };
 
-const SHARED_WEBHOOK_220 = {
+const SHARED_WEBHOOK_280 = {
     name: "events",
     required: true,
-    schema: SHARED_WEBHOOK_221,
+    schema: SHARED_WEBHOOK_281,
 };
 
-const SHARED_WEBHOOK_219 = [
+const SHARED_WEBHOOK_279 = [
     {
         name: "batch_id",
         required: true,
@@ -24120,12 +27807,12 @@ const SHARED_WEBHOOK_219 = [
             type: "string",
         },
     },
-    SHARED_WEBHOOK_220,
+    SHARED_WEBHOOK_280,
 ];
 
-const SHARED_WEBHOOK_218 = {
+const SHARED_WEBHOOK_278 = {
     additionalProperties: false,
-    fields: SHARED_WEBHOOK_219,
+    fields: SHARED_WEBHOOK_279,
     type: "object",
 };
 
@@ -24160,7 +27847,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
         acknowledgement: [
             "2XX: Acknowledged; anything else is retried (410 disables)",
         ],
-        data: SHARED_WEBHOOK_218,
+        data: SHARED_WEBHOOK_278,
         description: "alert.fired.batch",
         headers: [
             {
@@ -24186,7 +27873,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
         acknowledgement: [
             "2XX: Acknowledged; anything else is retried (410 disables)",
         ],
-        data: SHARED_WEBHOOK_232,
+        data: SHARED_WEBHOOK_292,
         description: "alert.status_changed",
         headers: [
             {
@@ -24212,7 +27899,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
         acknowledgement: [
             "2XX: Acknowledged; anything else is retried (410 disables)",
         ],
-        data: SHARED_WEBHOOK_238,
+        data: SHARED_WEBHOOK_298,
         description: "destination.disabled",
         headers: [
             {
@@ -24238,7 +27925,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
         acknowledgement: [
             "2XX: Acknowledged; anything else is retried (410 disables)",
         ],
-        data: SHARED_WEBHOOK_244,
+        data: SHARED_WEBHOOK_304,
         description: "destination.test",
         headers: [
             {
@@ -24264,7 +27951,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
         acknowledgement: [
             "2XX: Acknowledged; anything else is retried (410 disables)",
         ],
-        data: SHARED_WEBHOOK_250,
+        data: SHARED_WEBHOOK_310,
         description: "account.fire_cap_reached",
         headers: [
             {
@@ -24290,7 +27977,7 @@ export const WEBHOOKS: ReadonlyArray<WebhookEntry> = [
         acknowledgement: [
             "2XX: Acknowledged; anything else is retried (410 disables)",
         ],
-        data: SHARED_WEBHOOK_256,
+        data: SHARED_WEBHOOK_316,
         description: "alert_user.fire_cap_reached",
         headers: [
             {
@@ -24364,12 +28051,12 @@ export const WEBHOOK_ENVELOPE: WebhookSchema = {
     ],
     type: "object",
     variants: [
-        SHARED_WEBHOOK_224,
-        SHARED_WEBHOOK_228,
-        SHARED_WEBHOOK_234,
-        SHARED_WEBHOOK_240,
-        SHARED_WEBHOOK_246,
-        SHARED_WEBHOOK_252,
+        SHARED_WEBHOOK_284,
+        SHARED_WEBHOOK_288,
+        SHARED_WEBHOOK_294,
+        SHARED_WEBHOOK_300,
+        SHARED_WEBHOOK_306,
+        SHARED_WEBHOOK_312,
         {
             schema: {
                 additionalProperties: false,
@@ -24395,7 +28082,7 @@ export const WEBHOOK_ENVELOPE: WebhookSchema = {
                     {
                         name: "data",
                         required: true,
-                        schema: SHARED_WEBHOOK_218,
+                        schema: SHARED_WEBHOOK_278,
                     },
                 ],
                 type: "object",

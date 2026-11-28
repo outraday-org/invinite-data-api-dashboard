@@ -7,6 +7,7 @@ import { z } from "zod";
 import type { V2IposInput } from "@/lib/api/queries";
 import type { V2Ipo, V2IposResponse, V2IpoStage } from "@/lib/api/types";
 
+import { ENTRY_TYPES, MarketAlertEntryPoints } from "@/components/alerts/create-alert-button";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
 import { V2MetaLine } from "@/components/sec/v2-meta-line";
 import { Badge } from "@/components/ui/badge";
@@ -512,6 +513,7 @@ function IposPage() {
     return (
         <PageContainer>
             <PageHeader
+                actions={<MarketAlertEntryPoints types={ENTRY_TYPES.ipos} />}
                 description="Offerings from SEC registration to listing. Upcoming = not trading, withdrawn or dormant yet, from the next listing date on (offerings without one last: SEC registrations first, then calendar announcements); Recent = listed, newest first. An announcement over a year old without a registration is dormant (Stage filter). A row opens the listed company, else the issuer's SEC filer page."
                 title="IPO calendar"
             />

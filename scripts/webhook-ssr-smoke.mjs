@@ -109,7 +109,7 @@ try {
     results.push({ path: start.pathname + start.search + start.hash, location: target.pathname + target.search + target.hash });
 
     if (process.env.WEBHOOK_SSR_PROOF) writeFileSync(process.env.WEBHOOK_SSR_PROOF, JSON.stringify(results, null, 2) + "\n");
-    console.log(`Production reference SSR HTTP: ${results.length} cases passed (18 valid types, missing, catalog groups, unknown/query/fragment fallback)`);
+    console.log(`Production reference SSR HTTP: ${results.length} cases passed (23 valid types, missing, catalog groups, unknown/query/fragment fallback)`);
 }
 finally {
     server.closeAllConnections();

@@ -31,7 +31,9 @@ export const FIELD_SPECS: Partial<Record<AlertConditionField, Presentation>> = {
     baseline_mode: { help: "The volume baseline: mean or median of the previous bars, or rvol_slot = the same time-of-day bar of earlier sessions (default flat_mean).", label: "Baseline mode" },
     cik: { help: "The company by CIK (1–10 digits).", label: "CIK" },
     ciks: { help: "Companies by CIK (with symbols at most 100 in all).", label: "CIKs" },
+    codes: { help: "Match SEC transaction codes, such as P for a purchase or S for a sale.", label: "SEC transaction codes" },
     condition: { help: "A structured trigger lhs <comparator> rhs at each bar close (instead of a template).", label: "Structured condition", placeholder: "{\"lhs\": {\"kind\": \"indicator\", \"indicator_id\": \"rsi\", \"series_key\": \"rsi\"}, \"comparator\": \"crossing_up\", \"rhs\": {\"kind\": \"value\", \"value\": 30}}" },
+    crossing: { help: "Up or down across the percent threshold, compared with a known matched prior reporting person.", label: "Crossing" },
     days: { help: "Several weekdays of a daily / weekly reminder.", kind: "weekday-list", label: "Days" },
     days_before: { help: "Days before the event (0 = on the day).", label: "Days before" },
     direction: { help: "Which move fires.", label: "Direction" },
@@ -45,8 +47,10 @@ export const FIELD_SPECS: Partial<Record<AlertConditionField, Presentation>> = {
     form_types: { help: "Raw SEC form types (8-K, S-1).", label: "Form types" },
     frequency: { help: "Reminder: once at At, hourly, daily or weekly. Script / indicator: when its alerts deliver (default once_per_bar_close).", label: "Frequency" },
     include_amendments: { help: "Also amendments (/A).", label: "Include amendments" },
+    include_derivatives: { help: "Include derivative transactions (default no).", label: "Include derivatives" },
     inputs: { help: "Values for the script's declared inputs (absent = the defaults).", label: "Script inputs", placeholder: "{\"length\": 14}" },
     interval: { help: "The bar evaluated at its close. Script / indicator: the plan's shortest is FREE / LITE 1h, STANDARD 5m, PRO 1m.", label: "Interval" },
+    is_spac: { help: "Leave unset for either; a yes/no filter requires a known SPAC classification.", label: "SPAC" },
     keywords: { help: "Whole-word, case-insensitive keywords (2–50 characters), one per line or comma.", label: "Keywords", splitOnCommasOnly: true },
     kinds: { help: "News: the news kinds. Dividend: declared / ex_date / payment.", label: "Kinds" },
     level: { help: "The price level (> 0).", label: "Level" },
@@ -55,9 +59,14 @@ export const FIELD_SPECS: Partial<Record<AlertConditionField, Presentation>> = {
     macro_families: { help: "An empty selection includes all four families.", label: "Macro families" },
     macro_series_ids: { help: "An empty selection includes every series in the selected families.", label: "Series and tenors" },
     macro_threshold: { help: "Match a published value or change.", label: "Numeric threshold" },
+    managers: { help: "13F filing managers by CIK (1–10 digits, at most 100).", label: "Manager CIKs" },
     match: { help: "Any or all keywords (default any).", label: "Match" },
     mention_delta_rule: { help: "Mentions moved against the previous call (direction up / down / either, min_delta).", label: "Mention change", placeholder: "{\"direction\": \"up\", \"min_delta\": 3}" },
+    min_change_pct: { help: "Absolute share change against a positive known prior holding; a complete sold-out has zero current shares.", label: "Minimum share change (%)" },
+    min_market_value_usd: { help: "Form 144 proposed-sale value only; unknown totals cannot meet the minimum.", label: "Minimum proposed value (USD)" },
     min_mentions: { help: "Fire at this many mentions.", label: "Minimum mentions" },
+    min_percent_of_class: { help: "An inclusive minimum, or the threshold crossed when Crossing is set.", label: "Percent of class threshold" },
+    min_value_usd: { help: "Insiders: absolute shares × price; holder changes: current value, or prior value for a sold-out position. Unknown values cannot meet the minimum.", label: "Minimum value (USD)" },
     minutes_before: { help: "Minutes before the call starts (event earnings_call only).", label: "Minutes before" },
     mode: { help: "relative = a closed bar's volume ≥ multiple × its baseline; absolute = ≥ threshold; session = today's volume ≥ multiple × the 20-session average.", label: "Mode" },
     multiple: { help: "Volume multiple of the baseline (relative / session).", label: "Multiple" },
@@ -65,17 +74,23 @@ export const FIELD_SPECS: Partial<Record<AlertConditionField, Presentation>> = {
     notify_on_date_change: { help: "Tell when the event date moves (default yes).", label: "Notify on date change" },
     offsets_days: { help: "A ladder of days before (comma list, 0–90).", label: "Offsets (days)" },
     operator: { help: "crosses_* fire when the price crosses the level; above / below also fire at once when it is already on that side.", label: "Operator" },
+    owners: { help: "Reporting persons by CIK (1–10 digits, at most 100).", label: "Owner CIKs" },
     pct: { help: "The move in percent of the baseline.", label: "Move (%)" },
     price_direction: { help: "Only bars that closed up / down (default any).", label: "Price direction" },
     reason_codes: { help: "Only these halt reason codes.", label: "Reason codes" },
+    relationships: { help: "Match proposed sellers' relationships, such as Officer or Director.", label: "Seller relationships" },
     report_kinds: { help: "Results reports to fire on.", label: "Report kinds" },
+    roles: { help: "The same matching transaction must name one of these roles.", label: "Insider roles" },
     rules: { help: "AND-combined metric thresholds (1–5; metric ids of GET /v1/catalog/metrics, value a decimal string).", label: "Rules", placeholder: "[{\"metric_id\": \"is_total_revenue\", \"period_type\": \"quarterly\", \"operator\": \"gt\", \"value\": \"1000000000\"}]" },
+    schedule: { help: "13D or 13G; leave unset to include both.", label: "Ownership schedule" },
     scope: { help: "Where keywords are searched.", label: "Scope" },
     script_version_id: { help: "The script version evaluated (scv_…, status ok, of a script of this account).", label: "Script version id" },
     series_inputs: { help: "A script chain: what feeds each externalSeries input, by input key.", label: "Series inputs", placeholder: "{}" },
+    sides: { help: "Acquired means buy; disposed means sell, using the filing's own code.", label: "Transaction sides" },
     sources: { help: "News sources.", label: "Sources" },
     speaker_roles: { help: "Only these speakers.", label: "Speaker roles" },
     stage: { help: "detected = the moment the SEC publishes it (every filer); processed = after Invinite's processing.", label: "Stage" },
+    stages: { help: "Choose the IPO registration stages to follow.", label: "IPO stages" },
     statuses: { help: "Halt or resumption (empty = both).", label: "Statuses" },
     symbol: { help: "The company by ticker; price types, script and indicator: the instrument (a US stock / ETF ticker, a crypto slug or ticker, XAUUSD / XAGUSD).", label: "Symbol" },
     symbols: { help: "Companies by ticker (a US ETF ticker for the types that take ETFs); with CIKs at most 100 in all.", label: "Symbols" },
@@ -115,10 +130,23 @@ export function presentField(field: AlertField, presentation: Presentation = {})
     };
 }
 
+const TYPE_PRESENTATION: Partial<Record<AlertType, Partial<Record<AlertConditionField, Presentation>>>> = {
+    beneficial_ownership: {
+        include_amendments: { help: "Include Schedule 13D / 13G amendments (default yes)." },
+    },
+    holder_change: {
+        kinds: { help: "Choose new, increased, decreased or sold-out positions.", label: "Position changes" },
+        min_value_usd: { help: "Current position value, or prior value for a sold-out position. An unknown value cannot meet the minimum." },
+    },
+    insider_trade: {
+        min_value_usd: { help: "Absolute shares × price on the same matching transaction. An unknown price cannot meet the minimum." },
+    },
+};
+
 export type ConditionFieldSpec = FieldSpec & { name: AlertConditionField };
 
 export function conditionFieldsFor(type: AlertType): ReadonlyArray<ConditionFieldSpec> {
-    return ALERT_TYPE_FIELDS[type].condition.map(field => ({ ...presentField(field, FIELD_SPECS[field.name]), name: field.name }));
+    return ALERT_TYPE_FIELDS[type].condition.map(field => ({ ...presentField(field, { ...FIELD_SPECS[field.name], ...TYPE_PRESENTATION[type]?.[field.name] }), name: field.name }));
 }
 
 export const CONDITION_FIELDS = Object.fromEntries(Object.keys(ALERT_TYPE_FIELDS).map(type => [type, conditionFieldsFor(type as AlertType)])) as Record<AlertType, ReadonlyArray<ConditionFieldSpec>>;

@@ -127,7 +127,7 @@ describe("per-type alert editor fields", () => {
 
         expect(create.discriminator?.propertyName).toBe("type");
 
-        expect(types).toHaveLength(18);
+        expect(types).toHaveLength(23);
 
         expect([...types].sort()).toEqual(Object.keys(mapping).sort());
 

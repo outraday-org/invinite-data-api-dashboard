@@ -1,7 +1,7 @@
 import type { AlertBatchResult, AlertEventType, AlertStatus, AlertType } from "@/lib/api/types";
 
 /**
- * Words of the alerts area (backend tasks/data-api-dashboard 2-alerts task 2): the 18 alert types in 8 groups with one
+ * Words of the alerts area (backend tasks/data-api-dashboard 2-alerts task 2): the 23 alert types in 10 groups with one
  * line on what fires, the statuses, the event types. Every list is compile-time exhaustive over the contract enum
  * (`satisfies` + the `*_COMPLETE` checks), and `labels.test.ts` compares them with `openapi.json`.
  */
@@ -10,6 +10,7 @@ export type AlertTypeInfo = { label: string; summary: string };
 
 /** One line per type: what fires (the spec's `AlertConditionInput` descriptions, shortened). */
 export const ALERT_TYPE_INFO: Record<AlertType, AlertTypeInfo> = {
+    beneficial_ownership: { label: "Beneficial ownership", summary: "A Schedule 13D or 13G reporting person matches ownership or crossing thresholds." },
     dividend: { label: "Dividend", summary: "A company declares a dividend, or its ex-date / payment day arrives." },
     earnings_call: { label: "Earnings call", summary: "A call is scheduled, starts, ends, or its transcript and assets are ready." },
     earnings_call_keyword: { label: "Earnings call keyword", summary: "Keywords are said on a call (prepared remarks or Q&A)." },
@@ -19,7 +20,11 @@ export const ALERT_TYPE_INFO: Record<AlertType, AlertTypeInfo> = {
     filing_keyword: { label: "Filing keyword", summary: "Keywords appear in a filing (whole text, risk factors, MD&A, legal proceedings)." },
     fundamental_metric: { label: "Fundamental metric", summary: "A reported metric crosses a threshold (up to 5 rules, all must hold)." },
     halt: { label: "Trading halt", summary: "A company's stock is halted or resumes trading." },
+    holder_change: { label: "Holder change", summary: "A manager reports a matching position change in a stock or fund." },
     indicator: { label: "Indicator", summary: "A built-in indicator template or a structured condition fires at a bar close." },
+    insider_sale_notice: { label: "Insider sale notice", summary: "A Form 144 proposes a sale matching value and relationship filters." },
+    insider_trade: { label: "Insider trade", summary: "A reported transaction matches side, owner, role and value filters." },
+    ipo_stage: { label: "IPO stage", summary: "An IPO enters a non-trading registration stage." },
     macro: { label: "US macro", summary: "An agency publishes or revises an economic reading, optionally matching a numeric threshold." },
     news: { label: "News", summary: "A news item about the companies arrives (by kind and source)." },
     news_keyword: { label: "News keyword", summary: "Keywords appear in a news headline or description." },
@@ -35,6 +40,8 @@ export type AlertTypeGroup = { label: string; types: ReadonlyArray<AlertType> };
 /** The type picker's groups, in display order (every type exactly once: `labels.test.ts`). */
 export const ALERT_TYPE_GROUPS: ReadonlyArray<AlertTypeGroup> = [
     { label: "Filings", types: ["filing", "filing_keyword"] },
+    { label: "Ownership", types: ["insider_trade", "holder_change", "beneficial_ownership", "insider_sale_notice"] },
+    { label: "IPOs", types: ["ipo_stage"] },
     { label: "News", types: ["news", "news_keyword"] },
     { label: "Earnings", types: ["earnings_call", "earnings_call_keyword", "earnings_results"] },
     { label: "Corporate actions", types: ["dividend", "halt", "event_countdown"] },
