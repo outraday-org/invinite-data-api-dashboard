@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import type { V2HolderSource } from "@/lib/api/types";
 
+import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { HolderChangesList, HoldersList, HoldersOverview } from "@/components/sec/holder-views";
 import { ChangeTypeChips } from "@/components/sec/ownership-views";
@@ -147,6 +148,7 @@ function HoldersPage() {
     return (
         <div className="flex flex-col gap-6">
             <PageHeader
+                actions={<AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.holders} />}
                 description={(
                     <>
                         Who holds this security, per source: managers&apos; quarterly 13F reports, funds&apos; N-PORT

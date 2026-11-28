@@ -71,7 +71,7 @@ describe("published examples, fallback shapes and field rows", () => {
 
         expect(fired.data.discriminator?.propertyName).toBe("alert_type");
 
-        expect(fired.data.variants).toHaveLength(18);
+        expect(fired.data.variants).toHaveLength(23);
 
         expect(fired.data.variants?.map(branch => branch.schema.example)).toEqual(expect.arrayContaining(Object.values(ALERT_TYPE_FIELDS).map(type => type.firedExample)));
 

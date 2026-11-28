@@ -14,7 +14,11 @@ export function createValidator(type: AlertType) {
     let validator = validators.get(type);
 
     if (!validator) {
-        validator = z.fromJSONSchema(ALERT_TYPE_FIELDS[type].requestSchema);
+        // Generated variants are individually checked against JSONSchema. A generic schema view
+        // avoids optional undefined keys inferred across heterogeneous constraint branches.
+        const schema: Record<string, unknown> = ALERT_TYPE_FIELDS[type].requestSchema;
+
+        validator = z.fromJSONSchema(schema);
 
         validators.set(type, validator);
     }

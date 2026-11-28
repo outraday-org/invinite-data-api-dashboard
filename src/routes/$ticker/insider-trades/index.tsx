@@ -8,6 +8,7 @@ import { z } from "zod";
 import type { DetailFact } from "@/components/sec/ownership-views";
 import type { V2InsiderHolding, V2InsiderHoldingsResponse, V2InsiderSide, V2InsiderTrade, V2InsiderTradeDetail, V2InsiderTradesResponse } from "@/lib/api/types";
 
+import { AlertEntryPoints, ENTRY_TYPES } from "@/components/alerts/create-alert-button";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { FactGrid, statedFacts } from "@/components/sec/ownership-views";
 import { SecReadinessNotice } from "@/components/sec/sec-readiness-notice";
@@ -640,6 +641,7 @@ function InsiderTradesPage() {
     return (
         <div className="flex flex-col gap-6">
             <PageHeader
+                actions={<AlertEntryPoints symbol={ticker} types={ENTRY_TYPES.insiders} />}
                 description="Insider transactions and holdings from Forms 3, 4 and 5. A traded-day filter leaves out lines without a transaction date (the realtime feed's)."
                 title="Insider trades"
             />

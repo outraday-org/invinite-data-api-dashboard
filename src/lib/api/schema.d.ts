@@ -10145,7 +10145,7 @@ export interface components {
                 };
             };
         };
-        Alert: components["schemas"]["DividendAlert"] | components["schemas"]["EarningsCallAlert"] | components["schemas"]["EarningsCallKeywordAlert"] | components["schemas"]["EarningsResultsAlert"] | components["schemas"]["EventCountdownAlert"] | components["schemas"]["FilingAlert"] | components["schemas"]["FilingKeywordAlert"] | components["schemas"]["FundamentalMetricAlert"] | components["schemas"]["HaltAlert"] | components["schemas"]["IndicatorAlert"] | components["schemas"]["MacroAlert"] | components["schemas"]["NewsAlert"] | components["schemas"]["NewsKeywordAlert"] | components["schemas"]["PriceAlert"] | components["schemas"]["PriceMoveAlert"] | components["schemas"]["PriceReminderAlert"] | components["schemas"]["ScriptAlert"] | components["schemas"]["VolumeSpikeAlert"];
+        Alert: components["schemas"]["BeneficialOwnershipAlert"] | components["schemas"]["DividendAlert"] | components["schemas"]["EarningsCallAlert"] | components["schemas"]["EarningsCallKeywordAlert"] | components["schemas"]["EarningsResultsAlert"] | components["schemas"]["EventCountdownAlert"] | components["schemas"]["FilingAlert"] | components["schemas"]["FilingKeywordAlert"] | components["schemas"]["FundamentalMetricAlert"] | components["schemas"]["HaltAlert"] | components["schemas"]["HolderChangeAlert"] | components["schemas"]["IndicatorAlert"] | components["schemas"]["InsiderSaleNoticeAlert"] | components["schemas"]["InsiderTradeAlert"] | components["schemas"]["IpoStageAlert"] | components["schemas"]["MacroAlert"] | components["schemas"]["NewsAlert"] | components["schemas"]["NewsKeywordAlert"] | components["schemas"]["PriceAlert"] | components["schemas"]["PriceMoveAlert"] | components["schemas"]["PriceReminderAlert"] | components["schemas"]["ScriptAlert"] | components["schemas"]["VolumeSpikeAlert"];
         /** Alert */
         FilingAlert: {
             /** @description Alert id (`alt_…`) */
@@ -12754,6 +12754,599 @@ export interface components {
                 active_duration_seconds?: number;
             };
         };
+        /** Alert */
+        InsiderTradeAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "insider_trade";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["InsiderTradeAlertCondition"];
+            trigger: components["schemas"]["InsiderTradeAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * InsiderTradeAlertCondition
+         * @description The insider_trade alert condition.
+         */
+        InsiderTradeAlertCondition: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            sides?: Array<"buy" | "sell">;
+            codes?: Array<string>;
+            roles?: Array<"director" | "officer" | "ten_percent_owner">;
+            min_value_usd?: number;
+            /**
+             * @description Include derivative transactions (default false).
+             * @default false
+             */
+            include_derivatives?: boolean;
+            owners?: Array<string>;
+        };
+        /**
+         * InsiderTradeAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        InsiderTradeAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        HolderChangeAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "holder_change";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["HolderChangeAlertCondition"];
+            trigger: components["schemas"]["HolderChangeAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * HolderChangeAlertCondition
+         * @description The holder_change alert condition.
+         */
+        HolderChangeAlertCondition: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            managers?: Array<string>;
+            kinds?: Array<"decreased" | "increased" | "new" | "sold_out">;
+            min_value_usd?: number;
+            min_change_pct?: number;
+        };
+        /**
+         * HolderChangeAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        HolderChangeAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        IpoStageAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "ipo_stage";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["IpoStageAlertCondition"];
+            trigger: components["schemas"]["IpoStageAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * IpoStageAlertCondition
+         * @description The ipo_stage alert condition.
+         */
+        IpoStageAlertCondition: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            stages?: Array<"draft" | "effective" | "exchange_approved" | "price_range" | "priced" | "registered" | "withdrawn">;
+            is_spac?: boolean;
+        };
+        /**
+         * IpoStageAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        IpoStageAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        BeneficialOwnershipAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "beneficial_ownership";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["BeneficialOwnershipAlertCondition"];
+            trigger: components["schemas"]["BeneficialOwnershipAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * BeneficialOwnershipAlertCondition
+         * @description The beneficial_ownership alert condition.
+         */
+        BeneficialOwnershipAlertCondition: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @enum {string} */
+            schedule?: "13D" | "13G";
+            /**
+             * @description Include amendments (default true).
+             * @default true
+             */
+            include_amendments?: boolean;
+            min_percent_of_class?: number;
+            /** @enum {string} */
+            crossing?: "down" | "up";
+        };
+        /**
+         * BeneficialOwnershipAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        BeneficialOwnershipAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /** Alert */
+        InsiderSaleNoticeAlert: {
+            /** @description Alert id (`alt_…`) */
+            id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "insider_sale_notice";
+            /** @enum {string} */
+            status: "active" | "disabled" | "expired" | "paused" | "scheduled" | "triggered";
+            /** @description Why the platform disabled the alert (`script_error`: its script aborted on 3 bars in a row); null otherwise */
+            disabled_reason: null | string;
+            condition: components["schemas"]["InsiderSaleNoticeAlertCondition"];
+            trigger: components["schemas"]["InsiderSaleNoticeAlertTrigger"];
+            /** @description Destinations the fires are delivered to (empty = pull feed and WebSocket only) */
+            destination_ids: Array<string>;
+            /** @description Your id of the alert (unique per account) */
+            client_reference_id: null | string;
+            /** @description Your end user's id */
+            external_user_id: null | string;
+            /** @description Your own key / value pairs (≤ 50 keys, ≤ 8 KB), echoed in every event */
+            metadata: {
+                [key: string]: unknown;
+            };
+            /** @description The one company's ticker; null for several companies */
+            symbol: null | string;
+            /** @description The one company's CIK (10 digits); null for several companies */
+            cik: null | string;
+            /** @description Fires so far */
+            fire_count: number;
+            /** Format: date-time */
+            last_fired_at: null | string;
+            /** @description Bumped by every change (optimistic updates) */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * InsiderSaleNoticeAlertCondition
+         * @description The insider_sale_notice alert condition.
+         */
+        InsiderSaleNoticeAlertCondition: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            min_market_value_usd?: number;
+            relationships?: Array<string>;
+        };
+        /**
+         * InsiderSaleNoticeAlertTrigger
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        InsiderSaleNoticeAlertTrigger: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
         /**
          * AlertQuotaUsage
          * @description The account's CURRENT alert limits and their use (every page of GET /v1/alerts carries it, whatever the filters): the plan's defaults, or the limits an ENTERPRISE contract sets instead. Alerts with status active, paused or scheduled count; script and indicator alerts are a subset with their own limit. Plan defaults (active / script): FREE 0 / 0, LITE 50 / 5, STANDARD 500 / 50, PRO 2,000 / 500, ENTERPRISE 2,000 / 500. No plan has a daily fire cap: fires_per_day_limit is null unless an ENTERPRISE contract sets one Macro rules count toward the ordinary active-alert limit.
@@ -15085,6 +15678,541 @@ export interface components {
                 active_duration_seconds?: number;
             };
         };
+        /**
+         * @description insider_trade: see InsiderTradeAlertConditionInput for the condition and cross-field rules. US ETF subjects are refused; use a company subject.
+         * @example {
+         *       "type": "insider_trade",
+         *       "condition": {
+         *         "ciks": [
+         *           "320193"
+         *         ],
+         *         "sides": [
+         *           "buy"
+         *         ],
+         *         "include_derivatives": false,
+         *         "min_value_usd": 1000
+         *       }
+         *     }
+         */
+        CreateInsiderTradeAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "insider_trade";
+            condition: components["schemas"]["InsiderTradeAlertConditionInput"];
+            trigger?: components["schemas"]["InsiderTradeAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * InsiderTradeAlertConditionInput
+         * @description The insider_trade alert condition.
+         */
+        InsiderTradeAlertConditionInput: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            sides?: Array<"buy" | "sell">;
+            codes?: Array<string>;
+            roles?: Array<"director" | "officer" | "ten_percent_owner">;
+            min_value_usd?: number;
+            /**
+             * @description Include derivative transactions (default false).
+             * @default false
+             */
+            include_derivatives?: boolean;
+            owners?: Array<string>;
+        };
+        /**
+         * InsiderTradeAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        InsiderTradeAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description holder_change: see HolderChangeAlertConditionInput for the condition and cross-field rules. US ETF subjects are refused; use a company subject.
+         * @example {
+         *       "type": "holder_change",
+         *       "condition": {
+         *         "ciks": [
+         *           "320193"
+         *         ],
+         *         "kinds": [
+         *           "increased"
+         *         ],
+         *         "min_change_pct": 10
+         *       }
+         *     }
+         */
+        CreateHolderChangeAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "holder_change";
+            condition: components["schemas"]["HolderChangeAlertConditionInput"];
+            trigger?: components["schemas"]["HolderChangeAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * HolderChangeAlertConditionInput
+         * @description The holder_change alert condition.
+         */
+        HolderChangeAlertConditionInput: ({
+            /** @description Companies by CIK. */
+            ciks: Array<string>;
+        } | {
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols: Array<string>;
+        }) & {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            managers?: Array<string>;
+            kinds?: Array<"decreased" | "increased" | "new" | "sold_out">;
+            min_value_usd?: number;
+            min_change_pct?: number;
+        };
+        /**
+         * HolderChangeAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        HolderChangeAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description ipo_stage: see IpoStageAlertConditionInput for the condition and cross-field rules. US ETF subjects are refused; use a company subject.
+         * @example {
+         *       "type": "ipo_stage",
+         *       "condition": {
+         *         "stages": [
+         *           "registered"
+         *         ]
+         *       }
+         *     }
+         */
+        CreateIpoStageAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "ipo_stage";
+            condition: components["schemas"]["IpoStageAlertConditionInput"];
+            trigger?: components["schemas"]["IpoStageAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * IpoStageAlertConditionInput
+         * @description The ipo_stage alert condition.
+         */
+        IpoStageAlertConditionInput: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            stages?: Array<"draft" | "effective" | "exchange_approved" | "price_range" | "priced" | "registered" | "withdrawn">;
+            is_spac?: boolean;
+        };
+        /**
+         * IpoStageAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        IpoStageAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description beneficial_ownership: see BeneficialOwnershipAlertConditionInput for the condition and cross-field rules. US ETF subjects are refused; use a company subject.
+         * @example {
+         *       "type": "beneficial_ownership",
+         *       "condition": {
+         *         "ciks": [
+         *           "320193"
+         *         ],
+         *         "include_amendments": true,
+         *         "min_percent_of_class": 5
+         *       }
+         *     }
+         */
+        CreateBeneficialOwnershipAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "beneficial_ownership";
+            condition: components["schemas"]["BeneficialOwnershipAlertConditionInput"];
+            trigger?: components["schemas"]["BeneficialOwnershipAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * BeneficialOwnershipAlertConditionInput
+         * @description The beneficial_ownership alert condition.
+         */
+        BeneficialOwnershipAlertConditionInput: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            /** @enum {string} */
+            schedule?: "13D" | "13G";
+            /**
+             * @description Include amendments (default true).
+             * @default true
+             */
+            include_amendments?: boolean;
+            min_percent_of_class?: number;
+            /** @enum {string} */
+            crossing?: "down" | "up";
+        } & ({
+            crossing?: unknown;
+        } | {
+            min_percent_of_class: number;
+        });
+        /**
+         * BeneficialOwnershipAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        BeneficialOwnershipAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
+        /**
+         * @description insider_sale_notice: see InsiderSaleNoticeAlertConditionInput for the condition and cross-field rules. US ETF subjects are refused; use a company subject.
+         * @example {
+         *       "type": "insider_sale_notice",
+         *       "condition": {
+         *         "ciks": [
+         *           "320193"
+         *         ],
+         *         "min_market_value_usd": 1000
+         *       }
+         *     }
+         */
+        CreateInsiderSaleNoticeAlertRequest: {
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            type: "insider_sale_notice";
+            condition: components["schemas"]["InsiderSaleNoticeAlertConditionInput"];
+            trigger?: components["schemas"]["InsiderSaleNoticeAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+        };
+        /**
+         * InsiderSaleNoticeAlertConditionInput
+         * @description The insider_sale_notice alert condition.
+         */
+        InsiderSaleNoticeAlertConditionInput: {
+            /** @description Companies by CIK. */
+            ciks?: Array<string>;
+            /** @description Companies by ticker; a US ETF ticker for the types that take ETFs. */
+            symbols?: Array<string>;
+            min_market_value_usd?: number;
+            relationships?: Array<string>;
+        };
+        /**
+         * InsiderSaleNoticeAlertTriggerInput
+         * @description max_fires and cooldown_seconds require mode every_time. delete_on_expiry requires expires_at.
+         */
+        InsiderSaleNoticeAlertTriggerInput: {
+            /**
+             * @description Repeat mode; once becomes triggered after the first fire (default every_time).
+             * @default every_time
+             * @enum {string}
+             */
+            mode?: "every_time" | "once";
+            /** @description Minimum seconds between fires (at most 366 days) */
+            cooldown_seconds?: number;
+            /** @description The alert becomes `triggered` after this many fires */
+            max_fires?: number;
+            /**
+             * Format: date-time
+             * @description The alert becomes `expired` then
+             */
+            expires_at?: string;
+            /** @description Delete instead of `expired` (needs expires_at) */
+            delete_on_expiry?: boolean;
+            /**
+             * Format: date-time
+             * @description The alert is `scheduled` until then
+             */
+            activate_at?: string;
+            /**
+             * Format: date-time
+             * @description No fires until then
+             */
+            pause_until?: string;
+            /** @description Fires only inside this window: `weekly` (days + from / to in a time zone) or `every` (an anchor, an interval and an active duration) Weekly windows require timezone, days, from and to. Every windows require anchor_at, interval, unit and active_duration_seconds. */
+            active_window?: {
+                /**
+                 * @description Weekly hours or a recurring window.
+                 * @enum {string}
+                 */
+                type: "every" | "weekly";
+                /** @description IANA time zone (default America/New_York). Must name an IANA time zone known to the runtime. */
+                timezone?: string;
+                /** @description Weekdays of a weekly window. */
+                days?: Array<"fr" | "mo" | "sa" | "su" | "th" | "tu" | "we">;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                from?: string;
+                /** @description HH:MM (weekly) (HH:MM, 24 h) */
+                to?: string;
+                /**
+                 * Format: date-time
+                 * @description Start of the first window (every)
+                 */
+                anchor_at?: string;
+                /** @description Number of units between recurring windows. */
+                interval?: number;
+                /**
+                 * @description Unit of the schedule interval.
+                 * @enum {string}
+                 */
+                unit?: "days" | "hours" | "weeks";
+                /** @description Window length (every) */
+                active_duration_seconds?: number;
+            };
+        };
         UpdateFilingAlertRequest: {
             /** @enum {string} */
             type: "filing";
@@ -15301,6 +16429,66 @@ export interface components {
             /** @description Apply only to this version (409 conflict otherwise) */
             version?: number;
         };
+        UpdateInsiderTradeAlertRequest: {
+            /** @enum {string} */
+            type: "insider_trade";
+            condition?: components["schemas"]["InsiderTradeAlertConditionInput"];
+            trigger?: components["schemas"]["InsiderTradeAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateHolderChangeAlertRequest: {
+            /** @enum {string} */
+            type: "holder_change";
+            condition?: components["schemas"]["HolderChangeAlertConditionInput"];
+            trigger?: components["schemas"]["HolderChangeAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateIpoStageAlertRequest: {
+            /** @enum {string} */
+            type: "ipo_stage";
+            condition?: components["schemas"]["IpoStageAlertConditionInput"];
+            trigger?: components["schemas"]["IpoStageAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateBeneficialOwnershipAlertRequest: {
+            /** @enum {string} */
+            type: "beneficial_ownership";
+            condition?: components["schemas"]["BeneficialOwnershipAlertConditionInput"];
+            trigger?: components["schemas"]["BeneficialOwnershipAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        UpdateInsiderSaleNoticeAlertRequest: {
+            /** @enum {string} */
+            type: "insider_sale_notice";
+            condition?: components["schemas"]["InsiderSaleNoticeAlertConditionInput"];
+            trigger?: components["schemas"]["InsiderSaleNoticeAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"] | null;
+            external_user_id?: components["schemas"]["AlertExternalUserId"] | null;
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
         AlertSettingsUpdateRequest: {
             /** @description Apply only to this version (409 conflict otherwise) */
             version?: number;
@@ -15396,7 +16584,7 @@ export interface components {
             param: null | string;
             remedy: string;
         };
-        AlertBatchItem: components["schemas"]["AlertBatchActionItem"] | components["schemas"]["DividendAlertBatchWriteItem"] | components["schemas"]["EarningsCallAlertBatchWriteItem"] | components["schemas"]["EarningsCallKeywordAlertBatchWriteItem"] | components["schemas"]["EarningsResultsAlertBatchWriteItem"] | components["schemas"]["EventCountdownAlertBatchWriteItem"] | components["schemas"]["FilingAlertBatchWriteItem"] | components["schemas"]["FilingKeywordAlertBatchWriteItem"] | components["schemas"]["FundamentalMetricAlertBatchWriteItem"] | components["schemas"]["HaltAlertBatchWriteItem"] | components["schemas"]["IndicatorAlertBatchWriteItem"] | components["schemas"]["MacroAlertBatchWriteItem"] | components["schemas"]["NewsAlertBatchWriteItem"] | components["schemas"]["NewsKeywordAlertBatchWriteItem"] | components["schemas"]["PriceAlertBatchWriteItem"] | components["schemas"]["PriceMoveAlertBatchWriteItem"] | components["schemas"]["PriceReminderAlertBatchWriteItem"] | components["schemas"]["ScriptAlertBatchWriteItem"] | components["schemas"]["VolumeSpikeAlertBatchWriteItem"];
+        AlertBatchItem: components["schemas"]["AlertBatchActionItem"] | components["schemas"]["BeneficialOwnershipAlertBatchWriteItem"] | components["schemas"]["DividendAlertBatchWriteItem"] | components["schemas"]["EarningsCallAlertBatchWriteItem"] | components["schemas"]["EarningsCallKeywordAlertBatchWriteItem"] | components["schemas"]["EarningsResultsAlertBatchWriteItem"] | components["schemas"]["EventCountdownAlertBatchWriteItem"] | components["schemas"]["FilingAlertBatchWriteItem"] | components["schemas"]["FilingKeywordAlertBatchWriteItem"] | components["schemas"]["FundamentalMetricAlertBatchWriteItem"] | components["schemas"]["HaltAlertBatchWriteItem"] | components["schemas"]["HolderChangeAlertBatchWriteItem"] | components["schemas"]["IndicatorAlertBatchWriteItem"] | components["schemas"]["InsiderSaleNoticeAlertBatchWriteItem"] | components["schemas"]["InsiderTradeAlertBatchWriteItem"] | components["schemas"]["IpoStageAlertBatchWriteItem"] | components["schemas"]["MacroAlertBatchWriteItem"] | components["schemas"]["NewsAlertBatchWriteItem"] | components["schemas"]["NewsKeywordAlertBatchWriteItem"] | components["schemas"]["PriceAlertBatchWriteItem"] | components["schemas"]["PriceMoveAlertBatchWriteItem"] | components["schemas"]["PriceReminderAlertBatchWriteItem"] | components["schemas"]["ScriptAlertBatchWriteItem"] | components["schemas"]["VolumeSpikeAlertBatchWriteItem"];
         FilingAlertBatchWriteItem: {
             /** @enum {string} */
             op: "create" | "upsert";
@@ -15649,6 +16837,76 @@ export interface components {
             /** @description Apply only to this version (409 conflict otherwise) */
             version?: number;
         };
+        InsiderTradeAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "insider_trade";
+            condition: components["schemas"]["InsiderTradeAlertConditionInput"];
+            trigger?: components["schemas"]["InsiderTradeAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        HolderChangeAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "holder_change";
+            condition: components["schemas"]["HolderChangeAlertConditionInput"];
+            trigger?: components["schemas"]["HolderChangeAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        IpoStageAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "ipo_stage";
+            condition: components["schemas"]["IpoStageAlertConditionInput"];
+            trigger?: components["schemas"]["IpoStageAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        BeneficialOwnershipAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "beneficial_ownership";
+            condition: components["schemas"]["BeneficialOwnershipAlertConditionInput"];
+            trigger?: components["schemas"]["BeneficialOwnershipAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
+        InsiderSaleNoticeAlertBatchWriteItem: {
+            /** @enum {string} */
+            op: "create" | "upsert";
+            /** @enum {string} */
+            type: "insider_sale_notice";
+            condition: components["schemas"]["InsiderSaleNoticeAlertConditionInput"];
+            trigger?: components["schemas"]["InsiderSaleNoticeAlertTriggerInput"];
+            destination_ids?: components["schemas"]["AlertDestinationIds"];
+            client_reference_id?: components["schemas"]["AlertClientReferenceId"];
+            external_user_id?: components["schemas"]["AlertExternalUserId"];
+            metadata?: components["schemas"]["AlertMetadata"];
+            /** @description Apply only to this version (409 conflict otherwise) */
+            version?: number;
+        };
         AlertBatchActionItem: {
             /** @enum {string} */
             op: "delete" | "pause" | "resume";
@@ -15673,7 +16931,7 @@ export interface components {
             occurred_at: string;
             payload: components["schemas"]["AlertFiredData"];
         };
-        AlertFiredData: components["schemas"]["DividendAlertFiredData"] | components["schemas"]["EarningsCallAlertFiredData"] | components["schemas"]["EarningsCallKeywordAlertFiredData"] | components["schemas"]["EarningsResultsAlertFiredData"] | components["schemas"]["EventCountdownAlertFiredData"] | components["schemas"]["FilingAlertFiredData"] | components["schemas"]["FilingKeywordAlertFiredData"] | components["schemas"]["FundamentalMetricAlertFiredData"] | components["schemas"]["HaltAlertFiredData"] | components["schemas"]["IndicatorAlertFiredData"] | components["schemas"]["MacroAlertFiredData"] | components["schemas"]["NewsAlertFiredData"] | components["schemas"]["NewsKeywordAlertFiredData"] | components["schemas"]["PriceAlertFiredData"] | components["schemas"]["PriceMoveAlertFiredData"] | components["schemas"]["PriceReminderAlertFiredData"] | components["schemas"]["ScriptAlertFiredData"] | components["schemas"]["VolumeSpikeAlertFiredData"];
+        AlertFiredData: components["schemas"]["BeneficialOwnershipAlertFiredData"] | components["schemas"]["DividendAlertFiredData"] | components["schemas"]["EarningsCallAlertFiredData"] | components["schemas"]["EarningsCallKeywordAlertFiredData"] | components["schemas"]["EarningsResultsAlertFiredData"] | components["schemas"]["EventCountdownAlertFiredData"] | components["schemas"]["FilingAlertFiredData"] | components["schemas"]["FilingKeywordAlertFiredData"] | components["schemas"]["FundamentalMetricAlertFiredData"] | components["schemas"]["HaltAlertFiredData"] | components["schemas"]["HolderChangeAlertFiredData"] | components["schemas"]["IndicatorAlertFiredData"] | components["schemas"]["InsiderSaleNoticeAlertFiredData"] | components["schemas"]["InsiderTradeAlertFiredData"] | components["schemas"]["IpoStageAlertFiredData"] | components["schemas"]["MacroAlertFiredData"] | components["schemas"]["NewsAlertFiredData"] | components["schemas"]["NewsKeywordAlertFiredData"] | components["schemas"]["PriceAlertFiredData"] | components["schemas"]["PriceMoveAlertFiredData"] | components["schemas"]["PriceReminderAlertFiredData"] | components["schemas"]["ScriptAlertFiredData"] | components["schemas"]["VolumeSpikeAlertFiredData"];
         /**
          * FilingAlertFiredData
          * @description A filing fire: its reason details follow FilingFireDetails. Synthetic tests use representative example facts.
@@ -15746,7 +17004,7 @@ export interface components {
              * @description Alert type
              * @enum {string}
              */
-            type: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+            type: "beneficial_ownership" | "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "holder_change" | "indicator" | "insider_sale_notice" | "insider_trade" | "ipo_stage" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
             /** @description Your reference, as set on the alert */
             client_reference_id: null | string;
             /** @description Your end user, as set on the alert */
@@ -17636,6 +18894,472 @@ export interface components {
                 history_url: string;
             }>;
         };
+        /**
+         * InsiderTradeAlertFiredData
+         * @description A insider_trade fire: its reason details follow InsiderTradeFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "insider_trade",
+         *         "metadata": {},
+         *         "external_user_id": null,
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "summary": "A matching filing event.",
+         *         "details": {
+         *           "accession_number": "0000320193-26-000001",
+         *           "form_type": "4",
+         *           "transaction": {
+         *             "id": "trade:1",
+         *             "ownerCik": "12345",
+         *             "ownerName": "Example Person",
+         *             "isDirector": false,
+         *             "isOfficer": true,
+         *             "isTenPercentOwner": false,
+         *             "code": "P",
+         *             "acquiredDisposed": "A",
+         *             "shares": "100",
+         *             "price": "12.5",
+         *             "value": "1250",
+         *             "isDerivative": false
+         *           }
+         *         }
+         *       },
+         *       "source": {
+         *         "kind": "insider.filed",
+         *         "key": "insider:0000320193-26-000001:part:1"
+         *       },
+         *       "subject": {
+         *         "cik": "320193",
+         *         "symbol": null
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-16T09:00:06.067Z",
+         *       "alert_type": "insider_trade"
+         *     }
+         */
+        InsiderTradeAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "insider_trade";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["InsiderTradeFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * InsiderTradeFireDetails
+         * @description Facts emitted by insider_trade alerts, including historical optional fields.
+         */
+        InsiderTradeFireDetails: {
+            accession_number: string;
+            form_type: null | string;
+            transaction: {
+                id: string;
+                ownerCik: null | string;
+                ownerName: string;
+                isDirector: boolean;
+                isOfficer: boolean;
+                isTenPercentOwner: boolean;
+                code: string;
+                acquiredDisposed: string;
+                shares: null | string;
+                price: null | string;
+                value?: null | string;
+                isDerivative: boolean;
+            };
+        };
+        /**
+         * HolderChangeAlertFiredData
+         * @description A holder_change fire: its reason details follow HolderChangeFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "holder_change",
+         *         "metadata": {},
+         *         "external_user_id": null,
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "summary": "A matching filing event.",
+         *         "details": {
+         *           "accession_number": "0000001004-26-000010",
+         *           "manager_cik": "1004",
+         *           "manager_name": "MANAGER 1004",
+         *           "period_end": "2026-06-30",
+         *           "prior_period_end": "2026-03-31",
+         *           "current_snapshot_id": "11111111-1111-5111-8111-111111111111",
+         *           "prior_snapshot_id": "22222222-2222-5222-8222-222222222222",
+         *           "position": {
+         *             "positionKey": "037833100|position|SH",
+         *             "cusip": "037833100",
+         *             "cik": "320193",
+         *             "symbol": "AAPL",
+         *             "kind": "increased",
+         *             "currentShares": "90",
+         *             "priorShares": "80",
+         *             "currentValueUsd": "900",
+         *             "priorValueUsd": "800"
+         *           }
+         *         }
+         *       },
+         *       "source": {
+         *         "kind": "holders.changed",
+         *         "key": "holders:1004:2026-06-30:0000001004-26-000010:1"
+         *       },
+         *       "subject": {
+         *         "cik": "320193",
+         *         "symbol": "AAPL"
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-16T09:00:06.067Z",
+         *       "alert_type": "holder_change"
+         *     }
+         */
+        HolderChangeAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "holder_change";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["HolderChangeFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * HolderChangeFireDetails
+         * @description Facts emitted by holder_change alerts, including historical optional fields.
+         */
+        HolderChangeFireDetails: {
+            accession_number: string;
+            manager_cik: string;
+            manager_name: null | string;
+            /**
+             * Format: date
+             * @description Current holding period end.
+             */
+            period_end: string;
+            /**
+             * Format: date
+             * @description Current holding period end.
+             */
+            prior_period_end: string;
+            current_snapshot_id: string;
+            prior_snapshot_id: null | string;
+            position: {
+                positionKey: string;
+                cusip: null | string;
+                cik: null | string;
+                symbol: null | string;
+                /** @enum {string} */
+                kind: "decreased" | "increased" | "new" | "sold_out";
+                currentShares: null | string;
+                priorShares: null | string;
+                currentValueUsd: null | string;
+                priorValueUsd: null | string;
+            };
+        };
+        /**
+         * IpoStageAlertFiredData
+         * @description A ipo_stage fire: its reason details follow IpoStageFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "ipo_stage",
+         *         "metadata": {},
+         *         "external_user_id": null,
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "summary": "A matching filing event.",
+         *         "details": {
+         *           "track_key": "333-1",
+         *           "transition_id": "00000000000000000000000000000000",
+         *           "previous_stage": null,
+         *           "stage": "registered",
+         *           "proposed_symbols": [
+         *             {
+         *               "symbol": "NEWIPO",
+         *               "exchange": "Nasdaq",
+         *               "security_class": "common",
+         *               "source": "regex",
+         *               "ipo_calendar_match": false
+         *             }
+         *           ],
+         *           "is_spac": null,
+         *           "issuer_name": "Issuer"
+         *         }
+         *       },
+         *       "source": {
+         *         "kind": "ipo.stage",
+         *         "key": "ipo:1:333-1:registered:00000000000000000000000000000000"
+         *       },
+         *       "subject": {
+         *         "cik": "1",
+         *         "symbol": null
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-16T09:00:06.067Z",
+         *       "alert_type": "ipo_stage"
+         *     }
+         */
+        IpoStageAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "ipo_stage";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["IpoStageFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * IpoStageFireDetails
+         * @description Facts emitted by ipo_stage alerts, including historical optional fields.
+         */
+        IpoStageFireDetails: {
+            track_key: string;
+            transition_id: string;
+            previous_stage: null | string;
+            stage: string;
+            proposed_symbols: Array<{
+                symbol: string;
+                exchange: null | string;
+                security_class: string;
+                source: string;
+                ipo_calendar_match: boolean;
+            }>;
+            is_spac: boolean | null;
+            issuer_name: null | string;
+        };
+        /**
+         * BeneficialOwnershipAlertFiredData
+         * @description A beneficial_ownership fire: its reason details follow BeneficialOwnershipFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "beneficial_ownership",
+         *         "metadata": {},
+         *         "external_user_id": null,
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "summary": "A matching filing event.",
+         *         "details": {
+         *           "accession_number": "0000320193-26-000001",
+         *           "schedule": "13G",
+         *           "is_amendment": true,
+         *           "supersedes_accession": null,
+         *           "holder": {
+         *             "ordinal": 1,
+         *             "filerCik": null,
+         *             "filerName": "Example Fund",
+         *             "percentOfClass": "5.5",
+         *             "aggregateAmount": "100000",
+         *             "previousPercentOfClass": null,
+         *             "previousAggregateAmount": null
+         *           }
+         *         }
+         *       },
+         *       "source": {
+         *         "kind": "ownership.filed",
+         *         "key": "ownership:0000320193-26-000001:part:1"
+         *       },
+         *       "subject": {
+         *         "cik": "320193",
+         *         "symbol": null
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-16T09:00:06.067Z",
+         *       "alert_type": "beneficial_ownership"
+         *     }
+         */
+        BeneficialOwnershipAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "beneficial_ownership";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["BeneficialOwnershipFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * BeneficialOwnershipFireDetails
+         * @description Facts emitted by beneficial_ownership alerts, including historical optional fields.
+         */
+        BeneficialOwnershipFireDetails: {
+            accession_number: string;
+            /** @enum {string} */
+            schedule: "13D" | "13G";
+            is_amendment: boolean;
+            supersedes_accession: null | string;
+            holder: {
+                ordinal: number;
+                filerCik: null | string;
+                filerName: string;
+                percentOfClass: null | string;
+                aggregateAmount: null | string;
+                previousPercentOfClass: null | string;
+                previousAggregateAmount: null | string;
+            };
+        };
+        /**
+         * InsiderSaleNoticeAlertFiredData
+         * @description A insider_sale_notice fire: its reason details follow InsiderSaleNoticeFireDetails. Synthetic tests use representative example facts.
+         * @example {
+         *       "alert": {
+         *         "id": "alt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *         "type": "insider_sale_notice",
+         *         "metadata": {},
+         *         "external_user_id": null,
+         *         "client_reference_id": "example-alert"
+         *       },
+         *       "reason": {
+         *         "summary": "A matching filing event.",
+         *         "details": {
+         *           "accession_number": "0000320193-26-000001",
+         *           "is_amendment": true,
+         *           "seller_cik": null,
+         *           "seller_name": "Example Person",
+         *           "relationships": [
+         *             "Officer"
+         *           ],
+         *           "shares_to_sell": "100",
+         *           "market_value_usd": "1250",
+         *           "approximate_sale_date": "2026-12-01",
+         *           "replaces_accession": "0000320193-26-000000"
+         *         }
+         *       },
+         *       "source": {
+         *         "kind": "sale_notice.filed",
+         *         "key": "sale_notice:0000320193-26-000001"
+         *       },
+         *       "subject": {
+         *         "cik": "320193",
+         *         "symbol": null
+         *       },
+         *       "event_id": "evt_01JD2Q4X7Y8Z9A0B1C2D3E4F5G",
+         *       "fired_at": "2026-11-16T09:00:06.067Z",
+         *       "alert_type": "insider_sale_notice"
+         *     }
+         */
+        InsiderSaleNoticeAlertFiredData: {
+            /** @description Account event id; deduplicate on this value. */
+            event_id: string;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            alert_type: "insider_sale_notice";
+            alert: components["schemas"]["AlertFiredAlertRef"];
+            /** Format: date-time */
+            fired_at: string;
+            reason: {
+                summary: string;
+                details: components["schemas"]["InsiderSaleNoticeFireDetails"];
+            };
+            source?: components["schemas"]["AlertFireSource"];
+            /** @description Fires suppressed since the prior delivered fire. */
+            suppressed_since_last?: number;
+            /** @enum {string} */
+            delivery_skipped?: "alert_user_fire_cap" | "fire_cap";
+            /**
+             * @description Synthetic test delivery with representative example facts.
+             * @enum {boolean}
+             */
+            test?: true;
+            subject?: components["schemas"]["AlertFireSubject"];
+        };
+        /**
+         * InsiderSaleNoticeFireDetails
+         * @description Facts emitted by insider_sale_notice alerts, including historical optional fields.
+         */
+        InsiderSaleNoticeFireDetails: {
+            accession_number: string;
+            is_amendment: boolean;
+            seller_cik: null | string;
+            seller_name: null | string;
+            relationships: Array<string> | null;
+            shares_to_sell: null | string;
+            market_value_usd: null | string;
+            /**
+             * Format: date
+             * @description Common proposed sale date when the lines agree.
+             */
+            approximate_sale_date: null | string;
+            replaces_accession: null | string;
+        };
         /** AlertEvent */
         AlertStatusChangedEvent: {
             /** @description Event id (`evt_…`; the `webhook-id` of its deliveries) */
@@ -17664,7 +19388,7 @@ export interface components {
                  * @description Alert type
                  * @enum {string}
                  */
-                type: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+                type: "beneficial_ownership" | "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "holder_change" | "indicator" | "insider_sale_notice" | "insider_trade" | "ipo_stage" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
                 /** @description Your reference, as set on the alert */
                 client_reference_id: null | string;
                 /** @description Your end user, as set on the alert */
@@ -19629,8 +21353,8 @@ export interface components {
             channel: "news";
         };
         AlertWebhookEnvelope: components["schemas"]["AccountFireCapReachedWebhookEvent"] | components["schemas"]["AlertFiredBatchWebhookEvent"] | components["schemas"]["AlertFiredWebhookEvent"] | components["schemas"]["AlertStatusChangedWebhookEvent"] | components["schemas"]["AlertUserFireCapReachedWebhookEvent"] | components["schemas"]["DestinationDisabledWebhookEvent"] | components["schemas"]["DestinationTestWebhookEvent"];
-        AlertCreateRequest: components["schemas"]["CreateDividendAlertRequest"] | components["schemas"]["CreateEarningsCallAlertRequest"] | components["schemas"]["CreateEarningsCallKeywordAlertRequest"] | components["schemas"]["CreateEarningsResultsAlertRequest"] | components["schemas"]["CreateEventCountdownAlertRequest"] | components["schemas"]["CreateFilingAlertRequest"] | components["schemas"]["CreateFilingKeywordAlertRequest"] | components["schemas"]["CreateFundamentalMetricAlertRequest"] | components["schemas"]["CreateHaltAlertRequest"] | components["schemas"]["CreateIndicatorAlertRequest"] | components["schemas"]["CreateMacroAlertRequest"] | components["schemas"]["CreateNewsAlertRequest"] | components["schemas"]["CreateNewsKeywordAlertRequest"] | components["schemas"]["CreatePriceAlertRequest"] | components["schemas"]["CreatePriceMoveAlertRequest"] | components["schemas"]["CreatePriceReminderAlertRequest"] | components["schemas"]["CreateScriptAlertRequest"] | components["schemas"]["CreateVolumeSpikeAlertRequest"];
-        AlertUpdateRequest: components["schemas"]["AlertSettingsUpdateRequest"] | components["schemas"]["UpdateDividendAlertRequest"] | components["schemas"]["UpdateEarningsCallAlertRequest"] | components["schemas"]["UpdateEarningsCallKeywordAlertRequest"] | components["schemas"]["UpdateEarningsResultsAlertRequest"] | components["schemas"]["UpdateEventCountdownAlertRequest"] | components["schemas"]["UpdateFilingAlertRequest"] | components["schemas"]["UpdateFilingKeywordAlertRequest"] | components["schemas"]["UpdateFundamentalMetricAlertRequest"] | components["schemas"]["UpdateHaltAlertRequest"] | components["schemas"]["UpdateIndicatorAlertRequest"] | components["schemas"]["UpdateMacroAlertRequest"] | components["schemas"]["UpdateNewsAlertRequest"] | components["schemas"]["UpdateNewsKeywordAlertRequest"] | components["schemas"]["UpdatePriceAlertRequest"] | components["schemas"]["UpdatePriceMoveAlertRequest"] | components["schemas"]["UpdatePriceReminderAlertRequest"] | components["schemas"]["UpdateScriptAlertRequest"] | components["schemas"]["UpdateVolumeSpikeAlertRequest"];
+        AlertCreateRequest: components["schemas"]["CreateBeneficialOwnershipAlertRequest"] | components["schemas"]["CreateDividendAlertRequest"] | components["schemas"]["CreateEarningsCallAlertRequest"] | components["schemas"]["CreateEarningsCallKeywordAlertRequest"] | components["schemas"]["CreateEarningsResultsAlertRequest"] | components["schemas"]["CreateEventCountdownAlertRequest"] | components["schemas"]["CreateFilingAlertRequest"] | components["schemas"]["CreateFilingKeywordAlertRequest"] | components["schemas"]["CreateFundamentalMetricAlertRequest"] | components["schemas"]["CreateHaltAlertRequest"] | components["schemas"]["CreateHolderChangeAlertRequest"] | components["schemas"]["CreateIndicatorAlertRequest"] | components["schemas"]["CreateInsiderSaleNoticeAlertRequest"] | components["schemas"]["CreateInsiderTradeAlertRequest"] | components["schemas"]["CreateIpoStageAlertRequest"] | components["schemas"]["CreateMacroAlertRequest"] | components["schemas"]["CreateNewsAlertRequest"] | components["schemas"]["CreateNewsKeywordAlertRequest"] | components["schemas"]["CreatePriceAlertRequest"] | components["schemas"]["CreatePriceMoveAlertRequest"] | components["schemas"]["CreatePriceReminderAlertRequest"] | components["schemas"]["CreateScriptAlertRequest"] | components["schemas"]["CreateVolumeSpikeAlertRequest"];
+        AlertUpdateRequest: components["schemas"]["AlertSettingsUpdateRequest"] | components["schemas"]["UpdateBeneficialOwnershipAlertRequest"] | components["schemas"]["UpdateDividendAlertRequest"] | components["schemas"]["UpdateEarningsCallAlertRequest"] | components["schemas"]["UpdateEarningsCallKeywordAlertRequest"] | components["schemas"]["UpdateEarningsResultsAlertRequest"] | components["schemas"]["UpdateEventCountdownAlertRequest"] | components["schemas"]["UpdateFilingAlertRequest"] | components["schemas"]["UpdateFilingKeywordAlertRequest"] | components["schemas"]["UpdateFundamentalMetricAlertRequest"] | components["schemas"]["UpdateHaltAlertRequest"] | components["schemas"]["UpdateHolderChangeAlertRequest"] | components["schemas"]["UpdateIndicatorAlertRequest"] | components["schemas"]["UpdateInsiderSaleNoticeAlertRequest"] | components["schemas"]["UpdateInsiderTradeAlertRequest"] | components["schemas"]["UpdateIpoStageAlertRequest"] | components["schemas"]["UpdateMacroAlertRequest"] | components["schemas"]["UpdateNewsAlertRequest"] | components["schemas"]["UpdateNewsKeywordAlertRequest"] | components["schemas"]["UpdatePriceAlertRequest"] | components["schemas"]["UpdatePriceMoveAlertRequest"] | components["schemas"]["UpdatePriceReminderAlertRequest"] | components["schemas"]["UpdateScriptAlertRequest"] | components["schemas"]["UpdateVolumeSpikeAlertRequest"];
         /** AlertBatchRequest */
         AlertBatchRequest: {
             items: Array<components["schemas"]["AlertBatchItem"]>;
@@ -19874,7 +21598,7 @@ export interface operations {
                  *       "client_reference_id": "watchlist-aapl-8k"
                  *     }
                  */
-                "application/json": components["schemas"]["CreateDividendAlertRequest"] | components["schemas"]["CreateEarningsCallAlertRequest"] | components["schemas"]["CreateEarningsCallKeywordAlertRequest"] | components["schemas"]["CreateEarningsResultsAlertRequest"] | components["schemas"]["CreateEventCountdownAlertRequest"] | components["schemas"]["CreateFilingAlertRequest"] | components["schemas"]["CreateFilingKeywordAlertRequest"] | components["schemas"]["CreateFundamentalMetricAlertRequest"] | components["schemas"]["CreateHaltAlertRequest"] | components["schemas"]["CreateIndicatorAlertRequest"] | components["schemas"]["CreateMacroAlertRequest"] | components["schemas"]["CreateNewsAlertRequest"] | components["schemas"]["CreateNewsKeywordAlertRequest"] | components["schemas"]["CreatePriceAlertRequest"] | components["schemas"]["CreatePriceMoveAlertRequest"] | components["schemas"]["CreatePriceReminderAlertRequest"] | components["schemas"]["CreateScriptAlertRequest"] | components["schemas"]["CreateVolumeSpikeAlertRequest"];
+                "application/json": components["schemas"]["CreateBeneficialOwnershipAlertRequest"] | components["schemas"]["CreateDividendAlertRequest"] | components["schemas"]["CreateEarningsCallAlertRequest"] | components["schemas"]["CreateEarningsCallKeywordAlertRequest"] | components["schemas"]["CreateEarningsResultsAlertRequest"] | components["schemas"]["CreateEventCountdownAlertRequest"] | components["schemas"]["CreateFilingAlertRequest"] | components["schemas"]["CreateFilingKeywordAlertRequest"] | components["schemas"]["CreateFundamentalMetricAlertRequest"] | components["schemas"]["CreateHaltAlertRequest"] | components["schemas"]["CreateHolderChangeAlertRequest"] | components["schemas"]["CreateIndicatorAlertRequest"] | components["schemas"]["CreateInsiderSaleNoticeAlertRequest"] | components["schemas"]["CreateInsiderTradeAlertRequest"] | components["schemas"]["CreateIpoStageAlertRequest"] | components["schemas"]["CreateMacroAlertRequest"] | components["schemas"]["CreateNewsAlertRequest"] | components["schemas"]["CreateNewsKeywordAlertRequest"] | components["schemas"]["CreatePriceAlertRequest"] | components["schemas"]["CreatePriceMoveAlertRequest"] | components["schemas"]["CreatePriceReminderAlertRequest"] | components["schemas"]["CreateScriptAlertRequest"] | components["schemas"]["CreateVolumeSpikeAlertRequest"];
             };
         };
         responses: {
@@ -27522,7 +29246,7 @@ export interface operations {
                  * @description Only alerts of this type
                  * @example filing
                  */
-                type?: "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "indicator" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
+                type?: "beneficial_ownership" | "dividend" | "earnings_call" | "earnings_call_keyword" | "earnings_results" | "event_countdown" | "filing" | "filing_keyword" | "fundamental_metric" | "halt" | "holder_change" | "indicator" | "insider_sale_notice" | "insider_trade" | "ipo_stage" | "macro" | "news" | "news_keyword" | "price" | "price_move" | "price_reminder" | "script" | "volume_spike";
                 /**
                  * @description Only alerts of this end user (your own id, set at create)
                  * @example user_8812
@@ -38290,7 +40014,7 @@ export interface operations {
                  *       "version": 1
                  *     }
                  */
-                "application/json": components["schemas"]["AlertSettingsUpdateRequest"] | components["schemas"]["UpdateDividendAlertRequest"] | components["schemas"]["UpdateEarningsCallAlertRequest"] | components["schemas"]["UpdateEarningsCallKeywordAlertRequest"] | components["schemas"]["UpdateEarningsResultsAlertRequest"] | components["schemas"]["UpdateEventCountdownAlertRequest"] | components["schemas"]["UpdateFilingAlertRequest"] | components["schemas"]["UpdateFilingKeywordAlertRequest"] | components["schemas"]["UpdateFundamentalMetricAlertRequest"] | components["schemas"]["UpdateHaltAlertRequest"] | components["schemas"]["UpdateIndicatorAlertRequest"] | components["schemas"]["UpdateMacroAlertRequest"] | components["schemas"]["UpdateNewsAlertRequest"] | components["schemas"]["UpdateNewsKeywordAlertRequest"] | components["schemas"]["UpdatePriceAlertRequest"] | components["schemas"]["UpdatePriceMoveAlertRequest"] | components["schemas"]["UpdatePriceReminderAlertRequest"] | components["schemas"]["UpdateScriptAlertRequest"] | components["schemas"]["UpdateVolumeSpikeAlertRequest"];
+                "application/json": components["schemas"]["AlertSettingsUpdateRequest"] | components["schemas"]["UpdateBeneficialOwnershipAlertRequest"] | components["schemas"]["UpdateDividendAlertRequest"] | components["schemas"]["UpdateEarningsCallAlertRequest"] | components["schemas"]["UpdateEarningsCallKeywordAlertRequest"] | components["schemas"]["UpdateEarningsResultsAlertRequest"] | components["schemas"]["UpdateEventCountdownAlertRequest"] | components["schemas"]["UpdateFilingAlertRequest"] | components["schemas"]["UpdateFilingKeywordAlertRequest"] | components["schemas"]["UpdateFundamentalMetricAlertRequest"] | components["schemas"]["UpdateHaltAlertRequest"] | components["schemas"]["UpdateHolderChangeAlertRequest"] | components["schemas"]["UpdateIndicatorAlertRequest"] | components["schemas"]["UpdateInsiderSaleNoticeAlertRequest"] | components["schemas"]["UpdateInsiderTradeAlertRequest"] | components["schemas"]["UpdateIpoStageAlertRequest"] | components["schemas"]["UpdateMacroAlertRequest"] | components["schemas"]["UpdateNewsAlertRequest"] | components["schemas"]["UpdateNewsKeywordAlertRequest"] | components["schemas"]["UpdatePriceAlertRequest"] | components["schemas"]["UpdatePriceMoveAlertRequest"] | components["schemas"]["UpdatePriceReminderAlertRequest"] | components["schemas"]["UpdateScriptAlertRequest"] | components["schemas"]["UpdateVolumeSpikeAlertRequest"];
             };
         };
         responses: {

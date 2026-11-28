@@ -4,8 +4,8 @@ import type * as React from "react";
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { AlertEntryPoints, CreateAlertButton, ENTRY_TYPES, entryTypesFor, NON_STOCK_ALERT_TYPES, symbolAlertsText } from "@/components/alerts/create-alert-button";
-import { prefilledForm } from "@/lib/alerts/alert-form";
+import { AlertEntryPoints, CreateAlertButton, ENTRY_TYPES, entryTypesFor, MarketAlertEntryPoints, NON_STOCK_ALERT_TYPES, symbolAlertsText } from "@/components/alerts/create-alert-button";
+import { prefilledForm, toCreateBody } from "@/lib/alerts/alert-form";
 import { ALERT_FILING, ALERT_PRICE } from "@/lib/alerts/alerts-fixtures";
 import { AAPL_INSTRUMENT, PDI_INSTRUMENT, SPY_INSTRUMENT } from "@/lib/instruments-fixtures";
 import { ALERT_TYPE_CATALOG_FIXTURE } from "@/lib/reference/reference-fixtures";
@@ -58,6 +58,26 @@ describe("Create alert on ticker pages", () => {
         render(<CreateAlertButton symbol="AAPL" types={ENTRY_TYPES.dividends} />);
 
         expect(screen.getByRole("link", { name: "Create dividend alert" })).toHaveAttribute("href", "/alerts/new?symbol=AAPL&type=dividend");
+    });
+
+    it("a market-wide IPO entry has no invented ticker or symbol query", () => {
+        render(<MarketAlertEntryPoints types={ENTRY_TYPES.ipos} />);
+
+        expect(screen.getByRole("link", { name: "Create ipo stage alert" })).toHaveAttribute("href", "/alerts/new?type=ipo_stage");
+
+        expect(toCreateBody(prefilledForm("ipo_stage", undefined))).toMatchObject({ body: { condition: {}, type: "ipo_stage" }, errors: {} });
+    });
+
+    it("new filing and holder entry types follow their owning data pages and ETF rule", () => {
+        expect(ENTRY_TYPES.insiders).toEqual(["insider_trade"]);
+
+        expect(ENTRY_TYPES.holders).toEqual(["holder_change"]);
+
+        expect(ENTRY_TYPES.ownership).toEqual(["beneficial_ownership", "insider_sale_notice"]);
+
+        expect(entryTypesFor(ENTRY_TYPES.holders, SPY_INSTRUMENT)).toEqual(["holder_change"]);
+
+        expect(entryTypesFor(ENTRY_TYPES.insiders, SPY_INSTRUMENT)).toEqual([]);
     });
 
     it("several types = a menu; AAPL's news page offers news and news keyword", async () => {
@@ -174,7 +194,7 @@ describe("/alerts/new pre-fill (`?type=&symbol=&script=&version=&template=`)", (
 });
 
 it("ETF entry types match the complete released alert-type catalog fixture", () => {
-    expect(ALERT_TYPE_CATALOG_FIXTURE.data).toHaveLength(18);
+    expect(ALERT_TYPE_CATALOG_FIXTURE.data).toHaveLength(23);
 
     expect([...NON_STOCK_ALERT_TYPES].sort()).toEqual(ALERT_TYPE_CATALOG_FIXTURE.data.filter(row => row.subjects.etf).map(row => row.type).sort());
 });

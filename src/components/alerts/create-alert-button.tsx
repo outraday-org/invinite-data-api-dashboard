@@ -22,8 +22,12 @@ export const ENTRY_TYPES = {
     calls: ["earnings_call", "earnings_call_keyword", "earnings_results", "event_countdown"],
     dividends: ["dividend"],
     filings: ["filing", "filing_keyword"],
+    holders: ["holder_change"],
+    insiders: ["insider_trade"],
+    ipos: ["ipo_stage"],
     news: ["news", "news_keyword"],
     overview: [...PRICE_ALERT_TYPES, "fundamental_metric"],
+    ownership: ["beneficial_ownership", "insider_sale_notice"],
 } as const satisfies Record<string, ReadonlyArray<AlertType>>;
 
 /**
@@ -31,7 +35,7 @@ export const ENTRY_TYPES = {
  * `event_countdown`, `filing`, `filing_keyword` and the instrument types; `earnings_call*`, `earnings_results`,
  * `fundamental_metric`, `news*` refuse it). Applied to every non-stock type (fund, ETN): only what surely works.
  */
-export const NON_STOCK_ALERT_TYPES: ReadonlyArray<AlertType> = [...PRICE_ALERT_TYPES, "indicator", "script", "dividend", "event_countdown", "filing", "filing_keyword"];
+export const NON_STOCK_ALERT_TYPES: ReadonlyArray<AlertType> = [...PRICE_ALERT_TYPES, "indicator", "script", "dividend", "event_countdown", "filing", "filing_keyword", "holder_change"];
 
 /**
  * The page's types the instrument can carry (pure): none when its `datasets` (the API's own table) lacks `alerts` or
@@ -62,10 +66,12 @@ export function SymbolAlertsLink({ page, symbol }: { page: Pick<AlertsListRespon
 }
 
 /** "Create alert" (pure): one type = a link button; several = a menu of the types, each a link. */
-export function CreateAlertButton({ symbol, types }: { symbol: string; types: ReadonlyArray<AlertType> }) {
+export function CreateAlertButton({ symbol, types }: { symbol?: string; types: ReadonlyArray<AlertType> }) {
+    const subject = symbol === undefined ? {} : { symbol };
+
     if (types.length === 1) {
         return (
-            <Link className={buttonVariants({ size: "sm", variant: "outline" })} search={{ symbol, type: types[0] }} to="/alerts/new">
+            <Link className={buttonVariants({ size: "sm", variant: "outline" })} search={{ ...subject, type: types[0] }} to="/alerts/new">
                 <BellPlusIcon />
                 {`Create ${ALERT_TYPE_INFO[types[0]].label.toLowerCase()} alert`}
             </Link>
@@ -82,7 +88,7 @@ export function CreateAlertButton({ symbol, types }: { symbol: string; types: Re
             <DropdownMenuContent align="end" className="w-80 max-w-[calc(100vw-2rem)]">
                 <DropdownMenuGroup>
                     {types.map(type => (
-                        <DropdownMenuItem key={type} render={<Link search={{ symbol, type }} to="/alerts/new" />}>
+                        <DropdownMenuItem key={type} render={<Link search={{ ...subject, type }} to="/alerts/new" />}>
                             <span className="flex flex-col">
                                 <span className="font-medium">{ALERT_TYPE_INFO[type].label}</span>
                                 <span className="text-muted-foreground">{ALERT_TYPE_INFO[type].summary}</span>
@@ -122,4 +128,13 @@ export function AlertEntryPoints({ symbol, types }: { symbol: string; types: Rea
             <CreateAlertButton symbol={canonical} types={offered} />
         </div>
     );
+}
+
+/** Market-wide entry points have no selected listing; IPO and ownership schemas allow absent subjects. */
+export function MarketAlertEntryPoints({ types }: { types: ReadonlyArray<AlertType> }) {
+    const { me } = useKeyState();
+
+    if (me === null || !plansAlerts(me)) return null;
+
+    return <CreateAlertButton types={types} />;
 }

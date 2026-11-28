@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { V2BeneficialOwnershipType } from "@/lib/api/types";
 import type { OwnershipFormsSearch, OwnershipFormTab } from "@/lib/sec/ownership-forms";
 
+import { ENTRY_TYPES, MarketAlertEntryPoints } from "@/components/alerts/create-alert-button";
 import { DebouncedInput } from "@/components/navigation/debounced-input";
 import { CompanyFilter } from "@/components/search/company-filter";
 import { BeneficialOwnershipList, InsiderSaleNoticesList } from "@/components/sec/ownership-forms-views";
@@ -121,6 +122,7 @@ function OwnershipFilingsPage() {
     return (
         <PageContainer>
             <PageHeader
+                actions={<MarketAlertEntryPoints types={ENTRY_TYPES.ownership} />}
                 description={(
                     <>
                         Schedule 13D (activist) and 13G (passive) filings of holders above 5 % of a class of a listed company,
