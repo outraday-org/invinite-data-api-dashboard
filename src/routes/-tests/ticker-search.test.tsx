@@ -6,7 +6,7 @@ import type { V2FilersResponse } from "@/lib/api/types";
 
 import { mergeFilers, rankInstruments, TickerSearch } from "@/components/search/ticker-search";
 import { useInstrumentSearch, useV2Filers, useV2PeopleSearch } from "@/lib/api/queries";
-import { AAPL_INSTRUMENT, GLD_INSTRUMENT, INSTRUMENT_SEARCH } from "@/lib/instruments-fixtures";
+import { AAPL_INSTRUMENT, ACA_INSTRUMENT, GLD_INSTRUMENT, INSTRUMENT_SEARCH } from "@/lib/instruments-fixtures";
 import { PERSON_ANALYST, V2_PEOPLE } from "@/lib/people-fixtures";
 import { V2_FILERS } from "@/lib/sec/v2-fixtures";
 import { useTickerStore } from "@/lib/stores/ticker-store";
@@ -83,6 +83,32 @@ const option = (label: string) => screen.getAllByTestId("search-option").find(ro
 const optionLabels = () => screen.getAllByTestId("search-option").map(row => row.querySelector("div.font-medium")?.textContent);
 
 describe("top-bar search: groups, pills, keyboard, recents", () => {
+    it("keeps a supported delisted section and drops an unsupported one", () => {
+        vi.mocked(useInstrumentSearch).mockReturnValue({ data: { ...INSTRUMENT_SEARCH, data: [ACA_INSTRUMENT] }, isFetching: false } as never);
+
+        router.pathname = "/AAPL/filings";
+
+        openSearch();
+
+        type("ACA");
+
+        fireEvent.keyDown(screen.getByRole("combobox"), { key: "Enter" });
+
+        expect(router.navigate).toHaveBeenLastCalledWith({ href: "/ACA/filings" });
+
+        cleanup();
+
+        router.pathname = "/AAPL/financials";
+
+        openSearch();
+
+        type("ACA");
+
+        fireEvent.keyDown(screen.getByRole("combobox"), { key: "Enter" });
+
+        expect(router.navigate).toHaveBeenLastCalledWith({ params: { ticker: "ACA" }, to: "/$ticker" });
+    });
+
     it("instruments with their type badges (GLD an ETF trust), institutions & filers (managers first) and pages", () => {
         openSearch();
 

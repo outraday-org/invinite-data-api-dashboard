@@ -47,8 +47,8 @@ export function GuidanceTab({ event, eventId }: CallTabProps) {
                     )
                 : <KpiTable eventId={eventId} onMetricClick={setKpiHistory} />}
 
-            <GuidanceHistoryPanel company={event.symbol} onClose={() => setHistory(null)} target={history} />
-            <KpiHistoryPanel company={event.symbol} metric={kpiHistory} onClose={() => setKpiHistory(null)} />
+            <GuidanceHistoryPanel company={event.cik} onClose={() => setHistory(null)} target={history} />
+            <KpiHistoryPanel company={event.cik} metric={kpiHistory} onClose={() => setKpiHistory(null)} />
         </div>
     );
 }

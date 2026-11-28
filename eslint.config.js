@@ -16,6 +16,7 @@ export default [
             "**/.claude/**",
             "**/.output/**",
             "**/.nitro/**",
+            "**/.netlify/**",
             "**/dist/**",
             "**/node_modules/**",
         ],

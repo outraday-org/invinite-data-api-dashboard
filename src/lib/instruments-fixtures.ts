@@ -166,3 +166,25 @@ export const FUNDS_PAGE: V2FundsResponse = {
     meta: { coverage: { state: "complete" } },
     next_cursor: "c2",
 };
+
+/** Released historical policy: these values are answers, never inferred by the dashboard. */
+export const ACA_INSTRUMENT: V2Instrument = {
+    ...AAPL_INSTRUMENT,
+    company: { cik: "0001739445" },
+    datasets: ["profile", "filings", "events", "transcripts", "guidance", "beneficial_ownership", "insider_sale_notices", "people", "investor_documents", "ipos"],
+    is_active: false,
+    name: "Arcosa, Inc.",
+    symbol: "ACA",
+};
+
+export const MBSX_INSTRUMENT: V2Instrument = {
+    ...SPY_INSTRUMENT,
+    datasets: ["profile", "dividends"],
+    is_active: false,
+    symbol: "MBSX",
+};
+
+export const REUSED_DELISTED_INSTRUMENT: V2Instrument = {
+    ...ACA_INSTRUMENT,
+    datasets: ACA_INSTRUMENT.datasets.filter(dataset => dataset !== "dividends"),
+};

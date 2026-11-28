@@ -5,12 +5,8 @@ import type { V2Instrument } from "@/lib/api/types";
 import { Notice } from "@/components/ui/notice";
 import { delistedText } from "@/lib/instruments";
 
-/**
- * The state of a delisted symbol (Data API 12): it is delisted, not "not covered". The API answers its listing (the
- * Overview) and, for a company, the SEC filer record by CIK (`/sec/$cik`: identity, lifecycle, Form D offerings); the
- * notice links both. A section other than the Overview shows it instead of the page (`TickerLayout`).
- */
-export function DelistedNotice({ instrument, onOverview }: { instrument: Pick<V2Instrument, "company" | "symbol">; onOverview: boolean }) {
+/** The delisted Overview links the instrument record and its SEC filer, with the eligible historical families. */
+export function DelistedNotice({ instrument, onOverview }: { instrument: Pick<V2Instrument, "company" | "datasets" | "symbol" | "type">; onOverview: boolean }) {
     const cik = instrument.company?.cik;
 
     const action = (

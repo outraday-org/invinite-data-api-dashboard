@@ -77,14 +77,14 @@ function ParticipantRows({ group, participants }: { group: RoleGroup; participan
 }
 
 /** The people search scoped to this call and to the company's calls (`/people?event=` / `?company=`). */
-export function PeopleSearchLinks({ eventId, symbol }: { eventId: string; symbol: string }) {
+export function PeopleSearchLinks({ company, eventId, symbol }: { company: string; eventId: string; symbol: string }) {
     const linkClass = "text-muted-foreground hover:text-foreground underline-offset-4 hover:underline";
 
     return (
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
             <span className="text-muted-foreground">Search people:</span>
             <Link className={linkClass} search={{ event: eventId }} to="/people">on this call</Link>
-            <Link className={linkClass} search={{ company: symbol }} to="/people">{`on every ${symbol} call`}</Link>
+            <Link className={linkClass} search={{ company }} to="/people">{`on every ${symbol} call`}</Link>
         </div>
     );
 }
@@ -113,7 +113,7 @@ export function ParticipantsTab({ event, eventId }: CallTabProps) {
 
     return (
         <div className="flex flex-col gap-3">
-            <PeopleSearchLinks eventId={eventId} symbol={event.symbol} />
+            <PeopleSearchLinks company={event.cik} eventId={eventId} symbol={event.symbol} />
             <Table>
                 <TableHeader>
                     <TableRow>

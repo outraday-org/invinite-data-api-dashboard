@@ -38,7 +38,7 @@ browser's `localStorage`). Without a key entered in the UI the live player asks 
 
 ## API types
 
-`openapi.json` and `sdk-contract.json` come from the API reference bundle at `data-sdk-v13.2.0`.
+`openapi.json` and `sdk-contract.json` come from the API reference bundle at `data-sdk-v13.3.0`.
 When updating the pin, copy both files from the same release and run `pnpm generate:api` to regenerate the API types
 and operation metadata.
 `pnpm-workspace.yaml` records pnpm 11's `allowBuilds` decisions (esbuild's postinstall
