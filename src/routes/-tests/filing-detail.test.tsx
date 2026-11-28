@@ -66,6 +66,40 @@ function state<TPage>(pages: Array<TPage>, extra: Partial<ListState<TPage>> = {}
 const ACCESSION = "0000320193-26-000020";
 
 describe("filing page tabs", () => {
+    it("sections pending is preparation, while a known version without an outline is a covered empty state", () => {
+        const onOpenBlock = vi.fn();
+
+        const { rerender } = render(
+            <DocumentSectionsView
+                onOpenBlock={onOpenBlock}
+                state={state([
+                    { ...DOCUMENT_SECTIONS, data: [], meta: { coverage: { reason: "sections_not_projected", state: "pending" } } },
+                ])}
+            />,
+        );
+
+        expect(screen.getByText("Being prepared — asked again in 30 s")).toBeInTheDocument();
+
+        expect(screen.queryByText("This document has no sections in this outline.")).toBeNull();
+
+        rerender(
+            <DocumentSectionsView
+                onOpenBlock={onOpenBlock}
+                state={state([
+                    { ...DOCUMENT_SECTIONS, data: [], meta: { coverage: { reason: "no_legacy_outline", state: "complete" } } },
+                ])}
+            />,
+        );
+
+        expect(screen.getByText("Document available; no item outline")).toBeInTheDocument();
+
+        expect(screen.getByText(/This version is known to the store/)).toBeInTheDocument();
+
+        expect(screen.queryByText("Not known to the SEC store")).toBeNull();
+
+        expect(screen.queryByText("Failed to load the sections")).toBeNull();
+    });
+
     it("Facts: concept, value as filed (nil stated), period, dimensions; 'Load more' by cursor", () => {
         render(<FilingFactsView accession={ACCESSION} state={state([FILING_FACTS], { hasNextPage: true })} />);
 

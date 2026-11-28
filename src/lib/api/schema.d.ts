@@ -36515,39 +36515,44 @@ export interface operations {
                      *       "data": [
                      *         {
                      *           "company": {
-                     *             "cik": "0000320193",
-                     *             "ticker": "AAPL"
+                     *             "cik": "0001018724",
+                     *             "ticker": "AMZN"
                      *           },
-                     *           "fiscal_year": 2026,
+                     *           "fiscal_year": 2025,
                      *           "fiscal_quarter": 4,
                      *           "period": "annual",
-                     *           "period_start": "2025-09-28",
-                     *           "period_end": "2026-09-26",
-                     *           "calendar_year": 2026,
-                     *           "calendar_quarter": 3,
-                     *           "metric_id": "is_total_revenue",
-                     *           "segment_id": "seg_revenue_product",
-                     *           "value": 35577000000,
+                     *           "period_start": "2025-01-01",
+                     *           "period_end": "2025-12-31",
+                     *           "calendar_year": 2025,
+                     *           "calendar_quarter": 4,
+                     *           "metric_id": "is_operating_income",
+                     *           "segment_id": "seg_operating_income_business_segment",
+                     *           "value": 29619000000,
+                     *           "currency": "USD",
                      *           "dimensions": [
                      *             {
-                     *               "axis": "srt:ProductOrServiceAxis",
-                     *               "member": "aapl:WearablesHomeandAccessoriesMember"
+                     *               "axis": "StatementBusinessSegmentsAxis",
+                     *               "member": "NorthAmericaSegmentMember"
                      *             }
-                     *           ]
+                     *           ],
+                     *           "via_link": false,
+                     *           "source_member": "NorthAmericaSegmentMember",
+                     *           "source_row_id": "1018724|is_operating_income|annual|2025|4|seg_operating_income_business_segment|NorthAmericaSegmentMember"
                      *         }
                      *       ],
                      *       "has_more": true,
-                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTI2IiwiMzIwMTkzIiwyMDI2LDQsIjMyMDE5M3xpc19yZXNlYXJjaF9hbmRfZGV2ZWxvcG1lbnRfZXhwZW5zZXN8YW5udWFsfDIwMjZ8NHxzZWdfcmVzZWFyY2hfYW5kX2RldmVsb3BtZW50X2V4cGVuc2VzX2J1c2luZXNzX3NlZ21lbnR8UmVzdE9mQXNpYVBhY2lmaWNTZWdt…",
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDE3LTEyLTMxIiwiMTAxODcyNCIsMjAxNyw0LCIxMDE4NzI0fGlzX29wZXJhdGluZ19pbmNvbWV8YW5udWFsfDIwMTd8NHxzZWdfb3BlcmF0aW5nX2luY29tZV9idXNpbmVzc19zZWdtZW50fE5vcnRoQW1lcmljYVNlZ21lbnRNZW1iZXIiLCIiXSwiZiI6IjgwOTMwNTEwYTBiZDI5NjQi…",
                      *       "meta": {
                      *         "coverage": {
                      *           "state": "complete",
                      *           "through": null,
-                     *           "retry_after_s": null
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
                      *         },
                      *         "source": {
-                     *           "dataset_release": "2026q3",
+                     *           "dataset_release": null,
                      *           "version_id": null,
-                     *           "accession": "0000320193-26-000026",
+                     *           "accession": null,
                      *           "fetched_at": null
                      *         }
                      *       }
@@ -36683,44 +36688,53 @@ export interface operations {
                      *       "data": [
                      *         {
                      *           "company": {
-                     *             "cik": "0000320193",
-                     *             "ticker": "AAPL"
+                     *             "cik": "0001018724",
+                     *             "ticker": "AMZN"
                      *           },
-                     *           "fiscal_year": 2026,
+                     *           "fiscal_year": 2025,
                      *           "fiscal_quarter": 4,
                      *           "period": "annual",
-                     *           "period_start": "2025-09-28",
-                     *           "period_end": "2026-09-26",
-                     *           "calendar_year": 2026,
-                     *           "calendar_quarter": 3,
-                     *           "metric_id": "is_total_revenue",
-                     *           "segment_id": "seg_revenue_product",
-                     *           "value": 35577000000,
+                     *           "period_start": "2025-01-01",
+                     *           "period_end": "2025-12-31",
+                     *           "calendar_year": 2025,
+                     *           "calendar_quarter": 4,
+                     *           "metric_id": "is_operating_income",
+                     *           "segment_id": "seg_operating_income_business_segment",
+                     *           "value": 29619000000,
+                     *           "currency": "USD",
                      *           "dimensions": [
                      *             {
-                     *               "axis": "srt:ProductOrServiceAxis",
-                     *               "member": "aapl:WearablesHomeandAccessoriesMember"
+                     *               "axis": "StatementBusinessSegmentsAxis",
+                     *               "member": "NorthAmericaSegmentMember"
                      *             }
                      *           ],
-                     *           "metric": "RevenueFromContractWithCustomerExcludingAssessedTax",
-                     *           "accession": "0000320193-26-000026",
-                     *           "html_tag_id": "f-384",
-                     *           "html_label": "Net sales",
-                     *           "unit": "usd"
+                     *           "via_link": false,
+                     *           "source_member": "NorthAmericaSegmentMember",
+                     *           "source_row_id": "1018724|is_operating_income|annual|2025|4|seg_operating_income_business_segment|NorthAmericaSegmentMember",
+                     *           "metric": "OperatingIncomeLoss",
+                     *           "accession": "0001018724-26-000004",
+                     *           "html_tag_id": "f-1419",
+                     *           "html_label": "Operating income",
+                     *           "unit": "usd",
+                     *           "member_role": null,
+                     *           "reconciles_to_total": true,
+                     *           "predecessors": [],
+                     *           "successors": []
                      *         }
                      *       ],
                      *       "has_more": true,
-                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTI2IiwiMzIwMTkzIiwyMDI2LDQsIjMyMDE5M3xpc19yZXNlYXJjaF9hbmRfZGV2ZWxvcG1lbnRfZXhwZW5zZXN8YW5udWFsfDIwMjZ8NHxzZWdfcmVzZWFyY2hfYW5kX2RldmVsb3BtZW50X2V4cGVuc2VzX2J1c2luZXNzX3NlZ21lbnR8UmVzdE9mQXNpYVBhY2lmaWNTZWdt…",
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDE3LTEyLTMxIiwiMTAxODcyNCIsMjAxNyw0LCIxMDE4NzI0fGlzX29wZXJhdGluZ19pbmNvbWV8YW5udWFsfDIwMTd8NHxzZWdfb3BlcmF0aW5nX2luY29tZV9idXNpbmVzc19zZWdtZW50fE5vcnRoQW1lcmljYVNlZ21lbnRNZW1iZXIiLCIiXSwiZiI6ImYzYzU3YWEyMTkzNjViZTci…",
                      *       "meta": {
                      *         "coverage": {
                      *           "state": "complete",
                      *           "through": null,
-                     *           "retry_after_s": null
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
                      *         },
                      *         "source": {
-                     *           "dataset_release": "2026q3",
+                     *           "dataset_release": null,
                      *           "version_id": null,
-                     *           "accession": "0000320193-26-000026",
+                     *           "accession": null,
                      *           "fetched_at": null
                      *         }
                      *       }

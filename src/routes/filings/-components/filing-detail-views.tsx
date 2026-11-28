@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Copyable } from "@/components/ui/copy-button";
 import { right } from "@/components/ui/data-table";
+import { Notice } from "@/components/ui/notice";
 import { Skeleton } from "@/components/ui/skeleton";
 import { DASH, formatDay, formatNumber } from "@/lib/format";
 import { boolOf, listOf, numberOf, recordOf, scalarEntries, textOf } from "@/lib/sec/source";
@@ -224,6 +225,11 @@ export function itemText(itemId: null | string | undefined): null | string {
 
 /** A document version's section outline (`generic` headings or the `legacy` section ids); a row opens its first block. */
 export function DocumentSectionsView({ onOpenBlock, state }: { onOpenBlock: (blockId: string) => void; state: ListState<V2DocumentSectionsResponse> }) {
+    const coverage = state.pages.at(0)?.meta.coverage;
+
+    const knownWithoutOutline = coverage?.state === "complete" && coverage.reason === "no_legacy_outline"
+        && state.pages.every(page => page.data.length === 0);
+
     const columns: Array<ColumnDef<V2DocumentSection>> = [
         { cell: ({ row }) => right(String(row.original.ordinal)), header: () => <div className="text-right">#</div>, id: "ordinal" },
         { cell: ({ row }) => [row.original.part, itemText(row.original.item_id)].filter(Boolean).join(" · ") || DASH, header: "Part · item", id: "item" },
@@ -246,6 +252,9 @@ export function DocumentSectionsView({ onOpenBlock, state }: { onOpenBlock: (blo
             columns={columns}
             emptyText="This document has no sections in this outline."
             errorTitle="Failed to load the sections"
+            note={knownWithoutOutline
+                ? <Notice title="Document available; no item outline">This version is known to the store, but no item outline is available. You can still read its contents.</Notice>
+                : undefined}
             operationId="listDocumentSections"
             state={state}
         />

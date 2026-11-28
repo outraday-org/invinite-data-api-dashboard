@@ -38,8 +38,10 @@ browser's `localStorage`). Without a key entered in the UI the live player asks 
 
 ## API types
 
-`openapi.json` is the pinned data API spec, adopted from the API's versioned `reference/openapi.json`.
-Copy it over and run `pnpm generate:api` to regenerate `src/lib/api/schema.d.ts`.
+The last published baseline is `data-sdk-v13.2.0`. This branch pins `openapi.json` and `sdk-contract.json` to the
+unpublished statement-member reference at API commit `635ff3e19b76524fda4fc53d812aec9d4670051d`, which includes
+the 13.2 baseline. Use the published statement-member tag for deployment after its API smoke passes. Copy both
+files from the same reference bundle and run `pnpm generate:api` to regenerate the API types and operation metadata.
 `pnpm-workspace.yaml` records pnpm 11's `allowBuilds` decisions (esbuild's postinstall
 runs, the others are skipped) so `pnpm install` / `pnpm run` do not stop on
 `ERR_PNPM_IGNORED_BUILDS`.

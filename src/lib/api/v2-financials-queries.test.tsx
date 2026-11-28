@@ -180,6 +180,42 @@ describe("useV2FinancialsInfinite", () => {
 });
 
 describe("metrics hooks", () => {
+    it.each(["standard", "detailed"])("%s segments include server selection and following in their cache identity", async (view) => {
+        vi.mocked(getV2Segments).mockResolvedValue(V2_SEGMENTS);
+
+        vi.mocked(getV2SegmentsDetailed).mockResolvedValue(V2_SEGMENTS_DETAILED);
+
+        const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+
+        const stableWrapper = ({ children }: { children: React.ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+
+        const useRead = view === "standard" ? useV2SegmentsInfinite : useV2SegmentsDetailedInfinite;
+
+        const server = view === "standard" ? getV2Segments : getV2SegmentsDetailed;
+
+        const { rerender, result } = renderHook(({ followLinks, segmentIds }) => useRead({
+            company: "AAPL", followLinks, period: "annual", segmentIds,
+        }), { initialProps: { followLinks: false, segmentIds: ["seg_operating_income_business_segment"] }, wrapper: stableWrapper });
+
+        await waitFor(() => expect(result.current.data?.pages).toHaveLength(1));
+
+        expect(server).toHaveBeenCalledTimes(1);
+
+        rerender({ followLinks: false, segmentIds: ["seg_total_assets_business_segment"] });
+
+        await waitFor(() => expect(server).toHaveBeenCalledTimes(2));
+
+        rerender({ followLinks: true, segmentIds: ["seg_total_assets_business_segment"] });
+
+        await waitFor(() => expect(server).toHaveBeenCalledTimes(3));
+
+        expect(vi.mocked(server).mock.lastCall?.[0]?.data).toMatchObject({
+            followLinks: true, segmentIds: ["seg_total_assets_business_segment"],
+        });
+
+        client.clear();
+    });
+
     it("ratios `category`, growth `basis`, CAGR `horizon`, segments: the renamed v2 filters reach the server functions", async () => {
         vi.mocked(getV2Ratios).mockResolvedValue(V2_RATIOS);
 

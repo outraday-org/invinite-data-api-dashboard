@@ -1686,13 +1686,21 @@ export const getV2Cagr = createServerFn({ method: "POST" })
 const v2SegmentsSchema = v2PeriodListSchema.extend({
     /** XBRL axes (any of). */
     axis: z.array(z.string().trim().min(1)).optional(),
+    followLinks: z.boolean().optional(),
     /** Metric ids (any of). */
     metric: z.array(z.string().trim().min(1)).optional(),
+    segmentIds: z.array(z.string().trim().min(1)).optional(),
 });
 
 type V2SegmentsInput = z.infer<typeof v2SegmentsSchema>;
 
-const segmentsQuery = (data: V2SegmentsInput) => v2Query({ ...periodListQuery(data), axis: v2Expand(data.axis), metric: v2Expand(data.metric) });
+const segmentsQuery = (data: V2SegmentsInput) => v2Query({
+    ...periodListQuery(data),
+    axis: v2Expand(data.axis),
+    follow_links: data.followLinks,
+    metric: v2Expand(data.metric),
+    segment_id: v2Expand(data.segmentIds),
+});
 
 /** Segment facts, one row each (`metric_id`, `segment_id`, `value`, `dimensions[]`). */
 export const getV2Segments = createServerFn({ method: "POST" })

@@ -13,18 +13,19 @@ export const FINANCIAL_VIEW_VALUES = ["standardized", "as-reported", "ratios", "
 /**
  * Every filter of the Financials route's tabs (O6 URL state; a tab change keeps every filter but the chart — `tabSearch`): `statement`, `period`,
  * `layout` (summary / detailed / presentation — `view` is the tab; the Segments tab: summary / detailed), `reportedOnly`
- * + `sign` (as reported), `category` (ratios), `basis` (growth), `horizon` (CAGR), `segment` + `metric` + `axis`
+ * + `sign` (as reported), `category` (ratios), `basis` (growth), `horizon` (CAGR), `segment` + `metric` + `axis` + `followLinks`
  * (segments), the point in time `asOf` / `filing` (statements), the fiscal-year window `fyFrom` / `fyTo` (every tab)
- * and `chart` = the charted row's key (a metric id, an as-reported concept, a segment line).
+ * and `chart` = the charted row's key (a metric ID, an as-reported concept or member, or a segment line).
  */
 export const financialsSearchSchema = z.object({
     asOf: optionalDay(),
     axis: optionalText(200),
     basis: optionalEnum(["yoy", "qoq"] as const satisfies ReadonlyArray<V2GrowthBasis>),
     category: optionalEnum(V2_RATIO_CATEGORIES),
-    // A published member key contains the complete qualified dimension set, with no producer length bound.
+    // Member keys and followed segment keys carry complete dimension identities and can outgrow a metric ID.
     chart: z.string().min(1).optional().catch(undefined),
     filing: optionalAccession(),
+    followLinks: optionalFlag(),
     fyFrom: optionalInt(1900, 2200),
     fyTo: optionalInt(1900, 2200),
     // A typed `?horizon=5` parses as the number 5 (TanStack's JSON search parser), the select writes the string "5".

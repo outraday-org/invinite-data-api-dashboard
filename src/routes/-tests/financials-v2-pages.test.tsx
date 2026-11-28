@@ -1200,8 +1200,14 @@ describe("printed statement members", () => {
         expect(screen.getByRole("dialog")).toHaveTextContent("Your plan does not include filed values");
     });
 
-    it("round-trips opaque composite chart keys longer than 300 characters", () => {
-        for (const key of ["us-gaap:Revenues", `Revenue#group|ext:${"axis".repeat(90)}=ext:One;tax:Other=tax:Two`]) {
+    it("round-trips legacy chart keys and opaque member keys longer than 2000 characters", () => {
+        const dimensions = Array.from({ length: 16 }, (_, index) => `ext:${"ReportingDimension".repeat(5)}${index}Axis=ext:${"FinancialStatement".repeat(5)}${index}Member`);
+
+        const memberKey = `Revenue#group|${dimensions.join(";")}`;
+
+        expect(memberKey.length).toBeGreaterThan(2000);
+
+        for (const key of ["us-gaap:Revenues", memberKey]) {
             const encoded = new URLSearchParams({ chart: key }).toString();
 
             const parsed = Object.fromEntries(new URLSearchParams(encoded));

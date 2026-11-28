@@ -11,11 +11,15 @@ const periodOptions: Array<{ label: string; value: FiscalPeriodType }> = [
 
 /** The period switch of every Financials tab (`?period=`): a segmented control. */
 export function PeriodTypeButtons({
+    allowedPeriods,
     onValueChange,
     value,
 }: {
+    allowedPeriods?: ReadonlyArray<FiscalPeriodType>;
     value: FiscalPeriodType;
     onValueChange: (value: FiscalPeriodType) => void;
 }) {
-    return <SegmentedButtons aria-label="Period" onChange={onValueChange} options={periodOptions} value={value} />;
+    const options = allowedPeriods ? periodOptions.filter(option => allowedPeriods.includes(option.value)) : periodOptions;
+
+    return <SegmentedButtons aria-label="Period" onChange={onValueChange} options={options} value={value} />;
 }

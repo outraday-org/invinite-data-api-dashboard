@@ -1848,7 +1848,12 @@ export function useV2CagrInfinite(input: V2PeriodListInput & { horizon?: V2CagrH
     });
 }
 
-export type V2SegmentsInput = V2PeriodListInput & { axis?: Array<string>; metric?: Array<string> };
+export type V2SegmentsInput = V2PeriodListInput & {
+    axis?: Array<string>;
+    followLinks?: boolean;
+    metric?: Array<string>;
+    segmentIds?: Array<string>;
+};
 
 /** Segment facts by cursor (one row per fact). */
 export function useV2SegmentsInfinite(input: V2SegmentsInput) {
@@ -1856,7 +1861,7 @@ export function useV2SegmentsInfinite(input: V2SegmentsInput) {
         enabled: input.company.trim().length > 0,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2Segments({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "segments", input.company, input.period, key(input.metric), key(input.axis), input.limit ?? "", ...fiscalYearKey(input)],
+        queryKey: ["v2", "segments", input.company, input.period, key(input.metric), key(input.axis), key(input.segmentIds), input.followLinks ?? false, input.limit ?? "", ...fiscalYearKey(input)],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: FINANCIALS_STALE_MS,
     });
@@ -1868,7 +1873,7 @@ export function useV2SegmentsDetailedInfinite(input: V2SegmentsInput) {
         enabled: input.company.trim().length > 0,
         errorMessage: null,
         fetchPage: (cursor, apiKey) => getV2SegmentsDetailed({ data: { ...input, apiKey, cursor: cursor ?? undefined } }),
-        queryKey: ["v2", "segments", "detailed", input.company, input.period, key(input.metric), key(input.axis), input.limit ?? "", ...fiscalYearKey(input)],
+        queryKey: ["v2", "segments", "detailed", input.company, input.period, key(input.metric), key(input.axis), key(input.segmentIds), input.followLinks ?? false, input.limit ?? "", ...fiscalYearKey(input)],
         refetchInterval: refetchWhileCoveragePending,
         staleTime: FINANCIALS_STALE_MS,
     });

@@ -314,15 +314,8 @@ export type FiscalPeriodType = "annual" | "quarterly" | "ttm" | "ytd";
 /** `statement=` of the v2 statement operations (one statement per page view). */
 export type StatementType = "balance-sheet" | "cash-flow" | "income-statement";
 
-/** v1 `segment_id` values; v2 has no `segment_id` filter, so the segments page filters the loaded rows by them. */
-export type SegmentedFinancialsSegmentId
-    = | "seg_cost_of_revenue_business_segment"
-        | "seg_general_and_administrative_expenses_business_segment"
-        | "seg_research_and_development_expenses_business_segment"
-        | "seg_revenue_business_segment"
-        | "seg_revenue_geographic"
-        | "seg_revenue_product"
-        | "seg_selling_and_marketing_expenses_business_segment";
+/** The segment picker's closed vocabulary; `segment_id` is sent to the API. */
+export type { SegmentMetricId as SegmentedFinancialsSegmentId } from "@/lib/financials/segment-metrics";
 
 // Account (`/v1/me`, `/v1/me/usage`, 0 credits; backend tasks/data-api-dashboard O5): the caller's plan, rate limits,
 // credits and the docs groups the plan may call; usage per UTC day, per endpoint family and per caller.

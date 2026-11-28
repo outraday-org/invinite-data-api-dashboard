@@ -7,11 +7,14 @@ import type { SegmentedFinancialsSegmentId, V2SegmentsResponse } from "@/lib/api
 import { MetricsListBody, PeriodTableFrame } from "@/components/financial-metrics/metrics-list-body";
 import { PeriodTypeButtons } from "@/components/financials-presentation/period-type-buttons";
 import { SecSourceDialog } from "@/components/sec/sec-source-panel";
+import { Button } from "@/components/ui/button";
 import { PlanBadge, tierLabel } from "@/components/ui/credit-hint";
 import { FilterField } from "@/components/ui/filter-bar";
 import { FilterSelect } from "@/components/ui/filter-select";
+import { Notice } from "@/components/ui/notice";
 import { SegmentedButtons } from "@/components/ui/segmented-buttons";
 import { useV2SegmentsDetailedInfinite, useV2SegmentsInfinite } from "@/lib/api/queries";
+import { isInstantSegmentId } from "@/lib/financials/segment-metrics";
 import { completePeriodsOnly, periodLabels, segmentLines } from "@/lib/financials/statements";
 
 import type { FinancialsTabProps } from "./financials-frame";
@@ -27,8 +30,9 @@ import { segmentFilterOptions, SegmentsDetailedView, withAll } from "./segments-
 const SEGMENTS_PAGE = 200;
 
 /**
- * The segments list (pure). `/v1/segments` has no `segment_id` filter (v1 had one): the segment picker filters the
- * loaded rows and says when it hid them all. A column is shown only once every fact of its period is loaded.
+ * The segments list (pure). Requests are narrowed by `segment_id` on the server; the defensive local filter also
+ * keeps a stale response from showing another selection. A trailing partial period is withheld when other periods
+ * are already loaded; a lone period remains visible while its remaining rows can be fetched.
  */
 export function SegmentsView({
     pages,
@@ -90,9 +94,13 @@ const SEGMENTS_DETAILED_PAGE = 100;
 export function SegmentsFinancials({ tabs, ticker }: FinancialsTabProps) {
     const [search, update] = useFinancialsSearch();
 
-    const periodType = search.period ?? "quarterly";
-
     const segmentId = toSegmentId(search.segment);
+
+    const instant = isInstantSegmentId(segmentId);
+
+    const requestedPeriod = search.period ?? "quarterly";
+
+    const periodType = instant && (requestedPeriod === "ttm" || requestedPeriod === "ytd") ? "quarterly" : requestedPeriod;
 
     // `?layout=detailed` = the PRO lineage list; anything else (summary, a statement tab's presentation) the summary.
     const layout: SegmentsLayout = search.layout === "detailed" ? "detailed" : "summary";
@@ -101,14 +109,16 @@ export function SegmentsFinancials({ tabs, ticker }: FinancialsTabProps) {
 
     const openFiling = React.useCallback((accession: string) => setSource({ accession, kind: "filing" }), []);
 
-    // `metric` / `axis` are sent to the API (both operations take them, any of); the segment picker filters the loaded rows.
+    // Every selection participates in both the request and cache key; Standard never calls the PRO endpoint.
     const filters = {
         axis: search.axis ? [search.axis] : undefined,
         company: ticker,
         fiscalYearGte: search.fyFrom,
         fiscalYearLte: search.fyTo,
+        followLinks: search.followLinks ? true : undefined,
         metric: search.metric ? [search.metric] : undefined,
         period: periodType,
+        segmentIds: segmentId === "all" ? undefined : [segmentId],
     };
 
     // `/v1/segments?company=<ticker>&period=<type>[&metric=&axis=]`, newest first. Only the open view's hook asks
@@ -126,14 +136,21 @@ export function SegmentsFinancials({ tabs, ticker }: FinancialsTabProps) {
 
     return (
         <FinancialsFrame
-            activeCount={financialsFilterCount(search, [["segment"], ["metric"], ["axis"], FISCAL_YEAR_FILTER])}
+            activeCount={financialsFilterCount(search, [["segment"], ["metric"], ["axis"], ["followLinks"], FISCAL_YEAR_FILTER])}
             description={layout === "detailed"
                 ? `Each segment fact with its reported concept, the filing's caption and the filing (${tierLabel("listSegmentsDetailed")}).`
-                : "Financial data broken out by business segment in tabular format."}
+                : "Segment values as reported, with each member kept separate. Reconciliation details are available in Detailed."}
             filters={(
                 <>
                     <FilterField label="Segment">
-                        <SegmentSelect onValueChange={value => update({ chart: undefined, segment: value === "all" ? undefined : value })} value={segmentId} />
+                        <SegmentSelect
+                            onValueChange={value => update({
+                                chart: undefined,
+                                period: isInstantSegmentId(value) && (requestedPeriod === "ttm" || requestedPeriod === "ytd") ? undefined : search.period,
+                                segment: value === "all" ? undefined : value,
+                            })}
+                            value={segmentId}
+                        />
                     </FilterField>
                     <FilterField label="Metric">
                         {id => (
@@ -162,9 +179,19 @@ export function SegmentsFinancials({ tabs, ticker }: FinancialsTabProps) {
                     <FilterField label="Fiscal years">
                         <FiscalYearRange from={search.fyFrom} onChange={update} to={search.fyTo} />
                     </FilterField>
+                    <FilterField label="Segment history">
+                        <Button
+                            aria-pressed={search.followLinks === true}
+                            className="w-full"
+                            onClick={() => update({ chart: undefined, followLinks: search.followLinks ? undefined : true })}
+                            variant={search.followLinks ? "default" : "outline"}
+                        >
+                            Follow renamed segments
+                        </Button>
+                    </FilterField>
                 </>
             )}
-            onReset={() => update({ axis: undefined, chart: undefined, fyFrom: undefined, fyTo: undefined, metric: undefined, segment: undefined })}
+            onReset={() => update({ axis: undefined, chart: undefined, followLinks: undefined, fyFrom: undefined, fyTo: undefined, metric: undefined, segment: undefined })}
             tabs={tabs}
             what={(
                 <>
@@ -174,10 +201,12 @@ export function SegmentsFinancials({ tabs, ticker }: FinancialsTabProps) {
                         options={SEGMENT_VIEWS.map(option => ({ ...option, badge: option.value === "detailed" ? <PlanBadge operationId="listSegmentsDetailed" /> : undefined }))}
                         value={layout}
                     />
-                    <PeriodTypeButtons onValueChange={value => update({ period: value === "quarterly" ? undefined : value })} value={periodType} />
+                    <PeriodTypeButtons allowedPeriods={instant ? ["quarterly", "annual"] : undefined} onValueChange={value => update({ chart: undefined, period: value === "quarterly" ? undefined : value })} value={periodType} />
                 </>
             )}
         >
+            {instant && <Notice title="Period-end balances">Assets and goodwill are shown only for filed quarterly or annual periods. They are never added into YTD or TTM values.</Notice>}
+            {search.followLinks && <Notice title="Following proved member links">Earlier source members remain separate under their successor. Merge components are not summed; split links are not followed. The proof covers stated comparative periods, not numerical equivalence across all history.</Notice>}
             {layout === "detailed"
                 ? (
                         <SegmentsDetailedView
