@@ -886,6 +886,10 @@ export interface paths {
          * @description List the section IDs and titles for SEC filing forms.
          *
          *     Use `form` to see the sections of one form. Pass a section ID in the `item` filter on `GET /v1/search/filings` to search within that part of a filing.
+         *
+         *     With sections-only projection enabled, derived primary 10-K/10-Q/8-K filings and amendments can receive item outlines without legacy processing; not-yet-projected versions answer pending.
+         *
+         *     Exhibits and unsupported forms with no available legacy outline answer 200 with an empty list and coverage reason no_legacy_outline. Stored generic outlines remain available.
          */
         get: operations["listSectionCatalog"];
         put?: never;
@@ -1196,6 +1200,10 @@ export interface paths {
          * @description List the section outline of an SEC filing document.
          *
          *     Use a `current_version_id` from `GET /v1/filings/{accession}` with `expand=documents`. The default uses generic headings when available and otherwise uses the filing's item outline. Each section identifies the blocks to read in the same version.
+         *
+         *     With sections-only projection enabled, derived primary 10-K/10-Q/8-K filings and amendments can receive item outlines without legacy processing; not-yet-projected versions answer pending.
+         *
+         *     Exhibits and unsupported forms with no available legacy outline answer 200 with an empty list and coverage reason no_legacy_outline. Stored generic outlines remain available.
          */
         get: operations["listDocumentSections"];
         put?: never;
@@ -3253,7 +3261,11 @@ export interface paths {
          * List segment values
          * @description List financial values by business or geographic segment.
          *
-         *     Choose a company and `period`. Narrow by `metric` or `axis`, such as a geographic breakdown. Each row pairs a value with the dimension members that identify its segment.
+         *     Select company and period. segment_id filters catalog categories; metric filters standardized metric_id. Non-revenue metrics (operating income, D&A, assets, goodwill, capex) exist only on the business axis. Row currency is authoritative; catalog units are nominal.
+         *
+         *     Segment operating income need not sum to consolidated income. PRO detailed rows carry roles and reconciles_to_total; the basic route does not establish reconciliation. Assets/goodwill are period-end balances: no TTM/YTD. Fiscal-Q4 quarterly rows exist only where the enriched filing holds one.
+         *
+         *     follow_links keeps original rows and adds one-hop rename/merge predecessor copies before the successor first_period_end; never splits or sums. Keep source_row_id plus target dimensions when pivoting merge components. Links require filed proof and reach only as far as stored per-filing vintages.
          */
         get: operations["listSegments"];
         put?: never;
@@ -3275,7 +3287,11 @@ export interface paths {
          * List segment values with lineage
          * @description List segment values with their source filing and XBRL tag.
          *
-         *     Select a company and `period`, then use `metric` or `axis` to narrow the segment rows. Where available, `accession` and `html_tag_id` locate the reported value in the filing.
+         *     Select company and period. segment_id filters catalog categories; metric filters standardized metric_id. Non-revenue metrics (operating income, D&A, assets, goodwill, capex) exist only on the business axis. Row currency is authoritative; catalog units are nominal.
+         *
+         *     Segment operating income need not sum to consolidated income. PRO detailed rows carry roles and reconciles_to_total; the basic route does not establish reconciliation. Assets/goodwill are period-end balances: no TTM/YTD. Fiscal-Q4 quarterly rows exist only where the enriched filing holds one.
+         *
+         *     follow_links keeps original rows and adds one-hop rename/merge predecessor copies before the successor first_period_end; never splits or sums. Keep source_row_id plus target dimensions when pivoting merge components. Links require filed proof and reach only as far as stored per-filing vintages.
          */
         get: operations["listSegmentsDetailed"];
         put?: never;
@@ -5637,12 +5653,20 @@ export interface components {
              * @example is_total_revenue
              */
             metric_id: string;
-            /** @description Segment id, unique within the company */
+            /** @description Metric-and-axis category from the segment catalog; not a unique member identifier. */
             segment_id: string;
             /** @description Value at full magnitude */
             value: number;
-            /** @description The segment's axis / member pairs (normalised; v1 `segment`) */
+            /** @description The segment's axis / member pairs (normalised; v1 `segment`) With follow_links=true, the linked axis and member use their canonical local names on both original rows and predecessor copies; the copy names the successor. */
             dimensions: Array<components["schemas"]["Dimension"]>;
+            /** @description The row's own ISO 4217 monetary unit, upper-cased; null for a non-monetary or unrecognized unit. Authoritative over the catalog's nominal unit. */
+            currency?: null | string;
+            /** @description Present only when follow_links=true: true for a predecessor copy under its successor dimensions, false for an original row. */
+            via_link?: boolean;
+            /** @description Present only when follow_links=true: the original stored local member, before any relabeling. */
+            source_member?: null | string;
+            /** @description Present only when follow_links=true: the original derived financial_facts_segmented row identifier, not a raw SEC fact id. Combine with dimensions to distinguish multiple linked targets; never merge components by target and period alone. */
+            source_row_id?: string;
         };
         /**
          * Dimension
@@ -5701,11 +5725,11 @@ export interface components {
              * @example is_total_revenue
              */
             metric_id: string;
-            /** @description Segment id, unique within the company */
+            /** @description Metric-and-axis category from the segment catalog; not a unique member identifier. */
             segment_id: string;
             /** @description Value at full magnitude */
             value: number;
-            /** @description The segment's axis / member pairs (normalised; v1 `segment`) */
+            /** @description The segment's axis / member pairs (normalised; v1 `segment`) With follow_links=true, the linked axis and member use their canonical local names on both original rows and predecessor copies; the copy names the successor. */
             dimensions: Array<components["schemas"]["Dimension"]>;
             /** @description Reported XBRL concept */
             metric: null | string;
@@ -5717,6 +5741,80 @@ export interface components {
             html_label: null | string;
             /** @description Unit */
             unit: null | string;
+            /** @description The row's own ISO 4217 monetary unit, upper-cased; null for a non-monetary or unrecognized unit. Authoritative over the catalog's nominal unit. */
+            currency?: null | string;
+            /** @description Present only when follow_links=true: true for a predecessor copy under its successor dimensions, false for an original row. */
+            via_link?: boolean;
+            /** @description Present only when follow_links=true: the original stored local member, before any relabeling. */
+            source_member?: null | string;
+            /** @description Present only when follow_links=true: the original derived financial_facts_segmented row identifier, not a raw SEC fact id. Combine with dimensions to distinguish multiple linked targets; never merge components by target and period alone. */
+            source_row_id?: string;
+            /**
+             * @description Reconciling corporate or elimination member; null when not marked.
+             * @enum {string|null}
+             */
+            member_role?: "reconciling" | null;
+            /** @description Whether the segment measure reconciles to the consolidated metric; false forbids treating the components as its total, null means not established. */
+            reconciles_to_total?: boolean | null;
+            /** @description Proved predecessors of the displayed member; empty if none. Split links are described but never followed. */
+            predecessors?: Array<components["schemas"]["SegmentMemberLink"]>;
+            /** @description Proved successors of the displayed member; empty if none. */
+            successors?: Array<components["schemas"]["SegmentMemberLink"]>;
+        };
+        /**
+         * SegmentMemberLink
+         * @description A source-proved relationship to one member; not a fuzzy-name match.
+         */
+        SegmentMemberLink: {
+            /** @description Related local member on the same axis */
+            member: string;
+            /**
+             * @description Proved relationship
+             * @enum {string}
+             */
+            kind: "merged" | "renamed" | "split";
+            /**
+             * @description Proof source
+             * @enum {string}
+             */
+            evidence: "filer_statement" | "restated_values";
+            /**
+             * Format: date
+             * @description Earliest stored period end of the successor; predecessor copies are strictly earlier.
+             */
+            first_period_end: string;
+            /** @description Filed duration comparisons supporting the relationship */
+            matched_periods: Array<components["schemas"]["SegmentMatchedPeriod"]>;
+        };
+        /**
+         * SegmentMatchedPeriod
+         * @description One duration comparison proving a member relationship; no inference outside stored per-filing evidence.
+         */
+        SegmentMatchedPeriod: {
+            /**
+             * Format: date
+             * @description Start of the proved duration
+             */
+            start_date: string;
+            /**
+             * Format: date
+             * @description End of the proved duration
+             */
+            end_date: string;
+            /** @description Exact revenue concept QName */
+            concept: string;
+            /** @description Exact filed unit */
+            unit: string;
+            /** @description Earlier source filing */
+            from_accession: string;
+            /** @description Later restating filing */
+            to_accession: string;
+            /** @description Complete compatible dimension QName/member QName pairs, including additional qualifiers. */
+            qualifiers: Array<Array<string>>;
+            /** @description All predecessor components of this proof */
+            from_members: Array<string>;
+            /** @description All successor components of this proof */
+            to_members: Array<string>;
         };
         /**
          * FactExplanation
@@ -36159,10 +36257,20 @@ export interface operations {
                  */
                 "company": string;
                 /**
-                 * @description Metric id, comma list
+                 * @description Standardized metric_id comma list (for example is_operating_income). Use segment_id for seg_* catalog ids; both filters intersect.
                  * @example is_total_revenue
                  */
                 "metric"?: string;
+                /**
+                 * @description Segment catalog ids, comma list; unknown ids return 400. Absent means every segment id.
+                 * @example seg_operating_income_business_segment
+                 */
+                "segment_id"?: string;
+                /**
+                 * @description Include one-hop predecessor copies under successor dimensions before first_period_end. Renames and every merge component are followed; splits are never followed. Preserve source_row_id plus target dimensions when pivoting; do not sum non-additive metrics.
+                 * @example true
+                 */
+                "follow_links"?: boolean;
                 /**
                  * @description XBRL axis, comma list
                  * @example srt:ProductOrServiceAxis
@@ -36244,39 +36352,44 @@ export interface operations {
                      *       "data": [
                      *         {
                      *           "company": {
-                     *             "cik": "0000320193",
-                     *             "ticker": "AAPL"
+                     *             "cik": "0001018724",
+                     *             "ticker": "AMZN"
                      *           },
-                     *           "fiscal_year": 2026,
+                     *           "fiscal_year": 2025,
                      *           "fiscal_quarter": 4,
                      *           "period": "annual",
-                     *           "period_start": "2025-09-28",
-                     *           "period_end": "2026-09-26",
-                     *           "calendar_year": 2026,
-                     *           "calendar_quarter": 3,
-                     *           "metric_id": "is_total_revenue",
-                     *           "segment_id": "seg_revenue_product",
-                     *           "value": 35577000000,
+                     *           "period_start": "2025-01-01",
+                     *           "period_end": "2025-12-31",
+                     *           "calendar_year": 2025,
+                     *           "calendar_quarter": 4,
+                     *           "metric_id": "is_operating_income",
+                     *           "segment_id": "seg_operating_income_business_segment",
+                     *           "value": 29619000000,
+                     *           "currency": "USD",
                      *           "dimensions": [
                      *             {
-                     *               "axis": "srt:ProductOrServiceAxis",
-                     *               "member": "aapl:WearablesHomeandAccessoriesMember"
+                     *               "axis": "StatementBusinessSegmentsAxis",
+                     *               "member": "NorthAmericaSegmentMember"
                      *             }
-                     *           ]
+                     *           ],
+                     *           "via_link": false,
+                     *           "source_member": "NorthAmericaSegmentMember",
+                     *           "source_row_id": "1018724|is_operating_income|annual|2025|4|seg_operating_income_business_segment|NorthAmericaSegmentMember"
                      *         }
                      *       ],
                      *       "has_more": true,
-                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTI2IiwiMzIwMTkzIiwyMDI2LDQsIjMyMDE5M3xpc19yZXNlYXJjaF9hbmRfZGV2ZWxvcG1lbnRfZXhwZW5zZXN8YW5udWFsfDIwMjZ8NHxzZWdfcmVzZWFyY2hfYW5kX2RldmVsb3BtZW50X2V4cGVuc2VzX2J1c2luZXNzX3NlZ21lbnR8UmVzdE9mQXNpYVBhY2lmaWNTZWdt…",
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDE3LTEyLTMxIiwiMTAxODcyNCIsMjAxNyw0LCIxMDE4NzI0fGlzX29wZXJhdGluZ19pbmNvbWV8YW5udWFsfDIwMTd8NHxzZWdfb3BlcmF0aW5nX2luY29tZV9idXNpbmVzc19zZWdtZW50fE5vcnRoQW1lcmljYVNlZ21lbnRNZW1iZXIiLCIiXSwiZiI6IjgwOTMwNTEwYTBiZDI5NjQi…",
                      *       "meta": {
                      *         "coverage": {
                      *           "state": "complete",
                      *           "through": null,
-                     *           "retry_after_s": null
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
                      *         },
                      *         "source": {
-                     *           "dataset_release": "2026q3",
+                     *           "dataset_release": null,
                      *           "version_id": null,
-                     *           "accession": "0000320193-26-000026",
+                     *           "accession": null,
                      *           "fetched_at": null
                      *         }
                      *       }
@@ -36317,10 +36430,20 @@ export interface operations {
                  */
                 "company": string;
                 /**
-                 * @description Metric id, comma list
+                 * @description Standardized metric_id comma list (for example is_operating_income). Use segment_id for seg_* catalog ids; both filters intersect.
                  * @example is_total_revenue
                  */
                 "metric"?: string;
+                /**
+                 * @description Segment catalog ids, comma list; unknown ids return 400. Absent means every segment id.
+                 * @example seg_operating_income_business_segment
+                 */
+                "segment_id"?: string;
+                /**
+                 * @description Include one-hop predecessor copies under successor dimensions before first_period_end. Renames and every merge component are followed; splits are never followed. Preserve source_row_id plus target dimensions when pivoting; do not sum non-additive metrics.
+                 * @example true
+                 */
+                "follow_links"?: boolean;
                 /**
                  * @description XBRL axis, comma list
                  * @example srt:ProductOrServiceAxis
@@ -36402,44 +36525,53 @@ export interface operations {
                      *       "data": [
                      *         {
                      *           "company": {
-                     *             "cik": "0000320193",
-                     *             "ticker": "AAPL"
+                     *             "cik": "0001018724",
+                     *             "ticker": "AMZN"
                      *           },
-                     *           "fiscal_year": 2026,
+                     *           "fiscal_year": 2025,
                      *           "fiscal_quarter": 4,
                      *           "period": "annual",
-                     *           "period_start": "2025-09-28",
-                     *           "period_end": "2026-09-26",
-                     *           "calendar_year": 2026,
-                     *           "calendar_quarter": 3,
-                     *           "metric_id": "is_total_revenue",
-                     *           "segment_id": "seg_revenue_product",
-                     *           "value": 35577000000,
+                     *           "period_start": "2025-01-01",
+                     *           "period_end": "2025-12-31",
+                     *           "calendar_year": 2025,
+                     *           "calendar_quarter": 4,
+                     *           "metric_id": "is_operating_income",
+                     *           "segment_id": "seg_operating_income_business_segment",
+                     *           "value": 29619000000,
+                     *           "currency": "USD",
                      *           "dimensions": [
                      *             {
-                     *               "axis": "srt:ProductOrServiceAxis",
-                     *               "member": "aapl:WearablesHomeandAccessoriesMember"
+                     *               "axis": "StatementBusinessSegmentsAxis",
+                     *               "member": "NorthAmericaSegmentMember"
                      *             }
                      *           ],
-                     *           "metric": "RevenueFromContractWithCustomerExcludingAssessedTax",
-                     *           "accession": "0000320193-26-000026",
-                     *           "html_tag_id": "f-384",
-                     *           "html_label": "Net sales",
-                     *           "unit": "usd"
+                     *           "via_link": false,
+                     *           "source_member": "NorthAmericaSegmentMember",
+                     *           "source_row_id": "1018724|is_operating_income|annual|2025|4|seg_operating_income_business_segment|NorthAmericaSegmentMember",
+                     *           "metric": "OperatingIncomeLoss",
+                     *           "accession": "0001018724-26-000004",
+                     *           "html_tag_id": "f-1419",
+                     *           "html_label": "Operating income",
+                     *           "unit": "usd",
+                     *           "member_role": null,
+                     *           "reconciles_to_total": true,
+                     *           "predecessors": [],
+                     *           "successors": []
                      *         }
                      *       ],
                      *       "has_more": true,
-                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDI2LTA5LTI2IiwiMzIwMTkzIiwyMDI2LDQsIjMyMDE5M3xpc19yZXNlYXJjaF9hbmRfZGV2ZWxvcG1lbnRfZXhwZW5zZXN8YW5udWFsfDIwMjZ8NHxzZWdfcmVzZWFyY2hfYW5kX2RldmVsb3BtZW50X2V4cGVuc2VzX2J1c2luZXNzX3NlZ21lbnR8UmVzdE9mQXNpYVBhY2lmaWNTZWdt…",
+                     *       "next_cursor": "eyJ2IjoyLCJhZnRlciI6WyIyMDE3LTEyLTMxIiwiMTAxODcyNCIsMjAxNyw0LCIxMDE4NzI0fGlzX29wZXJhdGluZ19pbmNvbWV8YW5udWFsfDIwMTd8NHxzZWdfb3BlcmF0aW5nX2luY29tZV9idXNpbmVzc19zZWdtZW50fE5vcnRoQW1lcmljYVNlZ21lbnRNZW1iZXIiLCIiXSwiZiI6ImYzYzU3YWEyMTkzNjViZTci…",
                      *       "meta": {
                      *         "coverage": {
                      *           "state": "complete",
                      *           "through": null,
-                     *           "retry_after_s": null
+                     *           "retry_after_s": null,
+                     *           "reason": "period_not_computed"
                      *         },
                      *         "source": {
-                     *           "dataset_release": "2026q3",
+                     *           "dataset_release": null,
                      *           "version_id": null,
-                     *           "accession": "0000320193-26-000026",
+                     *           "accession": null,
                      *           "fetched_at": null
                      *         }
                      *       }

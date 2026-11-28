@@ -8,8 +8,9 @@ import type { SegmentedFinancialsSegmentId, V2Segment, V2SegmentsDetailedRespons
 import { FinancialsStateNotice, METRICS_PENDING_TITLE } from "@/components/financial-metrics/metrics-list-body";
 import { MetricCatalogLink } from "@/components/reference/metric-catalog-link";
 import { DataTable } from "@/components/ui/data-table";
+import { Notice } from "@/components/ui/notice";
 import { edgarFolderUrl } from "@/lib/earnings/edgar";
-import { dimensionsText, periodLabel, xbrlNameText } from "@/lib/financials/statements";
+import { dimensionsText, periodLabel, segmentFactKey, xbrlNameText } from "@/lib/financials/statements";
 import { isV2GenuineEmpty } from "@/lib/sec/readiness";
 import { formatMetricId, formatNumberEn, formatSegmentId } from "@/lib/utils";
 
@@ -80,7 +81,16 @@ function columns(onOpenFiling: (accession: string) => void): Array<ColumnDef<Seg
 
                 const segment = formatSegmentId(row.original.segment_id) || row.original.segment_id;
 
-                return <span title={row.original.dimensions.map(d => `${d.axis} = ${d.member}`).join("\n")}>{details ? `${segment} · ${details}` : segment}</span>;
+                return (
+                    <span className="flex flex-col" title={row.original.dimensions.map(d => `${d.axis} = ${d.member}`).join("\n")}>
+                        <span>{details ? `${segment} · ${details}` : segment}</span>
+                        {row.original.via_link && (
+                            <span className="text-muted-foreground text-xs">
+                                {`From ${row.original.source_member ?? "earlier member"}`}
+                            </span>
+                        )}
+                    </span>
+                );
             },
             header: "Segment",
             id: "segment",
@@ -90,7 +100,17 @@ function columns(onOpenFiling: (accession: string) => void): Array<ColumnDef<Seg
             header: () => <div className="text-right">Value</div>,
             id: "value",
         },
-        { cell: ({ row }) => row.original.unit?.toUpperCase() ?? "—", header: "Unit", id: "unit" },
+        { cell: ({ row }) => row.original.currency ?? row.original.unit?.toUpperCase() ?? "—", header: "Currency / unit", id: "unit" },
+        {
+            cell: ({ row }) => row.original.reconciles_to_total === true ? "Filed group reconciles" : row.original.reconciles_to_total === false ? "Group does not reconcile" : "Not compared",
+            header: "Reconciliation",
+            id: "reconciliation",
+        },
+        {
+            cell: ({ row }) => <SegmentLinkEvidence onOpenFiling={onOpenFiling} row={row.original} />,
+            header: "Member links",
+            id: "member_links",
+        },
         {
             cell: ({ row }) => (
                 <div className="flex flex-col">
@@ -124,10 +144,61 @@ function columns(onOpenFiling: (accession: string) => void): Array<ColumnDef<Seg
     ];
 }
 
+/** Keep the complete proved periods available, with their actual source filings rather than an inferred alias. */
+function SegmentLinkEvidence({ onOpenFiling, row }: { onOpenFiling: (accession: string) => void; row: SegmentDetailedRow }) {
+    const links = [
+        ...(row.predecessors ?? []).map(link => ({ direction: "From", link })),
+        ...(row.successors ?? []).map(link => ({ direction: "To", link })),
+    ];
+
+    if (links.length === 0) return "—";
+
+    return (
+        <details>
+            <summary className="cursor-pointer">
+                {links.length}
+                {" "}
+                {links.length === 1 ? "link" : "links"}
+            </summary>
+            <ul className="flex flex-col gap-2 pt-2 text-xs">
+                {links.map(({ direction, link }) => (
+                    <li key={`${direction}:${link.member}:${link.kind}`}>
+                        <div className="font-medium">
+                            {direction}
+                            {" "}
+                            {xbrlNameText(link.member)}
+                            {" "}
+                            ·
+                            {" "}
+                            {link.kind}
+                        </div>
+                        <div>
+                            {link.kind === "split" ? "Split evidence only; never followed." : `Earlier rows before ${link.first_period_end}.`}
+                            {" "}
+                            Proof covers these comparisons:
+                        </div>
+                        <ul className="flex flex-col gap-1 pt-1">
+                            {link.matched_periods.map(period => (
+                                <li key={JSON.stringify([period.start_date, period.end_date, period.concept, period.unit, period.qualifiers, period.from_accession, period.to_accession])}>
+                                    {`${period.start_date} – ${period.end_date} · ${period.concept} (${period.unit})`}
+                                    <span className="flex gap-2">
+                                        <button className="underline-offset-4 hover:underline" onClick={() => onOpenFiling(period.from_accession)} type="button">Original filing</button>
+                                        <button className="underline-offset-4 hover:underline" onClick={() => onOpenFiling(period.to_accession)} type="button">Restating filing</button>
+                                    </span>
+                                </li>
+                            ))}
+                        </ul>
+                    </li>
+                ))}
+            </ul>
+        </details>
+    );
+}
+
 /**
  * The detailed segments list (pure, PRO `/v1/segments/detailed`): one row per segment fact with its reported concept,
- * the filing's caption, unit and filing (opens its documents; EDGAR folder). The segment picker filters the loaded rows
- * as on the summary; metric / axis are sent to the API. Export = the loaded rows.
+ * the filing's caption, unit and filing. All selections are sent to the API. Role groups use only authoritative
+ * metadata; exports retain all loaded source components and their proof. No aggregate total is invented.
  */
 export function SegmentsDetailedView({ onOpenFiling, pages, segmentId, ticker, ...state }: MetricsListState & {
     onOpenFiling: (accession: string) => void;
@@ -138,7 +209,17 @@ export function SegmentsDetailedView({ onOpenFiling, pages, segmentId, ticker, .
     const rows = React.useMemo(() => {
         const loaded = pages.flatMap(page => page.data);
 
-        return segmentId === ALL ? loaded : loaded.filter(row => row.segment_id === segmentId);
+        const selected = segmentId === ALL ? loaded : loaded.filter(row => row.segment_id === segmentId);
+
+        const unique = new Map<string, SegmentDetailedRow>();
+
+        for (const row of selected) {
+            const identity = segmentFactKey(row);
+
+            if (!unique.has(identity)) unique.set(identity, row);
+        }
+
+        return [...unique.values()].sort((a, b) => Number(a.member_role === "reconciling") - Number(b.member_role === "reconciling"));
     }, [pages, segmentId]);
 
     const tableColumns = React.useMemo(() => columns(onOpenFiling), [onOpenFiling]);
@@ -152,12 +233,17 @@ export function SegmentsDetailedView({ onOpenFiling, pages, segmentId, ticker, .
     return (
         <div className="flex flex-col gap-2" data-testid="segments-detailed">
             <FinancialsStateNotice coverage={coverage} pendingTitle={METRICS_PENDING_TITLE} title="Detailed segments" />
+            {rows.some(row => row.reconciles_to_total === false) && <Notice title="Some filed segment groups do not reconcile">Reconciling items are shown separately. The status describes the filed metric and period, not a sum of the selected rows. No total is calculated here.</Notice>}
             <DataTable
                 columns={tableColumns}
                 emptyIsGenuine={isV2GenuineEmpty(coverage)}
                 emptyText={segmentId === ALL ? "No segment facts." : "No loaded rows for this segment."}
                 errorState={state.error ? <FinancialsStateNotice error={state.error} pendingTitle={METRICS_PENDING_TITLE} title="Failed to load more segment facts" /> : null}
                 exportConfig={{ dataset: "segments-detailed", scope: ticker }}
+                getRowId={segmentFactKey}
+                groupOf={rows.some(row => row.member_role === "reconciling")
+                    ? row => row.member_role === "reconciling" ? "Reconciling items" : "Segment values"
+                    : undefined}
                 hasNextPage={state.hasNextPage}
                 isFetchingNextPage={state.isFetchingNextPage}
                 isLoading={state.isLoading}

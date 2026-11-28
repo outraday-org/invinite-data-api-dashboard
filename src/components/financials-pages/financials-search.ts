@@ -22,8 +22,10 @@ export const financialsSearchSchema = z.object({
     axis: optionalText(200),
     basis: optionalEnum(["yoy", "qoq"] as const satisfies ReadonlyArray<V2GrowthBasis>),
     category: optionalEnum(V2_RATIO_CATEGORIES),
-    chart: optionalText(300),
+    // A followed series key preserves source member and target dimensions; it can exceed an ordinary metric id.
+    chart: optionalText(2000),
     filing: optionalAccession(),
+    followLinks: optionalFlag(),
     fyFrom: optionalInt(1900, 2200),
     fyTo: optionalInt(1900, 2200),
     // A typed `?horizon=5` parses as the number 5 (TanStack's JSON search parser), the select writes the string "5".

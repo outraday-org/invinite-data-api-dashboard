@@ -466,6 +466,10 @@
       "tsName": "fiscalYearLte",
       "pyName": "fiscal_year_lte"
     },
+    "follow_links": {
+      "tsName": "followLinks",
+      "pyName": "follow_links"
+    },
     "footnotes": {
       "tsName": "footnotes",
       "pyName": "footnotes"
@@ -781,6 +785,10 @@
     "segment": {
       "tsName": "segment",
       "pyName": "segment"
+    },
+    "segment_id": {
+      "tsName": "segmentId",
+      "pyName": "segment_id"
     },
     "series": {
       "tsName": "series",
@@ -1798,6 +1806,8 @@
       "params": [
         "company",
         "metric",
+        "segment_id",
+        "follow_links",
         "axis",
         "period",
         "fiscal_year.gte",
@@ -1821,6 +1831,8 @@
       "params": [
         "company",
         "metric",
+        "segment_id",
+        "follow_links",
         "axis",
         "period",
         "fiscal_year.gte",
@@ -3891,6 +3903,8 @@
       "SectorCatalogEntryIndustriesInner",
       "Segment",
       "SegmentDetailed",
+      "SegmentMatchedPeriod",
+      "SegmentMemberLink",
       "Slides",
       "SlidesDeck",
       "SlidesSlidesInner",
@@ -4532,6 +4546,8 @@
       "SectorCatalogEntryIndustriesInner",
       "Segment",
       "SegmentDetailed",
+      "SegmentMatchedPeriod",
+      "SegmentMemberLink",
       "Slides",
       "SlidesDeck",
       "SlidesSlidesInner",
@@ -4604,9 +4620,9 @@
   "provenance": {
     "repository": "https://github.com/outraday-org/invinite-data-api",
     "version": "1.0.0",
-    "specSha256": "aa1f864c2f4e3115b6b26f9af1c20188c768f96cf191aa5973fbac093f752e6c",
+    "specSha256": "5a0f905f5e69ce076fc90303e71a84bbe51fc745422147958811c64811bd4e24",
     "sourceHashes": {
-      "openapi.json": "aa1f864c2f4e3115b6b26f9af1c20188c768f96cf191aa5973fbac093f752e6c",
+      "openapi.json": "5a0f905f5e69ce076fc90303e71a84bbe51fc745422147958811c64811bd4e24",
       "openapitools.json": "0350a3db0a0a0adf49a7c7cdefe7eff466964480780e911b197763d202db1390",
       "package.json": "62dc9c98a97e546c4f2b86c7b579e545567de5ce5bab81cba28b3847e4574fc5",
       "scripts/check-data-sdk-names.ts": "b6a1d893085874a64f7b652c5c780add4d2adf503e63d4a851c2745159da9600",
@@ -4614,8 +4630,8 @@
       "scripts/reference-artifacts.ts": "0ef8e67cb5454a3f50f43de77b0be1aebb7897164ddf3f5288b58dc7d0f47255",
       "sdks/data/config/python.json": "8f90ab7c0fd25e125c0c6618ae6e09119ef0b5045818c098fd8b259d1888dd5f",
       "sdks/data/config/typescript.json": "69139143672ed147b18c217784cbed3bf609ebeb6b5fbd00617e09344b99c4f2",
-      "sdks/data/readme/python.md": "2bd08867fec6e7447c789c93dc6510814ec123f8a521014cf6553534bb788655",
-      "sdks/data/readme/typescript.md": "0626313fe89224edfc43b50410042084d783600cae5cfea118ef3cef05d031c2",
+      "sdks/data/readme/python.md": "6abdf93d073d72b3d16916a1bbc0011ee5b89c483d6d7f952548d9530a48dc9c",
+      "sdks/data/readme/typescript.md": "66a074d76ba53a8446c08cfe539ec6687c453f9fb278f3e0dcebd37518f11fc0",
       "sdks/data/sdk-naming.ts": "2738bc0f84f4c91aea3122b2ce4ea64d9bbe69f12790b6781b691f28e1c6df78",
       "sdks/data/templates/python/errors.mustache": "d5ec344532b707b5d4d7984af7cf80c0c16f04506b4e5771a1c31ab28d2ed576",
       "sdks/data/templates/python/model_generic.mustache": "be2335c0c154814341f3831212e7198ded9a365a551d3ed176f7b35c8b84a1c1",
@@ -4631,7 +4647,7 @@
       "sdks/data/templates/typescript/pagination.mustache": "190dc450794bc089117af5b5c2f7b2ff707dc2bf6175e49465c393cdba89b395",
       "sdks/data/templates/typescript/webhooks.mustache": "757001711eafe57e914c05cd6b2d86b5555c4d32d80bf3b1a94e4f570df0c20a"
     },
-    "revision": "ee5ccc2b7fb0ebc508ba4d2339ee4c0e3d9072a1",
-    "fingerprint": "d4170906632e94be412b977fb01d58e4d16a056cdeb0d1f0d243449df4120b92"
+    "revision": "19f86b6996bf9d5be77dee786f22c78a5385b9fa",
+    "fingerprint": "64688428bc6dbff9fd988232177a7ecf152df4f7e538bb0fb7f4015215f1446b"
   }
 }
