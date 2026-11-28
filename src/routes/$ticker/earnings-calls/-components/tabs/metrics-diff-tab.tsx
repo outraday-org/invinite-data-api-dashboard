@@ -187,11 +187,13 @@ function SlideDiff({ diff }: { diff: V2EventComparisonResponse["slide_diff"] }) 
 export function ComparisonView({
     data,
     error,
+    historicalTicker,
     isLoading,
     prior,
     symbol,
 }: {
     data: null | undefined | V2EventComparisonResponse;
+    historicalTicker?: string;
     error: unknown;
     isLoading: boolean;
     /** The picked `prior` (undefined = the derived previous call). */
@@ -218,7 +220,7 @@ export function ComparisonView({
             <div>
                 Compared with
                 {" "}
-                <EventLink className="font-medium underline-offset-4 hover:underline" event={{ event_id: data.prior_event.event_id, symbol }}>
+                <EventLink className="font-medium underline-offset-4 hover:underline" event={{ event_id: data.prior_event.event_id, symbol }} ticker={historicalTicker}>
                     {formatDay(data.prior_event.conference_date)}
                 </EventLink>
             </div>
@@ -304,7 +306,7 @@ export function PriorPicker({
     );
 }
 
-function DiffSection({ event, eventId, onSearchChange, search }: Pick<CallTabProps, "event" | "eventId" | "onSearchChange" | "search">) {
+function DiffSection({ event, eventId, historicalTicker, onSearchChange, search }: Pick<CallTabProps, "event" | "eventId" | "historicalTicker" | "onSearchChange" | "search">) {
     const [pickerOpened, setPickerOpened] = React.useState(false);
 
     const { data, error, isLoading } = useV2EventComparison(eventId, search.prior);
@@ -336,20 +338,20 @@ function DiffSection({ event, eventId, onSearchChange, search }: Pick<CallTabPro
                 onPriorChange={prior => onSearchChange({ prior })}
                 prior={search.prior}
             />
-            <ComparisonView data={data} error={error} isLoading={isLoading} prior={search.prior} symbol={event.symbol} />
+            <ComparisonView data={data} error={error} historicalTicker={historicalTicker} isLoading={isLoading} prior={search.prior} symbol={event.symbol} />
         </div>
     );
 }
 
 /** Metrics & diff tab: call metadata, then how the call differs from the company's prior call. */
-export function MetricsDiffTab({ event, eventId, onSearchChange, search }: CallTabProps) {
+export function MetricsDiffTab({ event, eventId, historicalTicker, onSearchChange, search }: CallTabProps) {
     return (
         <div className="flex flex-col gap-6">
             <Section title="Call metrics">
                 <MetricsSection eventId={eventId} />
             </Section>
             <Section title="Versus the prior call">
-                <DiffSection event={event} eventId={eventId} onSearchChange={onSearchChange} search={search} />
+                <DiffSection event={event} eventId={eventId} historicalTicker={historicalTicker} onSearchChange={onSearchChange} search={search} />
             </Section>
         </div>
     );

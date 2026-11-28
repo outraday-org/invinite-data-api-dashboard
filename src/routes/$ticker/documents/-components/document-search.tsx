@@ -31,7 +31,7 @@ const DOCUMENT_SEARCH_TIER = { badge: tierLabel("searchInvestorDocuments") ?? "P
 const linkClass = "inline-flex items-center gap-1 underline-offset-4 hover:underline";
 
 /** One passage; the relevance sits in the match badge's tooltip (as on the transcript hits), never as visible text. */
-function DocumentHitCard({ hit, query }: { hit: V2InvestorDocumentSearchHit; query: string }) {
+function DocumentHitCard({ historicalTicker, hit, query }: { historicalTicker?: string; hit: V2InvestorDocumentSearchHit; query: string }) {
     const source = [
         hit.title ?? "Untitled document",
         hit.year === null ? "undated" : String(hit.year),
@@ -60,7 +60,7 @@ function DocumentHitCard({ hit, query }: { hit: V2InvestorDocumentSearchHit; que
                 {hit.event_id && (
                     <Link
                         className={linkClass}
-                        params={{ eventId: hit.event_id, ticker: hit.symbol }}
+                        params={{ eventId: hit.event_id, ticker: historicalTicker ?? hit.symbol }}
                         search={{ tab: "documents" }}
                         to="/$ticker/earnings-calls/$eventId"
                     >
@@ -76,10 +76,12 @@ function DocumentHitCard({ hit, query }: { hit: V2InvestorDocumentSearchHit; que
 export function DocumentSearchResults({
     data,
     error,
+    historicalTicker,
     isLoading,
     mode,
 }: {
     data: null | V2InvestorDocumentSearchResponse;
+    historicalTicker?: string;
     error: unknown;
     isLoading: boolean;
     mode: SearchMode;
@@ -103,6 +105,7 @@ export function DocumentSearchResults({
                         <ul className="flex flex-col gap-2">
                             {data.data.map(hit => (
                                 <DocumentHitCard
+                                    historicalTicker={historicalTicker}
                                     hit={hit}
                                     // A hit has no id of its own: document + page + chunk start is unique within one answer.
                                     key={`${hit.document_id}:${hit.page ?? ""}:${hit.text.slice(0, 32)}`}
@@ -121,7 +124,7 @@ export function DocumentSearchResults({
  * library, by keywords (default; every word must match) or exact text (the API's case-sensitive default: v2 has no
  * case switch, and no source filter). Runs on submit, never per keystroke; a mode chip re-runs the submitted query.
  */
-export function DocumentSearch({ identifier }: { identifier: string }) {
+export function DocumentSearch({ historicalTicker, identifier }: { historicalTicker?: string; identifier: string }) {
     const [draft, setDraft] = React.useState("");
 
     const [query, setQuery] = React.useState("");
@@ -155,7 +158,7 @@ export function DocumentSearch({ identifier }: { identifier: string }) {
             {query && (
                 <>
                     <div className="text-muted-foreground text-xs">{DOCUMENT_SEARCH_LEAD}</div>
-                    <DocumentSearchResults data={data} error={error} isLoading={isFetching} mode={mode} />
+                    <DocumentSearchResults data={data} error={error} historicalTicker={historicalTicker} isLoading={isFetching} mode={mode} />
                 </>
             )}
         </section>

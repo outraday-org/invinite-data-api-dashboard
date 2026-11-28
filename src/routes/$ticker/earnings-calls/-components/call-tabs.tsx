@@ -36,6 +36,8 @@ export type TranscriptJump = { fromLink?: boolean; ms: number; nonce: number };
 
 /** What every tab panel gets. */
 export type CallTabProps = {
+    historicalTicker?: string;
+    newsAvailable?: boolean;
     event: V2Event;
     /** The event every per-event read names (`/v1/events/{event_id}/…`). */
     eventId: string;
@@ -90,6 +92,8 @@ const CALL_TABS: Record<CallTab, CallTabDefinition> = {
  */
 export function CallTabs({
     event,
+    historicalTicker,
+    newsAvailable,
     onSearchChange,
     onTabChange,
     onTranscriptJumpHandled,
@@ -98,6 +102,8 @@ export function CallTabs({
     transcriptJump,
 }: {
     event: V2Event;
+    historicalTicker?: string;
+    newsAvailable?: boolean;
     onSearchChange: (patch: Partial<CallSearch>) => void;
     onTabChange: (tab: CallTab) => void;
     onTranscriptJumpHandled: () => void;
@@ -135,6 +141,8 @@ export function CallTabs({
     const props: CallTabProps = {
         event,
         eventId: event.event_id,
+        historicalTicker,
+        newsAvailable,
         onSearchChange,
         onTabChange,
         onTranscriptJumpHandled,

@@ -178,7 +178,7 @@ function DocumentsPage() {
                 )}
                 title="Search"
             >
-                {searchSource === "company" ? <DocumentSearch identifier={subject} /> : <SecFilingsSource onOpen={openSecTarget} target={secTarget} ticker={subject} />}
+                {searchSource === "company" ? <DocumentSearch historicalTicker={historicalPageTicker(instrument, ticker)} identifier={subject} /> : <SecFilingsSource onOpen={openSecTarget} target={secTarget} ticker={subject} />}
             </Section>
 
             <Section title="Library">

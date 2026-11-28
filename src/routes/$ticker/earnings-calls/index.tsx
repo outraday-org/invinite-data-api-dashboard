@@ -274,8 +274,8 @@ function EarningsCallsPage() {
                                 title="Search"
                             >
                                 {searchScope === "transcripts"
-                                    ? <AskThisCall scope={{ identifier: subject, kind: "company" }} />
-                                    : <DocumentSearch identifier={subject} />}
+                                    ? <AskThisCall historicalTicker={historicalTicker} scope={{ identifier: subject, kind: "company" }} />
+                                    : <DocumentSearch historicalTicker={historicalTicker} identifier={subject} />}
                             </Section>
 
                             <div className="flex flex-col gap-4">

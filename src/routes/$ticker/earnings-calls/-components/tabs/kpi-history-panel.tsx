@@ -90,12 +90,14 @@ function KpiHistoryChart({ mentions }: { mentions: ReadonlyArray<V2KpiMention> }
 export function KpiHistoryView({
     company,
     error,
+    historicalTicker,
     isLoading,
     mentions,
     onSortChange,
     sort,
 }: {
     company: string;
+    historicalTicker?: string;
     error: unknown;
     isLoading: boolean;
     mentions: ReadonlyArray<V2KpiMention>;
@@ -148,7 +150,7 @@ export function KpiHistoryView({
                     {mentions.map(mention => (
                         <TableRow key={`${mention.event_id}:${mention.seq}`}>
                             <TableCell className="whitespace-nowrap">
-                                <EventLink className="underline-offset-4 hover:underline" event={{ event_id: mention.event_id, symbol: mention.company.ticker ?? company }}>
+                                <EventLink className="underline-offset-4 hover:underline" event={{ event_id: mention.event_id, symbol: mention.company.ticker ?? company }} ticker={historicalTicker}>
                                     {formatDay(mention.conference_date)}
                                 </EventLink>
                             </TableCell>
@@ -177,7 +179,7 @@ export function KpiHistoryView({
     );
 }
 
-function KpiHistoryBody({ company, metric }: { company: string; metric: string }) {
+function KpiHistoryBody({ company, historicalTicker, metric }: { company: string; historicalTicker?: string; metric: string }) {
     const [sort, setSort] = React.useState<KpiHistorySort>("-conference_date");
 
     const query = useV2KpiHistoryInfinite({ company, metric, sort });
@@ -190,6 +192,7 @@ function KpiHistoryBody({ company, metric }: { company: string; metric: string }
         <KpiHistoryView
             company={company}
             error={query.error}
+            historicalTicker={historicalTicker}
             isLoading={query.isLoading}
             mentions={mentions}
             onSortChange={setSort}
@@ -202,7 +205,7 @@ function KpiHistoryBody({ company, metric }: { company: string; metric: string }
  * "KPI history" beside the guidance history (`/v1/kpis?company=&metric=&sort=`, every page): opens for a KPI the API
  * normalized (`metric_normalized`); `metric: null` = closed, no request.
  */
-export function KpiHistoryPanel({ company, metric, onClose }: { company: string; metric: null | string; onClose: () => void }) {
+export function KpiHistoryPanel({ company, historicalTicker, metric, onClose }: { company: string; historicalTicker?: string; metric: null | string; onClose: () => void }) {
     return (
         <Dialog onOpenChange={open => !open && onClose()} open={metric !== null}>
             <DialogContent className="sm:max-w-3xl">
@@ -212,7 +215,7 @@ export function KpiHistoryPanel({ company, metric, onClose }: { company: string;
                             <DialogTitle>{`${metricLabel(metric)} across ${company}'s calls`}</DialogTitle>
                             <DialogDescription>Every time a call or its press release stated this KPI, as said.</DialogDescription>
                         </DialogHeader>
-                        <KpiHistoryBody company={company} metric={metric} />
+                        <KpiHistoryBody company={company} historicalTicker={historicalTicker} metric={metric} />
                     </>
                 )}
             </DialogContent>

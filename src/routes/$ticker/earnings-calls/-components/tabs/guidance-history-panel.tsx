@@ -44,7 +44,7 @@ function formatDelta(delta: null | number, unit: null | string, currency: null |
 /** The call day of a guidance row (`conference_date` is a timestamp in v2). */
 const callDay = (conferenceDate: null | string) => formatDay(conferenceDate);
 
-function HistoryBody({ company, target }: { company: string; target: GuidanceHistoryTarget }) {
+function HistoryBody({ company, historicalTicker, target }: { company: string; historicalTicker?: string; target: GuidanceHistoryTarget }) {
     // The company's items for the metric across its calls, newest call first (`/v1/guidance`, every review state).
     const query = useV2GuidanceInfinite({
         basis: target.basis,
@@ -132,7 +132,7 @@ function HistoryBody({ company, target }: { company: string; target: GuidanceHis
                             <TableCell>
                                 {entry.event_id
                                     ? (
-                                            <EventLink className="underline-offset-4 hover:underline" event={{ event_id: entry.event_id, symbol: entry.company.ticker ?? company }}>
+                                            <EventLink className="underline-offset-4 hover:underline" event={{ event_id: entry.event_id, symbol: entry.company.ticker ?? company }} ticker={historicalTicker}>
                                                 {callDay(entry.conference_date)}
                                             </EventLink>
                                         )
@@ -159,10 +159,12 @@ function HistoryBody({ company, target }: { company: string; target: GuidanceHis
  */
 export function GuidanceHistoryPanel({
     company,
+    historicalTicker,
     onClose,
     target,
 }: {
     company: string;
+    historicalTicker?: string;
     onClose: () => void;
     target: GuidanceHistoryTarget | null;
 }) {
@@ -177,7 +179,7 @@ export function GuidanceHistoryPanel({
                                 {`${PERIOD_KIND_LABELS[target.periodKind]} guidance · ${BASIS_LABELS[target.basis] === "—" ? "basis unknown" : BASIS_LABELS[target.basis]} · newest call first in the table`}
                             </DialogDescription>
                         </DialogHeader>
-                        <HistoryBody company={company} target={target} />
+                        <HistoryBody company={company} historicalTicker={historicalTicker} target={target} />
                     </>
                 )}
             </DialogContent>

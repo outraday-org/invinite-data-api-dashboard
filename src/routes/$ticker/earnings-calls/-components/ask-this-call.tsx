@@ -130,6 +130,7 @@ function hitSpeaker(hit: V2TranscriptSearchHit, imagesByName: SpeakerImages): nu
 }
 
 type HitCardProps = {
+    historicalTicker?: string;
     hit: V2TranscriptSearchHit;
     imagesByName: SpeakerImages;
     onPlayed: () => void;
@@ -222,7 +223,7 @@ function EventHitCard({ onJumpToTranscript, onPlayed, ...props }: Omit<HitCardPr
 }
 
 /** Company calls list / `/search`: the hit's call page, the audio in a new tab; `market` names the company too. */
-function CompanyHitCard({ market = false, ...props }: Omit<HitCardProps, "onPlayed" | "scope"> & { market?: boolean }) {
+function CompanyHitCard({ historicalTicker, market = false, ...props }: Omit<HitCardProps, "onPlayed" | "scope"> & { market?: boolean }) {
     const { hit } = props;
 
     const actions = (
@@ -238,7 +239,7 @@ function CompanyHitCard({ market = false, ...props }: Omit<HitCardProps, "onPlay
                 : hit.start_ms !== null && (
                     <Link
                         className={linkClass}
-                        params={{ eventId: hit.event_id, ticker: hit.symbol }}
+                        params={{ eventId: hit.event_id, ticker: historicalTicker ?? hit.symbol }}
                         search={{ tab: "transcript" }}
                         to="/$ticker/earnings-calls/$eventId"
                     >
@@ -251,7 +252,7 @@ function CompanyHitCard({ market = false, ...props }: Omit<HitCardProps, "onPlay
     );
 
     const title = (
-        <EventLink className="font-medium underline-offset-4 hover:underline" event={hit}>
+        <EventLink className="font-medium underline-offset-4 hover:underline" event={hit} ticker={historicalTicker}>
             {[market ? hit.symbol : null, formatDay(hit.conference_date), formatFiscalPeriod(hit)].filter(Boolean).join(" · ")}
         </EventLink>
     );
@@ -297,6 +298,7 @@ export function AskResults({
     data,
     error,
     expanded = true,
+    historicalTicker,
     imagesByName = NO_IMAGES,
     isLoading,
     onClear,
@@ -307,6 +309,7 @@ export function AskResults({
     data: null | V2TranscriptSearchResponse;
     error: unknown;
     expanded?: boolean;
+    historicalTicker?: string;
     /** Speaker name → image (`/v1/participants?event=`); missing = initials. */
     imagesByName?: SpeakerImages;
     isLoading: boolean;
@@ -359,6 +362,7 @@ export function AskResults({
                             <ul className="flex flex-col gap-2">
                                 {data.data.map(hit => (
                                     <HitCard
+                                        historicalTicker={historicalTicker}
                                         hit={hit}
                                         imagesByName={imagesByName}
                                         // A hit has no id: call + position + type is unique within one answer.
@@ -381,7 +385,7 @@ export function AskResults({
  * mode control. Scoped, any word may match (BM25) and the management answer follows a matched analyst question.
  * Runs on submit, never per keystroke; a type chip re-runs the submitted query.
  */
-export function AskThisCall({ scope }: { scope: Exclude<AskScope, { kind: "market" }> }) {
+export function AskThisCall({ historicalTicker, scope }: { historicalTicker?: string; scope: Exclude<AskScope, { kind: "market" }> }) {
     const [draft, setDraft] = React.useState("");
 
     const [query, setQuery] = React.useState("");
@@ -457,6 +461,7 @@ export function AskThisCall({ scope }: { scope: Exclude<AskScope, { kind: "marke
                     data={data}
                     error={error}
                     expanded={expanded}
+                    historicalTicker={historicalTicker}
                     imagesByName={imagesByName}
                     isLoading={isFetching}
                     onClear={clear}

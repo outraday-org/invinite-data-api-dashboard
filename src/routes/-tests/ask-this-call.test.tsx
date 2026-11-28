@@ -10,7 +10,9 @@ import { useV2TranscriptSearch } from "@/lib/api/queries";
 import { AskResults, AskThisCall, SpanHighlightedText } from "@/routes/$ticker/earnings-calls/-components/ask-this-call";
 
 vi.mock("@tanstack/react-router", () => ({
-    Link: ({ children }: { children: React.ReactNode }) => <a href="/">{children}</a>,
+    Link: ({ children, params, to }: { children: React.ReactNode; params: Record<string, string>; to: string }) => (
+        <a href={Object.entries(params).reduce((path, [key, value]) => path.replace(`$${key}`, value), to)}>{children}</a>
+    ),
 }));
 
 // The results body is rendered with its data directly: keep the server functions (TanStack Start) unloaded.
@@ -236,6 +238,28 @@ describe("AskResults", () => {
 });
 
 describe("AskResults (company scope)", () => {
+    it("keeps historical title and transcript action links under their parent ticker, with listed/global defaults unchanged", () => {
+        const hit = { ...HIT, symbol: "REUSED" };
+
+        const company = { identifier: hit.cik, kind: "company" } as const;
+
+        const { rerender } = render(<AskResults data={answer(coverage("complete"), [hit])} error={null} historicalTicker="OLDCO" isLoading={false} scope={company} />);
+
+        expect(screen.getAllByRole("link")).toHaveLength(2);
+
+        for (const link of screen.getAllByRole("link")) expect(link).toHaveAttribute("href", `/OLDCO/earnings-calls/${hit.event_id}`);
+
+        rerender(<AskResults data={answer(coverage("complete"), [hit])} error={null} isLoading={false} scope={company} />);
+
+        for (const link of screen.getAllByRole("link")) expect(link).toHaveAttribute("href", `/REUSED/earnings-calls/${hit.event_id}`);
+
+        rerender(<AskResults data={answer(coverage("complete"), [hit])} error={null} isLoading={false} scope={{ kind: "market" }} />);
+
+        for (const link of screen.getAllByRole("link")) expect(link).toHaveAttribute("href", `/REUSED/earnings-calls/${hit.event_id}`);
+
+        expect(screen.getByRole("link", { name: /REUSED/ })).toBeInTheDocument();
+    });
+
     it("renders hits without a call player, untimed ones too", () => {
         const company = { identifier: "ACME", kind: "company" } as const;
 
